@@ -3,6 +3,7 @@
 
 ## Index Main Architecture
 
+```
 <User>            [Core Smart Contract]           [Price Oracle]              [Exchange Privider]       <Exchange>
   |------- send eth ------->|
                             |------- request price ----->|
@@ -13,9 +14,11 @@
                                                                                         |---- exchange ---->|
                                                                                         |<--- done ---------|
   |<----------------------- orders completion && return ask tokens ---------------------|
+  ```
 
 ### Exchange Privider
 
+```
 contract ExchangeProvider {
 
   struct Status {
@@ -44,6 +47,7 @@ contract ExchangeProvider {
   function excuteTrade(address _from, uint _amount, address _to) public payable return (string) { ... }
 
 }
+```
 
-
-## Core
+### Price Oracle
+### Core
