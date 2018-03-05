@@ -1,5 +1,7 @@
 
-## Main Architecture
+# Protocol Architecture
+
+## Index Main Architecture
 
 <User>            [Core Smart Contract]           [Price Oracle]              [Exchange Privider]       <Exchange>
   |------- send eth ------->|
@@ -12,7 +14,7 @@
                                                                                         |<--- done ---------|
   |<----------------------- orders completion && return ask tokens ---------------------|
 
-## Exchange Privider
+### Exchange Privider
 
 contract ExchangeProvider {
 
