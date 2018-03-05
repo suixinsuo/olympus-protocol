@@ -18,7 +18,7 @@
 
 ### Exchange Privider
 
-```
+```node
 contract ExchangeProvider {
 
   struct Status {
