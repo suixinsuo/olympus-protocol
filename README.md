@@ -16,7 +16,7 @@
   |<----------------------- orders completion && return ask tokens ---------------------|
   ```
 
-### Exchange Privider
+### Exchange Provider
 
 ```node
 contract ExchangeProvider {
