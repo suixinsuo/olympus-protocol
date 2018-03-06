@@ -30,7 +30,7 @@ contract ExchangeProvider {
   event TradeSuccess(
     string tradeId,
     uint totalAmount,
-    uint completedAmout,
+    uint completedAmount,
   );
 
   event TradeFailure(
@@ -38,7 +38,7 @@ contract ExchangeProvider {
     uint errorCode
   );
 
-  function ExchangeProvider() puhlic {}
+  function ExchangeProvider() public {}
 
   function getProviderStatus() public return (Status) { ... }
 
