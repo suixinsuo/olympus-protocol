@@ -53,7 +53,7 @@ To be able to make goals listed above, the system needs to be designed in a such
 
 Their relationships are like the diagram shown below.
 
-![Component View](/Users/Administrator/Desktop/Component View.png)
+![Component View](https://github.com/Olympus-Labs/protocol-architecture/raw/master/Component%20View.png)
 
 
 
@@ -248,7 +248,7 @@ contract ExchangeProvider is Ownable, Provider {
 
 The interaction between the components described above and the buying process is described as below sequence diagram. 
 
-![OlympusSequence](/Users/Administrator/Desktop/OlympusSequence.png)
+![OlympusSequence](https://github.com/Olympus-Labs/protocol-architecture/raw/master/OlympusSequence.png)
 
 
 
