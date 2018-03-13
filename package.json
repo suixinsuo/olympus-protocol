@@ -1,0 +1,21 @@
+{
+  "name": "protocol-architecture",
+  "version": "1.0.0",
+  "description": "",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "truffle compile",
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Olympus-Labs/protocol-architecture.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "truffle": "^4.1.3"
+  }
+}
