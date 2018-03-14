@@ -24,6 +24,6 @@ contract ExchangeProvider is Ownable, Provider {
     function getExchanges() external returns (uint[] ids, string[] names);
     function getSupportedTokens(uint exchangeId) external returns (address[] tokenAddresses, string[] names, string[] symbols);
     function getMarketPrices(address[] tokenAddresses) external returns (uint[]);
-    function placeOrder(address tokenAddress, uint quantity, uint price, address depositAddress) external returns (string orderId);
+    function placeOrder(string orderId, address[] tokenAddresses, uint[] quantities, address depositAddress) external returns (string orderId);
     function cancelOrder(string orderId) external returns (bool success);
 }
