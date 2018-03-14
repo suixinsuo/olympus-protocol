@@ -29,7 +29,10 @@ contract StrategyProvider is Provider, Ownable {
 
     mapping(uint => address) ComboOwner;
 
-    event combo(Combo com);
+    event comboCreate(Combo _combo);
+
+    event comboUpdate(Combo _combo);
+
 
     modifier _checkIndex(uint _index) {
         require(_index < ComboHub.length);
@@ -39,15 +42,15 @@ contract StrategyProvider is Provider, Ownable {
     function StrategyProvider() {}
 
     function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool) {
-        if(_tokenAddresses.length != _weights.length) {
-            return false;
-        } else {
+        require(_tokenAddresses.length == _weights.length);
+
+
             uint total = 0;
             for (uint i = 0; i < _weights.length; ++i) {
                 total += _weights[i];
             }
             return total == 100;
-        }
+
     }
 
 
@@ -62,9 +65,7 @@ contract StrategyProvider is Provider, Ownable {
 
         address owner = msg.sender;
 
-        if (!_checkCombo(_tokenAddresses, _weights)) {
-            revert();
-        }
+        require(_checkCombo(_tokenAddresses, _weights));
 
         uint comboId = ComboIndex[msg.sender].length;
         Combo memory myCombo = Combo(comboId, _name, _description, _isPrivate, _tokenAddresses, _weights);
@@ -81,19 +82,20 @@ contract StrategyProvider is Provider, Ownable {
 
     function updateStrategy(uint _index, string _name, string _description, bool _isPrivate, address[] _tokenAddresses, uint[] _weights, uint _priceInMot) returns (bool success) {
 
-        if (!_checkCombo(_tokenAddresses, _weights) || !isOwner(_index)) {
-            return false;
-        } else {
-
+        //if (!_checkCombo(_tokenAddresses, _weights) || !isOwner(_index)) {
+            require(_checkCombo(_tokenAddresses, _weights);
+            require(isOwner(_index));
+            
             ComboHub[_index].name = _name;
             ComboHub[_index].description = _description;
             ComboHub[_index].isPrivate = _isPrivate;
             ComboHub[_index].tokenAddresses = _tokenAddresses;
             ComboHub[_index].weights = _weights;
-
+            
+            comboUpdate(ComboHub[_index]);
             return true;
-        }
-    }
+            }
+
 
     function isPrivate(uint _index) _checkIndex(_index) view returns(bool) {
         return ComboHub[_index].isPrivate;
