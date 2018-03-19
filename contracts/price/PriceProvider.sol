@@ -13,7 +13,7 @@ contract PriceProvider is Provider, Ownable {
     function getPrice(address tokenAddress) external returns (uint);
     
     // TO Oracles. msg.sender is the address of that Oracle.
-    function updatePrices(address[] tokenAddresses, uint[] prices,string _exchanges) external returns (bool success);
+    function updatePrices(address[] tokenAddresses, uint[] prices,string _exchanges, uint nonce) external returns (bool success);
    
     
     
