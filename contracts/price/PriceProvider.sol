@@ -40,7 +40,6 @@ contract Ownable {
 }
 
 contract Publish is Ownable{
-  address public owner;
   address[] public publisher;
 
     modifier onlyPublisher() {
@@ -49,7 +48,6 @@ contract Publish is Ownable{
   }
 
   function publish() public {
-    owner = msg.sender;
     publisher.push(owner);
   }
 
