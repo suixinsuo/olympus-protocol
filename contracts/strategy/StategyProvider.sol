@@ -82,8 +82,8 @@ contract StrategyProvider is Provider, Ownable {
 
     function updateStrategy(uint _index, string _name, string _description, bool _isPrivate, address[] _tokenAddresses, uint[] _weights, uint _priceInMot) returns (bool success) {
 
-        //if (!_checkCombo(_tokenAddresses, _weights) || !isOwner(_index)) {
-            require(_checkCombo(_tokenAddresses, _weights);
+        // if (!_checkCombo(_tokenAddresses, _weights) || !isOwner(_index)) {
+            require(_checkCombo(_tokenAddresses, _weights));
             require(isOwner(_index));
             
             ComboHub[_index].name = _name;

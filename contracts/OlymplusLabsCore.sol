@@ -4,6 +4,7 @@ import './libs/Ownable.sol';
 
 contract OlymplusLabsCore is Ownable {
     event IndexOrderUpdated (string orderId);
+    mapping (string => address) subContracts;
     
     struct IndexOrder {
         string id;
@@ -42,4 +43,9 @@ contract OlymplusLabsCore is Ownable {
     );
     function getIndexStatus (string orderId) public returns (OrderStatus status);
     function cancelOrder(string orderId) public returns (bool success);
+
+    function addorUpdateSubContract(string name, address contractAddress) public onlyOwner returns (bool success){
+        subContracts[name] = contractAddress;
+        return true;
+    }
 }
