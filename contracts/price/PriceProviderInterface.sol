@@ -15,4 +15,7 @@ contract PriceProviderInterface is Provider, Ownable {
     
     // TO Oracles. msg.sender is the address of that Oracle.
     function updatePrices(address[] tokenAddresses, uint[] prices) external returns (bool success);
+
+    // increment statistics
+    // function incrementStatistics(address id, uint amountInEther) external returns (bool success);
 }

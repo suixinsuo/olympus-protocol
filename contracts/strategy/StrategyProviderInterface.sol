@@ -5,12 +5,12 @@ import "../libs/Provider.sol";
 
 
 contract StrategyProviderInterface is Provider, Ownable {
-    event StrategyChanged(string strategyId);
+    event StrategyChanged(uint strategyId);
 
    // To core smart contract
     function getStrategies() external returns (uint[] ids, string[] names, string[] descriptions);
 
-    function getStrategy(string strategyId) external returns (
+    function getStrategy(uint strategyId) external returns (
         string name, 
         address owner, 
         string description, 
@@ -35,4 +35,7 @@ contract StrategyProviderInterface is Provider, Ownable {
         bool isPrivate, 
         uint priceInMot) 
         public returns (bool success);
+
+    // increment statistics
+    // function incrementStatistics(uint id, uint amountInEther) external returns (bool success);        
 }
