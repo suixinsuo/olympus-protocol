@@ -1,7 +1,8 @@
 pragma solidity ^0.4.18;
 
+
 contract Provider {
-  enum ProvderType{
+  enum ProvderType {
       Strategy,
       Pricing,
       Exchange
@@ -15,7 +16,7 @@ contract Provider {
       string symbol;
       address tokenAddress;
       uint decimal;
-  }    
+  }
 
   string public name;
   ProvderType public providerType;
