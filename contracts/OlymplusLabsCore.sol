@@ -1,10 +1,11 @@
 pragma solidity ^0.4.18;
 
-import './libs/Ownable.sol';
+import "./libs/Ownable.sol";
+
 
 contract OlymplusLabsCore is Ownable {
     event IndexOrderUpdated (string orderId);
-    mapping (string => address) subContracts;
+    mapping (string => address) public subContracts;
     
     struct IndexOrder {
         string id;
@@ -29,7 +30,9 @@ contract OlymplusLabsCore is Ownable {
     // Forward to Price smart contract.
     function getPrices(uint strategyId) public view returns (uint[] prices);
     // Send to Exchange smart contract after validation and splitted to sub orders.
-    function buyIndex(uint strategyId, uint amountInEther, uint[] stopLimits, address depositAddress) public payable returns (string orderId);
+
+    function buyIndex(uint strategyId, uint amountInEther, uint[] stopLimits, address depositAddress) 
+        public payable returns (string orderId);
         
     // For app/3rd-party clients to check details / status.
     function getIndexOrder(string orderId) public returns (
@@ -40,11 +43,12 @@ contract OlymplusLabsCore is Ownable {
         OrderStatus status,
         uint dateCreated,
         uint dateCompleted
-    );
+        );
+
     function getIndexStatus (string orderId) public returns (OrderStatus status);
     function cancelOrder(string orderId) public returns (bool success);
 
-    function addorUpdateSubContract(string name, address contractAddress) public onlyOwner returns (bool success){
+    function addorUpdateSubContract(string name, address contractAddress) public onlyOwner returns (bool success) {
         subContracts[name] = contractAddress;
         return true;
     }
