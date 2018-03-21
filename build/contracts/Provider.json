@@ -58,24 +58,24 @@
       "type": "function"
     }
   ],
-  "bytecode": "0x6060604052341561000f57600080fd5b61036a8061001e6000396000f300606060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806306fdde03146100675780635552ea40146100f55780637284e4161461012c57806395e272bd146101ba575b600080fd5b341561007257600080fd5b61007a6101e3565b6040518080602001828103825283818151815260200191508051906020019080838360005b838110156100ba57808201518184015260208101905061009f565b50505050905090810190601f1680156100e75780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b341561010057600080fd5b610108610281565b6040518082600281111561011857fe5b60ff16815260200191505060405180910390f35b341561013757600080fd5b61013f610294565b6040518080602001828103825283818151815260200191508051906020019080838360005b8381101561017f578082015181840152602081019050610164565b50505050905090810190601f1680156101ac5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b34156101c557600080fd5b6101cd610332565b6040518082815260200191505060405180910390f35b60008054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156102795780601f1061024e57610100808354040283529160200191610279565b820191906000526020600020905b81548152906001019060200180831161025c57829003601f168201915b505050505081565b600160009054906101000a900460ff1681565b60028054600181600116156101000203166002900480601f01602080910402602001604051908101604052809291908181526020018280546001816001161561010002031660029004801561032a5780601f106102ff5761010080835404028352916020019161032a565b820191906000526020600020905b81548152906001019060200180831161030d57829003601f168201915b505050505081565b600480600001549050815600a165627a7a72305820bd9c719e2b3b6e83a0d751a602de100a9c29f2dd2f2597ce0dd175bf427d9b980029",
-  "deployedBytecode": "0x606060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806306fdde03146100675780635552ea40146100f55780637284e4161461012c57806395e272bd146101ba575b600080fd5b341561007257600080fd5b61007a6101e3565b6040518080602001828103825283818151815260200191508051906020019080838360005b838110156100ba57808201518184015260208101905061009f565b50505050905090810190601f1680156100e75780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b341561010057600080fd5b610108610281565b6040518082600281111561011857fe5b60ff16815260200191505060405180910390f35b341561013757600080fd5b61013f610294565b6040518080602001828103825283818151815260200191508051906020019080838360005b8381101561017f578082015181840152602081019050610164565b50505050905090810190601f1680156101ac5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b34156101c557600080fd5b6101cd610332565b6040518082815260200191505060405180910390f35b60008054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156102795780601f1061024e57610100808354040283529160200191610279565b820191906000526020600020905b81548152906001019060200180831161025c57829003601f168201915b505050505081565b600160009054906101000a900460ff1681565b60028054600181600116156101000203166002900480601f01602080910402602001604051908101604052809291908181526020018280546001816001161561010002031660029004801561032a5780601f106102ff5761010080835404028352916020019161032a565b820191906000526020600020905b81548152906001019060200180831161030d57829003601f168201915b505050505081565b600480600001549050815600a165627a7a72305820bd9c719e2b3b6e83a0d751a602de100a9c29f2dd2f2597ce0dd175bf427d9b980029",
-  "sourceMap": "26:428:4:-;;;;;;;;;;;;;;;;;",
-  "deployedSourceMap": "26:428:4:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;283:18;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:2;8:100;;;99:1;94:3;90;84:5;80:1;75:3;71;64:6;52:2;49:1;45:3;40:15;;8:100;;;12:14;3:109;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;305:31:4;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;340:25;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:2;8:100;;;99:1;94:3;90;84:5;80:1;75:3;71;64:6;52:2;49:1;45:3;40:15;;8:100;;;12:14;3:109;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;416:35:4;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;283:18;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;305:31::-;;;;;;;;;;;;;:::o;340:25::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;416:35::-;;;;;;;;;:::o",
-  "source": "pragma solidity ^0.4.18;\n\ncontract Provider {\n  enum ProvderType{\n      Strategy,\n      Pricing,\n      Exchange\n  }\n      \n  struct ProviderStatistic {\n      uint counter;\n  }    \n\n  struct ERC20Token {\n      string symbol;\n      address tokenAddress;\n      uint decimal;\n  }    \n\n  string public name;\n  ProvderType public providerType;\n  string public description;\n  mapping(string => bool) internal properties;\n  ProviderStatistic public statistics;\n}",
+  "bytecode": "0x6060604052341561000f57600080fd5b61036a8061001e6000396000f300606060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806306fdde03146100675780635552ea40146100f55780637284e4161461012c57806395e272bd146101ba575b600080fd5b341561007257600080fd5b61007a6101e3565b6040518080602001828103825283818151815260200191508051906020019080838360005b838110156100ba57808201518184015260208101905061009f565b50505050905090810190601f1680156100e75780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b341561010057600080fd5b610108610281565b6040518082600281111561011857fe5b60ff16815260200191505060405180910390f35b341561013757600080fd5b61013f610294565b6040518080602001828103825283818151815260200191508051906020019080838360005b8381101561017f578082015181840152602081019050610164565b50505050905090810190601f1680156101ac5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b34156101c557600080fd5b6101cd610332565b6040518082815260200191505060405180910390f35b60008054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156102795780601f1061024e57610100808354040283529160200191610279565b820191906000526020600020905b81548152906001019060200180831161025c57829003601f168201915b505050505081565b600160009054906101000a900460ff1681565b60028054600181600116156101000203166002900480601f01602080910402602001604051908101604052809291908181526020018280546001816001161561010002031660029004801561032a5780601f106102ff5761010080835404028352916020019161032a565b820191906000526020600020905b81548152906001019060200180831161030d57829003601f168201915b505050505081565b600480600001549050815600a165627a7a723058200501e5d575c722dd2637ca820fa4d1e607e2f9de3b8a9f7164722b2529afe1bb0029",
+  "deployedBytecode": "0x606060405260043610610062576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806306fdde03146100675780635552ea40146100f55780637284e4161461012c57806395e272bd146101ba575b600080fd5b341561007257600080fd5b61007a6101e3565b6040518080602001828103825283818151815260200191508051906020019080838360005b838110156100ba57808201518184015260208101905061009f565b50505050905090810190601f1680156100e75780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b341561010057600080fd5b610108610281565b6040518082600281111561011857fe5b60ff16815260200191505060405180910390f35b341561013757600080fd5b61013f610294565b6040518080602001828103825283818151815260200191508051906020019080838360005b8381101561017f578082015181840152602081019050610164565b50505050905090810190601f1680156101ac5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b34156101c557600080fd5b6101cd610332565b6040518082815260200191505060405180910390f35b60008054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156102795780601f1061024e57610100808354040283529160200191610279565b820191906000526020600020905b81548152906001019060200180831161025c57829003601f168201915b505050505081565b600160009054906101000a900460ff1681565b60028054600181600116156101000203166002900480601f01602080910402602001604051908101604052809291908181526020018280546001816001161561010002031660029004801561032a5780601f106102ff5761010080835404028352916020019161032a565b820191906000526020600020905b81548152906001019060200180831161030d57829003601f168201915b505050505081565b600480600001549050815600a165627a7a723058200501e5d575c722dd2637ca820fa4d1e607e2f9de3b8a9f7164722b2529afe1bb0029",
+  "sourceMap": "27:425:4:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "27:425:4:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;281:18;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:2;8:100;;;99:1;94:3;90;84:5;80:1;75:3;71;64:6;52:2;49:1;45:3;40:15;;8:100;;;12:14;3:109;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;303:31:4;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;338:25;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:2;8:100;;;99:1;94:3;90;84:5;80:1;75:3;71;64:6;52:2;49:1;45:3;40:15;;8:100;;;12:14;3:109;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;414:35:4;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;281:18;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;303:31::-;;;;;;;;;;;;;:::o;338:25::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;414:35::-;;;;;;;;;:::o",
+  "source": "pragma solidity ^0.4.18;\n\n\ncontract Provider {\n  enum ProvderType {\n      Strategy,\n      Pricing,\n      Exchange\n  }\n      \n  struct ProviderStatistic {\n      uint counter;\n  }    \n\n  struct ERC20Token {\n      string symbol;\n      address tokenAddress;\n      uint decimal;\n  }\n\n  string public name;\n  ProvderType public providerType;\n  string public description;\n  mapping(string => bool) internal properties;\n  ProviderStatistic public statistics;\n}",
   "sourcePath": "/Users/Administrator/Projects/protocol-architecture/contracts/libs/Provider.sol",
   "ast": {
     "absolutePath": "/Users/Administrator/Projects/protocol-architecture/contracts/libs/Provider.sol",
     "exportedSymbols": {
       "Provider": [
-        350
+        724
       ]
     },
-    "id": 351,
+    "id": 725,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 323,
+        "id": 697,
         "literals": [
           "solidity",
           "^",
@@ -91,51 +91,51 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 350,
+        "id": 724,
         "linearizedBaseContracts": [
-          350
+          724
         ],
         "name": "Provider",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "canonicalName": "Provider.ProvderType",
-            "id": 327,
+            "id": 701,
             "members": [
               {
-                "id": 324,
+                "id": 698,
                 "name": "Strategy",
                 "nodeType": "EnumValue",
-                "src": "72:8:4"
+                "src": "74:8:4"
               },
               {
-                "id": 325,
+                "id": 699,
                 "name": "Pricing",
                 "nodeType": "EnumValue",
-                "src": "88:7:4"
+                "src": "90:7:4"
               },
               {
-                "id": 326,
+                "id": 700,
                 "name": "Exchange",
                 "nodeType": "EnumValue",
-                "src": "103:8:4"
+                "src": "105:8:4"
               }
             ],
             "name": "ProvderType",
             "nodeType": "EnumDefinition",
-            "src": "48:67:4"
+            "src": "49:68:4"
           },
           {
             "canonicalName": "Provider.ProviderStatistic",
-            "id": 330,
+            "id": 704,
             "members": [
               {
                 "constant": false,
-                "id": 329,
+                "id": 703,
                 "name": "counter",
                 "nodeType": "VariableDeclaration",
-                "scope": 330,
-                "src": "158:12:4",
+                "scope": 704,
+                "src": "160:12:4",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -143,10 +143,10 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 328,
+                  "id": 702,
                   "name": "uint",
                   "nodeType": "ElementaryTypeName",
-                  "src": "158:4:4",
+                  "src": "160:4:4",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -158,21 +158,21 @@
             ],
             "name": "ProviderStatistic",
             "nodeType": "StructDefinition",
-            "scope": 350,
-            "src": "125:50:4",
+            "scope": 724,
+            "src": "127:50:4",
             "visibility": "public"
           },
           {
             "canonicalName": "Provider.ERC20Token",
-            "id": 337,
+            "id": 711,
             "members": [
               {
                 "constant": false,
-                "id": 332,
+                "id": 706,
                 "name": "symbol",
                 "nodeType": "VariableDeclaration",
-                "scope": 337,
-                "src": "209:13:4",
+                "scope": 711,
+                "src": "211:13:4",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -180,10 +180,10 @@
                   "typeString": "string storage pointer"
                 },
                 "typeName": {
-                  "id": 331,
+                  "id": 705,
                   "name": "string",
                   "nodeType": "ElementaryTypeName",
-                  "src": "209:6:4",
+                  "src": "211:6:4",
                   "typeDescriptions": {
                     "typeIdentifier": "t_string_storage_ptr",
                     "typeString": "string storage pointer"
@@ -194,11 +194,11 @@
               },
               {
                 "constant": false,
-                "id": 334,
+                "id": 708,
                 "name": "tokenAddress",
                 "nodeType": "VariableDeclaration",
-                "scope": 337,
-                "src": "230:20:4",
+                "scope": 711,
+                "src": "232:20:4",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -206,10 +206,10 @@
                   "typeString": "address"
                 },
                 "typeName": {
-                  "id": 333,
+                  "id": 707,
                   "name": "address",
                   "nodeType": "ElementaryTypeName",
-                  "src": "230:7:4",
+                  "src": "232:7:4",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address",
                     "typeString": "address"
@@ -220,11 +220,11 @@
               },
               {
                 "constant": false,
-                "id": 336,
+                "id": 710,
                 "name": "decimal",
                 "nodeType": "VariableDeclaration",
-                "scope": 337,
-                "src": "258:12:4",
+                "scope": 711,
+                "src": "260:12:4",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -232,10 +232,10 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 335,
+                  "id": 709,
                   "name": "uint",
                   "nodeType": "ElementaryTypeName",
-                  "src": "258:4:4",
+                  "src": "260:4:4",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -247,17 +247,17 @@
             ],
             "name": "ERC20Token",
             "nodeType": "StructDefinition",
-            "scope": 350,
-            "src": "183:92:4",
+            "scope": 724,
+            "src": "185:92:4",
             "visibility": "public"
           },
           {
             "constant": false,
-            "id": 339,
+            "id": 713,
             "name": "name",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "283:18:4",
+            "scope": 724,
+            "src": "281:18:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -265,10 +265,10 @@
               "typeString": "string storage ref"
             },
             "typeName": {
-              "id": 338,
+              "id": 712,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "283:6:4",
+              "src": "281:6:4",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string storage pointer"
@@ -279,26 +279,26 @@
           },
           {
             "constant": false,
-            "id": 341,
+            "id": 715,
             "name": "providerType",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "305:31:4",
+            "scope": 724,
+            "src": "303:31:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_enum$_ProvderType_$327",
+              "typeIdentifier": "t_enum$_ProvderType_$701",
               "typeString": "enum Provider.ProvderType"
             },
             "typeName": {
               "contractScope": null,
-              "id": 340,
+              "id": 714,
               "name": "ProvderType",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 327,
-              "src": "305:11:4",
+              "referencedDeclaration": 701,
+              "src": "303:11:4",
               "typeDescriptions": {
-                "typeIdentifier": "t_enum$_ProvderType_$327",
+                "typeIdentifier": "t_enum$_ProvderType_$701",
                 "typeString": "enum Provider.ProvderType"
               }
             },
@@ -307,11 +307,11 @@
           },
           {
             "constant": false,
-            "id": 343,
+            "id": 717,
             "name": "description",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "340:25:4",
+            "scope": 724,
+            "src": "338:25:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -319,10 +319,10 @@
               "typeString": "string storage ref"
             },
             "typeName": {
-              "id": 342,
+              "id": 716,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "340:6:4",
+              "src": "338:6:4",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string storage pointer"
@@ -333,11 +333,11 @@
           },
           {
             "constant": false,
-            "id": 347,
+            "id": 721,
             "name": "properties",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "369:43:4",
+            "scope": 724,
+            "src": "367:43:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -345,28 +345,28 @@
               "typeString": "mapping(string memory => bool)"
             },
             "typeName": {
-              "id": 346,
+              "id": 720,
               "keyType": {
-                "id": 344,
+                "id": 718,
                 "name": "string",
                 "nodeType": "ElementaryTypeName",
-                "src": "377:6:4",
+                "src": "375:6:4",
                 "typeDescriptions": {
                   "typeIdentifier": "t_string_storage_ptr",
                   "typeString": "string storage pointer"
                 }
               },
               "nodeType": "Mapping",
-              "src": "369:23:4",
+              "src": "367:23:4",
               "typeDescriptions": {
                 "typeIdentifier": "t_mapping$_t_string_memory_$_t_bool_$",
                 "typeString": "mapping(string memory => bool)"
               },
               "valueType": {
-                "id": 345,
+                "id": 719,
                 "name": "bool",
                 "nodeType": "ElementaryTypeName",
-                "src": "387:4:4",
+                "src": "385:4:4",
                 "typeDescriptions": {
                   "typeIdentifier": "t_bool",
                   "typeString": "bool"
@@ -378,26 +378,26 @@
           },
           {
             "constant": false,
-            "id": 349,
+            "id": 723,
             "name": "statistics",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "416:35:4",
+            "scope": 724,
+            "src": "414:35:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_struct$_ProviderStatistic_$330_storage",
+              "typeIdentifier": "t_struct$_ProviderStatistic_$704_storage",
               "typeString": "struct Provider.ProviderStatistic storage ref"
             },
             "typeName": {
               "contractScope": null,
-              "id": 348,
+              "id": 722,
               "name": "ProviderStatistic",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 330,
-              "src": "416:17:4",
+              "referencedDeclaration": 704,
+              "src": "414:17:4",
               "typeDescriptions": {
-                "typeIdentifier": "t_struct$_ProviderStatistic_$330_storage_ptr",
+                "typeIdentifier": "t_struct$_ProviderStatistic_$704_storage_ptr",
                 "typeString": "struct Provider.ProviderStatistic storage pointer"
               }
             },
@@ -405,24 +405,24 @@
             "visibility": "public"
           }
         ],
-        "scope": 351,
-        "src": "26:428:4"
+        "scope": 725,
+        "src": "27:425:4"
       }
     ],
-    "src": "0:454:4"
+    "src": "0:452:4"
   },
   "legacyAST": {
     "absolutePath": "/Users/Administrator/Projects/protocol-architecture/contracts/libs/Provider.sol",
     "exportedSymbols": {
       "Provider": [
-        350
+        724
       ]
     },
-    "id": 351,
+    "id": 725,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 323,
+        "id": 697,
         "literals": [
           "solidity",
           "^",
@@ -438,51 +438,51 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 350,
+        "id": 724,
         "linearizedBaseContracts": [
-          350
+          724
         ],
         "name": "Provider",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "canonicalName": "Provider.ProvderType",
-            "id": 327,
+            "id": 701,
             "members": [
               {
-                "id": 324,
+                "id": 698,
                 "name": "Strategy",
                 "nodeType": "EnumValue",
-                "src": "72:8:4"
+                "src": "74:8:4"
               },
               {
-                "id": 325,
+                "id": 699,
                 "name": "Pricing",
                 "nodeType": "EnumValue",
-                "src": "88:7:4"
+                "src": "90:7:4"
               },
               {
-                "id": 326,
+                "id": 700,
                 "name": "Exchange",
                 "nodeType": "EnumValue",
-                "src": "103:8:4"
+                "src": "105:8:4"
               }
             ],
             "name": "ProvderType",
             "nodeType": "EnumDefinition",
-            "src": "48:67:4"
+            "src": "49:68:4"
           },
           {
             "canonicalName": "Provider.ProviderStatistic",
-            "id": 330,
+            "id": 704,
             "members": [
               {
                 "constant": false,
-                "id": 329,
+                "id": 703,
                 "name": "counter",
                 "nodeType": "VariableDeclaration",
-                "scope": 330,
-                "src": "158:12:4",
+                "scope": 704,
+                "src": "160:12:4",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -490,10 +490,10 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 328,
+                  "id": 702,
                   "name": "uint",
                   "nodeType": "ElementaryTypeName",
-                  "src": "158:4:4",
+                  "src": "160:4:4",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -505,21 +505,21 @@
             ],
             "name": "ProviderStatistic",
             "nodeType": "StructDefinition",
-            "scope": 350,
-            "src": "125:50:4",
+            "scope": 724,
+            "src": "127:50:4",
             "visibility": "public"
           },
           {
             "canonicalName": "Provider.ERC20Token",
-            "id": 337,
+            "id": 711,
             "members": [
               {
                 "constant": false,
-                "id": 332,
+                "id": 706,
                 "name": "symbol",
                 "nodeType": "VariableDeclaration",
-                "scope": 337,
-                "src": "209:13:4",
+                "scope": 711,
+                "src": "211:13:4",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -527,10 +527,10 @@
                   "typeString": "string storage pointer"
                 },
                 "typeName": {
-                  "id": 331,
+                  "id": 705,
                   "name": "string",
                   "nodeType": "ElementaryTypeName",
-                  "src": "209:6:4",
+                  "src": "211:6:4",
                   "typeDescriptions": {
                     "typeIdentifier": "t_string_storage_ptr",
                     "typeString": "string storage pointer"
@@ -541,11 +541,11 @@
               },
               {
                 "constant": false,
-                "id": 334,
+                "id": 708,
                 "name": "tokenAddress",
                 "nodeType": "VariableDeclaration",
-                "scope": 337,
-                "src": "230:20:4",
+                "scope": 711,
+                "src": "232:20:4",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -553,10 +553,10 @@
                   "typeString": "address"
                 },
                 "typeName": {
-                  "id": 333,
+                  "id": 707,
                   "name": "address",
                   "nodeType": "ElementaryTypeName",
-                  "src": "230:7:4",
+                  "src": "232:7:4",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address",
                     "typeString": "address"
@@ -567,11 +567,11 @@
               },
               {
                 "constant": false,
-                "id": 336,
+                "id": 710,
                 "name": "decimal",
                 "nodeType": "VariableDeclaration",
-                "scope": 337,
-                "src": "258:12:4",
+                "scope": 711,
+                "src": "260:12:4",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -579,10 +579,10 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 335,
+                  "id": 709,
                   "name": "uint",
                   "nodeType": "ElementaryTypeName",
-                  "src": "258:4:4",
+                  "src": "260:4:4",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -594,17 +594,17 @@
             ],
             "name": "ERC20Token",
             "nodeType": "StructDefinition",
-            "scope": 350,
-            "src": "183:92:4",
+            "scope": 724,
+            "src": "185:92:4",
             "visibility": "public"
           },
           {
             "constant": false,
-            "id": 339,
+            "id": 713,
             "name": "name",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "283:18:4",
+            "scope": 724,
+            "src": "281:18:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -612,10 +612,10 @@
               "typeString": "string storage ref"
             },
             "typeName": {
-              "id": 338,
+              "id": 712,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "283:6:4",
+              "src": "281:6:4",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string storage pointer"
@@ -626,26 +626,26 @@
           },
           {
             "constant": false,
-            "id": 341,
+            "id": 715,
             "name": "providerType",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "305:31:4",
+            "scope": 724,
+            "src": "303:31:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_enum$_ProvderType_$327",
+              "typeIdentifier": "t_enum$_ProvderType_$701",
               "typeString": "enum Provider.ProvderType"
             },
             "typeName": {
               "contractScope": null,
-              "id": 340,
+              "id": 714,
               "name": "ProvderType",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 327,
-              "src": "305:11:4",
+              "referencedDeclaration": 701,
+              "src": "303:11:4",
               "typeDescriptions": {
-                "typeIdentifier": "t_enum$_ProvderType_$327",
+                "typeIdentifier": "t_enum$_ProvderType_$701",
                 "typeString": "enum Provider.ProvderType"
               }
             },
@@ -654,11 +654,11 @@
           },
           {
             "constant": false,
-            "id": 343,
+            "id": 717,
             "name": "description",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "340:25:4",
+            "scope": 724,
+            "src": "338:25:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -666,10 +666,10 @@
               "typeString": "string storage ref"
             },
             "typeName": {
-              "id": 342,
+              "id": 716,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "340:6:4",
+              "src": "338:6:4",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string storage pointer"
@@ -680,11 +680,11 @@
           },
           {
             "constant": false,
-            "id": 347,
+            "id": 721,
             "name": "properties",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "369:43:4",
+            "scope": 724,
+            "src": "367:43:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -692,28 +692,28 @@
               "typeString": "mapping(string memory => bool)"
             },
             "typeName": {
-              "id": 346,
+              "id": 720,
               "keyType": {
-                "id": 344,
+                "id": 718,
                 "name": "string",
                 "nodeType": "ElementaryTypeName",
-                "src": "377:6:4",
+                "src": "375:6:4",
                 "typeDescriptions": {
                   "typeIdentifier": "t_string_storage_ptr",
                   "typeString": "string storage pointer"
                 }
               },
               "nodeType": "Mapping",
-              "src": "369:23:4",
+              "src": "367:23:4",
               "typeDescriptions": {
                 "typeIdentifier": "t_mapping$_t_string_memory_$_t_bool_$",
                 "typeString": "mapping(string memory => bool)"
               },
               "valueType": {
-                "id": 345,
+                "id": 719,
                 "name": "bool",
                 "nodeType": "ElementaryTypeName",
-                "src": "387:4:4",
+                "src": "385:4:4",
                 "typeDescriptions": {
                   "typeIdentifier": "t_bool",
                   "typeString": "bool"
@@ -725,26 +725,26 @@
           },
           {
             "constant": false,
-            "id": 349,
+            "id": 723,
             "name": "statistics",
             "nodeType": "VariableDeclaration",
-            "scope": 350,
-            "src": "416:35:4",
+            "scope": 724,
+            "src": "414:35:4",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_struct$_ProviderStatistic_$330_storage",
+              "typeIdentifier": "t_struct$_ProviderStatistic_$704_storage",
               "typeString": "struct Provider.ProviderStatistic storage ref"
             },
             "typeName": {
               "contractScope": null,
-              "id": 348,
+              "id": 722,
               "name": "ProviderStatistic",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 330,
-              "src": "416:17:4",
+              "referencedDeclaration": 704,
+              "src": "414:17:4",
               "typeDescriptions": {
-                "typeIdentifier": "t_struct$_ProviderStatistic_$330_storage_ptr",
+                "typeIdentifier": "t_struct$_ProviderStatistic_$704_storage_ptr",
                 "typeString": "struct Provider.ProviderStatistic storage pointer"
               }
             },
@@ -752,11 +752,11 @@
             "visibility": "public"
           }
         ],
-        "scope": 351,
-        "src": "26:428:4"
+        "scope": 725,
+        "src": "27:425:4"
       }
     ],
-    "src": "0:454:4"
+    "src": "0:452:4"
   },
   "compiler": {
     "name": "solc",
@@ -764,5 +764,5 @@
   },
   "networks": {},
   "schemaVersion": "2.0.0",
-  "updatedAt": "2018-03-13T04:35:06.751Z"
+  "updatedAt": "2018-03-21T09:12:46.043Z"
 }
