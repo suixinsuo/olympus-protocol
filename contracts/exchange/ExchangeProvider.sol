@@ -116,7 +116,7 @@ contract ExchangeProvider is ExchangeProviderInterface {
         return index + EXCHANGE_ID_OFFSET;
     }
 
-    function _getExchangeIndex(uint id) private returns(uint) {
+    function _getExchangeIndex(uint id) private pure returns(uint) {
         return id - EXCHANGE_ID_OFFSET;
     }
 

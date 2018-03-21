@@ -1,10 +1,9 @@
 pragma solidity ^0.4.18;
 
-import "../libs/Ownable.sol";
-import "../libs/Provider.sol";
+import "./StrategyProviderInterface.sol";
 
 
-contract StrategyProvider is Provider, Ownable {
+contract StrategyProvider is StrategyProviderInterface {
     struct Combo {
         uint id;
         string name;

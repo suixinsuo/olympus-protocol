@@ -29,13 +29,19 @@ contract ExchangeProviderInterface is Provider, Ownable {
     function getSupportedTokens(uint exchangeId) external returns (
         address[] tokenAddresses, 
         string[] names, 
-        string[] symbols
-    );
+        string[] symbols);
 
     function getMarketPrices(address[] tokenAddresses) external returns (uint[]);
 
-    function placeOrder(string orderId, address[] tokenAddresses, 
-        uint[] quantities, address depositAddress) external returns (string);
+    function placeOrder(
+        string orderId, 
+        address[] tokenAddresses, 
+        uint[] quantities, 
+        address depositAddress) 
+        external returns (string);
     
     function cancelOrder(string orderId) external returns (bool success);
+
+    // increment statistics
+    // function incrementStatistics(address id, uint amountInEther) external returns (bool success);    
 }
