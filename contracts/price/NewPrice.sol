@@ -175,6 +175,7 @@ contract PriceProvider is Provider, Ownable, Publish {
 
     address _ploy = 0x22260D1f2cB61a371BFF2625c4620Fc5A67f0A8e;
     uint public nonce;
+      IterableMapping.itmap data;
     IterableMapping.itmap priceData;
     
     PriceWeightInterface  _priceweightinterface = PriceWeightInterface(_ploy);
@@ -192,8 +193,10 @@ contract PriceProvider is Provider, Ownable, Publish {
         require(_Exchanges.length == _prices.length);
         nonce = _nonce + 1;
         for (var index = 0; index < _Exchanges.length; index++) {
-            tokenPrice[tokenAddresses][_Exchanges[index]] = _prices[index];
+            //tokenPrice[tokenAddresses][_Exchanges[index]] = _prices[index];
+            IterableMapping.insert(data, _Exchanges[index], _prices[index]);
             PriceUpdated(_nonce, tokenAddresses, _Exchanges[index], _prices[index]);
+            
         }
         return true;
     }
