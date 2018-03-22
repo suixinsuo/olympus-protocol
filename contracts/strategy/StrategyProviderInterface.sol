@@ -19,32 +19,24 @@ contract StrategyProviderInterface is Provider, Ownable {
     }
 
     Combo[] public comboHub;
-
-    mapping(address => uint[]) public comboIndex;
-    mapping(uint => address) public comboOwner;
-
-    event ComboCreated(uint id, string name);
-    event ComboUpdated(uint id, string name);
-
     modifier _checkIndex(uint _index) {
         require(_index < comboHub.length);
         _;
     }
 
-    event StrategyChanged(uint strategyId);
-
    // To core smart contract
+    function getStrategyCount() public view returns (uint length);
     function getStrategies(address _owner) public view returns (uint[] ids);
     function getMyStrategies() public view returns (uint[] ids);
+    function getStrategyTokenCount(uint strategyId) public view returns (uint length);
+    function getStrategyTokenByIndex(uint strategyId, uint tokenIndex) public view returns (address token, uint weight);
 
     function getStrategy(uint _index) public _checkIndex(_index)  view returns (
-        uint id, 
-        string name, 
-        string description, 
-        string category,
+        uint id, // id of the strategy under the same owner.
+        bytes32 name, 
+        bytes32 description, 
+        bytes32 category,
         address indexOwner, 
-        address[] tokenAddresses, 
-        uint[] weights, 
         bool isPrivateIndex, 
         uint follower,
         uint amount);
