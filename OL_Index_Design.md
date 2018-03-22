@@ -86,7 +86,7 @@ For the index product, the main features should include:
 So the interface of the core smart contract should look like below:
 
 ```javascript
-enum ProvderType{
+enum ProviderType{
     Strategy,
     Pricing,
     Exchange,
@@ -104,7 +104,7 @@ struct ERC20Token {
 
 contract Provider {
     string name,
-    ProvderType type,
+    ProviderType type,
     string description,
     map(string => boolean) properties,
     ProviderStatistic statistics,

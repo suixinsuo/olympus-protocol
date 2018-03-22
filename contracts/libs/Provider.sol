@@ -1,8 +1,10 @@
 pragma solidity ^0.4.18;
 
+import "./Manageable.sol";
+
 
 library TypeDefinitions {
-    enum ProvderType {
+    enum ProviderType {
         Strategy,
         Price,
         Exchange
@@ -21,9 +23,9 @@ library TypeDefinitions {
     }
 }
 
-contract Provider {
+contract Provider is Manageable {
     string public name;
-    TypeDefinitions.ProvderType public providerType;
+    TypeDefinitions.ProviderType public providerType;
     string public description;
     mapping(string => bool) internal properties;
     TypeDefinitions.ProviderStatistic public statistics;
