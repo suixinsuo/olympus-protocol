@@ -4,7 +4,7 @@ import "../libs/Ownable.sol";
 import "../libs/Provider.sol";
 
 
-contract PriceProviderInterface is Provider, Ownable {
+contract PriceProviderInterface is Provider {
     // For now, all price are ETH based.
     event PriceUpdated(uint timeUpdated);
 

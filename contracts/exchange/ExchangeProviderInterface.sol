@@ -4,7 +4,7 @@ import "../libs/Ownable.sol";
 import "../libs/Provider.sol";
 
 
-contract ExchangeProviderInterface is Provider, Ownable {
+contract ExchangeProviderInterface is Provider {
     event OrderStatusChanged(string orderId, MarketOrderStatus status);
     
     enum MarketOrderStatus {
