@@ -4,42 +4,21 @@ import "./StrategyProviderInterface.sol";
 
 
 contract StrategyProvider is StrategyProviderInterface {
-    struct Combo {
-        uint id;
-        string name;
-        string description;
-        bool isPrivate;      // false --> public/ true --> private
-        address[] tokenAddresses;
-        uint[] weights;      //total is 100
-    }
-
-    Combo[] public comboHub;
-
-    mapping(address => uint[]) public comboIndex;
-    mapping(uint => address) public comboOwner;
-
-    event ComboCreated(uint id, string name);
-    event ComboUpdated(uint id, string name);
-
-    modifier _checkIndex(uint _index) {
-        require(_index < comboHub.length);
-        _;
-    }
 
     function createStrategy(
         string _name,
         string _description,
+        string _category,
         address[] _tokenAddresses,
         uint[] _weights,
-        bool _isPrivate,
-        uint priceInMot
-    ) public returns(uint) 
+        bool _isPrivate) 
+        public returns(uint) 
     {
 
         address owner = msg.sender;
         require(_checkCombo(_tokenAddresses, _weights));
         uint comboId = comboIndex[msg.sender].length;
-        Combo memory myCombo = Combo(comboId, _name, _description, _isPrivate, _tokenAddresses, _weights);
+        Combo memory myCombo = Combo(comboId, _name, _description, _category, _isPrivate, _tokenAddresses, _weights, 0, 0);
 
         ComboCreated(myCombo.id, myCombo.name);
 
@@ -55,19 +34,19 @@ contract StrategyProvider is StrategyProviderInterface {
         uint _index, 
         string _name, 
         string _description, 
+        string _category,
         bool _isPrivate, 
         address[] _tokenAddresses, 
-        uint[] _weights, 
-        uint _priceInMot) 
+        uint[] _weights) 
         public returns (bool success) 
     {
 
-        // if (!_checkCombo(_tokenAddresses, _weights) || !isOwner(_index)) {
         require(_checkCombo(_tokenAddresses, _weights));
         require(isOwner(_index));
         
         comboHub[_index].name = _name;
         comboHub[_index].description = _description;
+        comboHub[_index].category = _category;
         comboHub[_index].isPrivate = _isPrivate;
         comboHub[_index].tokenAddresses = _tokenAddresses;
         comboHub[_index].weights = _weights;
@@ -84,19 +63,25 @@ contract StrategyProvider is StrategyProviderInterface {
         return comboOwner[_index] == msg.sender;
     }
 
-    function getAllStrategyIndex() public view returns (uint[]) {
+    function getMyStrategies() public view returns (uint[]) {
         return comboIndex[msg.sender];
     }
 
-    function getStrategy(uint _index) public _checkIndex(_index)  view returns (
+    function getStrategies(address _owner) public view returns (uint[]) {
+        return comboIndex[_owner];
+    }
+
+    function getStrategy(uint _index) public _checkIndex(_index) view returns (
         uint id, 
         string name, 
         string description, 
+        string category,
         address indexOwner, 
         address[] tokenAddresses, 
         uint[] weights, 
         bool isPrivateIndex, 
-        uint price) 
+        uint follower,
+        uint amount) 
     {
 
         if ((isOwner(_index) || !isPrivate(_index))) {
@@ -106,11 +91,13 @@ contract StrategyProvider is StrategyProviderInterface {
                 combo.id, 
                 combo.name, 
                 combo.description, 
+                combo.category,
                 owner, 
                 combo.tokenAddresses, 
                 combo.weights, 
                 combo.isPrivate, 
-                0);
+                combo.follower,
+                combo.amount);
         } else {
             //TODO
             revert();
@@ -121,10 +108,10 @@ contract StrategyProvider is StrategyProviderInterface {
             // return (0, name,description, tokenAddresses[0], tokenAddresses, weights, false, 0);
         }
     }
-
-    function getStrategies() public {
-        //TODO
-    }
+    //TODO require core contract address
+    function incrementStatistics(uint _index, uint _amountInEther) external returns (bool){
+        comboHub[_index].amount += _amountInEther;
+    }  
 
     function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool) {
         require(_tokenAddresses.length == _weights.length);
@@ -135,4 +122,5 @@ contract StrategyProvider is StrategyProviderInterface {
         return total == 100;
     }
 
+      
 }
