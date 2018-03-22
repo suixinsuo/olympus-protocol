@@ -1,28 +1,30 @@
 pragma solidity ^0.4.18;
 
 
-contract Provider {
+library TypeDefinitions {
     enum ProvderType {
         Strategy,
-        Pricing,
+        Price,
         Exchange
     }
-      
+
     struct ProviderStatistic {
         uint counter;
         uint amountInEther;
         uint reputation;
-    }    
+    }
 
     struct ERC20Token {
         string symbol;
         address tokenAddress;
         uint decimal;
     }
+}
 
+contract Provider {
     string public name;
-    ProvderType public providerType;
+    TypeDefinitions.ProvderType public providerType;
     string public description;
     mapping(string => bool) internal properties;
-    ProviderStatistic public statistics;
+    TypeDefinitions.ProviderStatistic public statistics;
 }
