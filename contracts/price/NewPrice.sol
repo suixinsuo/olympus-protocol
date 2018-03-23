@@ -173,18 +173,19 @@ contract Provider {
 
 contract PriceProvider is Provider, Ownable, Publish {
 
-    address _ploy = 0x22260D1f2cB61a371BFF2625c4620Fc5A67f0A8e;
     uint public nonce;
-      IterableMapping.itmap data;
-    IterableMapping.itmap priceData;
+    address public periceWeightAddress;
     
-    PriceWeightInterface  _priceweightinterface = PriceWeightInterface(_ploy);
-    mapping(address => mapping(bytes32 => uint)) tokenPrice;
+    //IterableMapping.itmap priceData;
+    
+    mapping(address => IterableMapping.itmap) tokenPrice;
 
     event PriceUpdated(uint _nonce, address tokenAddress, bytes32 _exchanges,uint _price);
+    event GetLatestPrice(address tokenAddress,uint _latestprice);
 
-    function PriceProvider (uint _number) public {
+    function PriceProvider (uint _number,address _address) public {
         nonce = _number;
+        periceWeightAddress = _address;
     }       
 
     //Data
@@ -194,25 +195,32 @@ contract PriceProvider is Provider, Ownable, Publish {
         nonce = _nonce + 1;
         for (var index = 0; index < _Exchanges.length; index++) {
             //tokenPrice[tokenAddresses][_Exchanges[index]] = _prices[index];
-            IterableMapping.insert(data, _Exchanges[index], _prices[index]);
+            IterableMapping.insert(tokenPrice[tokenAddresses], _Exchanges[index], _prices[index]);
             PriceUpdated(_nonce, tokenAddresses, _Exchanges[index], _prices[index]);
-            
         }
         return true;
     }
 
-    function getPrice(address tokenAddresses) external returns (uint prices){
+    function getPrice(address tokenAddresses) external returns (uint _prices){
         bytes32[] _Exchanges;
         uint[] _Prices;
-        //function getPrice(address tokenaddress, bytes32[] _Exchanges,  uint[] _prices) public returns(uint price);
-        //for(var i = 0;i < tokenPrice[tokenAddresses][0].length;i++ ){
-        //    _Exchanges.push();
-        //    _Prices.push();
-        //}
-        //for ( bytes32 keys in tokenPrice[tokenAddresses]){
-            
-        //}
-        //prices = _priceweightinterface.getPrice(tokenAddresses,_Exchanges,_Prices);
+        
+        uint _price;
+
+        for (var i = IterableMapping.iterate_start(tokenPrice[tokenAddresses]); IterableMapping.iterate_valid(tokenPrice[tokenAddresses],i); i = IterableMapping.iterate_next(tokenPrice[tokenAddresses], i))
+        {
+            var (key, value) = IterableMapping.iterate_get(tokenPrice[tokenAddresses], i);
+            _Exchanges.push(key);
+            _Prices.push(value);
+        }
+        
+        PriceWeightInterface periceWeight = PriceWeightInterface(periceWeightAddress);
+        
+        _price = periceWeight.getPrice(tokenAddresses,_Exchanges,_Prices);
+        
+        GetLatestPrice(tokenAddresses, _price);
+        return _price;
+        //return(_Exchanges,_Prices);
         
     }
     
