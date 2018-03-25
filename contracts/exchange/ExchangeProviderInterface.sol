@@ -34,13 +34,17 @@ contract ExchangeProviderInterface is Provider {
     function getMarketPrices(address[] tokenAddresses) external returns (uint[]);
 
     function placeOrder(
-        string orderId, 
+        bytes32 orderId, 
         address[] tokenAddresses, 
         uint[] quantities, 
+        uint[] prices, 
         address depositAddress) 
-        external returns (string);
+        external returns (bool success);
     
     function cancelOrder(string orderId) external returns (bool success);
+
+    // only allow core to call this.
+    function approve(address tokenAddress, uint minimumAmount) external returns (bool success);
 
     // increment statistics
     // function incrementStatistics(address id, uint amountInEther) external returns (bool success);    
