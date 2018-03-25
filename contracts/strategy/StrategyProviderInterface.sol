@@ -10,7 +10,6 @@ contract StrategyProviderInterface is Provider {
         string name;
         string description;
         string category;
-        bool isPrivate;      // false --> public/ true --> private
         address[] tokenAddresses;
         uint[] weights;      //total is 100
         uint follower;
@@ -25,8 +24,8 @@ contract StrategyProviderInterface is Provider {
 
    // To core smart contract
     function getStrategyCount() public view returns (uint length);
-    function getStrategies(address _owner) public view returns (uint[] ids);
-    function getMyStrategies() public view returns (uint[] ids);
+    // function getStrategies(address _owner) public view returns (uint[] ids);
+    // function getMyStrategies() public view returns (uint[] ids);
     function getStrategyTokenCount(uint strategyId) public view returns (uint length);
     function getStrategyTokenByIndex(uint strategyId, uint tokenIndex) public view returns (address token, uint weight);
 
@@ -35,8 +34,6 @@ contract StrategyProviderInterface is Provider {
         bytes32 name, 
         bytes32 description, 
         bytes32 category,
-        address indexOwner, 
-        bool isPrivateIndex, 
         uint follower,
         uint amount);
 
@@ -61,6 +58,6 @@ contract StrategyProviderInterface is Provider {
         public returns (bool success);
 
     // increment statistics
-    //TODO atuh the core contract address
+    // TODO atuh the core contract address
     function incrementStatistics(uint id, uint amountInEther) external returns (bool success);        
 }
