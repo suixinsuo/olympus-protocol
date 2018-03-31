@@ -2,7 +2,6 @@ pragma solidity ^0.4.18;
 
 import "../libs/Provider.sol";
 
-
 contract StrategyProviderInterface is Provider {
 
     struct Combo {
@@ -31,33 +30,34 @@ contract StrategyProviderInterface is Provider {
 
     function getStrategy(uint _index) public _checkIndex(_index)  view returns (
         uint id, // id of the strategy under the same owner.
-        bytes32 name, 
-        bytes32 description, 
+        bytes32 name,
+        bytes32 description,
         bytes32 category,
         uint follower,
-        uint amount);
+        uint amount,
+        bytes32 exchangeId);
 
    // To clients
     function createStrategy(
-        string name, 
-        string description, 
-        string category,
-        address[] tokenAddresses, 
-        uint[] weights, 
-        bool isPrivate) 
-        public returns (uint strategyId);
-
-    function updateStrategy(
-        uint strategyId, 
         string name,
         string description,
         string category,
-        bool isPricate, 
-        address[] tokenAddresses, 
-        uint[] weights) 
+        address[] tokenAddresses,
+        uint[] weights,
+        bool isPrivate)
+        public returns (uint strategyId);
+
+    function updateStrategy(
+        uint strategyId,
+        string name,
+        string description,
+        string category,
+        bool isPricate,
+        address[] tokenAddresses,
+        uint[] weights)
         public returns (bool success);
 
     // increment statistics
     // TODO atuh the core contract address
-    function incrementStatistics(uint id, uint amountInEther) external returns (bool success);        
+    function incrementStatistics(uint id, uint amountInEther) external returns (bool success);
 }

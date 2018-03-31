@@ -6,10 +6,11 @@ import "../libs/Provider.sol";
 
 contract ExchangeProviderInterface is Provider {
     event OrderStatusChanged(string orderId, MarketOrderStatus status);
-    
+
     enum MarketOrderStatus {
         Pending,
         Placed,
+        PartiallyCompleted,
         Completed,
         Cancelled,
         Errored
@@ -24,28 +25,20 @@ contract ExchangeProviderInterface is Provider {
         MarketOrderStatus status;
     }
 
-    function getExchanges() external returns (uint[] ids, string[] names);
-
-    function getSupportedTokens(uint exchangeId) external returns (
-        address[] tokenAddresses, 
-        string[] names, 
-        string[] symbols);
-
-    function getMarketPrices(address[] tokenAddresses) external returns (uint[]);
+    function checkTokenSupported(address tokenAddress) external view returns (bool);
 
     function placeOrder(
-        bytes32 orderId, 
-        address[] tokenAddresses, 
-        uint[] quantities, 
-        uint[] prices, 
-        address depositAddress) 
+        bytes32 orderId,
+        address[] tokenAddresses,
+        uint[] quantities,
+        uint[] prices,
+        bytes32 exchangeId,
+        address depositAddress)
         external returns (bool success);
-    
+
+    function getSubOrderStatus(bytes32 orderId, address tokenAddress) external view returns (MarketOrderStatus);
+
     function cancelOrder(string orderId) external returns (bool success);
-
-    // only allow core to call this.
-    function approve(address tokenAddress, uint minimumAmount) external returns (bool success);
-
     // increment statistics
-    // function incrementStatistics(address id, uint amountInEther) external returns (bool success);    
+    // function incrementStatistics(address id, uint amountInEther) external returns (bool success);
 }
