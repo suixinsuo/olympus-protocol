@@ -1,30 +1,14 @@
-pragma solidity ^0.4.18;
+contract PriceOracleInterface {
 
-import "../libs/Ownable.sol";
-import "../libs/Provider.sol";
+   function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
 
+  function getNewDefaultPrice(address _tokenAddress) public view returns(uint);
 
-contract PriceProviderInterface is Provider {
-    // For now, all price are ETH based.
-    event PriceUpdated(uint timeUpdated);
+  function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint);
 
-    function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
+  function GetNonce(address providerAddress,address tokenAddress) public view returns(uint);
 
-    function getNewDefaultPrice(address _tokenAddress) public view returns(uint);
+     function checkTokenSupported(address tokenAddress) view returns(bool success);
+     function checkExchangeSupported(bytes32 Exchanges) view returns(bool success);
+     function checkProviderSupported(address providerAddress,address tokenAddress) view returns(bool success);ion getToken(uint number) view returns(address);
 
-    function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint);
-
-    function GetNonce(address providerAddress,address tokenAddress) public view returns(uint);
-
-    function getExchangeLength() public view returns(uint);
-
-    function getTokenLength()  public view returns(uint);
-
-    function getProviderLength(address _tokenAddress)  public view returns(uint);
-
-    function checkTokenSupported(address _tokenAddrss) public  view returns(bool);
-
-    function getProvider(uint number,address _tokenAddress)  public view returns(address);
-
-    function getToken(uint number)  public view returns(address);
-}
