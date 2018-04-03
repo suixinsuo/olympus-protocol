@@ -8,14 +8,23 @@ contract PriceProviderInterface is Provider {
     // For now, all price are ETH based.
     event PriceUpdated(uint timeUpdated);
 
-    // To core smart contract
-    function getSupportedTokens() external returns (address[] tokenAddresses);
-    function getPrices(address[] tokenAddresses) external returns (uint[] prices);
-    function getPrice(address tokenAddress) external returns (uint);
+    function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
 
-    // TO Oracles. msg.sender is the address of that Oracle.
-    function updatePrices(address[] tokenAddresses, uint[] prices) external returns (bool success);
+    function getNewDefaultPrice(address _tokenAddress) public view returns(uint);
 
-    // increment statistics
-    // function incrementStatistics(address id, uint amountInEther) external returns (bool success);
+    function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint);
+
+    function GetNonce(address providerAddress,address tokenAddress) public view returns(uint);
+
+    function getExchangeLength() public view returns(uint);
+
+    function getTokenLength()  public view returns(uint);
+
+    function getProviderLength(address _tokenAddress)  public view returns(uint);
+
+    function checkTokenSupported(address _tokenAddrss) public  view returns(bool);
+
+    function getProvider(uint number,address _tokenAddress)  public view returns(address);
+
+    function getToken(uint number)  public view returns(address);
 }

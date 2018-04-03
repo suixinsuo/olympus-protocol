@@ -1,10 +1,11 @@
-// var ConvertLib = artifacts.require("./ConvertLib.sol");
-// var MetaCoin = artifacts.require("./MetaCoin.sol");
-var Strategy = artifacts.require("./strategy/StrategyProvider.sol");
+var Core = artifacts.require("./OlymplusLabsCore.sol");
+// var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
+// var ExchangeProvider = artifacts.require("./exchange/ExchangeProvider.sol");
+// var PriceProvider = artifacts.require("./price/PriceProvider.sol");
 
-module.exports = function(deployer) {
-  // deployer.deploy(ConvertLib);
-  // deployer.link(ConvertLib, MetaCoin);
-  // deployer.deploy(MetaCoin);
-  deployer.deploy(Strategy);
+module.exports = function (deployer) {
+  deployer.deploy(Core);
+  // deployer.deploy(StrategyProvider);
+  // deployer.deploy(ExchangeProvider);
+  // deployer.deploy(PriceProvider);
 };
