@@ -2,6 +2,7 @@ pragma solidity ^0.4.18;
 
 import "./Ownable.sol";
 
+
 contract Manageable is Ownable {
     event ProviderUpdated (uint8 name, address hash);
 

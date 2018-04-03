@@ -27,18 +27,14 @@ contract ExchangeProviderInterface is Provider {
 
     function checkTokenSupported(address tokenAddress) external view returns (bool);
 
-    function placeOrder(
-        bytes32 orderId,
-        address[] tokenAddresses,
-        uint[] quantities,
-        uint[] prices,
-        bytes32 exchangeId,
-        address depositAddress)
-        external returns (bool success);
+    function getSubOrderStatus(uint orderId, address tokenAddress) external view returns (MarketOrderStatus);
 
-    function getSubOrderStatus(bytes32 orderId, address tokenAddress) external view returns (MarketOrderStatus);
-
-    function cancelOrder(string orderId) external returns (bool success);
+    function cancelOrder(uint orderId) external returns (bool success);
     // increment statistics
     // function incrementStatistics(address id, uint amountInEther) external returns (bool success);
+
+    function startPlaceOrder(uint orderId, address deposit) external returns(bool);
+    function addPlaceOrderItem(uint orderId, address token,uint amount,uint rate) external returns(bool);
+    function endPlaceOrder(uint orderId) external payable returns(bool);
+
 }
