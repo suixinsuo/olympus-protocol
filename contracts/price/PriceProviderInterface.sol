@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-contract PriceOracleInterface {
+contract PriceProviderInterface {
 
     function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
 
