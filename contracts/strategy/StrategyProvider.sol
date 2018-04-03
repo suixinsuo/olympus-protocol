@@ -37,15 +37,15 @@ contract StrategyProvider is StrategyProviderInterface {
         return (comboHub[_index].tokenAddresses[tokenIndex], comboHub[_index].weights[tokenIndex]);
     }
 
+
     function getStrategy(uint _index) public _checkIndex(_index) view returns (
         uint id, 
         bytes32 name, 
         bytes32 description, 
         bytes32 category,
-        address indexOwner, 
-        bool isPrivateIndex,
         uint follower,
-        uint amount) 
+        uint amount,
+        bytes32 exchangeId) 
     {
         Combo memory combo = comboHub[_index];
         address owner = comboOwner[_index];
@@ -54,27 +54,24 @@ contract StrategyProvider is StrategyProviderInterface {
             Converter.stringToBytes32(combo.name),
             Converter.stringToBytes32(combo.description),
             Converter.stringToBytes32(combo.category),
-            owner, 
-            combo.isPrivate,
             combo.follower,
-            combo.amount);
+            combo.amount,
+            combo.exchangeId);
     }
     
-
     function createStrategy(
         string _name,
         string _description,
         string _category,
         address[] _tokenAddresses,
         uint[] _weights,
-        bool _isPrivate) 
+        bytes32 _exchangeId) 
         public returns(uint)
     {
-
         address owner = msg.sender;
         require(_checkCombo(_tokenAddresses, _weights));
         uint comboId = comboIndex[msg.sender].length;
-        Combo memory myCombo = Combo(comboId, _name, _description, _category, _isPrivate, _tokenAddresses, _weights, 0, 0);
+        Combo memory myCombo = Combo(comboId, _name, _description, _category, _tokenAddresses, _weights, 0, 0, _exchangeId);
 
         ComboCreated(myCombo.id, myCombo.name);
 
@@ -86,27 +83,25 @@ contract StrategyProvider is StrategyProviderInterface {
         return index;
     }
 
-
     function updateStrategy(
         uint _index, 
         string _name, 
         string _description, 
         string _category,
-        bool _isPrivate, 
         address[] _tokenAddresses, 
-        uint[] _weights) 
+        uint[] _weights,
+        bytes32 _exchangeId) 
         public returns (bool success) 
     {
-
         require(_checkCombo(_tokenAddresses, _weights));
         // require(isOwner(_index));
 
         comboHub[_index].name = _name;
         comboHub[_index].description = _description;
         comboHub[_index].category = _category;
-        comboHub[_index].isPrivate = _isPrivate;
         comboHub[_index].tokenAddresses = _tokenAddresses;
         comboHub[_index].weights = _weights;
+        comboHub[_index].exchangeId = _exchangeId;
 
         ComboUpdated(comboHub[_index].id, comboHub[_index].name);
         return true;
@@ -136,5 +131,4 @@ contract StrategyProvider is StrategyProviderInterface {
         }
         return total == 100;
     }
-      
 }
