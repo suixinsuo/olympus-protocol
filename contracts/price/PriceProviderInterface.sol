@@ -1,12 +1,6 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-import "../libs/Ownable.sol";
-import "../libs/Provider.sol";
-
-
-contract PriceProviderInterface is Provider {
-    // For now, all price are ETH based.
-    event PriceUpdated(uint timeUpdated);
+contract PriceProviderInterface {
 
     function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
 
@@ -16,15 +10,20 @@ contract PriceProviderInterface is Provider {
 
     function GetNonce(address providerAddress,address tokenAddress) public view returns(uint);
 
-    function getExchangeLength() public view returns(uint);
+//   function getExchangeLength() view returns(uint);
 
-    function getTokenLength()  public view returns(uint);
+//   function getTokenLength() view returns(uint);
 
-    function getProviderLength(address _tokenAddress)  public view returns(uint);
+//   function getProviderLength(address _tokenAddress) view returns(uint);
 
-    function checkTokenSupported(address _tokenAddrss) public  view returns(bool);
+//   function getExhchange(uint number) view returns(bytes32);
 
-    function getProvider(uint number,address _tokenAddress)  public view returns(address);
+//   function getProvider(uint number,address _tokenAddress) view returns(address);
 
-    function getToken(uint number)  public view returns(address);
+//   function getToken(uint number) view returns(address);
+
+    function checkTokenSupported(address tokenAddress) public view returns(bool success);
+    function checkExchangeSupported(bytes32 Exchanges) public view returns(bool success);
+    function checkProviderSupported(address providerAddress,address tokenAddress) public  view returns(bool success);
+
 }
