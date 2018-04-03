@@ -13,17 +13,25 @@ import { TypeDefinitions as TD, Provider } from "./libs/Provider.sol";
 contract OlymplusLabsCore is Manageable {
     using SafeMath for uint256;
 
-    event IndexOrderUpdated (bytes32 orderId);
+    event IndexOrderUpdated (uint orderId);
+
     event Log(string message);
     event LogNumber(uint number);
+    event LogAddress(address message);
+    event LogAddresses(address[] message);
+    event LogNumbers(uint[] numbers);
 
-    ExchangeProviderInterface internal exchangeProvider;
-    StrategyProviderInterface internal strategyProvider;
-    PriceProviderInterface internal priceProvider;
-    mapping (bytes32 => IndexOrder) public orders;
-    mapping(bytes32 => mapping(address => uint)) public orderTokenAmounts;
-    uint public feePercentage;
-    uint internal orderId;
+    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x00b31e55fec5704a9b09cf2c1ba65a276ec7a453b1));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x44F961821Bdb76eB2D8B06193F86f64a4C2bBDb8));
+    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0088c80fcaae06323e17ddcd4ff8e0fbe06d9799e6));
+    mapping (uint => IndexOrder) public orders;
+    mapping(uint => mapping(address => uint)) public orderTokenAmounts;
+    uint public feePercentage = 100;
+    uint public constant DENOMINATOR = 10000;
+    uint public orderId = 1000000;
+
+    uint public minimumInWei = 0;
+    uint public maximumInWei;
 
     modifier allowProviderOnly(TD.ProviderType _type) {
         require(msg.sender == subContracts[uint8(_type)]);
@@ -93,7 +101,7 @@ contract OlymplusLabsCore is Manageable {
     function getStrategyTokenAndWeightByIndex(uint strategyId, uint index) public view returns (
         address token,
         uint weight
-    )
+        )
     {
         require(strategyId >= 0);
 
@@ -106,7 +114,7 @@ contract OlymplusLabsCore is Manageable {
     // Forward to Price smart contract.
     function getPrice(address tokenAddress) public view returns (uint price){
         require(tokenAddress != address(0));
-        return priceProvider.getPrice(tokenAddress);
+        return priceProvider.getNewDefaultPrice(tokenAddress);
     }
 
     function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
@@ -143,13 +151,12 @@ contract OlymplusLabsCore is Manageable {
         return result;
     }
 
-   // Send to Exchange smart contract after validation and splitted to sub orders.
-    function buyIndex(uint strategyId, address depositAddress)
-        public payable returns (bytes32 indexOrderId){
-
-        address[] memory tokens;
-        uint[] memory weights;
-
+    function buyIndex(uint strategyId, address depositAddress) public payable returns (uint indexOrderId)
+    {
+        require(msg.value > minimumInWei);
+        if(maximumInWei > 0){
+            require(msg.value <= maximumInWei);
+        }
         string memory exchangeName;
         (,,,,,exchangeName,) = getStrategy(strategyId);
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
@@ -159,19 +166,27 @@ contract OlymplusLabsCore is Manageable {
 
         uint[3] memory amounts;
         amounts[0] = msg.value; //uint totalAmount
-        amounts[1] = amounts[0] * feePercentage; // fee
+        amounts[1] = getFeeAmount(amounts[0]); // fee
         amounts[2] = amounts[0] - amounts[1]; // actualAmount
 
         // create order.
-        indexOrderId = getOrderIdHash();
+        indexOrderId = getOrderId();
 
-        uint[][5] memory subOrderTemp;
+        uint[][4] memory subOrderTemp;
         // 0: token amounts
         // 1: estimatedPrices
         // 2: dealtPrices
         // 3: completedTokenAmounts
         bytes32 exchangeId = Converter.stringToBytes32(exchangeName);
         ExchangeProviderInterface.MarketOrderStatus[] memory statuses;
+
+        address[] memory tokens = new address[](tokenLength);
+        uint[] memory weights = new uint[](tokenLength);
+
+        subOrderTemp[0] = initializeArray(tokenLength);
+        subOrderTemp[1] = initializeArray(tokenLength);
+        subOrderTemp[2] = initializeArray(tokenLength);
+        subOrderTemp[3] = initializeArray(tokenLength);
 
         IndexOrder memory order = IndexOrder({
             strategyId: uint64(strategyId),
@@ -191,15 +206,19 @@ contract OlymplusLabsCore is Manageable {
             exchangeId: exchangeId
         });
 
+        LogNumber(indexOrderId);
+        require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
         for (uint i = 0; i < tokenLength; i ++ ) {
             (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
             // token has to be supported by exchange provider.
             if(!exchangeProvider.checkTokenSupported(tokens[i])){
+                Log("Exchange provider doesn't support");
                 revert();
             }
 
             // check if price provider supports it.
             if(!priceProvider.checkTokenSupported(tokens[i])){
+                Log("Price provider doesn't support");
                 revert();
             }
 
@@ -208,32 +227,32 @@ contract OlymplusLabsCore is Manageable {
                 continue;
             }
 
-            subOrderTemp[0][i] = amounts[2] * (weights[i] / 100);
-
+            subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
             subOrderTemp[1][i] = getPrice(tokens[i]);
+
             orderTokenAmounts[indexOrderId][tokens[i]] = subOrderTemp[0][i];
+
+            LogAddress(tokens[i]);
+            LogNumber(subOrderTemp[0][i]);
+            LogNumber(subOrderTemp[1][i]);
+            require(exchangeProvider.addPlaceOrderItem(indexOrderId, tokens[i], subOrderTemp[0][i], subOrderTemp[1][i]));
         }
 
-        address deposit = depositAddress == address(0) ? order.buyer : depositAddress;
-        exchangeProvider.placeOrder(
-            indexOrderId,
-            tokens,
-            subOrderTemp[0],
-            subOrderTemp[1],
-            exchangeId,
-            deposit
-        );
+        LogNumber(amounts[2]);
+        require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
+
         orders[indexOrderId] = order;
 
         // todo: send ethers to the clearing center.
-
         return indexOrderId;
     }
 
-
+    function initializeArray(uint length) private pure returns (uint[]){
+        return new uint[](length);
+    }
 
     // For app/3rd-party clients to check details / status.
-    function getIndexOrder(bytes32 _orderId) public view returns (
+    function getIndexOrder(uint _orderId) public view returns (
         uint strategyId,
         address buyer,
         OrderStatus status,
@@ -258,7 +277,7 @@ contract OlymplusLabsCore is Manageable {
     }
 
     function updateIndexOrderToken(
-        bytes32 _orderId,
+        uint _orderId,
         address _tokenAddress,
         uint _actualPrice,
         uint _totalTokenAmount,
@@ -301,7 +320,7 @@ contract OlymplusLabsCore is Manageable {
         return true;
     }
 
-    function updateOrderStatus(bytes32 _orderId, OrderStatus _status)
+    function updateOrderStatus(uint _orderId, OrderStatus _status)
         external allowProviderOnly(TD.ProviderType.Exchange)
         returns (bool success)
     {
@@ -312,7 +331,7 @@ contract OlymplusLabsCore is Manageable {
         return true;
     }
 
-    function getSubOrderStatus(bytes32 _orderId, address _tokenAddress)
+    function getSubOrderStatus(uint _orderId, address _tokenAddress)
         external view returns (ExchangeProviderInterface.MarketOrderStatus)
     {
         return exchangeProvider.getSubOrderStatus(_orderId, _tokenAddress);
@@ -323,7 +342,25 @@ contract OlymplusLabsCore is Manageable {
         return true;
     }
 
-    function getOrderIdHash() private returns (bytes32) {
-        return keccak256(orderId++);
+    function adjustTradeRange(uint _minInWei, uint _maxInWei) public onlyOwner returns (bool success) {
+        require(_minInWei > 0);
+        require(_maxInWei > _minInWei);
+        minimumInWei = _minInWei;
+        maximumInWei = _maxInWei;
+
+        return true;
+    }
+
+    function resetOrderIdTo(uint _start) public onlyOwner returns (uint) {
+        orderId = _start;
+        return orderId;
+    }
+
+    function getOrderId() private returns (uint) {
+        return orderId++;
+    }
+
+    function getFeeAmount(uint amountInWei) private view returns (uint){
+        return amountInWei * feePercentage / DENOMINATOR;
     }
 }
