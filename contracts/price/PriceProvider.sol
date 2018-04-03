@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.19;
 
 //这个合约控制数据库
 
@@ -181,9 +181,9 @@ contract PriceOracleInterface {
 
 //   function getToken(uint number) view returns(address);
   
-     function checkTokenSupported(address tokenAddress) view returns(bool success);
-     function checkExchangeSupported(bytes32 Exchanges) view returns(bool success);
-     function checkProviderSupported(address providerAddress,address tokenAddress) view returns(bool success);
+     function checkTokenSupported(address tokenAddress) public view returns(bool success);
+     function checkExchangeSupported(bytes32 Exchanges) public view returns(bool success);
+     function checkProviderSupported(address providerAddress,address tokenAddress) public view returns(bool success);
  
 }
 
@@ -405,7 +405,7 @@ contract PriceOracle is Ownable {
         return _prices[0];
     }
     
-    function changeWeight(bytes32[] _exchanges,uint[] _newWeights) onlyOwner returns(bool success) {
+    function changeWeight(bytes32[] _exchanges,uint[] _newWeights) public onlyOwner returns(bool success) {
         
         for(uint i = 0; i<_exchanges.length; i++){
             
@@ -443,14 +443,14 @@ contract PriceOracle is Ownable {
     //     return _TOKEN[number];
     // }
     
-    function checkTokenSupported(address tokenAddress) view returns(bool success){
+    function checkTokenSupported(address tokenAddress) public view returns(bool success){
         return TokenList[tokenAddress];
     }
     
-    function checkExchangeSupported(bytes32 Exchanges) view returns(bool success){
+    function checkExchangeSupported(bytes32 Exchanges) public view returns(bool success){
         return ExchangeList[Exchanges];
     }
-    function checkProviderSupported(address providerAddress,address tokenAddress) view returns(bool success){
+    function checkProviderSupported(address providerAddress,address tokenAddress) public view returns(bool success){
         return ProviderList[tokenAddress][providerAddress];
     }
 }
