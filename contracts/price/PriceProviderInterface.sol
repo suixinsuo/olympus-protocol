@@ -1,3 +1,5 @@
+pragma solidity ^0.4.19;
+
 contract PriceOracleInterface {
 
     function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
@@ -8,9 +10,20 @@ contract PriceOracleInterface {
 
     function GetNonce(address providerAddress,address tokenAddress) public view returns(uint);
 
-    function checkTokenSupported(address tokenAddress) public view returns(bool success);
-    function checkExchangeSupported(bytes32 Exchanges) public  view returns(bool success);
-    function checkProviderSupported(address providerAddress, address tokenAddress) public  view returns(bool success);
-    function getToken(uint number) public  view returns(address);
-}
+//   function getExchangeLength() view returns(uint);
 
+//   function getTokenLength() view returns(uint);
+
+//   function getProviderLength(address _tokenAddress) view returns(uint);
+
+//   function getExhchange(uint number) view returns(bytes32);
+
+//   function getProvider(uint number,address _tokenAddress) view returns(address);
+
+//   function getToken(uint number) view returns(address);
+
+    function checkTokenSupported(address tokenAddress) public view returns(bool success);
+    function checkExchangeSupported(bytes32 Exchanges) public view returns(bool success);
+    function checkProviderSupported(address providerAddress,address tokenAddress) public  view returns(bool success);
+
+}
