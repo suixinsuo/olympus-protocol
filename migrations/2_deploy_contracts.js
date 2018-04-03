@@ -1,4 +1,4 @@
-var Core = artifacts.require("./OlymplusLabsCore.sol");
+var Core = artifacts.require("./OlympusLabsCore.sol");
 // var StrategyProvider = artifacts.require("./strategy/StrategyProvider");
 // var ExchangeProvider = artifacts.require("./exchange/ExchangeProvider.sol");
 // var PriceProvider = artifacts.require("./price/PriceProvider.sol");

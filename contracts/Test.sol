@@ -1,6 +1,5 @@
 pragma solidity ^0.4.19;
 // pragma experimental ABIEncoderV2;
-pragma solidity ^0.4.19;
 
 import "./OlympusLabsCore.sol";
 
@@ -8,11 +7,11 @@ import "./OlympusLabsCore.sol";
 contract Test {
     using SafeMath for uint256;
 
-    OlymplusLabsCore public core;
+    OlympusLabsCore public core;
     uint strategyId = 2;
 
     function Test()  public {
-        core = new OlymplusLabsCore();
+        core = new OlympusLabsCore();
         core.resetOrderIdTo(now);
     }
 
