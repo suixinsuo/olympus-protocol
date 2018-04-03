@@ -16,7 +16,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "truffle": "^4.1.3"
+    "truffle": "^4.1.5"
   },
   "dependencies": {
   }
