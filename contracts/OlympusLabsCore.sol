@@ -135,16 +135,16 @@ contract OlympusLabsCore is Manageable {
         TD.ProviderType _type = TD.ProviderType(_name);
 
         if(_type == TD.ProviderType.Strategy) {
-            Log("StrategyProvider");
+            emit Log("StrategyProvider");
             strategyProvider = StrategyProviderInterface(_providerAddress);
         } else if(_type == TD.ProviderType.Exchange) {
-            Log("ExchangeProvider");
+            emit Log("ExchangeProvider");
             exchangeProvider = ExchangeProviderInterface(_providerAddress);
         } else if(_type == TD.ProviderType.Price) {
-            Log("PriceProvider");
+            emit Log("PriceProvider");
             priceProvider = PriceProviderInterface(_providerAddress);
         } else {
-            Log("Unknow provider tyep supplied.");
+            emit Log("Unknow provider tyep supplied.");
             revert();
         }
 
@@ -206,19 +206,19 @@ contract OlympusLabsCore is Manageable {
             exchangeId: exchangeId
         });
 
-        LogNumber(indexOrderId);
+        emit LogNumber(indexOrderId);
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
         for (uint i = 0; i < tokenLength; i ++ ) {
             (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
             // token has to be supported by exchange provider.
             if(!exchangeProvider.checkTokenSupported(tokens[i])){
-                Log("Exchange provider doesn't support");
+                emit Log("Exchange provider doesn't support");
                 revert();
             }
 
             // check if price provider supports it.
             if(!priceProvider.checkTokenSupported(tokens[i])){
-                Log("Price provider doesn't support");
+                emit Log("Price provider doesn't support");
                 revert();
             }
 
@@ -232,13 +232,13 @@ contract OlympusLabsCore is Manageable {
 
             orderTokenAmounts[indexOrderId][tokens[i]] = subOrderTemp[0][i];
 
-            LogAddress(tokens[i]);
-            LogNumber(subOrderTemp[0][i]);
-            LogNumber(subOrderTemp[1][i]);
+            emit LogAddress(tokens[i]);
+            emit LogNumber(subOrderTemp[0][i]);
+            emit LogNumber(subOrderTemp[1][i]);
             require(exchangeProvider.addPlaceOrderItem(indexOrderId, tokens[i], subOrderTemp[0][i], subOrderTemp[1][i]));
         }
 
-        LogNumber(amounts[2]);
+        emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
         orders[indexOrderId] = order;

@@ -12,7 +12,7 @@ contract Manageable is Ownable {
     function setProvider(uint8 _name, address _providerAddress) public onlyOwner returns (bool success) {
         require(_providerAddress != address(0));
         subContracts[_name] = _providerAddress;
-        ProviderUpdated(_name, _providerAddress);
+        emit ProviderUpdated(_name, _providerAddress);
 
         return true;
     }
