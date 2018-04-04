@@ -11,20 +11,20 @@ stages:
 
 build:
  stage: build
- tags: [ek-docker]
+ tags: [aireach]
  script:
    - truffle compile
 
 test:
  stage: test
- tags: [ek-docker]
+ tags: [aireach]
  script:
    - ganache-cli -p 8545 &     # We could also have a service
    - truffle test
 
 deploy:
  stage: deploy
- tags: [ek-docker]
+ tags: [aireach]
  script:
    - ganache-cli -p 8545 &
    - truffle migrate --network integration
