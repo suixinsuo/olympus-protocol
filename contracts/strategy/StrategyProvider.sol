@@ -112,76 +112,22 @@ contract StrategyProvider is StrategyProviderInterface {
         comboHub[_index].amount += _amountInEther;
     }  
    // To clients
-
-
-//     function isPrivate(uint _index) public _checkIndex(_index) view returns(bool) {
-//         return comboHub[_index].isPrivate;
-//     }
-
-//     // function isPrivate(uint _index) public _checkIndex(_index) view returns(bool) {
-//     //     return comboHub[_index].isPrivate;
-//     // }
+    // function isPrivate(uint _index) public _checkIndex(_index) view returns(bool) {
+    //     return comboHub[_index].isPrivate;
+    // }
 
 //     function isOwner(uint _index) public _checkIndex(_index)  view returns(bool) {
 //         return comboOwner[_index] == msg.sender;
 //     }
 
-//     function getMyStrategies() public view returns (uint[]) {
-//         return comboIndex[msg.sender];
-//     }
-
-//     function getStrategies(address _owner) public view returns (uint[]) {
-//         return comboIndex[_owner];
-//     }
-
-//     function getStrategy(uint _index) public _checkIndex(_index) view returns (
-//         uint id,
-//         bytes32 name,
-//         bytes32 description,
-//         bytes32 category,
-//         address indexOwner,
-//         // address[] tokenAddresses,
-//         // uint[] weights,
-//         uint follower,
-//         uint amount)
-//     {
-
-//         if ((isOwner(_index)/* || !isPrivate(_index)*/)) {
-//             Combo storage combo = comboHub[_index];
-//             address owner = comboOwner[_index];
-//             return (
-//                 combo.id,
-//                 Converter.stringToBytes32(combo.name),
-//                 Converter.stringToBytes32(combo.description),
-//                 Converter.stringToBytes32(combo.category),
-//                 owner,
-//                 // combo.tokenAddresses,
-//                 // combo.weights,
-//                 combo.follower,
-//                 combo.amount);
-//         } else {
-//             //TODO
-//             revert();
-//             // address[] memory tokenAddresses;
-//             // uint[] memory weights;
-//             // string memory name;
-//             // string memory description;
-//             // return (0, name,description, tokenAddresses[0], tokenAddresses, weights, false, 0);
-//         }
-//     }
-//     //TODO require core contract address
-//     function incrementStatistics(uint _index, uint _amountInEther) external returns (bool){
-//         comboHub[_index].amount += _amountInEther;
-//     }
-
-//     function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool) {
-//         require(_tokenAddresses.length == _weights.length);
-//         uint total = 0;
-//         for (uint i = 0; i < _weights.length; ++i) {
-//             total += _weights[i];
-//         }
-//         return total == 100;
-//     }
+    function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool) {
+        require(_tokenAddresses.length == _weights.length);
+        uint total = 0;
+        for (uint i = 0; i < _weights.length; ++i) {
+            total += _weights[i];
+        }
+        return total == 100;
+    }
 
 
-// }
+}
