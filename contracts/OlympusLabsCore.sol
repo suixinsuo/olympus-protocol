@@ -198,7 +198,7 @@ contract OlympusLabsCore is Manageable {
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
             emit LogNumber(subOrderTemp[1][i]);
-            1;
+            require(exchangeProvider.addPlaceOrderItem(indexOrderId, tokens[i], subOrderTemp[0][i], subOrderTemp[1][i]));
         }
 
         emit LogNumber(amounts[2]);
@@ -226,6 +226,7 @@ contract OlympusLabsCore is Manageable {
         bytes32[] memory exchangeId = new bytes32[](1);
         STD.OrderStatus[] memory status = new STD.OrderStatus[](1);
 
+        // Stack too deep, so should be split up
         (orderPartial[0], buyer[0], status[0], orderPartial[1]) = olympusStorage.getIndexOrder1(_orderId);
         (orderPartial[2], orderPartial[3], orderPartial[4], exchangeId[0]) = olympusStorage.getIndexOrder2(_orderId);
         address[] memory tokens = new address[](orderPartial[4]);
