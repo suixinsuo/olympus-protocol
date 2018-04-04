@@ -14,7 +14,7 @@ checkstyle:
   stage: checkstyle
   tags: [aireach]
   script:
-    - sohint "contracts/**/*.sol"
+    - npm run linting
 
 build:
  stage: build
