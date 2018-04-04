@@ -7,7 +7,8 @@ library TypeDefinitions {
     enum ProviderType {
         Strategy,
         Price,
-        Exchange
+        Exchange,
+        Storage
     }
 
     struct ProviderStatistic {
