@@ -112,7 +112,7 @@ contract Provider {
 ```
 
 ```javascript
-contract OlymplusLabsCore is Ownable {
+contract OlympusLabsCore is Ownable {
     event IndexOrderUpdated (string orderId);
     
     struct IndexOrder {
