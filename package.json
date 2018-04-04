@@ -6,8 +6,10 @@
     "test": "test"
   },
   "scripts": {
-    "start": "truffle compile",
-    "test": "truffle test"
+    "build": "truffle compile",
+    "test": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test' ",
+    "deploy": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network development' ",
+    "linting": "#solhint 'contracts/**/*.sol'"
   },
   "repository": {
     "type": "git",
@@ -16,7 +18,13 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "ganache-cli": "^6.1.0",
+    "run-with-testrpc": "^0.3.0",
+    "solhint": "^1.1.10",
     "truffle": "^4.1.5"
   },
-  "dependencies": {}
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "lodash": "^4.17.5"
+  }
 }
