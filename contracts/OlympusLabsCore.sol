@@ -188,6 +188,43 @@ contract OlympusLabsCore is Manageable {
         subOrderTemp[2] = initializeArray(tokenLength);
         subOrderTemp[3] = initializeArray(tokenLength);
 
+        emit LogNumber(indexOrderId);
+        require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
+        for (uint i = 0; i < tokenLength; i ++ ) {
+            (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
+            // ignore those tokens with zero weight.
+            if(weights[i] <= 0) {
+                continue;
+            }
+            // token has to be supported by exchange provider.
+            if(!exchangeProvider.checkTokenSupported(tokens[i])){
+                emit Log("Exchange provider doesn't support");
+                revert();
+            }
+
+            // check if price provider supports it.
+            if(!priceProvider.checkTokenSupported(tokens[i])){
+                emit Log("Price provider doesn't support");
+                revert();
+            }
+
+            subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
+            subOrderTemp[1][i] = getPrice(tokens[i]);
+            // OlympusStorage.addTokenDetails(
+            //     tokens[i], weights[i], subOrderTemp[0][i],
+            //     subOrderTemp[1][i], subOrderTemp[2][i], subOrderTemp[3][i]
+            // );
+
+            orderTokenAmounts[indexOrderId][tokens[i]] = subOrderTemp[0][i];
+
+            emit LogAddress(tokens[i]);
+            emit LogNumber(subOrderTemp[0][i]);
+            emit LogNumber(subOrderTemp[1][i]);
+            require(exchangeProvider.addPlaceOrderItem(indexOrderId, tokens[i], subOrderTemp[0][i], subOrderTemp[1][i]));
+        }
+
+        emit LogNumber(amounts[2]);
+        require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
         IndexOrder memory order = IndexOrder({
             strategyId: uint64(strategyId),
             buyer: msg.sender,
@@ -205,42 +242,6 @@ contract OlympusLabsCore is Manageable {
             subStatuses: statuses,
             exchangeId: exchangeId
         });
-
-        emit LogNumber(indexOrderId);
-        require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
-        for (uint i = 0; i < tokenLength; i ++ ) {
-            (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
-            // token has to be supported by exchange provider.
-            if(!exchangeProvider.checkTokenSupported(tokens[i])){
-                emit Log("Exchange provider doesn't support");
-                revert();
-            }
-
-            // check if price provider supports it.
-            if(!priceProvider.checkTokenSupported(tokens[i])){
-                emit Log("Price provider doesn't support");
-                revert();
-            }
-
-            // ignore those tokens with zero weight.
-            if(weights[i] <= 0) {
-                continue;
-            }
-
-            subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
-            subOrderTemp[1][i] = getPrice(tokens[i]);
-
-            orderTokenAmounts[indexOrderId][tokens[i]] = subOrderTemp[0][i];
-
-            emit LogAddress(tokens[i]);
-            emit LogNumber(subOrderTemp[0][i]);
-            emit LogNumber(subOrderTemp[1][i]);
-            require(exchangeProvider.addPlaceOrderItem(indexOrderId, tokens[i], subOrderTemp[0][i], subOrderTemp[1][i]));
-        }
-
-        emit LogNumber(amounts[2]);
-        require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
-
         orders[indexOrderId] = order;
 
         // todo: send ethers to the clearing center.
