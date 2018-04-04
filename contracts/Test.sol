@@ -12,7 +12,6 @@ contract Test {
 
     function Test()  public {
         core = new OlympusLabsCore();
-        core.resetOrderIdTo(now);
     }
 
     function() public payable {
