@@ -10,7 +10,7 @@ stages:
  - test
  - deploy
 
- checkstyle:
+checkstyle:
   stage: checkstyle
   tags: [aireach]
   script:
