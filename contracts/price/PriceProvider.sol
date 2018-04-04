@@ -159,7 +159,7 @@ contract Ownable {
 //     hash(provider_address,TokenAddress,ExchangeHash),price;
 //   )
 
-contract PriceOracleInterface {
+contract PriceProviderInterface {
     
     function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
 
@@ -177,7 +177,7 @@ contract PriceOracleInterface {
  
 }
 
-contract PriceOracle is Ownable {
+contract PriceProvider is Ownable {
 
   //防止计算下坠攻击
   //using math for SafeMath;
