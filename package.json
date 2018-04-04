@@ -19,6 +19,7 @@
   "devDependencies": {
     "ganache-cli": "^6.1.0",
     "run-with-testrpc": "^0.3.0",
+    "solhint": "^1.1.10",
     "truffle": "^4.1.5"
   },
   "dependencies": {
