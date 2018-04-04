@@ -9,7 +9,7 @@
     "build": "truffle compile",
     "test": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test' ",
     "deploy": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network development' ",
-    "linting": "solhint 'contracts/**/*.sol'"
+    "linting": "#solhint 'contracts/**/*.sol'"
   },
   "repository": {
     "type": "git",
