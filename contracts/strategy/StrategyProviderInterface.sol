@@ -14,6 +14,7 @@ contract StrategyProviderInterface is Provider {
         uint[] weights;      //total is 100
         uint follower;
         uint amount;
+        bytes32 exchangeId;
     }
 
     Combo[] public comboHub;
@@ -24,8 +25,10 @@ contract StrategyProviderInterface is Provider {
 
    // To core smart contract
     function getStrategyCount() public view returns (uint length);
+
     // function getStrategies(address _owner) public view returns (uint[] ids);
     // function getMyStrategies() public view returns (uint[] ids);
+
     function getStrategyTokenCount(uint strategyId) public view returns (uint length);
     function getStrategyTokenByIndex(uint strategyId, uint tokenIndex) public view returns (address token, uint weight);
 
@@ -45,7 +48,7 @@ contract StrategyProviderInterface is Provider {
         string category,
         address[] tokenAddresses,
         uint[] weights,
-        bool isPrivate)
+        bytes32 exchangeId)
         public returns (uint strategyId);
 
     function updateStrategy(
@@ -53,9 +56,9 @@ contract StrategyProviderInterface is Provider {
         string name,
         string description,
         string category,
-        bool isPricate,
         address[] tokenAddresses,
-        uint[] weights)
+        uint[] weights,
+        bytes32 exchangeId)
         public returns (bool success);
 
     // increment statistics
