@@ -7,6 +7,7 @@ import "./libs/Converter.sol";
 import "./exchange/ExchangeProviderInterface.sol";
 import "./price/PriceProviderInterface.sol";
 import "./strategy/StrategyProviderInterface.sol";
+import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
 import { TypeDefinitions as TD, Provider } from "./libs/Provider.sol";
 
 
@@ -14,7 +15,6 @@ contract OlympusLabsCore is Manageable {
     using SafeMath for uint256;
 
     event IndexOrderUpdated (uint orderId);
-
     event Log(string message);
     event LogNumber(uint number);
     event LogAddress(address message);
@@ -24,11 +24,10 @@ contract OlympusLabsCore is Manageable {
     ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x00b31e55fec5704a9b09cf2c1ba65a276ec7a453b1));
     StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x44F961821Bdb76eB2D8B06193F86f64a4C2bBDb8));
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0088c80fcaae06323e17ddcd4ff8e0fbe06d9799e6));
-    mapping (uint => IndexOrder) public orders;
-    mapping(uint => mapping(address => uint)) public orderTokenAmounts;
+    // TODO: Update storage address
+    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0xffffffffffffffffffffffffffffffffffffffffff));
     uint public feePercentage = 100;
     uint public constant DENOMINATOR = 10000;
-    uint public orderId = 1000000;
 
     uint public minimumInWei = 0;
     uint public maximumInWei;
@@ -36,33 +35,6 @@ contract OlympusLabsCore is Manageable {
     modifier allowProviderOnly(TD.ProviderType _type) {
         require(msg.sender == subContracts[uint8(_type)]);
         _;
-    }
-
-    struct IndexOrder {
-        address buyer;
-        uint64 strategyId;
-        uint amountInWei;
-        uint feeInWei;
-        uint dateCreated;
-        uint dateCompleted;
-        address[] tokens;
-        uint[] weights;
-        uint[] estimatedPrices;
-        uint[] dealtPrices;
-        uint[] totalTokenAmounts;
-        uint[] completedTokenAmounts;
-        ExchangeProviderInterface.MarketOrderStatus[] subStatuses;
-        OrderStatus status;
-        bytes32 exchangeId;
-    }
-
-    enum OrderStatus {
-        New,
-        Placed,
-        PartiallyCompleted,
-        Completed,
-        Cancelled,
-        Errored
     }
 
     function() payable public {
@@ -169,16 +141,22 @@ contract OlympusLabsCore is Manageable {
         amounts[1] = getFeeAmount(amounts[0]); // fee
         amounts[2] = amounts[0] - amounts[1]; // actualAmount
 
+        bytes32 exchangeId = Converter.stringToBytes32(exchangeName);
+
         // create order.
-        indexOrderId = getOrderId();
+        indexOrderId = olympusStorage.addOrderBasicFields(
+          strategyId,
+          msg.sender,
+          amounts[0],
+          amounts[1],
+          exchangeId
+        );
 
         uint[][4] memory subOrderTemp;
         // 0: token amounts
         // 1: estimatedPrices
         // 2: dealtPrices
         // 3: completedTokenAmounts
-        bytes32 exchangeId = Converter.stringToBytes32(exchangeName);
-        ExchangeProviderInterface.MarketOrderStatus[] memory statuses;
 
         address[] memory tokens = new address[](tokenLength);
         uint[] memory weights = new uint[](tokenLength);
@@ -188,28 +166,14 @@ contract OlympusLabsCore is Manageable {
         subOrderTemp[2] = initializeArray(tokenLength);
         subOrderTemp[3] = initializeArray(tokenLength);
 
-        IndexOrder memory order = IndexOrder({
-            strategyId: uint64(strategyId),
-            buyer: msg.sender,
-            amountInWei: amounts[0],
-            feeInWei: amounts[1],
-            status: OrderStatus.New,
-            dateCreated: now,
-            dateCompleted: 0,
-            tokens: tokens,
-            weights: weights,
-            totalTokenAmounts: subOrderTemp[0],
-            estimatedPrices: subOrderTemp[1],
-            dealtPrices: subOrderTemp[2],
-            completedTokenAmounts: subOrderTemp[3],
-            subStatuses: statuses,
-            exchangeId: exchangeId
-        });
-
         emit LogNumber(indexOrderId);
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
         for (uint i = 0; i < tokenLength; i ++ ) {
             (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
+            // ignore those tokens with zero weight.
+            if(weights[i] <= 0) {
+                continue;
+            }
             // token has to be supported by exchange provider.
             if(!exchangeProvider.checkTokenSupported(tokens[i])){
                 emit Log("Exchange provider doesn't support");
@@ -222,15 +186,14 @@ contract OlympusLabsCore is Manageable {
                 revert();
             }
 
-            // ignore those tokens with zero weight.
-            if(weights[i] <= 0) {
-                continue;
-            }
-
             subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
             subOrderTemp[1][i] = getPrice(tokens[i]);
 
-            orderTokenAmounts[indexOrderId][tokens[i]] = subOrderTemp[0][i];
+            olympusStorage.addTokenDetails(
+                indexOrderId,
+                tokens[i], weights[i], subOrderTemp[0][i],
+                subOrderTemp[1][i], subOrderTemp[2][i], subOrderTemp[3][i]
+            );
 
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
@@ -241,8 +204,6 @@ contract OlympusLabsCore is Manageable {
         emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
-        orders[indexOrderId] = order;
-
         // todo: send ethers to the clearing center.
         return indexOrderId;
     }
@@ -252,27 +213,29 @@ contract OlympusLabsCore is Manageable {
     }
 
     // For app/3rd-party clients to check details / status.
-    function getIndexOrder(uint _orderId) public view returns (
-        uint strategyId,
-        address buyer,
-        OrderStatus status,
-        uint dateCreated,
-        uint dateCompleted,
-        uint amountInWei,
-        address[] tokens,
-        bytes32 exchangeId
-        )
+    function getIndexOrder(uint _orderId) public view returns
+    (uint[])
     {
-        IndexOrder memory order = orders[_orderId];
+        // 0 strategyId
+        // 1 dateCreated
+        // 2 dateCompleted
+        // 3 amountInWei
+        // 4 tokenLength
+        uint[] memory orderPartial = new uint[](5);
+        address[] memory buyer = new address[](1);
+        bytes32[] memory exchangeId = new bytes32[](1);
+        STD.OrderStatus[] memory status = new STD.OrderStatus[](1);
+
+        // Stack too deep, so should be split up
+        (orderPartial[0], buyer[0], status[0], orderPartial[1]) = olympusStorage.getIndexOrder1(_orderId);
+        (orderPartial[2], orderPartial[3], orderPartial[4], exchangeId[0]) = olympusStorage.getIndexOrder2(_orderId);
+        address[] memory tokens = new address[](orderPartial[4]);
+
+        for(uint i = 0; i < orderPartial[4]; i++){
+            tokens[i] = olympusStorage.getIndexToken(_orderId, i);
+        }
         return (
-            order.strategyId,
-            order.buyer,
-            order.status,
-            order.dateCreated,
-            order.dateCompleted,
-            order.amountInWei,
-            order.tokens,
-            order.exchangeId
+          orderPartial
         );
     }
 
@@ -282,51 +245,31 @@ contract OlympusLabsCore is Manageable {
         uint _actualPrice,
         uint _totalTokenAmount,
         uint _completedQuantity
-    ) external allowProviderOnly(TD.ProviderType.Exchange)  returns (bool success)
+    ) external allowProviderOnly(TD.ProviderType.Exchange) returns (bool success)
     {
-        IndexOrder memory order = orders[_orderId];
-        int index = -1;
-        for(uint i = 0 ; i < order.tokens.length; i ++){
-            if(order.tokens[i] == _tokenAddress) {
-                index = int(i);
-                break;
-            }
-        }
-
-        if(index == -1) {
-            // token not found.
-            revert();
-        }
+        uint completedTokenAmount;
+        uint tokenIndex;
+        (completedTokenAmount, tokenIndex) = olympusStorage.getOrderTokenCompletedAmount(_orderId,_tokenAddress);
 
         ExchangeProviderInterface.MarketOrderStatus status;
 
-        if(order.completedTokenAmounts[uint(index)] == 0 && _completedQuantity < order.completedTokenAmounts[uint(index)]){
+        if(completedTokenAmount == 0 && _completedQuantity < completedTokenAmount){
             status = ExchangeProviderInterface.MarketOrderStatus.PartiallyCompleted;
         }
 
-        if(_completedQuantity >= order.completedTokenAmounts[uint(index)]){
+        if(_completedQuantity >= completedTokenAmount){
             status = ExchangeProviderInterface.MarketOrderStatus.Completed;
         }
-
-        order.totalTokenAmounts[uint(index)] = _totalTokenAmount;
-        order.dealtPrices[uint(index)] = _actualPrice;
-        order.completedTokenAmounts[uint(index)] = _completedQuantity;
-
-
-        order.subStatuses[uint(index)];
-
-        orders[_orderId] = order;
+        olympusStorage.updateIndexOrderToken(_orderId, tokenIndex, _totalTokenAmount, _actualPrice, _completedQuantity, status);
 
         return true;
     }
 
-    function updateOrderStatus(uint _orderId, OrderStatus _status)
+    function updateOrderStatus(uint _orderId, STD.OrderStatus _status)
         external allowProviderOnly(TD.ProviderType.Exchange)
         returns (bool success)
     {
-        IndexOrder memory order = orders[_orderId];
-        order.status = _status;
-        orders[_orderId] = order;
+        olympusStorage.updateOrderStatus(_orderId, _status);
 
         return true;
     }
@@ -337,7 +280,7 @@ contract OlympusLabsCore is Manageable {
         return exchangeProvider.getSubOrderStatus(_orderId, _tokenAddress);
     }
 
-    function ajustFee(uint _newFeePercentage) public onlyOwner returns (bool success) {
+    function adjustFee(uint _newFeePercentage) public onlyOwner returns (bool success) {
         feePercentage = _newFeePercentage;
         return true;
     }
@@ -349,15 +292,6 @@ contract OlympusLabsCore is Manageable {
         maximumInWei = _maxInWei;
 
         return true;
-    }
-
-    function resetOrderIdTo(uint _start) public onlyOwner returns (uint) {
-        orderId = _start;
-        return orderId;
-    }
-
-    function getOrderId() private returns (uint) {
-        return orderId++;
     }
 
     function getFeeAmount(uint amountInWei) private view returns (uint){
