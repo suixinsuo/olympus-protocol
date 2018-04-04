@@ -14,7 +14,7 @@ stages:
   stage: checkstyle
   tags: [aireach]
   script:
-    sohint "contracts/**/*.sol"
+    - sohint "contracts/**/*.sol"
 
 build:
  stage: build
