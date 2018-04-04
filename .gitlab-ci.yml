@@ -13,18 +13,16 @@ build:
  stage: build
  tags: [aireach]
  script:
-   - truffle compile
+   - npm run build
 
 test:
  stage: test
  tags: [aireach]
  script:
-   - ganache-cli -p 8545 &     # We could also have a service
-   - truffle test
+   - npm test
 
 deploy:
  stage: deploy
  tags: [aireach]
  script:
-   - ganache-cli -p 8545 &
-   - truffle migrate --network integration
+   - npm run deploy
