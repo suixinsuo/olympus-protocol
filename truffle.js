@@ -7,11 +7,11 @@ module.exports = {
       // gas: 7600000
     }
   },
-  mocha: {
-    reporter: 'eth-gas-reporter',
-    reporterOptions : {
-      currency: 'CHF',
-      gasPrice: 21
-    }
-  }
+  // mocha: {
+  //   reporter: 'eth-gas-reporter',
+  //   reporterOptions : {
+  //     currency: 'EUR',
+  //     gasPrice: 2
+  //   }
+  // }
 };
