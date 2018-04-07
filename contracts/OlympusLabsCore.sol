@@ -175,7 +175,7 @@ contract OlympusLabsCore is Manageable {
                 continue;
             }
             // token has to be supported by exchange provider.
-            if(!exchangeProvider.checkTokenSupported(tokens[i])){
+            if(!exchangeProvider.checkTokenSupported(ERC20(tokens[i]))){
                 emit Log("Exchange provider doesn't support");
                 revert();
             }
@@ -198,7 +198,7 @@ contract OlympusLabsCore is Manageable {
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
             emit LogNumber(subOrderTemp[1][i]);
-            require(exchangeProvider.addPlaceOrderItem(indexOrderId, tokens[i], subOrderTemp[0][i], subOrderTemp[1][i]));
+            require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
         }
 
         emit LogNumber(amounts[2]);
@@ -277,7 +277,7 @@ contract OlympusLabsCore is Manageable {
     function getSubOrderStatus(uint _orderId, address _tokenAddress)
         external view returns (ExchangeProviderInterface.MarketOrderStatus)
     {
-        return exchangeProvider.getSubOrderStatus(_orderId, _tokenAddress);
+        return exchangeProvider.getSubOrderStatus(_orderId, ERC20(_tokenAddress));
     }
 
     function adjustFee(uint _newFeePercentage) public onlyOwner returns (bool success) {
