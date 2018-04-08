@@ -108,8 +108,9 @@ contract StrategyProvider is StrategyProviderInterface {
     }
 
     //TODO require core contract address
-    function incrementStatistics(uint _index, uint _amountInEther) external returns (bool){
+    function incrementStatistics(uint _index, uint _amountInEther) external returns (bool success){
         comboHub[_index].amount += _amountInEther;
+        return true;
     }  
    // To clients
     // function isPrivate(uint _index) public _checkIndex(_index) view returns(bool) {
