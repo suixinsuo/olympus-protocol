@@ -1,3 +1,8 @@
+var HDWalletProvider = require("truffle-hdwallet-provider");
+var prompt = require('prompt-sync')();
+
+var mnemonics = {};
+
 module.exports = {
   networks: {
     development: {
@@ -5,11 +10,19 @@ module.exports = {
       port: 8545,
       network_id: "*", // Match any network id
       // gas: 7600000
+    },
+    kovan: {
+      provider: function () {
+        mnemonics.kovan = process.env.MNEMONICS || mnemonics.kovan || prompt('network kovan mnemonic: ');
+        return new HDWalletProvider(mnemonics.kovan, "https://kovan.infura.io/qajYHKaGssZt5WrdfzGP");
+      },
+      gasPrice: 1000000000,
+      network_id: 42
     }
   },
   mocha: {
     reporter: 'eth-gas-reporter',
-    reporterOptions : {
+    reporterOptions: {
       currency: 'CNY',
       gasPrice: 2
     }
