@@ -225,9 +225,9 @@ contract PriceProvider is Ownable {
 
     event UpdatePrice(address _tokenAddress,bytes32 _exchange,uint price);
 
-    event ExchangeUpdate(bytes32[],bytes32[]);
+    event ExchangeUpdate(bytes32[] oldExchanges,bytes32[] newExchanges);
     
-    event TokenUpdate(address[],address[]);
+    event TokenUpdate(address[] oldToken,address[] newToken);
 
     //Token_address,oldProvider,newProvider
     event ProviderUpdate(address Tokenaddress,address[] oldProviders,address[] newProviders);
@@ -236,7 +236,7 @@ contract PriceProvider is Ownable {
     
     event _GetPrice(address _provider,address token,uint price);
     
-    event ChangeWeight(bytes32,uint);
+    event ChangeWeight(bytes32 exchnage,uint weight);
     
   
   //初始化数据库
