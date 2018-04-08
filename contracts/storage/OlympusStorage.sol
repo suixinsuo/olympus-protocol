@@ -51,7 +51,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
         uint dealtPrice,
         uint totalTokenAmount,
         uint completedTokenAmount
-    ) public {
+    ) external {
         orders[indexOrderId].tokens.push(token);
         orders[indexOrderId].weights.push(weight);
         orders[indexOrderId].estimatedPrices.push(estimatedPrice);
@@ -68,7 +68,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
         uint amountInWei,
         uint feeInWei,
         bytes32 exchangeId
-        ) public returns (uint indexOrderId) {
+        ) external returns (uint indexOrderId) {
         indexOrderId = getOrderId();
 
         IndexOrder memory order = IndexOrder({
@@ -93,7 +93,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
         return indexOrderId;
     }
 
-    function getIndexOrder1(uint _orderId) public view returns(
+    function getIndexOrder1(uint _orderId) external view returns(
         uint strategyId,
         address buyer,
         StorageTypeDefinitions.OrderStatus status,
@@ -107,7 +107,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
             order.dateCreated
         );
     }
-    function getIndexOrder2(uint _orderId) public view returns(
+    function getIndexOrder2(uint _orderId) external view returns(
         uint dateCompleted,
         uint amountInWei,
         uint tokensLength,
@@ -122,7 +122,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
         );
     }
 
-    function getIndexToken(uint _orderId, uint tokenPosition) public view returns (address token){
+    function getIndexToken(uint _orderId, uint tokenPosition) external view returns (address token){
         IndexOrder memory order = orders[_orderId];
         return order.tokens[tokenPosition];
     }
@@ -152,7 +152,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
         uint _actualPrice,
         uint _totalTokenAmount,
         uint _completedQuantity,
-        ExchangeProviderInterface.MarketOrderStatus status) public{
+        ExchangeProviderInterface.MarketOrderStatus status) external {
         IndexOrder memory order = orders[_orderId];
 
         order.totalTokenAmounts[_tokenIndex] = _totalTokenAmount;
@@ -165,7 +165,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
     }
 
     function updateOrderStatus(uint _orderId, StorageTypeDefinitions.OrderStatus _status)
-        public returns (bool success){
+        external returns (bool success){
 
         IndexOrder memory order = orders[_orderId];
         order.status = _status;
