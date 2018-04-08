@@ -1,148 +1,263 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.17;
 
-// import "../libs/Ownable.sol";
-// import "../libs/Provider.sol";
-// import "./ExchangeAdapter.sol";
+import "./Interfaces.sol";
+import "./ExchangeProviderInterface.sol";
+import "./ExchangeAdapterBase.sol";
+import "../libs/utils.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-// import "./ExchangeProviderInterface.sol";
+contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Utils, Ownable {
 
 
-// contract ExchangeProvider is ExchangeProviderInterface {
+    IMarketOrderCallback marketOrderCallback;
 
-//     uint public constant EXCHANGE_ID_OFFSET = 1000;
-//     ExchangeAdapter[] public exchanges;
-//     mapping (uint=>uint) public balance; // orderId => eth
+    IExchangeAdapterManager exchangeManager;
 
-//     event OrderStatusChanged(string orderId, MarketOrderStatus status);
+    struct MarketOrder {
+        ERC20[]                 tokens;
+        uint[]                  amounts; // TODO:optional
+        uint[]                  rates; // TODO:optional
+        IExchangeAdapter[]      exchanges;
+        uint[]                  adapterOrdersId;
+        address                 deposit;
+        MarketOrderStatus       orderStatus;
+    }
+
+    mapping (uint => MarketOrder) public orders;
+
+    mapping (bytes32 => uint ) adapterOrders; // sha3(exchange, uint) => orderId
+
+    mapping (uint => uint) public balances;
+
+    function ExchangeProvider(address _exchangeManager) public {
+        exchangeManager = IExchangeAdapterManager(_exchangeManager);
+    }
+
+    function setMarketOrderCallback(IMarketOrderCallback _callback) public {
+        marketOrderCallback = _callback;
+        return;
+    }
     
-//     struct OrderInfo {
-//         address         deposit;
-//         MarketOrder[]   orders;
-//     }    
-
-//     mapping (uint => OrderInfo) public orders;
-
-//     function cancelOrder(uint orderId) external view returns (bool success) {
-//         OrderInfo memory orderInfo = orders[orderId];
-//         require(orderInfo.deposit != 0x0);
-//         // if(orderInfo.status)
-//         return false;
-//     }      
-
-//     // it seems doesn't need it currently
-//     // function getExchanges() external returns (uint[] ids, string[] names);
-//     function getSupportedTokens(uint exchangeId) external returns (
-//         address[] tokenAddresses, 
-//         string[] names, 
-//         string[] symbols
-//     ) {
-//         require(exchangeId >= EXCHANGE_ID_OFFSET);
-//         uint index = _getExchangeIndex(exchangeId);
-//         require(index < exchanges.length);
-//         ExchangeAdapter e = exchanges[index];
-//         if (!e.isEnabled()) {
-//             return;
-//         }
-//         // TODO
-//         return;
-//     }      
-
-//     // function getMarketPrices(address[] tokenAddresses) external returns (uint[]){}
-//     function placeOrder(uint orderId, address[] tokenAddresses, uint[] amount, uint[] rates, address deposit)
-//         external payable returns (bool success) 
-//     {
-
-//         // make sure all token exchange are supported
-
-//         // check valid params
-//         require(tokenAddresses.length > 0);
-//         require(tokenAddresses.length == amount.length);
-//         require(tokenAddresses.length == rates.length);
+    function startPlaceOrder(uint orderId, address deposit) external returns(bool){
         
-//         uint total;
-//         for (uint i = 0; i < amount.length; i++) {
-//             total += amount[i];
-//         }
-//         require(total == msg.value);
-
-//         uint[] memory choosedExchangesIndex = new uint[](tokenAddresses.length);
-
-//         // choose a exchange to placeorder based on the price
-//         for (i = 0; i < tokenAddresses.length; i++) {
-//             uint exchangeIndex;
-//             bool found;
-//             (exchangeIndex, found) = _pickExchange(tokenAddresses[i], rates[i]);
-//             if (!found) {
-//                 return false;
-//             }
-//             choosedExchangesIndex[i] = exchangeIndex;
-//         }
-
-//         MarketOrder[] memory marketOrders = new MarketOrder[](tokenAddresses.length);
-//         for (i = 0; i < choosedExchangesIndex.length; i++) {
-//             ExchangeAdapter e = exchanges[choosedExchangesIndex[i]];
-//             if (!e.placeOrder(orderId, 0x0, tokenAddresses[i], amount[i], rates[i], deposit)) {
-//                 revert();
-//                 return false;
-//             }
-
-//             MarketOrder memory order = MarketOrder({
-//                 token: tokenAddresses[i],
-//                 quantity: amount[i],
-//                 rate: rates[i],
-//                 timestamp: now,
-//                 exchangeId: _makeExchangeId(choosedExchangesIndex[i]),
-//                 status: MarketOrderStatus.Pending
-//             });
-//             marketOrders[i] = order;
-//         }
-//         orders[orderId] = OrderInfo(deposit, marketOrders);
-//         return true;
-//     }
-
-//     function registerExchange(ExchangeAdapter e) public onlyOwner returns (uint exchangeId) {
-//         require(address(e) != 0);
-//         for (uint i = 0; i < exchanges.length; i++) {
-//             if (e == exchanges[i]) {
-//                 return 0;
-//             }
-//         }
-//         exchangeId = _makeExchangeId(exchanges.length);
-//         exchanges.push(e);
-//         return  exchangeId;
-//     }    
-
-//     function _makeExchangeId(uint index) private view returns(uint) {
-//         return index + EXCHANGE_ID_OFFSET;
-//     }
-
-//     function _getExchangeIndex(uint id) private pure returns(uint) {
-//         return id - EXCHANGE_ID_OFFSET;
-//     }
-
-//     function _pickExchange(address token, uint rate) private view returns (uint exchangeIndex, bool found) {
+        if(orders[orderId].tokens.length > 0){
+            return false;
+        }
         
-//         int maxRate = -1;
-//         int index = -1;
+        orders[orderId] = MarketOrder({
+            tokens: new ERC20[](0),
+            amounts: new uint[](0),
+            rates: new uint[](0),
+            exchanges: new IExchangeAdapter[](0),
+            adapterOrdersId: new uint[](0),
+            deposit: deposit,
+            orderStatus:MarketOrderStatus.Pending
+        });
+        return true;
+    }
+    
+    function addPlaceOrderItem(uint orderId, ERC20 token, uint amount, uint rate) external returns(bool){
+        MarketOrder memory order = orders[orderId];
+        for (uint i = 0; i < order.tokens.length; i++) {
+            if(address(order.tokens[i]) == address(token)){
+                return false;
+            }
+        }
+        orders[orderId].tokens.push(token);
+        orders[orderId].amounts.push(amount);
+        orders[orderId].rates.push(rate);
+        return true;
+    }
+    
+    function endPlaceOrder(uint orderId) external payable returns(bool) {
         
-//         for (uint i = 0; i < exchanges.length; i++) {
-//             int _rate = exchanges[i].getRate(token);
-//             if (_rate == 0) {
-//                 continue;
-//             }
-//             if (_rate >= maxRate) {
-//                 maxRate = _rate;
-//                 index = int(i);        
-//             }
-//         }
+        if(!checkOrderValid(orderId)){
+            return false;
+        }
+        balances[orderId] = msg.value;
         
-//         if (index == -1) {
-//             found = false;
-//             return;
-//         }
+        MarketOrder memory order = orders[orderId];
+        IExchangeAdapter[] memory choosedExchanges = _pickExchanges(order.tokens, order.amounts, order.rates);
 
-//         exchangeIndex = uint(index);
-//         found = true;
-//         return; 
-//     }    
-// }
+        for(uint i = 0; i < choosedExchanges.length; i++) {
+
+            uint adapterOrderId = choosedExchanges[i].placeOrder(
+                order.tokens[i], 
+                order.amounts[i], 
+                order.rates[i], 
+                this);
+
+            if(adapterOrderId == 0){
+                revert();
+                return false;
+            }
+            orders[orderId].exchanges.push(choosedExchanges[i]);
+            orders[orderId].adapterOrdersId.push(adapterOrderId);
+
+            if(choosedExchanges[i].getOrderStatus(adapterOrderId) == int(OrderStatus.Approved)){
+                if(!adapterApprovedImmediately(orderId, adapterOrderId, choosedExchanges[i], order.tokens[i], order.amounts[i], order.rates[i], order.deposit)){
+                    revert();
+                    return false;
+                }
+            }
+        }
+        
+        orders[orderId].orderStatus = MarketOrderStatus.Completed;
+        return true;
+    }
+    
+    function checkOrderValid(uint orderId) private view returns(bool) {
+        
+        uint total = 0;
+        MarketOrder memory order = orders[orderId];
+        if(order.tokens.length == 0){
+            return false;
+        }
+        for(uint i = 0; i < order.amounts.length; i++ ){
+            total += order.amounts[i];
+        }
+        if(total != msg.value){
+            return false;
+        }
+        return true;
+    }
+    
+    function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter exchange, ERC20 token, uint amount, uint rate, address deposit) private returns(bool){
+
+        address owner = address(exchange);
+        uint expectAmount = getExpectAmount(amount, rate);
+        if(token.allowance(owner, this) < expectAmount){
+            return false;
+        }
+        if(!token.transferFrom(owner, deposit, expectAmount)){
+            return false;
+        }
+        balances[orderId] -= amount;
+        // pay eth
+        if(!exchange.payOrder.value(amount)(adapterOrderId)){
+            return false;
+        }
+        int status = exchange.getOrderStatus(adapterOrderId); 
+        return status == int(OrderStatus.Completed);
+    }
+
+    // owner可以直接是msg.sender
+    // TODO: only to be called by adapters
+    function adapterApproved(uint adapterOrderId, address owner) external returns (bool){
+
+        uint orderId = adapterOrders[keccak256(msg.sender, adapterOrderId)];
+        if(orderId==0){
+            return false;
+        }
+
+        MarketOrder memory order = orders[orderId];
+        bool found = false;
+        for(uint i = 0; i < order.adapterOrdersId.length; i++){
+            if(order.adapterOrdersId[i] == adapterOrderId){
+                found = true;
+                break;
+            }
+        }
+        if (!found){
+            return false;
+        }
+
+        ERC20 token = order.tokens[i];
+
+        uint expectAmount = getExpectAmount(order.amounts[i], order.rates[i]);
+        if(token.allowance(owner, order.deposit) < expectAmount){
+            return false;
+        }
+
+        if(!token.transferFrom(owner, order.deposit, expectAmount)){
+            return false;
+        }
+        balances[orderId] -= order.amounts[i];
+
+        msg.sender.transfer(order.amounts[i]);
+
+        checkMarketOrderStatus(adapterOrderId);
+        return true;
+    }
+
+    function getExpectAmount(uint eth, uint rate) private pure returns(uint){
+        // TODO: asume all token decimals is 18
+        return calcDstQty(eth, 18, 18, rate);
+    }
+
+    function checkMarketOrderStatus(uint orderId) private returns (bool){
+
+        MarketOrder memory order = orders[orderId];
+        for(uint i = 0; i < order.adapterOrdersId.length;i++){
+            // TODO: define 1 as done, including completed,failed,cancelled,etc.
+            if(order.exchanges[i].getOrderStatus(order.adapterOrdersId[i])!=1){
+                return false;
+            }
+        }
+        // all adapters order done,let's notify core smart contract;
+        if (address(marketOrderCallback) != 0x0){
+            marketOrderCallback.MarketOrderStatusUpdated(orderId, 1);
+        }
+        
+        return true;
+    }
+
+    function _pickExchanges(ERC20[] tokens,uint[] amounts, uint[] rates) private view returns(IExchangeAdapter[]){
+
+        IExchangeAdapter[] memory choosedExchanges = new IExchangeAdapter[](tokens.length);
+
+        uint i = 0;
+        // choose a exchange to placeorder based on the price
+        for(i = 0; i < tokens.length; i++) {
+            address exchange = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
+            if (exchange == 0x0) {
+                return new IExchangeAdapter[](0);
+            }
+            choosedExchanges[i] = IExchangeAdapter(exchange);
+        }
+        return choosedExchanges;
+    }
+
+    function cancelOrder(uint orderId) external returns (bool success) {
+        
+        MarketOrder memory order = orders[orderId];
+        require(order.tokens.length > 0);
+        require(order.orderStatus == MarketOrderStatus.Pending);
+
+        uint i = 0;
+        for(i = 0; i < order.tokens.length; i++) {
+            order.exchanges[i].cancelOrder(order.adapterOrdersId[i]);
+        }
+        return true;
+    }
+
+    function getSubOrderStatus(uint orderId, ERC20 token) external view returns (MarketOrderStatus){
+        
+        MarketOrder memory order = orders[orderId];
+        
+        bool found = false;
+        for(uint i = 0; i < order.tokens.length; i++){
+            if(address(order.tokens[i]) == address(token)){
+                found = true;
+                break;
+            }
+        }
+        require(found);
+
+        OrderStatus status = OrderStatus(order.exchanges[i].getOrderStatus(order.adapterOrdersId[i]));
+        if (status == OrderStatus.Pending || status == OrderStatus.Approved) {
+            return MarketOrderStatus.Pending;
+        } else if (status == OrderStatus.Completed) {
+            return MarketOrderStatus.Completed;
+        } else if (status == OrderStatus.Cancelled) {
+            return MarketOrderStatus.Cancelled; 
+        } else {
+            return MarketOrderStatus.Errored;
+        }
+    }
+
+    function checkTokenSupported(ERC20 token) external view returns (bool){
+        require(address(token) != 0x0);
+        return exchangeManager.checkTokenSupported(token);
+    }
+}
