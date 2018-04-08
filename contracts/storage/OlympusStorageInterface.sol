@@ -6,27 +6,27 @@ contract OlympusStorageInterface {
 
     function addTokenDetails(
         uint indexOrderId, address token, uint weight, uint estimatedPrice,
-        uint dealtPrice,uint totalTokenAmount,uint completedTokenAmount) public;
+        uint dealtPrice,uint totalTokenAmount,uint completedTokenAmount) external;
 
     function addOrderBasicFields(
         uint strategyId,
         address buyer,
         uint amountInWei,
         uint feeInWei,
-        bytes32 exchangeId) public returns (uint indexOrderId);
+        bytes32 exchangeId) external returns (uint indexOrderId);
 
     function getOrderTokenCompletedAmount(
         uint _orderId,
         address _tokenAddress) external view returns (uint, uint);
 
-    function getIndexOrder1(uint _orderId) public view returns(
+    function getIndexOrder1(uint _orderId) external view returns(
         uint strategyId,
         address buyer,
         STD.OrderStatus status,
         uint dateCreated
         );
 
-    function getIndexOrder2(uint _orderId) public view returns(
+    function getIndexOrder2(uint _orderId) external view returns(
         uint dateCompleted,
         uint amountInWei,
         uint tokensLength,
@@ -39,10 +39,10 @@ contract OlympusStorageInterface {
         uint _actualPrice,
         uint _totalTokenAmount,
         uint _completedQuantity,
-        ExchangeProviderInterface.MarketOrderStatus status) public;
+        ExchangeProviderInterface.MarketOrderStatus status) external;
 
-    function getIndexToken(uint _orderId, uint tokenPosition) public view returns (address token);
+    function getIndexToken(uint _orderId, uint tokenPosition) external view returns (address token);
 
     function updateOrderStatus(uint _orderId, STD.OrderStatus _status)
-        public returns (bool success);
+        external returns (bool success);
 }
