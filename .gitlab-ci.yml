@@ -11,11 +11,11 @@ cache:
     - node_modules/
 
 stages:
- - build
- - checkstyle
- - test
- - coverage
- - deploy
+  - build
+  - checkstyle
+  - test
+  - coverage
+  - deploy
 
 coverage:
   stage: coverage
