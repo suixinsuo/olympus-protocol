@@ -9,7 +9,17 @@ stages:
  - build
  - checkstyle
  - test
+ - coverage
  - deploy
+
+coverage:
+  stage: converage
+  tags: [aireach]
+  script:
+    - npm run coverage
+  artifacts:
+    paths
+      - coverage
 
 checkstyle:
   stage: checkstyle
