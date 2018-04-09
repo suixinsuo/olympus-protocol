@@ -24,22 +24,11 @@ coverage:
   tags: [aireach]
   script:
     - npm run coverage
-  artifacts:
-    paths:
-      - coverage
-
-pages:
-  stage: deploy
-  dependencies:
-    - rspec
-  script:
-    - mv coverage/ public/
+    - mv coverage/ public/    
   artifacts:
     paths:
       - public
-    expire_in: 30 days
-  only:
-    - develop  
+    expire_in: 30 days  
 
 checkstyle:
   stage: checkstyle
