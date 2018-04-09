@@ -12,13 +12,13 @@ module.exports = {
       // gas: 7600000
     }
   },
-  mocha: {
-    reporter: 'eth-gas-reporter',
-    reporterOptions : {
-      currency: 'EUR',
-      gasPrice: 2
-    }
-  },
+  // mocha: {
+  //   reporter: 'eth-gas-reporter',
+  //   reporterOptions : {
+  //     currency: 'EUR',
+  //     gasPrice: 2
+  //   }
+  // },
   kovan: {
     provider: function () {
       mnemonics.kovan = process.env.MNEMONICS || mnemonics.kovan || prompt('network kovan mnemonic: ');
