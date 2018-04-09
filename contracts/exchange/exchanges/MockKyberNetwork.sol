@@ -14,7 +14,7 @@ contract MockKyberNetwork is Utils {
 
     Token[] public supportedTokens;
     function MockKyberNetwork(uint total) public {
-        require(total <= 10 && total > 0);
+        require(total <= 50 && total > 0);
         for (uint i = 0; i < total; i++) {
             supportedTokens.push(Token({
                 token: new SimpleERC20Token(),
@@ -37,7 +37,7 @@ contract MockKyberNetwork is Utils {
         return _getExpectedRate(src,dest,srcQty);
     }
 
-    function _getExpectedRate(ERC20 src, ERC20 dest, uint) private view 
+    function _getExpectedRate(ERC20 /*src*/, ERC20 dest, uint) private view
     returns (uint expectedRate, uint slippageRate)
     {
         for (uint i = 0; i < supportedTokens.length; i++){
