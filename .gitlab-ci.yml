@@ -28,6 +28,19 @@ coverage:
     paths:
       - coverage
 
+pages:
+  stage: deploy
+  dependencies:
+    - rspec
+  script:
+    - mv coverage/ public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - develop  
+
 checkstyle:
   stage: checkstyle
   tags: [aireach]
