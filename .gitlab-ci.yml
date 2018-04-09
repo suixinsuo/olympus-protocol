@@ -13,7 +13,7 @@ stages:
  - deploy
 
 coverage:
-  stage: converage
+  stage: coverage
   tags: [aireach]
   script:
     - npm run coverage
