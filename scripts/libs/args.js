@@ -4,7 +4,7 @@ module.exports = {
             .filter((a) => { return a.indexOf("=") > 0 })
             .reduce((objects, a) => {
                 let args = a.split('=');
-                objects[args[0]] = args[1];
+                objects[args[0].replace(/-/g,'')] = args[1];
                 return objects;
             }, {});
     }
