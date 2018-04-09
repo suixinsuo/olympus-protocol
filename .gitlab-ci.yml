@@ -5,6 +5,11 @@ before_script:
  - npm i -g truffle ganache-cli run-with-testrpc solhint
  - npm i
 
+ cache:
+  key: ${CI_PROJECT_ID}
+  paths:
+    - node_modules/
+
 stages:
  - build
  - checkstyle
