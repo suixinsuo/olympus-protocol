@@ -1,7 +1,8 @@
 const Core = artifacts.require("../contracts/OlympusLabsCore.sol");
 const Strategy = artifacts.require("../contracts/strategy/StrategyProvider.sol");
-// const Price = artifacts.require("../contracts/price/PriceProvider.sol");
-// const Exchange = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
+const Price = artifacts.require("../contracts/price/PriceProvider.sol");
+// const KyberMock = artifacts.require("./helper/KyberNetworkMock.sol");
+const Exchange = artifacts.require("../contracts/exchange/ExchangeProviderWrap.sol");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
@@ -21,9 +22,10 @@ const mockData = {
 contract('Olympus-Protocol', function(accounts) {
   it("They should be able to deploy.", function() {
     return Promise.all([
+      // KyberMock.deployed(),
       // Price.deployed(),
       Strategy.deployed(),
-      // Exchange.deployed(),
+      Exchange.deployed(),
       Core.deployed(),
     ])
     .spread((/*price, strategy, exchange,*/ core) =>  {
@@ -31,11 +33,11 @@ contract('Olympus-Protocol', function(accounts) {
     });
   });
 
+  //strategy provider
   it("should be able to create a strategy.", async () => {
       let instance = await Strategy.deployed();
       let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[0]});
       assert.equal(result.receipt.status, '0x01');
-      console.log(instance.address);
   })
 
   it("should be able to set a strategy provider.", async () => {
@@ -77,4 +79,12 @@ contract('Olympus-Protocol', function(accounts) {
       assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[1].toLowerCase());          //asert name
       assert.equal(result[1].toNumber(), mockData.weights[1]);   //asert description
   })
+
+  //price provider
+  // it("should be able to changeTokens in price provider.", async () => {
+  //     let instance = await Price.deployed();
+  //     let result = await instance.changeTokens(mockData.tokenAddresses, {from:accounts[0]});
+  //     assert.equal(result.receipt.status, '0x01');
+  //     console.log(instance.address);
+  // })
 });
