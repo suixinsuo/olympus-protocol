@@ -33,10 +33,10 @@ checkstyle:
     - npm run linting
 
 build:
- stage: build
- tags: [aireach]
- script:
-   - npm run build
+  stage: build
+  tags: [aireach]
+  script:
+    - npm run build
   artifacts:
     paths:
       - build
