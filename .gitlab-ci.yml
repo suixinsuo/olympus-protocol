@@ -19,6 +19,8 @@ stages:
 
 coverage:
   stage: coverage
+  only:
+    - develop
   tags: [aireach]
   script:
     - npm run coverage
