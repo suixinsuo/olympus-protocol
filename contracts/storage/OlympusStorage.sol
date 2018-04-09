@@ -1,7 +1,7 @@
 pragma solidity ^0.4.19;
 
-
 import "../exchange/ExchangeProviderInterface.sol";
+import "./OlympusStorageExtendedInterface.sol";
 import "./OlympusStorageInterface.sol";
 import "../libs/Ownable.sol";
 import "../libs/SafeMath.sol";
@@ -42,6 +42,8 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
     mapping(uint => IndexOrder) public orders;
     mapping(uint => mapping(address => uint)) public orderTokenAmounts;
     uint public orderId = 1000000;
+    string constant dataType = "Order";
+    OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0x63F853a536Ea1af51E8fC795D96999e77F028C9B));
 
     function addTokenDetails(
         uint indexOrderId,
