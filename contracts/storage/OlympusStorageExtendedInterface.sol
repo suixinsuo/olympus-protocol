@@ -9,7 +9,7 @@ contract OlympusStorageExtendedInterface {
      * @param value The value which will be set on the location of the key
      * @return A boolean which returns true if the function executed succesfully
      */
-    function setOrderExtra(bytes32 dataKind, uint objectId, string key, string value) public returns(bool success);
+    function setCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key, bytes32 value) public returns(bool success);
     /*
      * @dev Use this function to get custom extra data for your contract by key
      * @param dataKind The kind of data, e.g. strategy, order, price, exchange
@@ -17,7 +17,7 @@ contract OlympusStorageExtendedInterface {
      * @param key The key which is used to lookup your data in the key value mapping
      * @return The result from the key lookup in string format
      */
-    function getOrderExtraData(bytes32 dataKind, uint objectId, string key) public view returns(string result);
+    function getCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key) public view returns(bytes32 result);
     /*
      * @dev This function is used internally to get the accessor for the kind of data
      * @param dataKind The kind of data, e.g. strategy, order, price, exchange
