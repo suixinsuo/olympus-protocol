@@ -42,7 +42,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
     mapping(uint => IndexOrder) public orders;
     mapping(uint => mapping(address => uint)) public orderTokenAmounts;
     uint public orderId = 1000000;
-    string constant dataType = "Order";
+    bytes32 constant private dataKind = "Order";
     OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0x63F853a536Ea1af51E8fC795D96999e77F028C9B));
 
     function addTokenDetails(
@@ -164,6 +164,21 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
 
         orders[_orderId] = order;
 
+    }
+
+    function addCustomField(
+        uint _orderId,
+        bytes32 key,
+        bytes32 value
+    ) external returns (bool success){
+        return olympusStorageExtended.setCustomExtraData(dataKind,_orderId,key,value);
+    }
+
+    function getCustomField(
+        uint _orderId,
+        bytes32 key
+    ) external view returns (bytes32 result){
+        return olympusStorageExtended.getCustomExtraData(dataKind,_orderId,key);
     }
 
     function updateOrderStatus(uint _orderId, StorageTypeDefinitions.OrderStatus _status)
