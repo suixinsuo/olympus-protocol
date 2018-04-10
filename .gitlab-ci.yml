@@ -5,11 +5,30 @@ before_script:
  - npm i -g truffle ganache-cli run-with-testrpc solhint
  - npm i
 
+cache:
+  key: ${CI_PROJECT_ID}
+  paths:
+    - node_modules/
+
 stages:
- - build
- - checkstyle
- - test
- - deploy
+  - build
+  - checkstyle
+  - test
+  - coverage
+  - deploy
+
+coverage:
+  stage: coverage
+  only:
+    - develop
+  tags: [aireach]
+  script:
+    - npm run coverage
+    - mv coverage/ public/    
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days  
 
 checkstyle:
   stage: checkstyle
@@ -18,10 +37,13 @@ checkstyle:
     - npm run linting
 
 build:
- stage: build
- tags: [aireach]
- script:
-   - npm run build
+  stage: build
+  tags: [aireach]
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - build
 
 test:
  stage: test
