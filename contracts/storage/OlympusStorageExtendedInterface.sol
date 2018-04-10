@@ -2,7 +2,7 @@ pragma solidity ^0.4.19;
 
 
 /*
- * @dev This contract, for now, can be used to store simple key pairs.
+ * @dev This contract, for now, can be used to store simple bytes32 key pairs.
  * These key pairs which are identifiable by their objectId and dataKind
  * Such as strategy, order, price, etc.
  * The purpose of this interface is that we can store custom data into this contract
