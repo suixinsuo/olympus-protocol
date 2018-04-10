@@ -52,5 +52,6 @@ function deployExchangeProviderWrap(deployer, network) {
 }
 
 module.exports = function (deployer, network) {
+    return;
     deployExchangeProviderWrap(deployer, network);
 };
