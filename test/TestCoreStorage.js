@@ -1,19 +1,65 @@
 'use strict'
-
 /*
-contract OlympusStorageExtendedInterface {
-  function setCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key, bytes32 value) external returns(bool success);
-  function getCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key) external view returns(bytes32 result);
-  function getAccessor(bytes32 dataKind, uint id) private pure returns(string accessor);
-  function bytes32ToString(bytes32 value) private pure returns(string result);
+contract OlympusStorageInterface {
+    function addTokenDetails(
+        uint indexOrderId, address token, uint weight, uint estimatedPrice,
+        uint dealtPrice,uint totalTokenAmount,uint completedTokenAmount) external;
+    function addOrderBasicFields(
+        uint strategyId,
+        address buyer,
+        uint amountInWei,
+        uint feeInWei,
+        bytes32 exchangeId) external returns (uint indexOrderId);
+    function getOrderTokenCompletedAmount(
+        uint _orderId,
+        address _tokenAddress) external view returns (uint, uint);
+    function getIndexOrder1(uint _orderId) external view returns(
+        uint strategyId,
+        address buyer,
+        STD.OrderStatus status,
+        uint dateCreated
+        );
+    function getIndexOrder2(uint _orderId) external view returns(
+        uint dateCompleted,
+        uint amountInWei,
+        uint tokensLength,
+        bytes32 exchangeId
+        );
+    function updateIndexOrderToken(
+        uint _orderId,
+        uint _tokenIndex,
+        uint _actualPrice,
+        uint _totalTokenAmount,
+        uint _completedQuantity,
+        ExchangeProviderInterface.MarketOrderStatus status) external;
+    function getIndexToken(uint _orderId, uint tokenPosition) external view returns (address token);
+    function updateOrderStatus(uint _orderId, STD.OrderStatus _status)
+        external returns (bool success);
 }
 */
-
+const KyberConfig = require('../scripts/libs/kyber_config');
 const OlympusStorage = artifacts.require("../contracts/storage/OlympusStorage.sol");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
 const Promise = require('bluebird');
+const mockData = {
+  buyer: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  strategyId: 0,
+  amountInWei: 1000000,
+  feeInWei: 100000,
+  dateCreated: 0,
+  dateCompleted: 0,
+  tokens: KyberConfig.kovan.tokens,
+  weights: [80, 20],
+  estimatedPrices: [1, 2],
+  dealtPrices: [0, 0],
+  totalTokenAmounts: [0, 0],
+  completedTokenAmounts: [0, 0],
+  subStatuses: [0, 0],
+  status: 0,
+  exchangeId: 'Kyber'
+}
 
 contract('OlympusStorage', (accounts) => {
 
@@ -25,41 +71,33 @@ contract('OlympusStorage', (accounts) => {
     });
   });
 
-  it("Should be able to set a custom value.", async () => {
-    let instance = await OlympusStorageExtended.deployed();
-    let result = await instance.setCustomExtraData(mockData.type, mockData.id, mockData.key, mockData.value, { from: accounts[0] });
+  it("Should be able to add order basic fields.", async () => {
+    let instance = await OlympusStorage.deployed();
+    let result = await instance.addOrderBasicFields(
+      mockData.strategyId, mockData.buyer,
+      mockData.amountInWei, mockData.feeInWei,
+      mockData.exchangeId,
+      { from: accounts[0] });
+    console.log('S: result', result)
     assert.equal(result.receipt.status, '0x01');
   });
 
-  it("Should be able to get a custom value.", async () => {
-    let instance = await OlympusStorageExtended.deployed();
-    let result = await instance.getCustomExtraData(mockData.type, mockData.id, mockData.key);
-    console.log('result', result);
-    assert.equal(web3.toAscii(result).replace(/\0/g, ''), mockData.value);
+  it("Should be able to add order token fields.", async () => {
   });
 
-  it("Should not override different dataType with same ID", async () => {
-    let instance = await OlympusStorageExtended.deployed();
-    let setResult = await instance.setCustomExtraData(
-      mockDataAlternative.type, mockDataAlternative.id, mockDataAlternative.key, mockDataAlternative.value,
-      { from: accounts[0] });
-    assert.equal(setResult.receipt.status, '0x01');
-    let resultMockData = await instance.getCustomExtraData(mockData.type, mockData.id, mockData.key, { from: accounts[0] });
-    assert.equal(web3.toAscii(resultMockData).replace(/\0/g, ''), mockData.value);
-    let resultMockDataAlternative = await instance.getCustomExtraData(
-      mockDataAlternative.type, mockDataAlternative.id, mockDataAlternative.key, { from: accounts[0] });
-    assert.equal(web3.toAscii(resultMockDataAlternative).replace(/\0/g, ''), mockDataAlternative.value);
+  it("Should be able to get order token completed amount", async () => {
   });
 
-  it("Should override if setCustomData is called again", async () => {
-    let instance = await OlympusStorageExtended.deployed();
-    let setResult = await instance.setCustomExtraData(
-      mockDataAlternative.type, mockDataAlternative.id, mockDataAlternative.key, finalOverrideValue,
-      { from: accounts[0] });
-    assert.equal(setResult.receipt.status, '0x01');
-    let resultMockData = await instance.getCustomExtraData(
-      mockDataAlternative.type, mockDataAlternative.id, mockDataAlternative.key, { from: accounts[0] });
-    assert.equal(web3.toAscii(resultMockData).replace(/\0/g, ''), finalOverrideValue);
+  it("Should be able to get order details", async () => {
+  });
+
+  it("Should be able to update order token", async () => {
+  });
+
+  it("Should be able to get index token", async () => {
+  });
+
+  it("Should be able to update order details", async () => {
   });
 
 });
