@@ -11,12 +11,12 @@ contract OlympusStorageExtended is OlympusStorageExtendedInterface, Ownable {
 
     mapping(string => mapping(bytes32 => bytes32)) private orderExtraData;
 
-    function setCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key, bytes32 value) public returns(bool success) {
+    function setCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key, bytes32 value) external returns(bool success) {
         orderExtraData[getAccessor(dataKind, objectId)][key] = value;
         return true;
     }
 
-    function getCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key) public view returns(bytes32 result) {
+    function getCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key) external view returns(bytes32 result) {
         return orderExtraData[getAccessor(dataKind, objectId)][key];
     }
 
