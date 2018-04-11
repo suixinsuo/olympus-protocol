@@ -47,10 +47,6 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     bytes32 constant private dataKind = "Order";
     OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0x63F853a536Ea1af51E8fC795D96999e77F028C9B));
 
-    function getTokensByID(uint id) public view returns (uint[]) {
-        return orders[id].completedTokenAmounts;
-    }
-
     function addTokenDetails(
         uint indexOrderId,
         address token,
