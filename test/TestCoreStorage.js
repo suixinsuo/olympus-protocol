@@ -46,7 +46,8 @@ const Promise = require('bluebird');
 const TX_OK = '0x01';
 const mockData = {
   startOrderId: 1000000,
-  buyer: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  buyer: '0x0000000000000000000000000000000000000000',
+
   strategyId: 0,
   amountInWei: 1000000,
   feeInWei: 100000,
@@ -57,10 +58,11 @@ const mockData = {
   estimatedPrices: [1, 2],
   dealtPrices: [0, 0],
   totalTokenAmounts: [10, 20],
-  completedTokenAmounts: [0, 1],
+  completedTokenAmounts: [5, 10],
   subStatuses: [0, 0],
   status: 0,
-  exchangeId: 'Kyber'
+  exchangeId: 'Kyber',
+  statusNew: 1,
 }
 
 contract('OlympusStorage', (accounts) => {
@@ -112,12 +114,10 @@ contract('OlympusStorage', (accounts) => {
   it("Should be able to get order token completed amount", async () => {
     try {
       const instance = await OlympusStorage.deployed();
-      const res = await instance.orders.call();
-      console.log(res);
-      assert.equal(true, true);
-      // const result = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[0]);
-      // console.log(mockData.startOrderId, mockData.tokens[0]);
-      // console.log(result[0].toNumber(), result[1].toNumber());
+      const firstResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[0]);
+      const secondResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[1]);
+      assert.equal(firstResult[0].toNumber(), mockData.completedTokenAmounts[0]);
+      assert.equal(secondResult[0].toNumber(), mockData.completedTokenAmounts[1]);
     } catch (e) {
       console.error(e);
       throw e;
@@ -127,6 +127,15 @@ contract('OlympusStorage', (accounts) => {
   it("Should be able to get order details", async () => {
     try {
       const instance = await OlympusStorage.deployed();
+      const firstPart = await instance.getIndexOrder1.call(mockData.startOrderId);
+      const secondPart = await instance.getIndexOrder2.call(mockData.startOrderId);
+      const fullIndex = firstPart.concat(secondPart);
+      assert.equal(fullIndex[0].toNumber(), mockData.strategyId);
+      assert.equal(fullIndex[1], mockData.buyer);
+      assert.equal(fullIndex[2].toNumber(), mockData.status);
+      assert.equal(fullIndex[5].toNumber(), mockData.amountInWei);
+      assert.equal(fullIndex[6].toNumber(), mockData.tokens.length);
+      assert.equal(web3.toAscii(fullIndex[7]).replace(/\0/g, ''), mockData.exchangeId);
     } catch (e) {
       console.error(e);
       throw e;
@@ -136,6 +145,27 @@ contract('OlympusStorage', (accounts) => {
   it("Should be able to update order token", async () => {
     try {
       const instance = await OlympusStorage.deployed();
+      const firstTransactionResult = await instance.updateIndexOrderToken(
+        mockData.startOrderId,
+        0,
+        mockData.estimatedPrices[0],
+        mockData.totalTokenAmounts[0],
+        mockData.completedTokenAmounts[0] + 5,
+        0);
+      const secondTransactionResult = await instance.updateIndexOrderToken(
+        mockData.startOrderId,
+        1,
+        mockData.estimatedPrices[1],
+        mockData.totalTokenAmounts[1],
+        mockData.completedTokenAmounts[1] + 2,
+        0);
+
+      assert.equal(firstTransactionResult.receipt.status, TX_OK);
+      assert.equal(secondTransactionResult.receipt.status, TX_OK);
+      const firstResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[0]);
+      const secondResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[1]);
+      assert.equal(firstResult[0].toNumber(), mockData.completedTokenAmounts[0] + 5);
+      assert.equal(secondResult[0].toNumber(), mockData.completedTokenAmounts[1] + 2);
     } catch (e) {
       console.error(e);
       throw e;
@@ -145,6 +175,10 @@ contract('OlympusStorage', (accounts) => {
   it("Should be able to get index token", async () => {
     try {
       const instance = await OlympusStorage.deployed();
+      const firstResult = await instance.getIndexToken.call(mockData.startOrderId, 0);
+      const secondResult = await instance.getIndexToken.call(mockData.startOrderId, 1);
+      assert.equal(firstResult, mockData.tokens[0]);
+      assert.equal(secondResult, mockData.tokens[1]);
     } catch (e) {
       console.error(e);
       throw e;
@@ -154,6 +188,10 @@ contract('OlympusStorage', (accounts) => {
   it("Should be able to update order details", async () => {
     try {
       const instance = await OlympusStorage.deployed();
+      const result = await instance.updateOrderStatus(mockData.startOrderId, mockData.statusNew);
+      assert.equal(result.receipt.status, TX_OK);
+      const status = (await instance.getIndexOrder1.call(mockData.startOrderId))[2].toNumber();
+      assert.equal(status, mockData.statusNew);
     } catch (e) {
       console.error(e);
       throw e;

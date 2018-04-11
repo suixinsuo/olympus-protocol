@@ -45,6 +45,9 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
     bytes32 constant private dataKind = "Order";
     OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0x63F853a536Ea1af51E8fC795D96999e77F028C9B));
 
+    function getTokensByID(uint id) public view returns (uint[]) {
+        return orders[id].completedTokenAmounts;
+    }
     function addTokenDetails(
         uint indexOrderId,
         address token,
@@ -154,13 +157,13 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
         uint _actualPrice,
         uint _totalTokenAmount,
         uint _completedQuantity,
-        ExchangeProviderInterface.MarketOrderStatus status) external {
+        ExchangeProviderInterface.MarketOrderStatus _status) external {
         IndexOrder memory order = orders[_orderId];
 
         order.totalTokenAmounts[_tokenIndex] = _totalTokenAmount;
         order.dealtPrices[_tokenIndex] = _actualPrice;
         order.completedTokenAmounts[_tokenIndex] = _completedQuantity;
-        order.subStatuses[_tokenIndex] = status;
+        order.subStatuses[_tokenIndex] = _status;
 
         orders[_orderId] = order;
 
