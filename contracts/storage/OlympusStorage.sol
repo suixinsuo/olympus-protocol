@@ -45,7 +45,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     mapping(uint => mapping(address => uint)) public orderTokenAmounts;
     uint public orderId = 1000000;
     bytes32 constant private dataKind = "Order";
-    OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0x63F853a536Ea1af51E8fC795D96999e77F028C9B));
+    OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0xcEb51bD598ABb0caa8d2Da30D4D760f08936547B));
 
     function addTokenDetails(
         uint indexOrderId,
