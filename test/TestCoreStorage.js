@@ -43,7 +43,9 @@ const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
 const Promise = require('bluebird');
+const TX_OK = '0x01';
 const mockData = {
+  startOrderId: 1000000,
   buyer: '0x0000000000000000000000000000000000000000000000000000000000000000',
   strategyId: 0,
   amountInWei: 1000000,
@@ -54,8 +56,8 @@ const mockData = {
   weights: [80, 20],
   estimatedPrices: [1, 2],
   dealtPrices: [0, 0],
-  totalTokenAmounts: [0, 0],
-  completedTokenAmounts: [0, 0],
+  totalTokenAmounts: [10, 20],
+  completedTokenAmounts: [0, 1],
   subStatuses: [0, 0],
   status: 0,
   exchangeId: 'Kyber'
@@ -72,50 +74,90 @@ contract('OlympusStorage', (accounts) => {
   });
 
   it("Should be able to add order basic fields.", async () => {
-    let instance = await OlympusStorage.deployed();
     try {
-      let result = await instance.addOrderBasicFields.call(
+      const instance = await OlympusStorage.deployed();
+      const result = await instance.addOrderBasicFields.call(
         mockData.strategyId, mockData.buyer,
         mockData.amountInWei, mockData.feeInWei,
         mockData.exchangeId,
         { from: accounts[0] });
-      console.log('S: result', result.toNumber())
-      let result1 = await instance.addOrderBasicFields.call(
+      const resultTransaction = await instance.addOrderBasicFields(
         mockData.strategyId, mockData.buyer,
         mockData.amountInWei, mockData.feeInWei,
         mockData.exchangeId,
         { from: accounts[0] });
-      console.log('S: result1', result1.toNumber())
-      let result2 = await instance.addOrderBasicFields.call(
-        mockData.strategyId, mockData.buyer,
-        mockData.amountInWei, mockData.feeInWei,
-        mockData.exchangeId,
-        { from: accounts[0] });
-      console.log('S: result2', result2.toNumber())
-
-      //assert.equal(result.receipt.status, '0x01');
-    } catch (error) {
-      console.log(error);
+      assert.equal(result.toNumber(), mockData.startOrderId);
+      assert.equal(resultTransaction.receipt.status, TX_OK);
+    } catch (e) {
+      console.error(e);
+      throw e;
     }
-
   });
 
   it("Should be able to add order token fields.", async () => {
+    try {
+      const instance = await OlympusStorage.deployed();
+      for (let index = 0; index < mockData.tokens.length; index++) {
+        const result = await instance.addTokenDetails(
+          mockData.startOrderId, mockData.tokens[index], mockData.weights[index], mockData.estimatedPrices[index],
+          mockData.dealtPrices[index], mockData.totalTokenAmounts[index], mockData.completedTokenAmounts[index]);
+        assert.equal(result.receipt.status, TX_OK);
+      }
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   });
 
   it("Should be able to get order token completed amount", async () => {
+    try {
+      const instance = await OlympusStorage.deployed();
+      const res = await instance.orders.call();
+      console.log(res);
+      assert.equal(true, true);
+      // const result = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[0]);
+      // console.log(mockData.startOrderId, mockData.tokens[0]);
+      // console.log(result[0].toNumber(), result[1].toNumber());
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   });
 
   it("Should be able to get order details", async () => {
+    try {
+      const instance = await OlympusStorage.deployed();
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   });
 
   it("Should be able to update order token", async () => {
+    try {
+      const instance = await OlympusStorage.deployed();
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   });
 
   it("Should be able to get index token", async () => {
+    try {
+      const instance = await OlympusStorage.deployed();
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   });
 
   it("Should be able to update order details", async () => {
+    try {
+      const instance = await OlympusStorage.deployed();
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   });
 
 });

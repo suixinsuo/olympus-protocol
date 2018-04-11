@@ -40,15 +40,18 @@ contract('OlympusStorageExtended', (accounts) => {
   });
 
   it("Should be able to set a custom value.", async () => {
-    let instance = await OlympusStorageExtended.deployed();
-    // let result = await instance.setCustomExtraData(mockData.type, mockData.id, mockData.key, mockData.value, { from: accounts[0] });
-    // assert.equal(result.receipt.status, '0x01');
-    let result = await instance.setCustomExtraData.call(
-      mockData.type, mockData.id, mockData.key, mockData.value, { from: accounts[0] });
-    let transactionResult = await instance.setCustomExtraData(
-      mockData.type, mockData.id, mockData.key, mockData.value, { from: accounts[0] });
-    assert.equal(result, true);
-    assert.equal(transactionResult.receipt.status, TX_OK);
+    try {
+      let instance = await OlympusStorageExtended.deployed();
+      let result = await instance.setCustomExtraData.call(
+        mockData.type, mockData.id, mockData.key, mockData.value, { from: accounts[0] });
+      let transactionResult = await instance.setCustomExtraData(
+        mockData.type, mockData.id, mockData.key, mockData.value, { from: accounts[0] });
+      assert.equal(result, true);
+      assert.equal(transactionResult.receipt.status, TX_OK);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   });
 
   it("Should be able to get a custom value.", async () => {
@@ -58,6 +61,7 @@ contract('OlympusStorageExtended', (accounts) => {
       assert.equal(web3.toAscii(result).replace(/\0/g, ''), mockData.value);
     } catch (e) {
       console.error(e);
+      throw e;
     }
   });
 
@@ -80,6 +84,7 @@ contract('OlympusStorageExtended', (accounts) => {
       assert.equal(web3.toAscii(resultMockDataAlternative).replace(/\0/g, ''), mockDataAlternative.value);
     } catch (e) {
       console.error(e);
+      throw e;
     }
   });
 
@@ -99,8 +104,8 @@ contract('OlympusStorageExtended', (accounts) => {
       assert.equal(web3.toAscii(resultMockData).replace(/\0/g, ''), finalOverrideValue);
     } catch (e) {
       console.error(e);
+      throw e;
     }
-
   });
 
 });
