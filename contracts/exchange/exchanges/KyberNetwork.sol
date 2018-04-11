@@ -32,6 +32,8 @@ contract KyberNetworkExchange is ExchangeAdapter {
 
     mapping (uint=>Order) orders;
 
+    event PlacedOrder(uint orderId);
+
     function KyberNetworkExchange(KyberNetwork _kyber) public{
         require(address(_kyber) != 0x0);
         kyber = _kyber;
@@ -47,7 +49,7 @@ contract KyberNetworkExchange is ExchangeAdapter {
     
     function placeOrder(ERC20 dest, uint amount, uint rate, address deposit) external payable returns(uint adapterOrderId){
         
-        if(this.balance < amount){
+        if (address(this).balance < amount) {
             return 0;
         }
 
@@ -82,6 +84,7 @@ contract KyberNetworkExchange is ExchangeAdapter {
             status:OrderStatus.Approved,
             amount:amount
         });
+        emit PlacedOrder(orderId);
         return orderId;
     }
 
@@ -124,6 +127,6 @@ contract KyberNetworkExchange is ExchangeAdapter {
     function() public onlyOwner payable { }
     
     function withdrawl() public onlyOwner {
-        owner.transfer(this.balance);
+        owner.transfer(address(this).balance);
     }
 }

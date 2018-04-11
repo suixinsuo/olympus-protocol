@@ -3,3 +3,5 @@ node_modules
 build
 .idea./build/
 .idea
+coverage
+coverage.json
