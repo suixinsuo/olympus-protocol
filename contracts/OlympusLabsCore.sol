@@ -214,7 +214,7 @@ contract OlympusLabsCore is Manageable {
         return new uint[](length);
     }
 
-    function resetOrderIdTo(uint _start) external returns (uint) {
+    function resetOrderIdTo(uint _start) external onlyOwner returns (uint) {
         return olympusStorage.resetOrderIdTo(_start);
     }
 
