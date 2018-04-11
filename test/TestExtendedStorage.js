@@ -98,7 +98,7 @@ contract('OlympusStorageExtended', (accounts) => {
         mockDataAlternative.type, mockDataAlternative.id, mockDataAlternative.key, finalOverrideValue,
         { from: accounts[0] });
       assert.equal(setResult, true);
-      assert.equal(setTransactionResult, TX_OK);
+      assert.equal(setTransactionResult.receipt.status, TX_OK);
       let resultMockData = await instance.getCustomExtraData.call(
         mockDataAlternative.type, mockDataAlternative.id, mockDataAlternative.key, { from: accounts[0] });
       assert.equal(web3.toAscii(resultMockData).replace(/\0/g, ''), finalOverrideValue);

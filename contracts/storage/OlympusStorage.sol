@@ -3,8 +3,9 @@ pragma solidity ^0.4.19;
 import "../exchange/ExchangeProviderInterface.sol";
 import "./OlympusStorageExtendedInterface.sol";
 import "./OlympusStorageInterface.sol";
-import "../libs/Ownable.sol";
+import "../libs/Manageable.sol";
 import "../libs/SafeMath.sol";
+import { TypeDefinitions as TD, Provider } from "../libs/Provider.sol";
 
 library StorageTypeDefinitions {
     enum OrderStatus {
@@ -17,10 +18,11 @@ library StorageTypeDefinitions {
     }
 }
 
-contract OlympusStorage is Ownable, OlympusStorageInterface {
+contract OlympusStorage is Manageable, OlympusStorageInterface {
     using SafeMath for uint256;
 
     event IndexOrderUpdated (uint orderId);
+    event Log(string message);
 
     struct IndexOrder {
         address buyer;
@@ -48,6 +50,7 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
     function getTokensByID(uint id) public view returns (uint[]) {
         return orders[id].completedTokenAmounts;
     }
+
     function addTokenDetails(
         uint indexOrderId,
         address token,
@@ -202,5 +205,21 @@ contract OlympusStorage is Ownable, OlympusStorageInterface {
         orderId = _start;
         return orderId;
     }
+
+    function setProvider(uint8 _id, address _providerAddress) public onlyOwner returns (bool success) {
+        bool result = super.setProvider(_id, _providerAddress);
+        TD.ProviderType _type = TD.ProviderType(_id);
+
+        if(_type == TD.ProviderType.ExtendedStorage) {
+            emit Log("ExtendedStorage");
+            olympusStorageExtended = OlympusStorageExtendedInterface(_providerAddress);
+        } else {
+            emit Log("Unknown provider type supplied.");
+            revert();
+        }
+
+        return result;
+    }
+
 
 }
