@@ -66,7 +66,9 @@ const mockData = {
   statusNew: 1,
 
   customFieldKey: 'mock key',
-  customFieldValue: 'mock data'
+  customFieldValue: 'mock data',
+
+  fakeToken: '0xea1887835d177ba8052e5461a269f42f9d77a5a3'
 }
 
 contract('OlympusStorage', (accounts) => {
@@ -113,6 +115,19 @@ contract('OlympusStorage', (accounts) => {
     } catch (e) {
       console.error(e);
       throw e;
+    }
+  });
+
+  it("Should not be able to get amount for non-existing token", async () => {
+    try {
+      const instance = await OlympusStorage.deployed();
+      const result = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.fakeToken);
+    } catch (e) {
+      assert.equal(e.message, 'VM Exception while processing transaction: revert');
+      if (e.message != 'VM Exception while processing transaction: revert') {
+        console.error(e);
+        throw e;
+      }
     }
   });
 
@@ -230,6 +245,21 @@ contract('OlympusStorage', (accounts) => {
       throw e;
     }
   });
+
+  it("Should not be able to set unsupported Provider", async () => {
+    try {
+      const extendedInstance = await OlympusStorageExtended.deployed();
+      const instance = await OlympusStorage.deployed();
+
+      await instance.setProvider.call(2, extendedInstance.address);
+    } catch (e) {
+      assert.equal(e.message, 'VM Exception while processing transaction: revert');
+      if (e.message != 'VM Exception while processing transaction: revert') {
+        console.error(e);
+        throw e;
+      }
+    }
+  })
 
   it("Should be able to set and get a custom value for order", async () => {
     try {
