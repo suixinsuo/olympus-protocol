@@ -197,7 +197,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         return orderId++;
     }
 
-    function resetOrderIdTo(uint _start) public onlyOwner returns (uint) {
+    function resetOrderIdTo(uint _start) external returns (uint) {
         orderId = _start;
         return orderId;
     }
