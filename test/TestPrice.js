@@ -170,5 +170,12 @@ contract('PriceProvider', (accounts) => {
         let result2 = await instance.checkProviderSupported(accounts[3],mockData.tokenAddresses[0],{from:accounts[0]});
         assert.equal(result2,false);
     });
+    it("Should be able to changeDefaultProvider.", async () => {
+        let instance  = await PriceProvider.deployed();
+
+        let result1 = await instance.changeDefaultProviders(accounts[4],mockData.tokenAddresses[0],{from:accounts[0]});
+        assert.equal(result1.receipt.status, '0x01');
+        //console.log(result1);
+    });
 
 });

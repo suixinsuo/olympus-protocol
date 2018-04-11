@@ -2,156 +2,9 @@ pragma solidity ^0.4.21;
 
 //这个合约控制数据库
 
-library itMaps {
-
-    struct entryBytes32Uint {
-        // Equal to the index of the key of this item in keys, plus 1.
-        uint keyIndex;
-        uint value;
-    }
-
-    struct itMapBytes32Uint {
-        mapping(bytes32 => entryBytes32Uint) data;
-        bytes32[] keys;
-    }
-
-    function insert(itMapBytes32Uint storage self, bytes32 key, uint value) internal returns (bool replaced) {
-        entryBytes32Uint storage e = self.data[key];
-        e.value = value;
-        if (e.keyIndex > 0) {
-            return true;
-        } else {
-            e.keyIndex = ++self.keys.length;
-            self.keys[e.keyIndex - 1] = key;
-            return false;
-        }
-    }
-
-    function remove(itMapBytes32Uint storage self, bytes32 key) internal returns (bool success) {
-        entryBytes32Uint storage e = self.data[key];
-        if (e.keyIndex == 0)
-            return false;
-
-        if (e.keyIndex <= self.keys.length) {
-            // Move an existing element into the vacated key slot.
-            self.data[self.keys[self.keys.length - 1]].keyIndex = e.keyIndex;
-            self.keys[e.keyIndex - 1] = self.keys[self.keys.length - 1];
-            self.keys.length -= 1;
-            delete self.data[key];
-            return true;
-        }
-    }
-
-    function destroy(itMapBytes32Uint storage self) internal  {
-        for (uint i; i<self.keys.length; i++) {
-            delete self.data[self.keys[i]];
-        }
-        delete self.keys;
-        return ;
-    }
-
-    function contains(itMapBytes32Uint storage self, bytes32 key) internal constant returns (bool exists) {
-        return self.data[key].keyIndex > 0;
-    }
-
-    function size(itMapBytes32Uint storage self) internal constant returns (uint) {
-        return self.keys.length;
-    }
-
-    function get(itMapBytes32Uint storage self, bytes32 key) internal constant returns (uint) {
-        return self.data[key].value;
-    }
-
-    function getKey(itMapBytes32Uint storage self, uint idx) internal constant returns (bytes32) {
-      /* Decrepated, use getKeyByIndex. This kept for backward compatilibity */
-        return self.keys[idx];
-    }
-
-    function getKeyByIndex(itMapBytes32Uint storage self, uint idx) internal constant returns (bytes32) {
-      /* Same as decrepated getKey. getKeyByIndex was introduced to be less ambiguous  */
-        return self.keys[idx];
-    }
-
-    function getValueByIndex(itMapBytes32Uint storage self, uint idx) internal constant returns (uint) {
-        return self.data[self.keys[idx]].value;
-    }
-}
-
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-    }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-contract Ownable {
-  
-    address public owner;
-
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-}
+import "../libs/Ownable.sol";
+import "../libs/SafeMath.sol";
+import "../libs/itMaps.sol";
 
 // 正式合约
 // 思路是：
@@ -267,42 +120,42 @@ contract PriceProvider is Ownable {
         return true;
     }
 
-    function getDefaultPrice(address _tokenAddress) public returns(uint){
-        //定义函数内部变长数组
-        uint length = _EXCHANGE.length;
-        uint[] memory _priceNow = new uint[](length);
+    // function getDefaultPrice(address _tokenAddress) public returns(uint){
+    //     //定义函数内部变长数组
+    //     uint length = _EXCHANGE.length;
+    //     uint[] memory _priceNow = new uint[](length);
 
-        for (uint i = 0 ; i < _EXCHANGE.length ; i ++ ){
-            //priceData.getValueByIndex(k);
-            bytes32 _data = keccak256(_Provider[_tokenAddress][0],_tokenAddress,_EXCHANGE[i]);
-            _priceNow[i] = (priceData.get(_data));
-        }
+    //     for (uint i = 0 ; i < _EXCHANGE.length ; i ++ ){
+    //         //priceData.getValueByIndex(k);
+    //         bytes32 _data = keccak256(_Provider[_tokenAddress][0],_tokenAddress,_EXCHANGE[i]);
+    //         _priceNow[i] = (priceData.get(_data));
+    //     }
 
-        uint _price = PriceWeight(_priceNow);
+    //     uint _price = PriceWeight(_priceNow);
         
-        emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress,_price);
+    //     emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress,_price);
         
-        return _price;
+    //     return _price;
 
-    }
+    // }
 
-    function getCustomPrice(address _provider,address _tokenAddress) public returns(uint){
-        //定义函数内部变长数组
-        uint[] memory _priceNow = new uint[](_EXCHANGE.length);
+    // function getCustomPrice(address _provider,address _tokenAddress) public returns(uint){
+    //     //定义函数内部变长数组
+    //     uint[] memory _priceNow = new uint[](_EXCHANGE.length);
 
-        for (uint i = 0 ; i < _EXCHANGE.length; i ++){
+    //     for (uint i = 0 ; i < _EXCHANGE.length; i ++){
             
-            bytes32 _data = keccak256(_provider, _tokenAddress,_EXCHANGE[i]);
-            _priceNow[i] = (priceData.get(_data));
+    //         bytes32 _data = keccak256(_provider, _tokenAddress,_EXCHANGE[i]);
+    //         _priceNow[i] = (priceData.get(_data));
             
-        }
+    //     }
 
-        uint _price = PriceWeight(_priceNow);
+    //     uint _price = PriceWeight(_priceNow);
         
-        emit _GetPrice(_provider,_tokenAddress,_price);
+    //     emit _GetPrice(_provider,_tokenAddress,_price);
           
-        return _price;
-    }
+    //     return _price;
+    // }
     
     //新接口
     
@@ -380,6 +233,7 @@ contract PriceProvider is Ownable {
     //修改默认Provider
     
     function changeDefaultProviders(address _newProvider,address _tokenAddress) public onlyOwner returns(bool success) {
+        emit DefaultProviderUpdate(_tokenAddress,_Provider[_tokenAddress][0],_newProvider);
         _Provider[_tokenAddress][0] = _newProvider;
         return true;
     }
