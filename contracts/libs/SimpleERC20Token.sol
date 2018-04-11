@@ -42,7 +42,7 @@ contract SimpleERC20Token {
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
         balances[from] = balances[from] - tokens;
         allowed[from][msg.sender] = allowed[from][msg.sender] - tokens;
-        balances[to] = balances[to] - tokens;
+        balances[to] = balances[to] + tokens;
         emit Transfer(from, to, tokens);
         return true;
     }
