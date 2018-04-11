@@ -3,6 +3,8 @@ var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
 var PermissionControl = artifacts.require("./rbac/PermissionControl.sol");
 // var ExchangeProvider = artifacts.require("./exchange/ExchangeProvider.sol");
 // var PriceProvider = artifacts.require("./price/PriceProvider.sol");
+//var ExchangeProvider = artifacts.require("./exchange/ExchangeProvider.sol");
+ var PriceProvider = artifacts.require("./price/PriceProvider.sol");
 
 module.exports = function (deployer) {
   deployer.deploy(Core);
@@ -10,4 +12,6 @@ module.exports = function (deployer) {
   deployer.deploy(PermissionControl);
   // deployer.deploy(ExchangeProvider);
   // deployer.deploy(PriceProvider);
+  //deployer.deploy(ExchangeProvider);
+  deployer.deploy(PriceProvider);
 }
