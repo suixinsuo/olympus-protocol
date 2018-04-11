@@ -101,9 +101,9 @@ contract OlympusLabsCore is Manageable {
         return getPrice(token);
     }
 
-    function setProvider(uint8 _name, address _providerAddress) public onlyOwner returns (bool success) {
-        bool result = super.setProvider(_name, _providerAddress);
-        TD.ProviderType _type = TD.ProviderType(_name);
+    function setProvider(uint8 _id, address _providerAddress) public onlyOwner returns (bool success) {
+        bool result = super.setProvider(_id, _providerAddress);
+        TD.ProviderType _type = TD.ProviderType(_id);
 
         if(_type == TD.ProviderType.Strategy) {
             emit Log("StrategyProvider");
@@ -114,8 +114,11 @@ contract OlympusLabsCore is Manageable {
         } else if(_type == TD.ProviderType.Price) {
             emit Log("PriceProvider");
             priceProvider = PriceProviderInterface(_providerAddress);
-        } else {
-            emit Log("Unknow provider tyep supplied.");
+        } else if(_type == TD.ProviderType.Storage) {
+            emit Log("StorageProvider");
+            olympusStorage = OlympusStorageInterface(_providerAddress);
+          } else {
+            emit Log("Unknown provider type supplied.");
             revert();
         }
 

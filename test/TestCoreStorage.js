@@ -38,6 +38,7 @@ contract OlympusStorageInterface {
 }
 */
 const KyberConfig = require('../scripts/libs/kyber_config');
+const OlympusStorageExtended = artifacts.require("../contracts/storage/OlympusStorageExtended.sol");
 const OlympusStorage = artifacts.require("../contracts/storage/OlympusStorage.sol");
 const Web3 = require('web3');
 const web3 = new Web3();
@@ -63,13 +64,17 @@ const mockData = {
   status: 0,
   exchangeId: 'Kyber',
   statusNew: 1,
+
+  customFieldKey: 'mock key',
+  customFieldValue: 'mock data'
 }
 
 contract('OlympusStorage', (accounts) => {
 
   it("Should be able to deploy.", () => {
     return Promise.all([
-      OlympusStorage.deployed()
+      OlympusStorage.deployed(),
+      OlympusStorageExtended.deployed()
     ]).spread((storage) => {
       assert.ok(storage, 'OlympusStorage contract is not deployed.');
     });
@@ -192,6 +197,44 @@ contract('OlympusStorage', (accounts) => {
       assert.equal(result.receipt.status, TX_OK);
       const status = (await instance.getIndexOrder1.call(mockData.startOrderId))[2].toNumber();
       assert.equal(status, mockData.statusNew);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  });
+
+  it("Admin should be able to reset the order id", async () => {
+    try {
+      const instance = await OlympusStorage.deployed();
+      const resultTransaction = await instance.resetOrderIdTo(5);
+      assert.equal(resultTransaction.receipt.status, TX_OK);
+      const result = await instance.orderId.call();
+      assert.equal(result.toNumber(), 5);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  });
+
+  it("Should be able to set and get a custom value for order", async () => {
+    try {
+      const extendedInstance = await OlympusStorageExtended.deployed();
+      const instance = await OlympusStorage.deployed();
+
+      const resultSetProvider = await instance.setProvider.call(4, extendedInstance.address);
+      const resultSetProviderTransaction = await instance.setProvider(4, extendedInstance.address);
+      assert.equal(resultSetProvider, true);
+      assert.equal(resultSetProviderTransaction.receipt.status, TX_OK);
+
+      const resultTransactionExpectation = await instance.addCustomField.call(
+        mockData.startOrderId, web3.fromAscii(mockData.customFieldKey), web3.fromAscii(mockData.customFieldValue));
+      const resultTransaction = await instance.addCustomField(
+        mockData.startOrderId, web3.fromAscii(mockData.customFieldKey), web3.fromAscii(mockData.customFieldValue));
+      assert.equal(resultTransaction.receipt.status, TX_OK);
+      assert.equal(resultTransactionExpectation, true);
+
+      const result = await instance.getCustomField.call(mockData.startOrderId);
+      assert.equal(web3.toAscii(result).replace(/\0/g, ''), mockData.customFieldValue);
     } catch (e) {
       console.error(e);
       throw e;

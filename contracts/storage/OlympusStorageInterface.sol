@@ -48,4 +48,15 @@ contract OlympusStorageInterface is Ownable {
         external returns (bool success);
 
     function resetOrderIdTo(uint _orderId) public onlyOwner returns(uint);
+
+    function addCustomField(
+        uint _orderId,
+        bytes32 key,
+        bytes32 value
+        ) external returns (bool success);
+
+    function getCustomField(
+        uint _orderId,
+        bytes32 key
+        ) external view returns (bytes32 result);
 }
