@@ -23,16 +23,4 @@ contract ExchangeAdapter is ExchangeAdapterBase, Ownable, Utils {
     function isEnabled() external view returns (bool success) {
         return status == Status.ENABLED;
     }
-
-    /// >0 : current exchange rate
-    /// =0 : not support
-    /// <0 : support but doesn't know rate
-    function getRate(ERC20 token, uint amount) external view returns(int);
-
-    function placeOrder(ERC20 dest, uint amount, uint rate, address deposit) external payable returns(uint adapterOrderId);
-
-    function payOrder(uint adapterOrderId) external payable returns(bool);
-
-    function cancelOrder(uint adapterOrderId) external returns(bool);
-    function getOrderStatus(uint adapterOrderId) external view returns(OrderStatus);
 }
