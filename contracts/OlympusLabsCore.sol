@@ -89,7 +89,7 @@ contract OlympusLabsCore is Manageable {
     }
 
     function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
-        require(strategyId != 0);
+        require(strategyId >= 0);
         uint totalLength;
 
         (,,,,,totalLength) = getStrategy(strategyId);
@@ -151,60 +151,61 @@ contract OlympusLabsCore is Manageable {
           exchangeId
         );
 
-        uint[][4] memory subOrderTemp;
-        // 0: token amounts
-        // 1: estimatedPrices
-        // 2: dealtPrices
-        // 3: completedTokenAmounts
+        // uint[][4] memory subOrderTemp;
+        // // 0: token amounts
+        // // 1: estimatedPrices
+        // // 2: dealtPrices
+        // // 3: completedTokenAmounts
 
-        address[] memory tokens = new address[](tokenLength);
-        uint[] memory weights = new uint[](tokenLength);
+        // address[] memory tokens = new address[](tokenLength);
+        // uint[] memory weights = new uint[](tokenLength);
 
-        subOrderTemp[0] = initializeArray(tokenLength);
-        subOrderTemp[1] = initializeArray(tokenLength);
-        subOrderTemp[2] = initializeArray(tokenLength);
-        subOrderTemp[3] = initializeArray(tokenLength);
+        // subOrderTemp[0] = initializeArray(tokenLength);
+        // subOrderTemp[1] = initializeArray(tokenLength);
+        // subOrderTemp[2] = initializeArray(tokenLength);
+        // subOrderTemp[3] = initializeArray(tokenLength);
 
-        emit LogNumber(indexOrderId);
-        require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
-        for (uint i = 0; i < tokenLength; i ++ ) {
-            (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
-            // ignore those tokens with zero weight.
-            if(weights[i] <= 0) {
-                continue;
-            }
-            // token has to be supported by exchange provider.
-            if(!exchangeProvider.checkTokenSupported(ERC20(tokens[i]))){
-                emit Log("Exchange provider doesn't support");
-                revert();
-            }
+        // emit LogNumber(indexOrderId);
+        // require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
+        // for (uint i = 0; i < tokenLength; i ++ ) {
+        //     (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
+        //     // ignore those tokens with zero weight.
+        //     if(weights[i] <= 0) {
+        //         continue;
+        //     }
+        //     // token has to be supported by exchange provider.
+        //     if(!exchangeProvider.checkTokenSupported(ERC20(tokens[i]))){
+        //         emit Log("Exchange provider doesn't support");
+        //         revert();
+        //     }
 
-            // check if price provider supports it.
-            if(!priceProvider.checkTokenSupported(tokens[i])){
-                emit Log("Price provider doesn't support");
-                revert();
-            }
+        //     // check if price provider supports it.
+        //     if(!priceProvider.checkTokenSupported(tokens[i])){
+        //         emit Log("Price provider doesn't support");
+        //         revert();
+        //     }
 
-            subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
-            subOrderTemp[1][i] = getPrice(tokens[i]);
+        //     subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
+        //     subOrderTemp[1][i] = getPrice(tokens[i]);
 
-            olympusStorage.addTokenDetails(
-                indexOrderId,
-                tokens[i], weights[i], subOrderTemp[0][i],
-                subOrderTemp[1][i], subOrderTemp[2][i], subOrderTemp[3][i]
-            );
+        //     olympusStorage.addTokenDetails(
+        //         indexOrderId,
+        //         tokens[i], weights[i], subOrderTemp[0][i],
+        //         subOrderTemp[1][i], subOrderTemp[2][i], subOrderTemp[3][i]
+        //     );
 
-            emit LogAddress(tokens[i]);
-            emit LogNumber(subOrderTemp[0][i]);
-            emit LogNumber(subOrderTemp[1][i]);
-            require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
-        }
+        //     emit LogAddress(tokens[i]);
+        //     emit LogNumber(subOrderTemp[0][i]);
+        //     emit LogNumber(subOrderTemp[1][i]);
+        //     require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
+        // }
 
-        emit LogNumber(amounts[2]);
-        require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
+        // emit LogNumber(amounts[2]);
+        // require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
         // todo: send ethers to the clearing center.
-        return indexOrderId;
+        // return indexOrderId;
+        return 1;
     }
 
     function initializeArray(uint length) private pure returns (uint[]){
