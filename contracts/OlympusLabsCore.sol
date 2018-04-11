@@ -22,7 +22,7 @@ contract OlympusLabsCore is Manageable {
     event LogNumbers(uint[] numbers);
 
     ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0xB31e55fec5704A9B09Cf2c1BA65A276Ec7a453B1));
-    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x44F961821Bdb76eB2D8B06193F86f64a4C2bBDb8));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x49341fa51c75e66ea57e5b4eb99ca4d3608c5201));
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x88c80FcaAE06323e17DDCD4ff8E0Fbe06D9799e6));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x5B9eD7b79c551dCDdEd7E196F34d5c9D071551f8));
     uint public feePercentage = 100;
@@ -212,6 +212,10 @@ contract OlympusLabsCore is Manageable {
 
     function initializeArray(uint length) private pure returns (uint[]){
         return new uint[](length);
+    }
+
+    function resetOrderIdTo(uint _start) external returns (uint) {
+        return olympusStorage.resetOrderIdTo(_start);
     }
 
     // For app/3rd-party clients to check details / status.

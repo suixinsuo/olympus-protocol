@@ -47,7 +47,7 @@ contract OlympusStorageInterface is Ownable {
     function updateOrderStatus(uint _orderId, STD.OrderStatus _status)
         external returns (bool success);
 
-    function resetOrderIdTo(uint _orderId) public onlyOwner returns(uint);
+    function resetOrderIdTo(uint _orderId) external returns(uint);
 
     function addCustomField(
         uint _orderId,
