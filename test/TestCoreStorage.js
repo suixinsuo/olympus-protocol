@@ -216,6 +216,21 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
+  it("Should be able to set Provider", async () => {
+    try {
+      const extendedInstance = await OlympusStorageExtended.deployed();
+      const instance = await OlympusStorage.deployed();
+
+      const resultSetProvider = await instance.setProvider.call(4, extendedInstance.address);
+      const resultSetProviderTransaction = await instance.setProvider(4, extendedInstance.address);
+      assert.equal(resultSetProvider, true);
+      assert.equal(resultSetProviderTransaction.receipt.status, TX_OK);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  });
+
   it("Should be able to set and get a custom value for order", async () => {
     try {
       const extendedInstance = await OlympusStorageExtended.deployed();
@@ -233,7 +248,7 @@ contract('OlympusStorage', (accounts) => {
       assert.equal(resultTransaction.receipt.status, TX_OK);
       assert.equal(resultTransactionExpectation, true);
 
-      const result = await instance.getCustomField.call(mockData.startOrderId);
+      const result = await instance.getCustomField.call(mockData.startOrderId, mockData.customFieldKey);
       assert.equal(web3.toAscii(result).replace(/\0/g, ''), mockData.customFieldValue);
     } catch (e) {
       console.error(e);
