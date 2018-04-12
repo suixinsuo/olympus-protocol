@@ -102,7 +102,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
             }
         }
         
-        orders[orderId].orderStatus = MarketOrderStatus.Completed;
+        // orders[orderId].orderStatus = MarketOrderStatus.Completed;
         return true;
     }
     
