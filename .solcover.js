@@ -16,6 +16,7 @@ module.exports = {
     'libs/SafeMath.sol',
     'libs/SimpleERC20Token.sol',
     'libs/strings.sol',
-    'libs/utils.sol'
+    'libs/utils.sol',
+    'libs/itMaps.sol',
   ]
 };
