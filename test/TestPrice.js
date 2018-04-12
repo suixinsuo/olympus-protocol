@@ -62,9 +62,9 @@ contract('PriceProvider', (accounts) => {
     })
     it("Should be able to check support price.", async () => {
         let instance  = await PriceProvider.deployed();
-        let result1 = await instance.checkTokenSupported(mockData.tokenAddresses[0],{from:accounts[0]});
-        let result2 = await instance.checkTokenSupported(mockData.tokenAddresses[1],{from:accounts[0]});
-        let result3 = await instance.checkTokenSupported(accounts[0],{from:accounts[0]});
+        let result1 = await instance.checkTokenSupported.call(mockData.tokenAddresses[0],{from:accounts[0]});
+        let result2 = await instance.checkTokenSupported.call(mockData.tokenAddresses[1],{from:accounts[0]});
+        let result3 = await instance.checkTokenSupported.call(accounts[0],{from:accounts[0]});
         assert.equal(result1, true);
         assert.equal(result2, true);
         assert.equal(result3, false);
@@ -79,9 +79,9 @@ contract('PriceProvider', (accounts) => {
 
     it("Should be able to check support exchanges.", async () => {
         let instance  = await PriceProvider.deployed();
-        let result1 = await instance.checkExchangeSupported(mockData.exchangesAddressHash[0],{from:accounts[0]});
-        let result2 = await instance.checkExchangeSupported(mockData.exchangesAddressHash[1],{from:accounts[0]});
-        let result3 = await instance.checkExchangeSupported(accounts[0],{from:accounts[0]});
+        let result1 = await instance.checkExchangeSupported.call(mockData.exchangesAddressHash[0],{from:accounts[0]});
+        let result2 = await instance.checkExchangeSupported.call(mockData.exchangesAddressHash[1],{from:accounts[0]});
+        let result3 = await instance.checkExchangeSupported.call(accounts[0],{from:accounts[0]});
         assert.equal(result1, true);
         assert.equal(result2, true);
         assert.equal(result3, false);
@@ -97,12 +97,12 @@ contract('PriceProvider', (accounts) => {
 
     it("Should be able to check support provider.", async () => {
         let instance  = await PriceProvider.deployed();
-        let result1 = await instance.checkProviderSupported(accounts[1],mockData.tokenAddresses[0],{from:accounts[0]});
-        let result2 = await instance.checkProviderSupported(accounts[2],mockData.tokenAddresses[0],{from:accounts[0]});
-        let result3 = await instance.checkProviderSupported(accounts[3],mockData.tokenAddresses[0],{from:accounts[0]});
-        let result4 = await instance.checkProviderSupported(accounts[1],mockData.tokenAddresses[1],{from:accounts[0]});
-        let result5 = await instance.checkProviderSupported(accounts[2],mockData.tokenAddresses[1],{from:accounts[0]});
-        let result6 = await instance.checkProviderSupported(accounts[3],mockData.tokenAddresses[1],{from:accounts[0]});
+        let result1 = await instance.checkProviderSupported.call(accounts[1],mockData.tokenAddresses[0],{from:accounts[0]});
+        let result2 = await instance.checkProviderSupported.call(accounts[2],mockData.tokenAddresses[0],{from:accounts[0]});
+        let result3 = await instance.checkProviderSupported.call(accounts[3],mockData.tokenAddresses[0],{from:accounts[0]});
+        let result4 = await instance.checkProviderSupported.call(accounts[1],mockData.tokenAddresses[1],{from:accounts[0]});
+        let result5 = await instance.checkProviderSupported.call(accounts[2],mockData.tokenAddresses[1],{from:accounts[0]});
+        let result6 = await instance.checkProviderSupported.call(accounts[3],mockData.tokenAddresses[1],{from:accounts[0]});
         assert.equal(result1, true);
         assert.equal(result2, true);
         assert.equal(result3, false);
@@ -130,44 +130,44 @@ contract('PriceProvider', (accounts) => {
     it("Should be able to check price.", async () => {
         let instance  = await PriceProvider.deployed();
 
-        let result1 = await instance.getNewDefaultPrice(mockData.tokenAddresses[0],{from:accounts[0]});
+        let result1 = await instance.getNewDefaultPrice.call(mockData.tokenAddresses[0],{from:accounts[0]});
         assert.equal(result1.c[0],mockData.tokenTwoPrice[0]);
-        let result2 = await instance.getNewCustomPrice(accounts[2],mockData.tokenAddresses[0],{from:accounts[0]});
+        let result2 = await instance.getNewCustomPrice.call(accounts[2],mockData.tokenAddresses[0],{from:accounts[0]});
         assert.equal(result2.c[0],mockData.tokenOnePrice[0]);
     });
     it("Should be able to get nonce.", async () => {
         let instance  = await PriceProvider.deployed();
 
-        let result1 = await instance.GetNonce(accounts[1],mockData.tokenAddresses[0],{from:accounts[0]});
+        let result1 = await instance.GetNonce.call(accounts[1],mockData.tokenAddresses[0],{from:accounts[0]});
         assert.equal(result1.c[0],2);
-        let result2 = await instance.GetNonce(accounts[2],mockData.tokenAddresses[0],{from:accounts[0]});
+        let result2 = await instance.GetNonce.call(accounts[2],mockData.tokenAddresses[0],{from:accounts[0]});
         assert.equal(result2.c[0],2);
     });
 
     it("Should be able to checkTokenSupported.", async () => {
         let instance  = await PriceProvider.deployed();
 
-        let result1 = await instance.checkTokenSupported(mockData.tokenAddresses[0],{from:accounts[0]});
+        let result1 = await instance.checkTokenSupported.call(mockData.tokenAddresses[0],{from:accounts[0]});
         assert.equal(result1,true);
-        let result2 = await instance.checkTokenSupported(accounts[2],{from:accounts[0]});
+        let result2 = await instance.checkTokenSupported.call(accounts[2],{from:accounts[0]});
         assert.equal(result2,false);
     });
 
     it("Should be able to checkExchangeSupported.", async () => {
         let instance  = await PriceProvider.deployed();
 
-        let result1 = await instance.checkExchangeSupported(mockData.exchangesAddressHash[0],{from:accounts[0]});
+        let result1 = await instance.checkExchangeSupported.call(mockData.exchangesAddressHash[0],{from:accounts[0]});
         assert.equal(result1,true);
-        let result2 = await instance.checkExchangeSupported(accounts[2],{from:accounts[0]});
+        let result2 = await instance.checkExchangeSupported.call(accounts[2],{from:accounts[0]});
         assert.equal(result2,false);
     });
 
     it("Should be able to checkProviderSupported.", async () => {
         let instance  = await PriceProvider.deployed();
 
-        let result1 = await instance.checkProviderSupported(accounts[1],mockData.tokenAddresses[0],{from:accounts[0]});
+        let result1 = await instance.checkProviderSupported.call(accounts[1],mockData.tokenAddresses[0],{from:accounts[0]});
         assert.equal(result1,true);
-        let result2 = await instance.checkProviderSupported(accounts[3],mockData.tokenAddresses[0],{from:accounts[0]});
+        let result2 = await instance.checkProviderSupported.call(accounts[3],mockData.tokenAddresses[0],{from:accounts[0]});
         assert.equal(result2,false);
     });
     it("Should be able to changeDefaultProvider.", async () => {
