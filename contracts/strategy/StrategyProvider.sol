@@ -111,15 +111,16 @@ contract StrategyProvider is StrategyProviderInterface {
     function incrementStatistics(uint _index, uint _amountInEther) external returns (bool success){
         comboHub[_index].amount += _amountInEther;
         return true;
-    }  
-   // To clients
-    // function isPrivate(uint _index) public _checkIndex(_index) view returns(bool) {
-    //     return comboHub[_index].isPrivate;
-    // }
+    }
 
-//     function isOwner(uint _index) public _checkIndex(_index)  view returns(bool) {
-//         return comboOwner[_index] == msg.sender;
-//     }
+    function updateFollower(uint _index, bool follow) external returns (bool success){
+        if (follow) {
+            comboHub[_index].follower ++;
+        } else {
+            comboHub[_index].follower --;
+        }
+        return true;
+    }  
 
     function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool success) {
         require(_tokenAddresses.length == _weights.length);
