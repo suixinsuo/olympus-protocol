@@ -74,7 +74,7 @@ contract PriceProvider is Ownable {
 
     //Kyber address 
     address eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
-    address kyber = 0x0;
+    address kyber = 0x11542D7807DFb2B44937F756b9092c76e814F8eD;
     DecentralizationExchanges _kyber = DecentralizationExchanges(kyber);
   
     //实时价格记录
@@ -241,8 +241,9 @@ contract PriceProvider is Ownable {
     }
     
     //kyber
-    function getrates(address dest, uint srcQty)  public view returns (uint expectedRate, uint slippageRate){
-        ( expectedRate , slippageRate )  =  _kyber.getExpectedRate(eth_token, dest , srcQty);
+    function getrates(address dest, uint srcQty)  public view returns (uint expectedRate,uint slippageRate){
+        require(dest != 0x0);
+        (expectedRate,slippageRate ) = _kyber.getExpectedRate(eth_token, dest , srcQty);
         return(expectedRate,slippageRate);
     }
     
