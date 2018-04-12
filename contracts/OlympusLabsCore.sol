@@ -21,7 +21,7 @@ contract OlympusLabsCore is Manageable {
     event LogAddresses(address[] message);
     event LogNumbers(uint[] numbers);
 
-    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0xB31e55fec5704A9B09Cf2c1BA65A276Ec7a453B1));
+    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x864071486f4C71C7988b53DCEe1f7cEffa57EFcC));
     StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x49341fa51c75e66ea57e5b4eb99ca4d3608c5201));
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x88c80FcaAE06323e17DDCD4ff8E0Fbe06D9799e6));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0xc82cCeEF63e095A56D6Bb0C17c1F3ec58567aF1C));
