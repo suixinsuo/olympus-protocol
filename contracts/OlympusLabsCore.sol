@@ -23,7 +23,7 @@ contract OlympusLabsCore is Manageable {
 
     ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x864071486f4C71C7988b53DCEe1f7cEffa57EFcC));
     StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x49341fA51c75e66Ea57E5b4eb99Ca4d3608C5201));
-    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x6BD27b7eD6D9aEe0Be571c7a6ebf7F9DE0A84EfE));
+    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x38d88be510aC318a5E5c12dbd453c1C6F4ae385E));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0xc82cCeEF63e095A56D6Bb0C17c1F3ec58567aF1C));
     uint public feePercentage = 100;
     uint public constant DENOMINATOR = 10000;
@@ -85,12 +85,12 @@ contract OlympusLabsCore is Manageable {
     // Forward to Price smart contract.
     function getPrice(address tokenAddress, uint srcQty) public view returns (uint price){
         require(tokenAddress != address(0));
-        // (, price) = priceProvider.getrates(tokenAddress, srcQty);
-        return 100;
+        (, price) = priceProvider.getrates(tokenAddress, srcQty);
+        return price;
     }
 
     function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
-        require(strategyId >= 0);
+        require(strategyId != 0);
         uint totalLength;
 
         (,,,,,totalLength) = getStrategy(strategyId);
@@ -178,7 +178,6 @@ contract OlympusLabsCore is Manageable {
             if(weights[i] <= 0) {
                 continue;
             }
-            emit LogAddress(tokens[i]);
             // token has to be supported by exchange provider.
             if(!exchangeProvider.checkTokenSupported(ERC20(tokens[i]))){
                 emit Log("Exchange provider doesn't support");
@@ -194,20 +193,20 @@ contract OlympusLabsCore is Manageable {
             subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
             subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
 
-            // olympusStorage.addTokenDetails(
-            //     indexOrderId,
-            //     tokens[i], weights[i], subOrderTemp[0][i],
-            //     subOrderTemp[1][i], subOrderTemp[2][i], subOrderTemp[3][i]
-            // );
+            olympusStorage.addTokenDetails(
+                indexOrderId,
+                tokens[i], weights[i], subOrderTemp[0][i],
+                subOrderTemp[1][i], subOrderTemp[2][i], subOrderTemp[3][i]
+            );
 
-            // emit LogAddress(tokens[i]);
-            // emit LogNumber(subOrderTemp[0][i]);
-            // emit LogNumber(subOrderTemp[1][i]);
-            // require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
+            emit LogAddress(tokens[i]);
+            emit LogNumber(subOrderTemp[0][i]);
+            emit LogNumber(subOrderTemp[1][i]);
+            require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
         }
 
         emit LogNumber(amounts[2]);
-        // require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
+        require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
         // todo: send ethers to the clearing center.
         return indexOrderId;
