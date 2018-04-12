@@ -12,6 +12,13 @@ import "../libs/itMaps.sol";
 //     hash(provider_address,TokenAddress,ExchangeHash),price;
 //   )
 
+contract DecentralizationExchanges {
+    //Kyber
+    function getExpectedRate(address src, address dest, uint srcQty) external view returns (uint expectedRate, uint slippageRate);
+}
+
+
+
 contract PriceProviderInterface {
     
     function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
@@ -64,9 +71,11 @@ contract PriceProvider is Ownable {
     address[] internal _TOKEN;
     //token address
     mapping(address =>address[]) internal _Provider;
-   
-  
-  
+
+    //Kyber address 
+    address eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+    address kyber = 0x0;
+    DecentralizationExchanges _kyber = DecentralizationExchanges(kyber);
   
     //实时价格记录
     //(Provider => (Token => Price))
@@ -230,6 +239,13 @@ contract PriceProvider is Ownable {
 
         return true;
     }
+    
+    //kyber
+    function getrates(address dest, uint srcQty)  public view returns (uint expectedRate, uint slippageRate){
+        ( expectedRate , slippageRate )  =  _kyber.getExpectedRate(eth_token, dest , srcQty);
+        return(expectedRate,slippageRate);
+    }
+    
     //修改默认Provider
     
     function changeDefaultProviders(address _newProvider,address _tokenAddress) public onlyOwner returns(bool success) {
