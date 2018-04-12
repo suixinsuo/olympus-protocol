@@ -6,9 +6,10 @@ const PriceProvider = artifacts.require("../contracts/price/PriceProvider.sol");
 const ExchangeAdapterManager = artifacts.require("../contracts/exchange/ExchangeAdapterManager.sol");
 const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
 
+const OlympusStorage = artifacts.require("../contracts/storage/OlympusStorage.sol");
+
 const MockKyberNetwork = artifacts.require("../contracts/exchange/exchanges/MockKyberNetwork.sol");
 const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/KyberNetworkExchange.sol");
-const tokenNum = 2;
 
 const Web3 = require('web3');
 const web3 = new Web3();
@@ -26,12 +27,14 @@ const mockData = {
     weights: [80,20],
     follower: 0,
     amount: 0,
-    exchangeId: "0x0000000000000000000000000000000000000000000000000000000000000000" 
+    exchangeId: "0x0000000000000000000000000000000000000000000000000000000000000000",
+    minTradeFeeInWei: 2000000, 
+    maxTradeFeeInWei: 3000000 
 }
 contract('Olympus-Protocol', function(accounts) {
     it("They should be able to deploy.", function() {
         return Promise.all([
-        // KyberMock.deployed(),
+        OlympusStorage.deployed(),
         PriceProvider.deployed(),
         StrategyProvider.deployed(),
         //   Exchange.deployed(),
@@ -59,6 +62,12 @@ contract('Olympus-Protocol', function(accounts) {
 
         let instance = await Core.deployed();
         let result = await instance.setProvider(2, exchangeInstance.address);
+
+
+        let srcAmountETH = 1;
+        let totalSrcAmountETH = srcAmountETH * tokens.length;
+
+        await kyberExchange.send(web3.toWei(totalSrcAmountETH, 'ether'));
         assert.equal(result.receipt.status, '0x01');                                      
     })
 
@@ -172,9 +181,20 @@ contract('Olympus-Protocol', function(accounts) {
         assert.equal(result1.toNumber(), mockData.tokenTwoPrice[0]);
     })
 
+    //storage provider
+
+    it("should be able to set a storage provider.", async () => {
+        let instance = await Core.deployed();
+        let storageInstance = await OlympusStorage.deployed();
+
+        let result = await instance.setProvider(3, storageInstance.address);
+        assert.equal(result.receipt.status, '0x01');                                  
+    })
+    
+
     it("should be able to adjustTradeRange.", async () => {
         let instance = await Core.deployed();
-        let result = await instance.adjustTradeRange(2000000,3000000, {from:accounts[0]});
+        let result = await instance.adjustTradeRange(mockData.minTradeFeeInWei, mockData.maxTradeFeeInWei, {from:accounts[0]});
         assert.equal(result.receipt.status, '0x01');
     })
 
@@ -188,10 +208,27 @@ contract('Olympus-Protocol', function(accounts) {
         let instance = await Core.deployed();
 
         let result = await instance.buyIndex(0, accounts[1], {from:accounts[0], value: 3000000});
-        console.log(result);
-        // assert.equal(result0.toNumber(), mockData.tokenOnePrice[0]);
+        assert.equal(result.receipt.status, '0x01');
     })
 
+    it("should be able to get index order.", async () => {
+        let instance = await Core.deployed();
+        //TODO set the orderId to 1000000 
+        let result = await instance.getIndexOrder(1000000);
+        assert.equal(result[0].toNumber(), 0);
+        // assert.equal(result[1].toString(), 0);
+        // assert.equal(result[2].toString(), 0);
+        assert.equal(result[3].toNumber(), mockData.maxTradeFeeInWei);
+        assert.equal(result[4].toNumber(), mockData.tokenAddresses.length);
+    })
 
+    it("should be able to getSubOrderStatus.", async () => {
+        let instance = await Core.deployed();
+
+        //TODO set the orderId to 1000000 
+        let result = await instance.getSubOrderStatus(1000000, mockData.tokenAddresses[0]);
+
+        assert.equal(result.toNumber(), 3);
+    })
 
 })
