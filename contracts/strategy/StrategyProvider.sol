@@ -121,7 +121,7 @@ contract StrategyProvider is StrategyProviderInterface {
 //         return comboOwner[_index] == msg.sender;
 //     }
 
-    function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool) {
+    function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool success) {
         require(_tokenAddresses.length == _weights.length);
         uint total = 0;
         for (uint i = 0; i < _weights.length; ++i) {

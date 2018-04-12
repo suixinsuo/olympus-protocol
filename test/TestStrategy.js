@@ -35,7 +35,7 @@ contract('Olympus-Protocol-strategy', (accounts) => {
 
     it("Should be able to get a strategy.", async () => {
         let instance  = await Strategy.deployed();
-        let result = await instance.getStrategy(0);
+        let result = await instance.getStrategy.call(0);
 
         assert.equal(result[0].toNumber(), 0);                                            //asert id
         assert.equal(web3.toAscii(result[1]).replace(/\0/g, ''), mockData.name);          //asert name
@@ -48,21 +48,21 @@ contract('Olympus-Protocol-strategy', (accounts) => {
 
     it("Should be able to get strategies.", async () => {
         let instance  = await Strategy.deployed();
-        let result = await instance.getStrategies(accounts[0]);
+        let result = await instance.getStrategies.call(accounts[0]);
 
         assert.equal(result[0].toNumber(), 0);                                            //asert id
     })
 
     it("Should be able to get my strategies.", async () => {
         let instance  = await Strategy.deployed();
-        let result = await instance.getMyStrategies({from: accounts[0]});
+        let result = await instance.getMyStrategies.call({from: accounts[0]});
 
         assert.equal(result[0].toNumber(), 0);                                            //asert id
     })
 
     it("Should be able to get strategy token by index.", async () => {
         let instance  = await Strategy.deployed();
-        let result = await instance.getStrategyTokenByIndex(0,0);
+        let result = await instance.getStrategyTokenByIndex.call(0,0);
 
         assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[0].toLowerCase());                              //token
         assert.equal(result[1].toNumber(), mockData.weights[0]);                          //weight
@@ -70,14 +70,14 @@ contract('Olympus-Protocol-strategy', (accounts) => {
 
     it("Should be able to get strategy token count by index.", async () => {
         let instance  = await Strategy.deployed();
-        let result = await instance.getStrategyTokenCount(0);
+        let result = await instance.getStrategyTokenCount.call(0);
 
         assert.equal(result.toNumber(), 2);                          //token length
     })
 
     it("Should be able to get strategy count.", async () => {
         let instance  = await Strategy.deployed();
-        let result = await instance.getStrategyCount();
+        let result = await instance.getStrategyCount.call();
 
         assert.equal(result.toNumber(), 1);                          //strategy count
     })
