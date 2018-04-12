@@ -4,3 +4,6 @@ build
 .idea./build/
 coverage
 coverage.json
+coverageEnv
+.node-xml*
+scTopics
