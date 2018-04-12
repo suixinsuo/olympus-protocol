@@ -8,7 +8,8 @@ library TypeDefinitions {
         Strategy,
         Price,
         Exchange,
-        Storage
+        Storage,
+        ExtendedStorage
     }
 
     struct ProviderStatistic {
