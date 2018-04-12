@@ -88,13 +88,13 @@ contract('Olympus-Protocol', function(accounts) {
 
     it("should be able to get a strategy count.", async () => {
         let instance = await Core.deployed();
-        let result = await instance.getStrategyCount();
+        let result = await instance.getStrategyCount.call();
         assert.equal(result.toNumber(), 1);                                  
     })
 
     it("should be able to get a strategy by index.", async () => {
         let instance = await Core.deployed();
-        let result = await instance.getStrategy(0);
+        let result = await instance.getStrategy.call(0);
 
         assert.equal(result[0], mockData.name);          //asert name
         assert.equal(result[1], mockData.description);   //asert description
@@ -107,12 +107,12 @@ contract('Olympus-Protocol', function(accounts) {
 
     it("should be able to get a getStrategyTokenAndWeightByIndex.", async () => {
         let instance = await Core.deployed();
-        let result = await instance.getStrategyTokenAndWeightByIndex(0,0);
+        let result = await instance.getStrategyTokenAndWeightByIndex.call(0,0);
 
         assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[0].toLowerCase());          //asert name
         assert.equal(result[1].toNumber(), mockData.weights[0]);   //asert description
 
-        result = await instance.getStrategyTokenAndWeightByIndex(0,1);
+        result = await instance.getStrategyTokenAndWeightByIndex.call(0,1);
 
         assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[1].toLowerCase());          //asert name
         assert.equal(result[1].toNumber(), mockData.weights[1]);   //asert description
@@ -165,8 +165,8 @@ contract('Olympus-Protocol', function(accounts) {
 
     it("should be able to get price.", async () => {
         let instance = await Core.deployed();
-        let result0 = await instance.getPrice(mockData.tokenAddresses[0]);
-        let result1 = await instance.getPrice(mockData.tokenAddresses[1]);
+        let result0 = await instance.getPrice.call(mockData.tokenAddresses[0]);
+        let result1 = await instance.getPrice.call(mockData.tokenAddresses[1]);
 
         assert.equal(result0.toNumber(), mockData.tokenOnePrice[0]);
         assert.equal(result1.toNumber(), mockData.tokenTwoPrice[0]);
@@ -174,8 +174,8 @@ contract('Olympus-Protocol', function(accounts) {
 
     it("should be able to get strategy token price.", async () => {
         let instance = await Core.deployed();
-        let result0 = await instance.getStragetyTokenPrice(0,0);
-        let result1 = await instance.getStragetyTokenPrice(0,1);
+        let result0 = await instance.getStragetyTokenPrice.call(0,0);
+        let result1 = await instance.getStragetyTokenPrice.call(0,1);
 
         assert.equal(result0.toNumber(), mockData.tokenOnePrice[0]);
         assert.equal(result1.toNumber(), mockData.tokenTwoPrice[0]);
@@ -214,7 +214,7 @@ contract('Olympus-Protocol', function(accounts) {
     it("should be able to get index order.", async () => {
         let instance = await Core.deployed();
         //TODO set the orderId to 1000000 
-        let result = await instance.getIndexOrder(1000000);
+        let result = await instance.getIndexOrder.call(1000000);
         assert.equal(result[0].toNumber(), 0);
         // assert.equal(result[1].toString(), 0);
         // assert.equal(result[2].toString(), 0);
@@ -226,7 +226,7 @@ contract('Olympus-Protocol', function(accounts) {
         let instance = await Core.deployed();
 
         //TODO set the orderId to 1000000 
-        let result = await instance.getSubOrderStatus(1000000, mockData.tokenAddresses[0]);
+        let result = await instance.getSubOrderStatus.call(1000000, mockData.tokenAddresses[0]);
 
         assert.equal(result.toNumber(), 3);
     })
