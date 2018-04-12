@@ -96,4 +96,20 @@ contract('Olympus-Protocol-strategy', (accounts) => {
         assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);      
     })
 
+    it("Should be able to update follower.", async () => {
+        let instance  = await Strategy.deployed();
+        //follow strategy
+        let result = await instance.updateFollower(0, true);
+        let resStrategy = await instance.getStrategy.call(0);
+
+        assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);      
+        assert.equal(resStrategy[4].toNumber(), 1);                            //asert follower
+
+        //unfollow strategy
+        result = await instance.updateFollower(0, false);
+        resStrategy = await instance.getStrategy.call(0);
+
+        assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);      
+        assert.equal(resStrategy[4].toNumber(), 0);                            //asert follower
+    })
 });
