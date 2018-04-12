@@ -21,10 +21,10 @@ contract OlympusLabsCore is Manageable {
     event LogAddresses(address[] message);
     event LogNumbers(uint[] numbers);
 
-    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0xB31e55fec5704A9B09Cf2c1BA65A276Ec7a453B1));
-    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x44F961821Bdb76eB2D8B06193F86f64a4C2bBDb8));
+    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x864071486f4C71C7988b53DCEe1f7cEffa57EFcC));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x49341fa51c75e66ea57e5b4eb99ca4d3608c5201));
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x88c80FcaAE06323e17DDCD4ff8E0Fbe06D9799e6));
-    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x5B9eD7b79c551dCDdEd7E196F34d5c9D071551f8));
+    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0xc82cCeEF63e095A56D6Bb0C17c1F3ec58567aF1C));
     uint public feePercentage = 100;
     uint public constant DENOMINATOR = 10000;
 
@@ -101,9 +101,9 @@ contract OlympusLabsCore is Manageable {
         return getPrice(token);
     }
 
-    function setProvider(uint8 _name, address _providerAddress) public onlyOwner returns (bool success) {
-        bool result = super.setProvider(_name, _providerAddress);
-        TD.ProviderType _type = TD.ProviderType(_name);
+    function setProvider(uint8 _id, address _providerAddress) public onlyOwner returns (bool success) {
+        bool result = super.setProvider(_id, _providerAddress);
+        TD.ProviderType _type = TD.ProviderType(_id);
 
         if(_type == TD.ProviderType.Strategy) {
             emit Log("StrategyProvider");
@@ -115,10 +115,10 @@ contract OlympusLabsCore is Manageable {
             emit Log("PriceProvider");
             priceProvider = PriceProviderInterface(_providerAddress);
         } else if(_type == TD.ProviderType.Storage) {
-            emit Log("olympusStorage");
+            emit Log("StorageProvider");
             olympusStorage = OlympusStorageInterface(_providerAddress);
-        } else {
-            emit Log("Unknow provider tyep supplied.");
+          } else {
+            emit Log("Unknown provider type supplied.");
             revert();
         }
 
@@ -212,6 +212,10 @@ contract OlympusLabsCore is Manageable {
 
     function initializeArray(uint length) private pure returns (uint[]){
         return new uint[](length);
+    }
+
+    function resetOrderIdTo(uint _start) external onlyOwner returns (uint) {
+        return olympusStorage.resetOrderIdTo(_start);
     }
 
     // For app/3rd-party clients to check details / status.

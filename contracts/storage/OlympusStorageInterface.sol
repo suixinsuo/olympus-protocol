@@ -1,8 +1,9 @@
 pragma solidity ^0.4.19;
 import "../exchange/ExchangeProviderInterface.sol";
+import "../libs/Ownable.sol";
 import { StorageTypeDefinitions as STD } from "./OlympusStorage.sol";
 
-contract OlympusStorageInterface {
+contract OlympusStorageInterface is Ownable {
 
     function addTokenDetails(
         uint indexOrderId, address token, uint weight, uint estimatedPrice,
@@ -45,4 +46,17 @@ contract OlympusStorageInterface {
 
     function updateOrderStatus(uint _orderId, STD.OrderStatus _status)
         external returns (bool success);
+
+    function resetOrderIdTo(uint _orderId) external returns(uint);
+
+    function addCustomField(
+        uint _orderId,
+        bytes32 key,
+        bytes32 value
+        ) external returns (bool success);
+
+    function getCustomField(
+        uint _orderId,
+        bytes32 key
+        ) external view returns (bytes32 result);
 }
