@@ -16,7 +16,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
 
     it("should be able to create a admin.", async () => {
         let instance  = await Permission.deployed({from:accounts[0]});
-        let result = await instance.hasRole(accounts[0], "admin");
+        let result = await instance.hasRole.call(accounts[0], "admin");
 
         assert.equal(result, true);
     })
@@ -24,7 +24,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     it("should be able to create a role.", async () => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminAddRole(accounts[1], "strategyOwner", {from:accounts[0]});
-        let resHasRole = await instance.hasRole(accounts[1], "strategyOwner");
+        let resHasRole = await instance.hasRole.call(accounts[1], "strategyOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, true);
@@ -33,7 +33,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     it("should be able to remove a role.", async () => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminRemoveRole(accounts[1], "strategyOwner", {from:accounts[0]});
-        let resHasRole = await instance.hasRole(accounts[1], "strategyOwner");
+        let resHasRole = await instance.hasRole.call(accounts[1], "strategyOwner");
     
         assert.equal(result.receipt.status, 1);
         assert.equal(resHasRole, false);
@@ -41,7 +41,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
 
     it("should be able to check a role.", async () => {
         let instance  = await Permission.deployed({from:accounts[0]});
-        let resHasRole = await instance.checkRole(accounts[0], "admin");
+        let resHasRole = await instance.checkRole.call(accounts[0], "admin");
    
         assert.equal(resHasRole.length, 0);
     })
@@ -51,7 +51,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminAddStrategyOwner(accounts[1], {from:accounts[0]});
 
-        let resHasRole = await instance.hasRole(accounts[1], "StrategyOwner");
+        let resHasRole = await instance.hasRole.call(accounts[1], "StrategyOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, true);
@@ -61,7 +61,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminRemoveStrategyOwner(accounts[1], {from:accounts[0]});
 
-        let resHasRole = await instance.hasRole(accounts[1], "StrategyOwner");
+        let resHasRole = await instance.hasRole.call(accounts[1], "StrategyOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, false);
@@ -71,7 +71,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminAddPriceOwner(accounts[2], {from:accounts[0]});
 
-        let resHasRole = await instance.hasRole(accounts[2], "PriceOwner");
+        let resHasRole = await instance.hasRole.call(accounts[2], "PriceOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, true);
@@ -81,7 +81,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminRemovePriceOwner(accounts[2], {from:accounts[0]});
 
-        let resHasRole = await instance.hasRole(accounts[2], "PriceOwner");
+        let resHasRole = await instance.hasRole.call(accounts[2], "PriceOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, false);
@@ -91,7 +91,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminAddExchangeOwner(accounts[3], {from:accounts[0]});
 
-        let resHasRole = await instance.hasRole(accounts[3], "ExchangeOwner");
+        let resHasRole = await instance.hasRole.call(accounts[3], "ExchangeOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, true);
@@ -101,7 +101,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminRemoveExchangeOwner(accounts[3], {from:accounts[0]});
 
-        let resHasRole = await instance.hasRole(accounts[3], "ExchangeOwner");
+        let resHasRole = await instance.hasRole.call(accounts[3], "ExchangeOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, false);
@@ -111,7 +111,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminAddStorageOwner(accounts[4], {from:accounts[0]});
 
-        let resHasRole = await instance.hasRole(accounts[4], "StorageOwner");
+        let resHasRole = await instance.hasRole.call(accounts[4], "StorageOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, true);
@@ -121,7 +121,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
         let instance  = await Permission.deployed({from:accounts[0]});
         let result = await instance.adminRemoveStorageOwner(accounts[4], {from:accounts[0]});
 
-        let resHasRole = await instance.hasRole(accounts[4], "StorageOwner");
+        let resHasRole = await instance.hasRole.call(accounts[4], "StorageOwner");
 
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, false);
