@@ -15,5 +15,6 @@ contract PriceProviderInterface {
     function checkExchangeSupported(bytes32 Exchanges)  public view returns(bool success);
 
     function checkProviderSupported(address providerAddress,address tokenAddress)  public view returns(bool success);
- 
+    
+    function getrates(address dest, uint srcQty)  public view returns (uint expectedRate, uint slippageRate);
 }
