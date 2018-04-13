@@ -25,6 +25,7 @@ function deployOnDev(deployer, num) {
     }).then(() => {
         return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
     }).then(() => {
+        // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
         return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
     }).then(() => {
         return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
@@ -54,6 +55,7 @@ function deployExchangeProviderWrap(deployer, network) {
     }).then(() => {
         return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
     }).then(() => {
+        // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
         return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
     }).then(() => {
         return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
@@ -78,5 +80,5 @@ module.exports = function (deployer, network) {
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })
-  
+
 }
