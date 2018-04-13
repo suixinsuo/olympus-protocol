@@ -2,9 +2,10 @@ pragma solidity ^0.4.21;
 
 //这个合约控制数据库
 
-import "../libs/Ownable.sol";
+// import "../libs/Ownable.sol";
 import "../libs/SafeMath.sol";
 import "../libs/itMaps.sol";
+import "../permission/PermissionProviderInterface.sol";
 
 // 正式合约
 // 思路是：
@@ -37,7 +38,7 @@ contract PriceProviderInterface {
  
 }
 
-contract PriceProvider is Ownable {
+contract PriceProvider {
 
   //防止计算下坠攻击
   //using math for SafeMath;
@@ -103,6 +104,17 @@ contract PriceProvider is Ownable {
   
   //初始化数据库
     itMaps.itMapBytes32Uint priceData;
+    
+    PermissionProviderInterface internal permissionProvider;
+
+    modifier onlyOwner() {
+        require(permissionProvider.hasPriceOwner(msg.sender));
+        _;
+    }
+    
+    function PriceProvider (address _permissionProvider) public {
+        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+    }
 
     function () public payable {
         revert();
