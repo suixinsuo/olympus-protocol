@@ -7,6 +7,7 @@ import "./libs/Converter.sol";
 import "./exchange/ExchangeProviderInterface.sol";
 import "./price/PriceProviderInterface.sol";
 import "./strategy/StrategyProviderInterface.sol";
+import "./permission/PermissionProviderInterface.sol";
 import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
 import { TypeDefinitions as TD, Provider } from "./libs/Provider.sol";
 
@@ -34,6 +35,17 @@ contract OlympusLabsCore is Manageable {
     modifier allowProviderOnly(TD.ProviderType _type) {
         require(msg.sender == subContracts[uint8(_type)]);
         _;
+    }
+
+    modifier onlyOwner() {
+        require(permissionProvider.hasPriceOwner(msg.sender));
+        _;
+    }
+    
+    PermissionProviderInterface internal permissionProvider;
+
+    function OlympusLabsCore(address _permissionProvider) public {
+        permissionProvider = PermissionProviderInterface(_permissionProvider); 
     }
 
     function() payable public {
