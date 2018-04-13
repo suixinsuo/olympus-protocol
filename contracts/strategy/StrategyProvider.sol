@@ -120,12 +120,12 @@ contract StrategyProvider is StrategyProviderInterface {
     }
 
     //TODO require core contract address
-    function incrementStatistics(uint _index, uint _amountInEther) onlyCore external returns (bool success){
+    function incrementStatistics(uint _index, uint _amountInEther) external  onlyCore returns (bool success){
         comboHub[_index].amount += _amountInEther;
         return true;
     }
     //TODO require core contract address
-    function updateFollower(uint _index, bool follow) onlyCore external returns (bool success){
+    function updateFollower(uint _index, bool follow) external onlyCore returns (bool success){
         if (follow) {
             comboHub[_index].follower ++;
         } else {
