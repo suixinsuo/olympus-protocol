@@ -13,8 +13,9 @@ interface IExchangeProvider{
 }
 
 interface IExchangeAdapterManager {
-    function pickExchange(ERC20 token, uint amount, uint rate) external view returns (address exchange);
+    function pickExchange(ERC20 token, uint amount, uint rate) external view returns (bytes32 exchangeId);
     function checkTokenSupported(ERC20 token) external view returns(bool);
+    function getExchangeAdapter(bytes32 exchangeId) external view returns(address);
 }
 
 interface IAdapterOrderCallback{
@@ -25,7 +26,7 @@ interface IAdapterOrderCallback{
 interface IExchangeAdapter{
 
     // 成功返回Adapter自己定义的adapter's order id, 跟orderId无关
-    function placeOrder(ERC20 dest, uint amount, uint rate, address deposit) external payable returns(uint adapterOrderId);
+    function placeOrder(bytes32 exchangeId, ERC20 dest, uint amount, uint rate, address deposit) external payable returns(uint adapterOrderId);
 
     // 订单成功后付款
     function payOrder(uint adapterOrderId) external payable returns(bool);
@@ -38,6 +39,10 @@ interface IExchangeAdapter{
     /// >0 : current exchange rate
     /// =0 : not support
     /// <0 : support but doesn't know rate
-    function getRate(ERC20 token, uint amount) external view returns (int);
-    function isEnabled() external view returns (bool);
+    function getRate(bytes32 exchangeId, ERC20 token, uint amount) external view returns (int);
+    function isEnabled(bytes32 _id) external view returns (bool);
+
+    function getExchange(bytes32 _id) external view returns(bytes32 name, uint status);
+
+    function addExchange(bytes32 _id, bytes32 _name) external returns(bool);
 }

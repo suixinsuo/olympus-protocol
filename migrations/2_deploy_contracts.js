@@ -7,6 +7,7 @@ var olympusStorage = artifacts.require("./storage/OlympusStorage.sol");
 var PriceProvider = artifacts.require("./price/PriceProvider.sol");
 var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol")
 var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
+
 module.exports = function (deployer) {
   deployer.deploy(Core);
   deployer.deploy(StrategyProvider);

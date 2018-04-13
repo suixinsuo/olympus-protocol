@@ -57,7 +57,7 @@ contract('Olympus-Protocol', function(accounts) {
         mockData.tokenAddresses[1] = tokens[1];
 
         let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        await manager.registerExchange(kyberExchange.address);
+        await manager.addExchange("kyber", kyberExchange.address);
         let exchangeInstance = await ExchangeProvider.new(manager.address);
 
         let instance = await Core.deployed();

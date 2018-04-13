@@ -14,8 +14,12 @@ function deployOnDev(deployer, num) {
     }).then(() => {
         return deployer.deploy(KyberNetworkExchange, MockKyberNetwork.address);
     }).then(() => {
-        return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
+        return deployer.deploy(ExchangeAdapterManager);
     }).then(() => {
+        return ExchangeAdapterManager.deployed();
+    }).then((instance) => {
+        return instance.addExchange("kyber", KyberNetworkExchange.address);
+    }).then((res) => {
         return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
     }).then(() => {
         return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
@@ -52,6 +56,5 @@ function deployExchangeProviderWrap(deployer, network) {
 }
 
 module.exports = function (deployer, network) {
-    return;
     deployExchangeProviderWrap(deployer, network);
 };

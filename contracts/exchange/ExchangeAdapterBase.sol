@@ -1,6 +1,7 @@
 pragma solidity ^0.4.17;
+import "../libs/utils.sol";
 
-contract ExchangeAdapterBase {
+contract ExchangeAdapterBase is Utils{
     
     enum Status {
         ENABLED, 
