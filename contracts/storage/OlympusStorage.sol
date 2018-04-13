@@ -49,21 +49,26 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
 
     function addTokenDetails(
         uint indexOrderId,
-        address token,
-        uint weight,
-        uint estimatedPrice,
-        uint dealtPrice,
-        uint totalTokenAmount,
-        uint completedTokenAmount
+        address[] tokens,
+        uint[] weights,
+        uint[] totalTokenAmounts,
+        uint[] estimatedPrices
     ) external {
-        orders[indexOrderId].tokens.push(token);
-        orders[indexOrderId].weights.push(weight);
-        orders[indexOrderId].estimatedPrices.push(estimatedPrice);
-        orders[indexOrderId].dealtPrices.push(dealtPrice);
-        orders[indexOrderId].totalTokenAmounts.push(totalTokenAmount);
-        orders[indexOrderId].completedTokenAmounts.push(completedTokenAmount);
-        orders[indexOrderId].subStatuses.push(ExchangeProviderInterface.MarketOrderStatus.Pending);
-        orderTokenAmounts[indexOrderId][token] = weight;
+        IndexOrder memory order = orders[indexOrderId];
+        order.tokens = tokens;
+        order.weights = weights;
+        order.estimatedPrices = estimatedPrices;
+        order.totalTokenAmounts = totalTokenAmounts;
+
+        uint i;
+        for (i = 0; i < tokens.length; i++ ) {
+            order.subStatuses[i] = ExchangeProviderInterface.MarketOrderStatus.Pending;
+            orderTokenAmounts[indexOrderId][tokens[i]] = weights[i];
+            order.dealtPrices[i] = 0;
+            order.completedTokenAmounts[i] = 0;
+        }
+
+        orders[indexOrderId] = order;
     }
 
     function addOrderBasicFields(
