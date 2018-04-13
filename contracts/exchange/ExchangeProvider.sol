@@ -4,9 +4,10 @@ import "./Interfaces.sol";
 import "./ExchangeProviderInterface.sol";
 import "./ExchangeAdapterBase.sol";
 import "../libs/utils.sol";
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../permission/PermissionProviderInterface.sol";
+// import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Utils, Ownable {
+contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Utils {
 
 
     IMarketOrderCallback marketOrderCallback;
@@ -28,9 +29,17 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
     mapping (bytes32 => uint ) adapterOrders; // sha3(exchange, uint) => orderId
 
     mapping (uint => uint) public balances;
+    PermissionProviderInterface internal permissionProvider;
 
+    modifier onlyOwner() {
+        require(permissionProvider.hasPriceOwner(msg.sender));
+        _;
+    }
+    
+    // function ExchangeProvider(address _exchangeManager, address _permissionProvider) public {
     function ExchangeProvider(address _exchangeManager) public {
         exchangeManager = IExchangeAdapterManager(_exchangeManager);
+        // permissionProvider = PermissionProviderInterface(_permissionProvider); 
     }
 
     function setMarketOrderCallback(IMarketOrderCallback _callback) public {

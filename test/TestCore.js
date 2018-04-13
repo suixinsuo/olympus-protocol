@@ -5,7 +5,8 @@ const PriceProvider = artifacts.require("../contracts/price/PriceProvider.sol");
 // const Exchange = artifacts.require("../contracts/exchange/ExchangeProviderWrap.sol");
 const ExchangeAdapterManager = artifacts.require("../contracts/exchange/ExchangeAdapterManager.sol");
 const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
-var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
+
 const OlympusStorage = artifacts.require("../contracts/storage/OlympusStorage.sol");
 const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token.sol");
 const MockKyberNetwork = artifacts.require("../contracts/exchange/exchanges/MockKyberNetwork.sol");
@@ -49,7 +50,7 @@ contract('Olympus-Protocol', function(accounts) {
         OlympusStorage.deployed(),
         PriceProvider.deployed(),
         StrategyProvider.deployed(),
-        //   Exchange.deployed(),
+        PermissionProvider.deployed(),
         Core.deployed(),
         ])
         .spread((/*price, strategy, exchange,*/ core) =>  {
@@ -150,6 +151,8 @@ contract('Olympus-Protocol', function(accounts) {
 
     it("should be able to set a exchange provider.", async () => {
 
+        let permissionInstance = await PermissionProvider.deployed();
+
         let manager = await ExchangeAdapterManager.new(0);
         let mockKyber = await MockKyberNetwork.new(2);
         let tokens = await mockKyber.supportedTokens();
@@ -160,6 +163,7 @@ contract('Olympus-Protocol', function(accounts) {
         let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
         await manager.registerExchange(kyberExchange.address);
         let exchangeInstance = await ExchangeProvider.new(manager.address);
+        // let exchangeInstance = await ExchangeProvider.new(manager.address, permissionInstance.address);
 
         let instance = await Core.deployed();
         let result = await instance.setProvider(2, exchangeInstance.address);

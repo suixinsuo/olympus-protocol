@@ -3,15 +3,15 @@ const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/
 const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token.sol");
 const ExchangeAdapterManager = artifacts.require("../contracts/exchange/ExchangeAdapterManager.sol");
 const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
 
 const tokenNum = 3;
 const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
-
+const Promise = require('bluebird');
 contract('MockKyberNetwork', (accounts) => {
 
     it("MockKyberNetwork should be able to trade.", async () => {
-
         let mockKyber = await MockKyberNetwork.new(tokenNum);
         let tokens = await mockKyber.supportedTokens();
         assert.equal(tokens.length, tokenNum);
@@ -200,13 +200,22 @@ const MarketOrderStatusCancelled = 4;
 const MarketOrderStatusErrored = 5;
 
 contract('ExchangeProvider', (accounts) => {
-
+    it("They should be able to deploy.", function() {
+        return Promise.all([
+        PermissionProvider.deployed(),
+        ])
+        .spread((/*price, strategy, exchange,*/ core) =>  {
+        assert.ok(core, 'Permission contract is not deployed.');
+        });
+    });
     it("test placeOrder", async () => {
+        let permissionInstance = await PermissionProvider.deployed(); 
 
         let manager = await ExchangeAdapterManager.new(0);
         let mockKyber = await MockKyberNetwork.new(tokenNum);
         let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
         await manager.registerExchange(kyberExchange.address);
+        // let exchangeProvider = await ExchangeProvider.new(manager.address, permissionInstance.address);
         let exchangeProvider = await ExchangeProvider.new(manager.address);
         let tokens = await mockKyber.supportedTokens();
         let srcAmountETH = 1;
