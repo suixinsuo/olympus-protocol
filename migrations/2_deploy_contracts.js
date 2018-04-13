@@ -4,7 +4,7 @@ var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol"
 var PriceProvider = artifacts.require("./price/PriceProvider.sol");
 var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol")
 var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
-let premissionInstance;
+let premissionInstance, coreInstance;
 
 
 const KyberConfig = require('../scripts/libs/kyber_config');
@@ -25,6 +25,7 @@ function deployOnDev(deployer, num) {
     }).then(() => {
         return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
     }).then(() => {
+        // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
         return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
     }).then(() => {
         return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
@@ -54,6 +55,7 @@ function deployExchangeProviderWrap(deployer, network) {
     }).then(() => {
         return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
     }).then(() => {
+        // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
         return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
     }).then(() => {
         return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
@@ -62,15 +64,15 @@ function deployExchangeProviderWrap(deployer, network) {
 
 module.exports = function (deployer, network) {
 
-  deployer.then(() => {
-    premissionInstance = deployer.deploy(PermissionProvider);
-    return premissionInstance;
+  deployer.then( () => {
+    return deployer.deploy(PermissionProvider);
+  }).then((err, result) => {
+    return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {
-    return deployer.deploy(StrategyProvider, PermissionProvider.address);
+    console.log(Core.address);
+    return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
   }).then(() => {
     return deployer.deploy(PriceProvider, PermissionProvider.address);
-  }).then(() => {
-    return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExtendedStorage, PermissionProvider.address);
   }).then(() => {
@@ -78,5 +80,5 @@ module.exports = function (deployer, network) {
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })
-  
+
 }
