@@ -14,9 +14,15 @@ contract StrategyProvider is StrategyProviderInterface {
     event ComboUpdated(uint id, string name);
 
     PermissionProviderInterface internal permissionProvider;
+    address coreAddress;
 
-    function StrategyProvider(address _permissionProvider) public {
+    modifier onlyCore() {
+        require(msg.sender == coreAddress);
+        _;
+    }
+    function StrategyProvider(address _permissionProvider, address _core) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider); 
+        coreAddress = _core;
     }
 
     function getStrategyCount() public view returns (uint length){
@@ -114,12 +120,12 @@ contract StrategyProvider is StrategyProviderInterface {
     }
 
     //TODO require core contract address
-    function incrementStatistics(uint _index, uint _amountInEther) external returns (bool success){
+    function incrementStatistics(uint _index, uint _amountInEther) onlyCore external returns (bool success){
         comboHub[_index].amount += _amountInEther;
         return true;
     }
     //TODO require core contract address
-    function updateFollower(uint _index, bool follow) external returns (bool success){
+    function updateFollower(uint _index, bool follow) onlyCore external returns (bool success){
         if (follow) {
             comboHub[_index].follower ++;
         } else {
