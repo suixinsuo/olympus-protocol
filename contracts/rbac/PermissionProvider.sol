@@ -29,63 +29,63 @@ contract PermissionProvider is PermissionProviderInterface {
         return true;
     }
 
-    // function adminAddCoreOwner(address _addr) onlyAdmin public {
-    //     adminAddRole(_addr, "CoreOwner");
-    // }
+    function adminAddCoreOwner(address _addr) onlyAdmin public {
+        adminAddRoleControl(_addr, "CoreOwner");
+    }
 
-    // function adminRemoveCoreOwner(address _addr) onlyAdmin public{
-    //     adminRemoveRole(_addr, "CoreOwner");
-    // }
+    function adminRemoveCoreOwner(address _addr) onlyAdmin public{
+        adminRemoveRoleControl(_addr, "CoreOwner");
+    }
 
-    // function hasCoreOwner(address _addr) public view returns(bool success) {
-    //     return hasRole(_addr, "CoreOwner"); 
-    // }
+    function hasCoreOwner(address _addr) public view returns(bool success) {
+        return hasRole(_addr, "CoreOwner"); 
+    }
 
-    // function adminAddStrategyOwner(address _addr) onlyAdmin public {
-    //     adminAddRole(_addr, "StrategyOwner");
-    // }
+    function adminAddStrategyOwner(address _addr) onlyAdmin public {
+        adminAddRole(_addr, "StrategyOwner");
+    }
 
-    // function adminRemoveStrategyOwner(address _addr) onlyAdmin public{
-    //     adminRemoveRole(_addr, "StrategyOwner");
-    // }
+    function adminRemoveStrategyOwner(address _addr) onlyAdmin public{
+        adminRemoveRole(_addr, "StrategyOwner");
+    }
 
-    // function hasStrategyOwner(address _addr) public view returns(bool success) {
-    //     return hasRole(_addr, "StrategyOwner"); 
-    // }
+    function hasStrategyOwner(address _addr) public view returns(bool success) {
+        return hasRole(_addr, "StrategyOwner"); 
+    }
     
-    // function adminAddPriceOwner(address _addr) onlyAdmin public {
-    //     adminAddRole(_addr, "PriceOwner");
-    // }    
+    function adminAddPriceOwner(address _addr) onlyAdmin public {
+        adminAddRole(_addr, "PriceOwner");
+    }    
     
-    // function adminRemovePriceOwner(address _addr) onlyAdmin public {
-    //     adminRemoveRole(_addr, "PriceOwner");
-    // }
+    function adminRemovePriceOwner(address _addr) onlyAdmin public {
+        adminRemoveRole(_addr, "PriceOwner");
+    }
 
-    // function hasPriceOwner(address _addr) public view returns(bool success) {
-    //     return hasRole(_addr, "PriceOwner"); 
-    // }
+    function hasPriceOwner(address _addr) public view returns(bool success) {
+        return hasRole(_addr, "PriceOwner"); 
+    }
     
-    // function adminAddExchangeOwner(address _addr) onlyAdmin public {
-    //     adminAddRole(_addr, "ExchangeOwner");
-    // }
+    function adminAddExchangeOwner(address _addr) onlyAdmin public {
+        adminAddRole(_addr, "ExchangeOwner");
+    }
 
-    // function adminRemoveExchangeOwner(address _addr) onlyAdmin public {
-    //     adminRemoveRole(_addr, "ExchangeOwner");
-    // }
+    function adminRemoveExchangeOwner(address _addr) onlyAdmin public {
+        adminRemoveRole(_addr, "ExchangeOwner");
+    }
 
-    // function hasExchangeOwner(address _addr) public view returns(bool success) {
-    //     return hasRole(_addr, "ExchangeOwner"); 
-    // }
+    function hasExchangeOwner(address _addr) public view returns(bool success) {
+        return hasRole(_addr, "ExchangeOwner");
+    }
     
-    // function adminAddStorageOwner(address _addr) onlyAdmin public {
-    //     adminAddRole(_addr, "StorageOwner");
-    // }
+    function adminAddStorageOwner(address _addr) onlyAdmin public {
+        adminAddRole(_addr, "StorageOwner");
+    }
 
-    // function adminRemoveStorageOwner(address _addr) onlyAdmin public {
-    //     adminRemoveRole(_addr, "StorageOwner");
-    // }
+    function adminRemoveStorageOwner(address _addr) onlyAdmin public {
+        adminRemoveRole(_addr, "StorageOwner");
+    }
 
-    // function checkStorageOwner(address _addr) public view returns(bool success) {
-    //     return hasRole(_addr, "StorageOwner"); 
-    // }
+    function hasStorageOwner(address _addr) public view returns(bool success) {
+        return hasRole(_addr, "StorageOwner"); 
+    }
 }

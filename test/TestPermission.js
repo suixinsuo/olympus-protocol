@@ -30,100 +30,119 @@ contract('Olympus-Protocol-permission', (accounts) => {
         assert.equal(resHasRole, true);
     })
 
-    // it("should be able to remove a role.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminRemoveRole(accounts[1], "strategyOwner", {from:accounts[0]});
-    //     let resHasRole = await instance.hasRole.call(accounts[1], "strategyOwner");
+    it("should be able to remove a role.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminRemoveRole(accounts[1], "strategyOwner", {from:accounts[0]});
+        let resHasRole = await instance.hasRole.call(accounts[1], "strategyOwner");
     
-    //     assert.equal(result.receipt.status, 1);
-    //     assert.equal(resHasRole, false);
-    // })
+        assert.equal(result.receipt.status, 1);
+        assert.equal(resHasRole, false);
+    })
 
-    // it("should be able to check a role.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let resHasRole = await instance.checkRole.call(accounts[0], "admin");
+    it("should be able to check a role.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let resHasRole = await instance.checkRole.call(accounts[0], "admin");
    
-    //     assert.equal(resHasRole.length, 0);
-    // })
+        assert.equal(resHasRole.length, 0);
+    })
 
+    it("should be able to create a core owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminAddCoreOwner(accounts[1], {from:accounts[0]});
 
-    // it("should be able to create a strategy owner.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminAddStrategyOwner(accounts[1], {from:accounts[0]});
+        let resHasRole = await instance.hasCoreOwner.call(accounts[1]);
 
-    //     let resHasRole = await instance.hasRole.call(accounts[1], "StrategyOwner");
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, true);
+    })
 
-    //     assert.equal(result.receipt.status, 1); 
-    //     assert.equal(resHasRole, true);
-    // })
+    it("should be able to remove a core owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminRemoveCoreOwner(accounts[1], {from:accounts[0]});
 
-    // it("should be able to remove a strategy owner.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminRemoveStrategyOwner(accounts[1], {from:accounts[0]});
+        let resHasRole = await instance.hasCoreOwner.call(accounts[1]);
 
-    //     let resHasRole = await instance.hasRole.call(accounts[1], "StrategyOwner");
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, false);
+    })
 
-    //     assert.equal(result.receipt.status, 1); 
-    //     assert.equal(resHasRole, false);
-    // })
+    it("should be able to create a strategy owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminAddStrategyOwner(accounts[1], {from:accounts[0]});
 
-    // it("should be able to create a price owner.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminAddPriceOwner(accounts[2], {from:accounts[0]});
+        let resHasRole = await instance.hasStrategyOwner.call(accounts[1]);
 
-    //     let resHasRole = await instance.hasRole.call(accounts[2], "PriceOwner");
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, true);
+    })
 
-    //     assert.equal(result.receipt.status, 1); 
-    //     assert.equal(resHasRole, true);
-    // })
+    it("should be able to remove a strategy owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminRemoveStrategyOwner(accounts[1], {from:accounts[0]});
 
-    // it("should be able to remove a price owner.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminRemovePriceOwner(accounts[2], {from:accounts[0]});
+        let resHasRole = await instance.hasStrategyOwner.call(accounts[1]);
 
-    //     let resHasRole = await instance.hasRole.call(accounts[2], "PriceOwner");
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, false);
+    })
 
-    //     assert.equal(result.receipt.status, 1); 
-    //     assert.equal(resHasRole, false);
-    // })
+    it("should be able to create a price owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminAddPriceOwner(accounts[2], {from:accounts[0]});
 
-    // it("should be able to create a exchange owner.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminAddExchangeOwner(accounts[3], {from:accounts[0]});
+        let resHasRole = await instance.hasPriceOwner.call(accounts[2]);
 
-    //     let resHasRole = await instance.hasRole.call(accounts[3], "ExchangeOwner");
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, true);
+    })
 
-    //     assert.equal(result.receipt.status, 1); 
-    //     assert.equal(resHasRole, true);
-    // })
+    it("should be able to remove a price owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminRemovePriceOwner(accounts[2], {from:accounts[0]});
 
-    // it("should be able to remove a exchange owner.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminRemoveExchangeOwner(accounts[3], {from:accounts[0]});
+        let resHasRole = await instance.hasPriceOwner.call(accounts[2]);
 
-    //     let resHasRole = await instance.hasRole.call(accounts[3], "ExchangeOwner");
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, false);
+    })
 
-    //     assert.equal(result.receipt.status, 1); 
-    //     assert.equal(resHasRole, false);
-    // })
+    it("should be able to create a exchange owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminAddExchangeOwner(accounts[3], {from:accounts[0]});
 
-    // it("should be able to create a storage owner.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminAddStorageOwner(accounts[4], {from:accounts[0]});
+        let resHasRole = await instance.hasExchangeOwner.call(accounts[3]);
 
-    //     let resHasRole = await instance.hasRole.call(accounts[4], "StorageOwner");
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, true);
+    })
 
-    //     assert.equal(result.receipt.status, 1); 
-    //     assert.equal(resHasRole, true);
-    // })
+    it("should be able to remove a exchange owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminRemoveExchangeOwner(accounts[3], {from:accounts[0]});
 
-    // it("should be able to remove a storage owner.", async () => {
-    //     let instance  = await Permission.deployed({from:accounts[0]});
-    //     let result = await instance.adminRemoveStorageOwner(accounts[4], {from:accounts[0]});
+        let resHasRole = await instance.hasExchangeOwner.call(accounts[3]);
 
-    //     let resHasRole = await instance.hasRole.call(accounts[4], "StorageOwner");
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, false);
+    })
 
-    //     assert.equal(result.receipt.status, 1); 
-    //     assert.equal(resHasRole, false);
-    // })
+    it("should be able to create a storage owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminAddStorageOwner(accounts[4], {from:accounts[0]});
+
+        let resHasRole = await instance.hasStorageOwner.call(accounts[4]);
+
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, true);
+    })
+
+    it("should be able to remove a storage owner.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminRemoveStorageOwner(accounts[4], {from:accounts[0]});
+
+        let resHasRole = await instance.hasStorageOwner.call(accounts[4]);
+
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, false);
+    })
 });
