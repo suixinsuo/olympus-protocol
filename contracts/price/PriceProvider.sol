@@ -118,7 +118,7 @@ contract PriceProvider {
         permissionProvider = PermissionProviderInterface(_permissionProvider);  
     }
 
-    function setKyber(address kyber) public returns(bool success){
+    function setKyber(address kyber) public onlyOwner() returns(bool success){
         _kyber = DecentralizationExchanges(kyber);
         emit SetKyber(kyber);
     }
