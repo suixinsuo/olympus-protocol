@@ -203,6 +203,8 @@ contract OlympusLabsCore is Manageable {
             require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
         }
 
+        strategyProvider.updateFollower(strategyId, true);
+
         emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
