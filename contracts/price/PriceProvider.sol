@@ -119,6 +119,7 @@ contract PriceProvider {
     }
 
     function setKyber(address kyber) public onlyOwner() returns(bool success){
+        require(kyber != address(0));
         _kyber = DecentralizationExchanges(kyber);
         emit SetKyber(kyber);
     }
