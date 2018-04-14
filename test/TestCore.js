@@ -117,13 +117,13 @@ contract('Olympus-Protocol', function(accounts) {
     for (var i = 0; i < tokens.length; i++) {
 
         // Test getRate
-        let rate = await kyberExchange.getRate(tokens[i], 0);
+        let rate = await kyberExchange.getRate('', tokens[i], 0);
         assert.ok(expectedRate.equals(rate));
 
         let deposit = accounts[0];
         let srcAmountETH = 1;
         // Test placeOrder
-        let result = await kyberExchange.placeOrder(tokens[i], web3.toWei(srcAmountETH), rate, deposit);
+        let result = await kyberExchange.placeOrder('', tokens[i], web3.toWei(srcAmountETH), rate, deposit);
 
         let placedOrderEvent = result.logs.find(log => {
             return log.event === 'PlacedOrder';
@@ -161,13 +161,12 @@ contract('Olympus-Protocol', function(accounts) {
         mockData.tokenAddresses[1] = tokens[1];
 
         let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        await manager.registerExchange(kyberExchange.address);
+        await manager.addExchange("kyber", kyberExchange.address);
         let exchangeInstance = await ExchangeProvider.new(manager.address);
         // let exchangeInstance = await ExchangeProvider.new(manager.address, permissionInstance.address);
 
         let instance = await Core.deployed();
         let result = await instance.setProvider(2, exchangeInstance.address);
-
 
         let srcAmountETH = 1;
         let totalSrcAmountETH = srcAmountETH * tokens.length;

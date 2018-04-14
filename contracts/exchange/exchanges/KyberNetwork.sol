@@ -1,6 +1,6 @@
 pragma solidity ^0.4.17;
 
-import "../ExchangeAdapter.sol";
+import "../ExchangeAdapterBase.sol";
 import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract KyberNetwork {
@@ -19,9 +19,11 @@ contract KyberNetwork {
         external payable returns(uint);
 }
 
-contract KyberNetworkExchange is ExchangeAdapter {
+contract KyberNetworkExchange is ExchangeAdapterBase {
 
     KyberNetwork kyber;
+    bytes32 name;
+    bytes32 exchangeId;
     ERC20 constant ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     uint orderId = 0;
 
@@ -29,6 +31,8 @@ contract KyberNetworkExchange is ExchangeAdapter {
         OrderStatus status;
         uint amount;
     }
+
+    Status public status;
 
     mapping (uint=>Order) orders;
 
@@ -40,14 +44,44 @@ contract KyberNetworkExchange is ExchangeAdapter {
         status = Status.ENABLED;
     }
 
-    function getRate(ERC20 token, uint amount) external view returns(int){
+    function addExchange(bytes32 _id, bytes32 _name)
+    public returns(bool)
+    {
+        exchangeId = _id;
+        name = _name;
+        return true;
+    }
+
+    function getExchange(bytes32 _id)
+    public view returns(bytes32, Status)
+    {
+        return (name, status);
+    }
+
+    function enable(bytes32 /*_id*/) public returns(bool){
+        status = Status.ENABLED;
+        return true;
+    }
+
+    function disable(bytes32 /*_id*/) public returns(bool){
+        status = Status.DISABLED;
+        return true;
+    }
+
+    function isEnabled(bytes32 /*_id*/) external view returns (bool success) {
+        return status == Status.ENABLED;
+    }
+
+    function getRate(bytes32 /*id*/, ERC20 token, uint amount) external view returns(int){
         uint expectedRate;
         uint slippageRate;
         (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, token, amount);
         return int(slippageRate);
     }
     
-    function placeOrder(ERC20 dest, uint amount, uint rate, address deposit) external payable returns(uint adapterOrderId){
+    function placeOrder(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
+    external payable returns(uint adapterOrderId)
+    {
         
         if (address(this).balance < amount) {
             return 0;
@@ -124,9 +158,5 @@ contract KyberNetworkExchange is ExchangeAdapter {
         return orders[adapterOrderId].status;
     }
     
-    function() public onlyOwner payable { }
-    
-    function withdrawl() public onlyOwner {
-        owner.transfer(address(this).balance);
-    }
+    function() public payable { }
 }

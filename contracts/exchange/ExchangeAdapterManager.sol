@@ -6,67 +6,59 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 // TODO: ownable
 contract ExchangeAdapterManager is Ownable {
 
-    IExchangeAdapter[] exchanges;
-    event ExchangeAdapterRegisted(address exchange);
-    event ExchangeAdapterUnRegisted(address exchange);
+    mapping(bytes32 => IExchangeAdapter) public exchangeAdapters;
+    bytes32[] public exchanges;
+    uint private genExchangeId = 1000;
 
-    function ExchangeAdapterManager(IExchangeAdapter initAdatper) public {
-        if(address(initAdatper) == 0x0){
-            return;
-        }
-        registerExchange(initAdatper);
+    event AddedExchange(bytes32 id);
+
+    function getExchanges() public view returns(bytes32[])
+    {
+        return exchanges;
     }
 
-    function registerExchange(address e) public onlyOwner
-    returns (bool) 
+    function getExchangeInfo(bytes32 id)
+    public view returns(bytes32 name, uint status)
     {
-        require(e != 0x0);
+        IExchangeAdapter adapter = exchangeAdapters[id];
+        require(address(adapter) != 0x0);
 
-        for(uint i = 0; i < exchanges.length; i++){
-            if (e == address(exchanges[i])){
-                return false;
-            }
-        }
-        exchanges.push(IExchangeAdapter(e));
-        emit ExchangeAdapterRegisted(e);
+        return adapter.getExchange(id);
+    }
+
+    function getExchangeAdapter(bytes32 id) 
+    public view returns(address)
+    {
+        return address(exchangeAdapters[id]);
+    }
+
+    function addExchange(bytes32 name, address adapter)
+    public returns(bool)
+    {
+        require(adapter != 0x0);
+        bytes32 id = keccak256(genExchangeId++);
+        require(IExchangeAdapter(adapter).addExchange(id, name));
+        exchanges.push(id);
+        exchangeAdapters[id] = IExchangeAdapter(adapter);
+
+        emit AddedExchange(id);
         return true;
     }
 
-    function unregisterExchange(address e) public onlyOwner
-    returns(bool success)
-    {
-        int foundIndex = -1;
-        for (uint i = 0; i < exchanges.length; i++) {
-            if(e == address(exchanges[i])){
-                foundIndex = int(i);
-                break;
-            }
-        }
-        assert(foundIndex>=0);
-
-        // TODO: make sure exchange is not working
-        for(i = uint(foundIndex); i < exchanges.length - 1; i++){
-            exchanges[i] = exchanges[i+1];
-        }
-        exchanges.length--;
-        
-        emit ExchangeAdapterUnRegisted(e);
-        return true;
-    }
-   
     /// >0  : found exchangeId
     /// ==0 : not found
-    function pickExchange(ERC20 token, uint amount, uint rate) external view returns (address exchange) {
+    function pickExchange(ERC20 token, uint amount, uint rate) external view returns (bytes32 exchangeId) {
         
         int maxRate = -1;
-        for(uint i = 0; i < exchanges.length;  i++) {
+        for(uint i = 0; i < exchanges.length; i++) {
 
-            IExchangeAdapter e = exchanges[i];
-            if(!e.isEnabled()) {
+            bytes32 id = exchanges[i];
+            IExchangeAdapter adapter = exchangeAdapters[id];
+            if(!adapter.isEnabled(id)) {
                 continue;
             }
 
-            int _rate = e.getRate(token, amount);
+            int _rate = adapter.getRate(id, token, amount);
             if (_rate == 0) { // not support
                 continue;
             }
@@ -78,7 +70,7 @@ contract ExchangeAdapterManager is Ownable {
 
             if (_rate >= maxRate) {
                 maxRate = _rate;
-                return address(e);
+                return id;
             }
         }
         return 0x0; 
@@ -87,7 +79,15 @@ contract ExchangeAdapterManager is Ownable {
     function checkTokenSupported(ERC20 token) external view returns (bool){
 
         for(uint i = 0; i < exchanges.length; i++){
-            if(exchanges[i].getRate(token,0)!=0){
+
+            bytes32 id = exchanges[i];
+
+            IExchangeAdapter adapter = exchangeAdapters[id];
+
+            if(!adapter.isEnabled(id)) {
+                continue;
+            }
+            if (adapter.getRate(id, token, 0) != 0) {
                 return true;
             }
         }
