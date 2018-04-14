@@ -3,6 +3,7 @@ const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/
 const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token.sol");
 const ExchangeAdapterManager = artifacts.require("../contracts/exchange/ExchangeAdapterManager.sol");
 const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
 const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 
 const tokenNum = 3;
@@ -13,10 +14,10 @@ function bytes32ToString(bytes32){
     return web3.toAscii(bytes32).replace(/\u0000/g,'');
 }
 
+const Promise = require('bluebird');
 contract('MockKyberNetwork', (accounts) => {
 
     it("MockKyberNetwork should be able to trade.", async () => {
-
         let mockKyber = await MockKyberNetwork.new(tokenNum);
         let tokens = await mockKyber.supportedTokens();
         assert.equal(tokens.length, tokenNum);
@@ -224,15 +225,21 @@ const MarketOrderStatusCancelled = 4;
 const MarketOrderStatusErrored = 5;
 
 contract('ExchangeProvider', (accounts) => {
-
+    it("They should be able to deploy.", function() {
+        return Promise.all([
+        PermissionProvider.deployed(),
+        ])
+        .spread((/*price, strategy, exchange,*/ core) =>  {
+        assert.ok(core, 'Permission contract is not deployed.');
+        });
+    });
     it("test placeOrder", async () => {
+        let permissionInstance = await PermissionProvider.deployed(); 
 
         let manager = await ExchangeAdapterManager.new();
         let mockKyber = await MockKyberNetwork.new(tokenNum);
         let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        let expectedExchangeName = "kyber";
-        let result = await manager.addExchange(expectedExchangeName, kyberExchange.address);
-
+        await manager.addExchange('kyber', kyberExchange.address);
         let exchangeProvider = await ExchangeProvider.new(manager.address);
 
         let tokens = await mockKyber.supportedTokens();
@@ -297,7 +304,6 @@ contract('ExchangeProvider', (accounts) => {
 })
 
 contract('ExchangeProviderWrap', (accounts) => {
-
 
     it("should be able to buy", async () => {
         let manager = await ExchangeAdapterManager.new(0);

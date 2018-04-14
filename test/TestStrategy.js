@@ -1,5 +1,6 @@
 'use strict'
 const Strategy = artifacts.require("../contracts/strategy/StrategyProvider.sol");
+const Core = artifacts.require("../contracts/OlympusLabsCore.sol");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
@@ -19,7 +20,7 @@ contract('Olympus-Protocol-strategy', (accounts) => {
   
     it("They should be able to deploy.", () => {
         return Promise.all([
-        // Price.deployed(),
+        Core.deployed(),
         Strategy.deployed(),
         // Exchange.deployed(),
     ]).spread((/*price, strategy, exchange,*/ core) =>  {
@@ -88,12 +89,4 @@ contract('Olympus-Protocol-strategy', (accounts) => {
 
         assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);                          
     })
-
-    it("Should be able to increment amount.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.incrementStatistics(0, 10);
-
-        assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);      
-    })
-
 });
