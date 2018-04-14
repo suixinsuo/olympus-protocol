@@ -1,5 +1,6 @@
 const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 const KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
+const ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 const SimpleERC20Token = artifacts.require("SimpleERC20Token");
 const MockKyberNetwork = artifacts.require("MockKyberNetwork");
 const args = require('../libs/args')
@@ -67,6 +68,12 @@ module.exports = function (callback) {
                 console.log(r.tx);
             }).catch((res) => { })
         });
+    } else if (method === 'addKyber') {
+        (async () => {
+            let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+            let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+            await exchangeAdapterManager.addExchange('kyber',kyberExchangeInstance.address);
+        })()
     } else {
         console.log("no method found, please !");
     }

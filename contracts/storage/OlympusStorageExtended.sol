@@ -4,12 +4,22 @@ import "../libs/SafeMath.sol";
 import "../libs/strings.sol";
 import "../libs/Ownable.sol";
 import "./OlympusStorageExtendedInterface.sol";
+import "../permission/PermissionProviderInterface.sol";
 
-contract OlympusStorageExtended is OlympusStorageExtendedInterface, Ownable {
+contract OlympusStorageExtended is OlympusStorageExtendedInterface {
     using strings for *;
     using SafeMath for uint256;
 
     mapping(string => mapping(bytes32 => bytes32)) private orderExtraData;
+
+    PermissionProviderInterface internal permissionProvider;
+    modifier onlyOwner() {
+        require(permissionProvider.hasPriceOwner(msg.sender));
+        _;
+    }
+    function OlympusStorageExtended(address _permissionProvider) public {
+        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+    }
 
     function setCustomExtraData(bytes32 dataKind, uint objectId, bytes32 key, bytes32 value) external returns(bool success) {
         orderExtraData[getAccessor(dataKind, objectId)][key] = value;

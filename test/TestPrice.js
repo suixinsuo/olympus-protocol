@@ -1,4 +1,3 @@
-'use strict'
 //
 /*
 测试
@@ -28,11 +27,16 @@
 // }
 
 const PriceProvider = artifacts.require("../contracts/price/PriceProvider.sol");
-const Web3 = require('web3');
-const web3 = new Web3();
+const MockKyberNetwork = artifacts.require("../contracts/exchange/exchanges/MockKyberNetwork.sol");
+const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token.sol");
+const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/KyberNetworkExchange.sol");
+
+// const Web3 = require('web3');
+// const web3 = new Web3();
 const _ = require('lodash');
 const Promise = require('bluebird');
 const mockData = { 
+    tokenNum : 3,
     id: 0,
     name: "Price",
     description: "Test PriceProvider",
@@ -43,6 +47,71 @@ const mockData = {
     tokenOnePrice: [1000000,20000],
     tokenTwoPrice: [3000000,40000]
 }
+
+
+const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
+
+const OrderStatusPending = 0;
+const OrderStatusApproved = 1;
+const OrderStatusCompleted = 2;
+const OrderStatusCancelled = 3;
+const OrderStatusErrored = 4;
+
+contract('KyberNetworkExchange', (accounts) => {
+
+    it("KyberNetworkExchange should be able to placeOrder.", async () => {
+
+        let mockKyber = await MockKyberNetwork.new(mockData.tokenNum);
+        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
+        let tokens = await mockKyber.supportedTokens();
+
+        // without pre-deposit
+        let srcAmountETH = 1;
+        let needDeposit = srcAmountETH * tokens.length;
+        let balance = await web3.eth.getBalance(kyberExchange.address);
+        assert.ok(balance.equals(0), 'kyberExchange\'s balance should be 0 before deposit');
+        await kyberExchange.send(web3.toWei(needDeposit, 'ether'));
+        balance = await web3.eth.getBalance(kyberExchange.address);
+        assert.ok(balance.equals(web3.toWei(needDeposit)), `kyberExchange's balance should be ${web3.toWei(needDeposit, 'ether').toString()} after deposit`);
+
+        let expectedAllowanced = expectedRate.mul(srcAmountETH);
+
+        for (var i = 0; i < tokens.length; i++) {
+
+            // Test getRate
+            let rate = await kyberExchange.getRate('', tokens[i], 0);
+            assert.ok(expectedRate.equals(rate));
+
+            let deposit = accounts[0];
+            let srcAmountETH = 1;
+            // Test placeOrder
+            let result = await kyberExchange.placeOrder('', tokens[i], web3.toWei(srcAmountETH), rate, deposit);
+
+            let placedOrderEvent = result.logs.find(log => {
+                return log.event === 'PlacedOrder';
+            });
+            assert.ok(placedOrderEvent);
+
+            let actualOrderId = parseInt(placedOrderEvent.args.orderId);
+            let expectedOrderId = i + 1;
+            assert.equal(actualOrderId, expectedOrderId);
+
+            let erc20Token = await SimpleERC20Token.at(tokens[i]);
+            let actualAllowance = await erc20Token.allowance(kyberExchange.address, deposit);
+            assert.ok(expectedAllowanced.equals(actualAllowance));
+
+            let orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
+            assert.equal(orderStatus, OrderStatusApproved);
+
+            // Test payOrder
+            await kyberExchange.payOrder(actualOrderId, { value: web3.toWei(srcAmountETH) });
+            orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
+            assert.equal(orderStatus, OrderStatusCompleted);
+        }
+    })
+})
+
 contract('PriceProvider', (accounts) => {
   
     it("They should be able to deploy.", () => {
@@ -54,6 +123,12 @@ contract('PriceProvider', (accounts) => {
         assert.ok(core, 'PriceProvider contract is not deployed.');
         });
     });
+
+    it("Should be able to set kyber.", async () => {
+        let instance  = await PriceProvider.deployed();
+        let result = await instance.setKyber(accounts[0],{from:accounts[0]});
+        assert.equal(result.receipt.status, '0x01');
+    })
 
     it("Should be able to update support price.", async () => {
         let instance  = await PriceProvider.deployed();

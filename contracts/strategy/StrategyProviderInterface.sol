@@ -64,4 +64,5 @@ contract StrategyProviderInterface is Provider {
     // increment statistics
     // TODO atuh the core contract address
     function incrementStatistics(uint id, uint amountInEther) external returns (bool success);
+    function updateFollower(uint id, bool follow) external returns (bool success);
 }
