@@ -18,7 +18,7 @@ const args = require('../scripts/libs/args')
 
 function deployOnDev(deployer, num) {
 
-    deployer.then(() => {
+    return deployer.then(() => {
         return deployer.deploy(MockKyberNetwork, num);
     }).then(() => {
         return deployer.deploy(KyberNetworkExchange, MockKyberNetwork.address);
@@ -50,10 +50,10 @@ function deployExchangeProviderWrap(deployer, network) {
         return;
     }
 
-    deployer.then(() => {
+    return deployer.then(() => {
         return deployer.deploy(KyberNetworkExchange, kyberNetwork.network);
     }).then(() => {
-        return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
+        return deployer.deploy(ExchangeAdapterManager);
     }).then(() => {
         // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
         return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);

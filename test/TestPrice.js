@@ -80,13 +80,13 @@ contract('KyberNetworkExchange', (accounts) => {
         for (var i = 0; i < tokens.length; i++) {
 
             // Test getRate
-            let rate = await kyberExchange.getRate(tokens[i], 0);
+            let rate = await kyberExchange.getRate('', tokens[i], 0);
             assert.ok(expectedRate.equals(rate));
 
             let deposit = accounts[0];
             let srcAmountETH = 1;
             // Test placeOrder
-            let result = await kyberExchange.placeOrder(tokens[i], web3.toWei(srcAmountETH), rate, deposit);
+            let result = await kyberExchange.placeOrder('', tokens[i], web3.toWei(srcAmountETH), rate, deposit);
 
             let placedOrderEvent = result.logs.find(log => {
                 return log.event === 'PlacedOrder';
