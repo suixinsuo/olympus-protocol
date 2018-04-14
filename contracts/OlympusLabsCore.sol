@@ -23,7 +23,7 @@ contract OlympusLabsCore is Manageable {
     event LogNumbers(uint[] numbers);
 
     ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x864071486f4C71C7988b53DCEe1f7cEffa57EFcC));
-    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x49341fa51c75e66ea57e5b4eb99ca4d3608c5201));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x296b6FE67B9ee209B360a52fDFB67fbe4C14e952));
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x88c80FcaAE06323e17DDCD4ff8E0Fbe06D9799e6));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0xc82cCeEF63e095A56D6Bb0C17c1F3ec58567aF1C));
     uint public feePercentage = 100;
@@ -41,11 +41,11 @@ contract OlympusLabsCore is Manageable {
         require(permissionProvider.hasPriceOwner(msg.sender));
         _;
     }
-    
+
     PermissionProviderInterface internal permissionProvider;
 
     function OlympusLabsCore(address _permissionProvider) public {
-        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+        permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
     function() payable public {
