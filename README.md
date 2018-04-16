@@ -4,4 +4,4 @@
 
 [![coverage report](https://gitlab.com/aireach/olympus-protocol/badges/develop/coverage.svg)](https://gitlab.com/aireach/olympus-protocol/commits/develop)
 
-Deployed core address on kovan: 0x4387c119346427906CdA3b7cDAE4bd10019C0023
+Deployed core address on kovan: 0x1A010AfB88051F891E62Cc9F9bBD8b2d6c9bBA0F
