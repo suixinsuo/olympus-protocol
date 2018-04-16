@@ -23,8 +23,8 @@ contract OlympusLabsCore is Manageable {
     event LogNumbers(uint[] numbers);
 
     ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x864071486f4C71C7988b53DCEe1f7cEffa57EFcC));
-    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x49341fA51c75e66Ea57E5b4eb99Ca4d3608C5201));
-    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x38d88be510aC318a5E5c12dbd453c1C6F4ae385E));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x296b6FE67B9ee209B360a52fDFB67fbe4C14e952));
+    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x51e404a62CA2874398525C61366E2E914e3657Ab));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0xc82cCeEF63e095A56D6Bb0C17c1F3ec58567aF1C));
     uint public feePercentage = 100;
     uint public constant DENOMINATOR = 10000;
