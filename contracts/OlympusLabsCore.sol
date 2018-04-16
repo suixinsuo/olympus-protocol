@@ -41,11 +41,11 @@ contract OlympusLabsCore is Manageable {
         require(permissionProvider.hasPriceOwner(msg.sender));
         _;
     }
-    
+
     PermissionProviderInterface internal permissionProvider;
 
     function OlympusLabsCore(address _permissionProvider) public {
-        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+        permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
     function() payable public {

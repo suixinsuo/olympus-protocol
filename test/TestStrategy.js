@@ -1,5 +1,6 @@
 'use strict'
 const Strategy = artifacts.require("../contracts/strategy/StrategyProvider.sol");
+const Core = artifacts.require("../contracts/OlympusLabsCore.sol");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
@@ -19,7 +20,7 @@ contract('Olympus-Protocol-strategy', (accounts) => {
   
     it("They should be able to deploy.", () => {
         return Promise.all([
-        // Price.deployed(),
+        Core.deployed(),
         Strategy.deployed(),
         // Exchange.deployed(),
     ]).spread((/*price, strategy, exchange,*/ core) =>  {
@@ -87,29 +88,5 @@ contract('Olympus-Protocol-strategy', (accounts) => {
         let result = await instance.updateStrategy(0, "update name", "update desc", "update category", ["0x86fa049857e0209aa7d9e616f7eb3b3b78ecfdb0", "0xd26114cd6ee289accf82350c8d8487fedb8a0c07"], [30,70], web3.toAscii('testExchange'));
 
         assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);                          
-    })
-
-    it("Should be able to increment amount.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.incrementStatistics(0, 10);
-
-        assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);      
-    })
-
-    it("Should be able to update follower.", async () => {
-        let instance  = await Strategy.deployed();
-        //follow strategy
-        let result = await instance.updateFollower(0, true);
-        let resStrategy = await instance.getStrategy.call(0);
-
-        assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);      
-        assert.equal(resStrategy[4].toNumber(), 1);                            //asert follower
-
-        //unfollow strategy
-        result = await instance.updateFollower(0, false);
-        resStrategy = await instance.getStrategy.call(0);
-
-        assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);      
-        assert.equal(resStrategy[4].toNumber(), 0);                            //asert follower
     })
 });

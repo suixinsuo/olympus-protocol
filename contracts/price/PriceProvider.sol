@@ -75,8 +75,8 @@ contract PriceProvider {
 
     //Kyber address 
     address eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
-    address kyber = 0x65b1faad1b4d331fd0ea2a50d5be2c20abe42e50;
-    DecentralizationExchanges _kyber = DecentralizationExchanges(kyber);
+    //address kyber = 0x65b1faad1b4d331fd0ea2a50d5be2c20abe42e50;
+    DecentralizationExchanges _kyber ;
   
     //实时价格记录
     //(Provider => (Token => Price))
@@ -100,6 +100,8 @@ contract PriceProvider {
     event _GetPrice(address _provider,address token,uint price);
     
     event ChangeWeight(bytes32 exchnage,uint weight);
+
+    event SetKyber(address _KYBER);
     
   
   //初始化数据库
@@ -113,7 +115,13 @@ contract PriceProvider {
     }
     
     function PriceProvider (address _permissionProvider) public {
-        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+        permissionProvider = PermissionProviderInterface(_permissionProvider);  
+    }
+
+    function setKyber(address kyber) public onlyOwner() returns(bool success){
+        require(kyber != address(0));
+        _kyber = DecentralizationExchanges(kyber);
+        emit SetKyber(kyber);
     }
 
     function () public payable {
