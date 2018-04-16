@@ -22,9 +22,9 @@ contract OlympusLabsCore is Manageable {
     event LogAddresses(address[] message);
     event LogNumbers(uint[] numbers);
 
-    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x864071486f4C71C7988b53DCEe1f7cEffa57EFcC));
+    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x9FC2267BeE84E56Fab30637dB70f9ceB0bCaDFD0));
     StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x296b6FE67B9ee209B360a52fDFB67fbe4C14e952));
-    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x88c80FcaAE06323e17DDCD4ff8E0Fbe06D9799e6));
+    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x51e404a62CA2874398525C61366E2E914e3657Ab));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0xc82cCeEF63e095A56D6Bb0C17c1F3ec58567aF1C));
     uint public feePercentage = 100;
     uint public constant DENOMINATOR = 10000;
@@ -95,9 +95,10 @@ contract OlympusLabsCore is Manageable {
     }
 
     // Forward to Price smart contract.
-    function getPrice(address tokenAddress) public view returns (uint price){
+    function getPrice(address tokenAddress, uint srcQty) public view returns (uint price){
         require(tokenAddress != address(0));
-        return priceProvider.getNewDefaultPrice(tokenAddress);
+        (, price) = priceProvider.getrates(tokenAddress, srcQty);
+        return price;
     }
 
     function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
@@ -110,7 +111,8 @@ contract OlympusLabsCore is Manageable {
         address token;
         (token,) = getStrategyTokenAndWeightByIndex(strategyId, tokenIndex);
 
-        return getPrice(token);
+        //Default get the price for one Ether
+        return getPrice(token, 10**18);
     }
 
     function setProvider(uint8 _id, address _providerAddress) public onlyOwner returns (bool success) {
@@ -201,7 +203,7 @@ contract OlympusLabsCore is Manageable {
             }
 
             subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
-            subOrderTemp[1][i] = getPrice(tokens[i]);
+            subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
 
             olympusStorage.addTokenDetails(
                 indexOrderId,
