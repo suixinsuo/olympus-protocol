@@ -2,9 +2,10 @@ pragma solidity ^0.4.21;
 
 //这个合约控制数据库
 
-import "../libs/Ownable.sol";
+// import "../libs/Ownable.sol";
 import "../libs/SafeMath.sol";
 import "../libs/itMaps.sol";
+import "../permission/PermissionProviderInterface.sol";
 
 // 正式合约
 // 思路是：
@@ -37,7 +38,7 @@ contract PriceProviderInterface {
  
 }
 
-contract PriceProvider is Ownable {
+contract PriceProvider {
 
   //防止计算下坠攻击
   //using math for SafeMath;
@@ -74,8 +75,8 @@ contract PriceProvider is Ownable {
 
     //Kyber address 
     address eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
-    address kyber = 0x65b1faad1b4d331fd0ea2a50d5be2c20abe42e50;
-    DecentralizationExchanges _kyber = DecentralizationExchanges(kyber);
+    //address kyber = 0x65b1faad1b4d331fd0ea2a50d5be2c20abe42e50;
+    DecentralizationExchanges _kyber ;
   
     //实时价格记录
     //(Provider => (Token => Price))
@@ -99,10 +100,29 @@ contract PriceProvider is Ownable {
     event _GetPrice(address _provider,address token,uint price);
     
     event ChangeWeight(bytes32 exchnage,uint weight);
+
+    event SetKyber(address _KYBER);
     
   
   //初始化数据库
     itMaps.itMapBytes32Uint priceData;
+    
+    PermissionProviderInterface internal permissionProvider;
+
+    modifier onlyOwner() {
+        require(permissionProvider.hasPriceOwner(msg.sender));
+        _;
+    }
+    
+    function PriceProvider (address _permissionProvider) public {
+        permissionProvider = PermissionProviderInterface(_permissionProvider);  
+    }
+
+    function setKyber(address kyber) public onlyOwner() returns(bool success){
+        require(kyber != address(0));
+        _kyber = DecentralizationExchanges(kyber);
+        emit SetKyber(kyber);
+    }
 
     function () public payable {
         revert();

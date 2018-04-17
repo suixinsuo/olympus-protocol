@@ -6,6 +6,7 @@ import "./OlympusStorageInterface.sol";
 import "../libs/Manageable.sol";
 import "../libs/SafeMath.sol";
 import { TypeDefinitions as TD, Provider } from "../libs/Provider.sol";
+import "../permission/PermissionProviderInterface.sol";
 
 library StorageTypeDefinitions {
     enum OrderStatus {
@@ -46,6 +47,15 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     uint public orderId = 1000000;
     bytes32 constant private dataKind = "Order";
     OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0xcEb51bD598ABb0caa8d2Da30D4D760f08936547B));
+
+    modifier onlyOwner() {
+        require(permissionProvider.hasPriceOwner(msg.sender));
+        _;
+    }
+    PermissionProviderInterface internal permissionProvider;
+    function OlympusStorage(address _permissionProvider) public {
+        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+    }
 
     function addTokenDetails(
         uint indexOrderId,

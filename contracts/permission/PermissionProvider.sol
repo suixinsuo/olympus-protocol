@@ -38,7 +38,7 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasCoreOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "CoreOwner"); 
+        return hasRole(_addr, "CoreOwner") || hasRole(_addr, ROLE_ADMIN); 
     }
 
     function adminAddStrategyOwner(address _addr) onlyAdmin public {
@@ -50,7 +50,7 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasStrategyOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "StrategyOwner"); 
+        return hasRole(_addr, "StrategyOwner") || hasRole(_addr, ROLE_ADMIN); 
     }
     
     function adminAddPriceOwner(address _addr) onlyAdmin public {
@@ -62,7 +62,7 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasPriceOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "PriceOwner"); 
+        return hasRole(_addr, "PriceOwner") || hasRole(_addr, ROLE_ADMIN); 
     }
     
     function adminAddExchangeOwner(address _addr) onlyAdmin public {
@@ -74,7 +74,7 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasExchangeOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "ExchangeOwner");
+        return hasRole(_addr, "ExchangeOwner") || hasRole(_addr, ROLE_ADMIN);
     }
     
     function adminAddStorageOwner(address _addr) onlyAdmin public {
@@ -86,6 +86,6 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasStorageOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "StorageOwner"); 
+        return hasRole(_addr, "StorageOwner") || hasRole(_addr, ROLE_ADMIN); 
     }
 }
