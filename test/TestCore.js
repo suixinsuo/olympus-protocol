@@ -323,7 +323,7 @@ contract('Olympus-Protocol', function (accounts) {
   it("should be able to buy index.", async () => {
     let instance = await Core.deployed();
 
-    let result = await instance.buyIndex(0, accounts[1], { from: accounts[0], value: 3000000 });
+    let result = await instance.buyIndex(0, accounts[1], true, { from: accounts[0], value: 3000000 });
     assert.equal(result.receipt.status, '0x01');
   })
 
