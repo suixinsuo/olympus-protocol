@@ -6,8 +6,11 @@ import { StorageTypeDefinitions as STD } from "./OlympusStorage.sol";
 contract OlympusStorageInterface {
 
     function addTokenDetails(
-        uint indexOrderId, address token, uint weight, uint estimatedPrice,
-        uint dealtPrice,uint totalTokenAmount,uint completedTokenAmount) external;
+        uint indexOrderId,
+        address[] tokens,
+        uint[] weights,
+        uint[] totalTokenAmounts,
+        uint[] estimatedPrices) external;
 
     function addOrderBasicFields(
         uint strategyId,
