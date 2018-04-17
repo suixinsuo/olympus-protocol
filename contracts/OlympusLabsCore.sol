@@ -171,16 +171,12 @@ contract OlympusLabsCore is Manageable {
         uint[][4] memory subOrderTemp;
         // 0: token amounts
         // 1: estimatedPrices
-        // 2: dealtPrices
-        // 3: completedTokenAmounts
 
         address[] memory tokens = new address[](tokenLength);
         uint[] memory weights = new uint[](tokenLength);
 
         subOrderTemp[0] = initializeArray(tokenLength);
         subOrderTemp[1] = initializeArray(tokenLength);
-        subOrderTemp[2] = initializeArray(tokenLength);
-        subOrderTemp[3] = initializeArray(tokenLength);
 
         emit LogNumber(indexOrderId);
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
@@ -205,17 +201,17 @@ contract OlympusLabsCore is Manageable {
             subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
             subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
 
-            olympusStorage.addTokenDetails(
-                indexOrderId,
-                tokens[i], weights[i], subOrderTemp[0][i],
-                subOrderTemp[1][i], subOrderTemp[2][i], subOrderTemp[3][i]
-            );
-
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
             emit LogNumber(subOrderTemp[1][i]);
             require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
         }
+
+        olympusStorage.addTokenDetails(
+            indexOrderId,
+            tokens, weights, subOrderTemp[0], subOrderTemp[1]
+        );
+
         emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
