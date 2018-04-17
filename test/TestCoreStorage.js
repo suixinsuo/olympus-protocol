@@ -2,8 +2,11 @@
 /*
 contract OlympusStorageInterface {
     function addTokenDetails(
-        uint indexOrderId, address token, uint weight, uint estimatedPrice,
-        uint dealtPrice,uint totalTokenAmount,uint completedTokenAmount) external;
+        uint indexOrderId,
+        address[] tokens,
+        uint[] weights,
+        uint[] totalTokenAmounts,
+        uint[] estimatedPrices) external;
     function addOrderBasicFields(
         uint strategyId,
         address buyer,
@@ -59,7 +62,7 @@ const mockData = {
   estimatedPrices: [1, 2],
   dealtPrices: [0, 0],
   totalTokenAmounts: [10, 20],
-  completedTokenAmounts: [5, 10],
+  completedTokenAmounts: [0, 0], // Needs to be zero
   subStatuses: [0, 0],
   status: 0,
   exchangeId: 'Kyber',
@@ -106,12 +109,11 @@ contract('OlympusStorage', (accounts) => {
   it("Should be able to add order token fields.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
-      for (let index = 0; index < mockData.tokens.length; index++) {
-        const result = await instance.addTokenDetails(
-          mockData.startOrderId, mockData.tokens[index], mockData.weights[index], mockData.estimatedPrices[index],
-          mockData.dealtPrices[index], mockData.totalTokenAmounts[index], mockData.completedTokenAmounts[index]);
-        assert.equal(result.receipt.status, TX_OK);
-      }
+      const result = await instance.addTokenDetails(
+        mockData.startOrderId, mockData.tokens, mockData.weights,
+        mockData.totalTokenAmounts, mockData.estimatedPrices
+      );
+      assert.equal(result.receipt.status, TX_OK);
     } catch (e) {
       console.error(e);
       throw e;
@@ -136,6 +138,7 @@ contract('OlympusStorage', (accounts) => {
       const instance = await OlympusStorage.deployed();
       const firstResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[0]);
       const secondResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[1]);
+
       assert.equal(firstResult[0].toNumber(), mockData.completedTokenAmounts[0]);
       assert.equal(secondResult[0].toNumber(), mockData.completedTokenAmounts[1]);
     } catch (e) {
