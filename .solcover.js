@@ -18,5 +18,7 @@ module.exports = {
     'libs/strings.sol',
     'libs/utils.sol',
     'libs/itMaps.sol',
+    'libs/Log.sol',
+    'libs/Loblib.sol'
   ]
 };

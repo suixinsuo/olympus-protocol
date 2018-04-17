@@ -3,11 +3,10 @@ pragma solidity ^0.4.17;
 import "./Interfaces.sol";
 import "./ExchangeProviderInterface.sol";
 import "./ExchangeAdapterBase.sol";
-import "../libs/utils.sol";
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../permission/PermissionProviderInterface.sol";
+// import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Utils, Ownable {
-
+contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase  {
 
     IMarketOrderCallback marketOrderCallback;
 
@@ -17,7 +16,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
         ERC20[]                 tokens;
         uint[]                  amounts; // TODO:optional
         uint[]                  rates; // TODO:optional
-        IExchangeAdapter[]      exchanges;
+        bytes32[]               exchanges;
         uint[]                  adapterOrdersId;
         address                 deposit;
         MarketOrderStatus       orderStatus;
@@ -28,9 +27,24 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
     mapping (bytes32 => uint ) adapterOrders; // sha3(exchange, uint) => orderId
 
     mapping (uint => uint) public balances;
+    PermissionProviderInterface internal permissionProvider;
 
+    modifier onlyOwner() {
+        require(permissionProvider.hasPriceOwner(msg.sender));
+        _;
+    }
+    
+    // function ExchangeProvider(address _exchangeManager, address _permissionProvider) public {
     function ExchangeProvider(address _exchangeManager) public {
+
+        if (_exchangeManager != 0x0) {
+            setExchangeManager(_exchangeManager);
+        }
+    }
+
+    function setExchangeManager(address _exchangeManager) public {
         exchangeManager = IExchangeAdapterManager(_exchangeManager);
+        // permissionProvider = PermissionProviderInterface(_permissionProvider); 
     }
 
     function setMarketOrderCallback(IMarketOrderCallback _callback) public {
@@ -48,7 +62,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
             tokens: new ERC20[](0),
             amounts: new uint[](0),
             rates: new uint[](0),
-            exchanges: new IExchangeAdapter[](0),
+            exchanges: new bytes32[](0),
             adapterOrdersId: new uint[](0),
             deposit: deposit,
             orderStatus:MarketOrderStatus.Pending
@@ -57,6 +71,21 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
     }
     
     function addPlaceOrderItem(uint orderId, ERC20 token, uint amount, uint rate) external returns(bool){
+        return _addPlaceOrderItem(orderId, 0, token, amount, rate);
+    }
+
+    function addPlaceOrderItemByExchangeId(uint orderId, bytes32 exchangeId, ERC20 token, uint amount, uint rate) external returns(bool){
+
+        if(exchangeId == 0){
+            return false;
+        }
+        if(exchangeManager.getExchangeAdapter(exchangeId) == 0x0){
+            return false;
+        }
+        return _addPlaceOrderItem(orderId, exchangeId, token, amount, rate);
+    }
+
+    function _addPlaceOrderItem(uint orderId, bytes32 exchangeId, ERC20 token, uint amount, uint rate) private returns (bool){
         MarketOrder memory order = orders[orderId];
         for (uint i = 0; i < order.tokens.length; i++) {
             if(address(order.tokens[i]) == address(token)){
@@ -66,9 +95,10 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
         orders[orderId].tokens.push(token);
         orders[orderId].amounts.push(amount);
         orders[orderId].rates.push(rate);
+        orders[orderId].exchanges.push(exchangeId);
         return true;
     }
-    
+
     function endPlaceOrder(uint orderId) external payable returns(bool) {
         
         if(!checkOrderValid(orderId)){
@@ -77,32 +107,43 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
         balances[orderId] = msg.value;
         
         MarketOrder memory order = orders[orderId];
-        IExchangeAdapter[] memory choosedExchanges = _pickExchanges(order.tokens, order.amounts, order.rates);
 
-        for(uint i = 0; i < choosedExchanges.length; i++) {
+        for (uint i = 0; i < order.tokens.length; i++ ) {
+            
+            IExchangeAdapter adapter;
+            if(order.exchanges[i] != 0){
+                adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
+            }else{
+                bytes32 exchangeId = exchangeManager.pickExchange(order.tokens[i],order.amounts[i],order.rates[i]);
+                if(exchangeId == 0){
+                    return false;
+                }
+                adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
+                orders[orderId].exchanges[i] = exchangeId;
+            }
 
-            uint adapterOrderId = choosedExchanges[i].placeOrder(
+            uint adapterOrderId = adapter.placeOrder(
+                order.exchanges[i],
                 order.tokens[i], 
                 order.amounts[i], 
                 order.rates[i], 
                 this);
 
             if(adapterOrderId == 0){
-                revert();
                 return false;
             }
-            orders[orderId].exchanges.push(choosedExchanges[i]);
-            orders[orderId].adapterOrdersId.push(adapterOrderId);
 
-            if(choosedExchanges[i].getOrderStatus(adapterOrderId) == int(OrderStatus.Approved)){
-                if(!adapterApprovedImmediately(orderId, adapterOrderId, choosedExchanges[i], order.tokens[i], order.amounts[i], order.rates[i], order.deposit)){
+            orders[orderId].adapterOrdersId.push(adapterOrderId);
+            
+            if(adapter.getOrderStatus(adapterOrderId) == int(OrderStatus.Approved)){
+                if(!adapterApprovedImmediately(orderId, adapterOrderId, adapter, order.tokens[i], order.amounts[i], order.rates[i], order.deposit)){
                     revert();
                     return false;
                 }
             }
         }
         
-        // orders[orderId].orderStatus = MarketOrderStatus.Completed;
+        orders[orderId].orderStatus = MarketOrderStatus.Completed;
         return true;
     }
     
@@ -122,9 +163,9 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
         return true;
     }
     
-    function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter exchange, ERC20 token, uint amount, uint rate, address deposit) private returns(bool){
+    function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter adapter, ERC20 token, uint amount, uint rate, address deposit) private returns(bool){
 
-        address owner = address(exchange);
+        address owner = address(adapter);
         uint expectAmount = getExpectAmount(amount, rate);
         if(token.allowance(owner, this) < expectAmount){
             return false;
@@ -134,50 +175,11 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
         }
         balances[orderId] -= amount;
         // pay eth
-        if(!exchange.payOrder.value(amount)(adapterOrderId)){
+        if(!adapter.payOrder.value(amount)(adapterOrderId)){
             return false;
         }
-        int status = exchange.getOrderStatus(adapterOrderId); 
+        int status = adapter.getOrderStatus(adapterOrderId); 
         return status == int(OrderStatus.Completed);
-    }
-
-    // owner可以直接是msg.sender
-    // TODO: only to be called by adapters
-    function adapterApproved(uint adapterOrderId, address owner) external returns (bool){
-
-        uint orderId = adapterOrders[keccak256(msg.sender, adapterOrderId)];
-        if(orderId==0){
-            return false;
-        }
-
-        MarketOrder memory order = orders[orderId];
-        bool found = false;
-        for(uint i = 0; i < order.adapterOrdersId.length; i++){
-            if(order.adapterOrdersId[i] == adapterOrderId){
-                found = true;
-                break;
-            }
-        }
-        if (!found){
-            return false;
-        }
-
-        ERC20 token = order.tokens[i];
-
-        uint expectAmount = getExpectAmount(order.amounts[i], order.rates[i]);
-        if(token.allowance(owner, order.deposit) < expectAmount){
-            return false;
-        }
-
-        if(!token.transferFrom(owner, order.deposit, expectAmount)){
-            return false;
-        }
-        balances[orderId] -= order.amounts[i];
-
-        msg.sender.transfer(order.amounts[i]);
-
-        checkMarketOrderStatus(adapterOrderId);
-        return true;
     }
 
     function getExpectAmount(uint eth, uint rate) private pure returns(uint){
@@ -185,38 +187,61 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
         return calcDstQty(eth, 18, 18, rate);
     }
 
-    function checkMarketOrderStatus(uint orderId) private returns (bool){
+    // owner可以直接是msg.sender
+    // TODO: only to be called by adapters
+    // function adapterApproved(uint adapterOrderId, address owner) external returns (bool){
 
-        MarketOrder memory order = orders[orderId];
-        for(uint i = 0; i < order.adapterOrdersId.length;i++){
-            // TODO: define 1 as done, including completed,failed,cancelled,etc.
-            if(order.exchanges[i].getOrderStatus(order.adapterOrdersId[i])!=1){
-                return false;
-            }
-        }
-        // all adapters order done,let's notify core smart contract;
-        if (address(marketOrderCallback) != 0x0){
-            marketOrderCallback.MarketOrderStatusUpdated(orderId, 1);
-        }
+    //     uint orderId = adapterOrders[keccak256(msg.sender, adapterOrderId)];
+    //     if(orderId==0){
+    //         return false;
+    //     }
+
+    //     MarketOrder memory order = orders[orderId];
+    //     bool found = false;
+    //     for(uint i = 0; i < order.adapterOrdersId.length; i++){
+    //         if(order.adapterOrdersId[i] == adapterOrderId){
+    //             found = true;
+    //             break;
+    //         }
+    //     }
+    //     if (!found){
+    //         return false;
+    //     }
+
+    //     ERC20 token = order.tokens[i];
+
+    //     uint expectAmount = getExpectAmount(order.amounts[i], order.rates[i]);
+    //     if(token.allowance(owner, order.deposit) < expectAmount){
+    //         return false;
+    //     }
+
+    //     if(!token.transferFrom(owner, order.deposit, expectAmount)){
+    //         return false;
+    //     }
+    //     balances[orderId] -= order.amounts[i];
+
+    //     msg.sender.transfer(order.amounts[i]);
+
+    //     checkMarketOrderStatus(adapterOrderId);
+    //     return true;
+    // }
+   
+    // function checkMarketOrderStatus(uint orderId) private returns (bool){
+
+    //     MarketOrder memory order = orders[orderId];
+    //     for(uint i = 0; i < order.adapterOrdersId.length;i++){
+    //         // TODO: define 1 as done, including completed,failed,cancelled,etc.
+    //         if(order.exchanges[i].getOrderStatus(order.adapterOrdersId[i])!=1){
+    //             return false;
+    //         }
+    //     }
+    //     // all adapters order done,let's notify core smart contract;
+    //     if (address(marketOrderCallback) != 0x0){
+    //         marketOrderCallback.MarketOrderStatusUpdated(orderId, 1);
+    //     }
         
-        return true;
-    }
-
-    function _pickExchanges(ERC20[] tokens,uint[] amounts, uint[] rates) private view returns(IExchangeAdapter[]){
-
-        IExchangeAdapter[] memory choosedExchanges = new IExchangeAdapter[](tokens.length);
-
-        uint i = 0;
-        // choose a exchange to placeorder based on the price
-        for(i = 0; i < tokens.length; i++) {
-            address exchange = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
-            if (exchange == 0x0) {
-                return new IExchangeAdapter[](0);
-            }
-            choosedExchanges[i] = IExchangeAdapter(exchange);
-        }
-        return choosedExchanges;
-    }
+    //     return true;
+    // }
 
     function cancelOrder(uint orderId) external returns (bool success) {
         
@@ -226,15 +251,20 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
 
         uint i = 0;
         for(i = 0; i < order.tokens.length; i++) {
-            order.exchanges[i].cancelOrder(order.adapterOrdersId[i]);
+            IExchangeAdapter adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
+            adapter.cancelOrder(order.adapterOrdersId[i]);
         }
         return true;
     }
 
+    event LogAddress(string desc, address addr);
+    event LogBytes32(string desc, bytes32 value);
+    event LogUint(string desc, uint value);
+
     function getSubOrderStatus(uint orderId, ERC20 token) external view returns (MarketOrderStatus){
-        
+
         MarketOrder memory order = orders[orderId];
-        
+
         bool found = false;
         for(uint i = 0; i < order.tokens.length; i++){
             if(address(order.tokens[i]) == address(token)){
@@ -244,7 +274,8 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase, Uti
         }
         require(found);
 
-        OrderStatus status = OrderStatus(order.exchanges[i].getOrderStatus(order.adapterOrdersId[i]));
+        IExchangeAdapter adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
+        OrderStatus status = OrderStatus(adapter.getOrderStatus(order.adapterOrdersId[i]));
         if (status == OrderStatus.Pending || status == OrderStatus.Approved) {
             return MarketOrderStatus.Pending;
         } else if (status == OrderStatus.Completed) {

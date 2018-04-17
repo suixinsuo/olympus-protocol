@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./StrategyProviderInterface.sol";
+import "../permission/PermissionProviderInterface.sol";
 import "../libs/Converter.sol";
 
 contract StrategyProvider is StrategyProviderInterface {
@@ -12,6 +13,17 @@ contract StrategyProvider is StrategyProviderInterface {
     event ComboCreated(uint id, string name);
     event ComboUpdated(uint id, string name);
 
+    PermissionProviderInterface internal permissionProvider;
+    address coreAddress;
+
+    modifier onlyCore() {
+        require(msg.sender == coreAddress);
+        _;
+    }
+    function StrategyProvider(address _permissionProvider, address _core) public {
+        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+        coreAddress = _core;
+    }
 
     function getStrategyCount() public view returns (uint length){
         return comboHub.length;
@@ -108,12 +120,12 @@ contract StrategyProvider is StrategyProviderInterface {
     }
 
     //TODO require core contract address
-    function incrementStatistics(uint _index, uint _amountInEther) external returns (bool success){
+    function incrementStatistics(uint _index, uint _amountInEther) external  onlyCore returns (bool success){
         comboHub[_index].amount += _amountInEther;
         return true;
     }
-
-    function updateFollower(uint _index, bool follow) external returns (bool success){
+    //TODO require core contract address
+    function updateFollower(uint _index, bool follow) external onlyCore returns (bool success){
         if (follow) {
             comboHub[_index].follower ++;
         } else {
