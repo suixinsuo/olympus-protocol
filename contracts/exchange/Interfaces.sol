@@ -19,8 +19,8 @@ interface IExchangeAdapterManager {
 }
 
 interface IAdapterOrderCallback{
-    function AdapterOrderStatusUpdated(address exchange, uint adapterOrderId) external returns(bool);
-    function AdapterApproved(uint adapterOrderId) external;
+    function adapterOrderStatusUpdated(address exchange, uint adapterOrderId) external returns(bool);
+    function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint completedAmount) external returns (bool);
 }
 
 interface IExchangeAdapter{
