@@ -120,6 +120,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase  {
                 }
                 adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
                 orders[orderId].exchanges[i] = exchangeId;
+                order.exchanges[i] = exchangeId;
             }
 
             uint adapterOrderId = adapter.placeOrder(
@@ -141,6 +142,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase  {
                     return false;
                 }
             }
+            adapterOrders[keccak256(address(adapter),adapterOrderId)] = orderId;
         }
         
         orders[orderId].orderStatus = MarketOrderStatus.Completed;
@@ -182,49 +184,46 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangeAdapterBase  {
         return status == int(OrderStatus.Completed);
     }
 
-    function getExpectAmount(uint eth, uint rate) private pure returns(uint){
-        // TODO: asume all token decimals is 18
-        return calcDstQty(eth, 18, 18, rate);
-    }
+
 
     // owner可以直接是msg.sender
     // TODO: only to be called by adapters
-    // function adapterApproved(uint adapterOrderId, address owner) external returns (bool){
+    function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint completedAmount) external returns (bool){
 
-    //     uint orderId = adapterOrders[keccak256(msg.sender, adapterOrderId)];
-    //     if(orderId==0){
-    //         return false;
-    //     }
+        uint orderId = adapterOrders[keccak256(msg.sender, adapterOrderId)];
+        if(orderId == 0){
+            return false;
+        }
 
-    //     MarketOrder memory order = orders[orderId];
-    //     bool found = false;
-    //     for(uint i = 0; i < order.adapterOrdersId.length; i++){
-    //         if(order.adapterOrdersId[i] == adapterOrderId){
-    //             found = true;
-    //             break;
-    //         }
-    //     }
-    //     if (!found){
-    //         return false;
-    //     }
+        // TODO: valid order stauts
+        MarketOrder memory order = orders[orderId];
+        bool found = false;
+        for(uint i = 0; i < order.adapterOrdersId.length; i++){
+            if(order.adapterOrdersId[i] == adapterOrderId){
+                found = true;
+                break;
+            }
+        }
+        if (!found){
+            return false;
+        }
 
-    //     ERC20 token = order.tokens[i];
+        ERC20 token = order.tokens[i];
 
-    //     uint expectAmount = getExpectAmount(order.amounts[i], order.rates[i]);
-    //     if(token.allowance(owner, order.deposit) < expectAmount){
-    //         return false;
-    //     }
+        uint expectAmount = getExpectAmount(completedAmount, order.rates[i]);
+        if(token.allowance(tokenOwner, this) < expectAmount){
+            return false;
+        }
 
-    //     if(!token.transferFrom(owner, order.deposit, expectAmount)){
-    //         return false;
-    //     }
-    //     balances[orderId] -= order.amounts[i];
+        if(!token.transferFrom(tokenOwner, order.deposit, expectAmount)){
+            return false;
+        }
+        balances[orderId] -= completedAmount;
+        payee.transfer(completedAmount);
 
-    //     msg.sender.transfer(order.amounts[i]);
-
-    //     checkMarketOrderStatus(adapterOrderId);
-    //     return true;
-    // }
+        // checkMarketOrderStatus(adapterOrderId);
+        return true;
+    }
    
     // function checkMarketOrderStatus(uint orderId) private returns (bool){
 
