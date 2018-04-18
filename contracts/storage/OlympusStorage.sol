@@ -54,26 +54,28 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     }
     PermissionProviderInterface internal permissionProvider;
     function OlympusStorage(address _permissionProvider) public {
-        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+        permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
     function addTokenDetails(
         uint indexOrderId,
-        address token,
-        uint weight,
-        uint estimatedPrice,
-        uint dealtPrice,
-        uint totalTokenAmount,
-        uint completedTokenAmount
+        address[] tokens,
+        uint[] weights,
+        uint[] totalTokenAmounts,
+        uint[] estimatedPrices
     ) external {
-        orders[indexOrderId].tokens.push(token);
-        orders[indexOrderId].weights.push(weight);
-        orders[indexOrderId].estimatedPrices.push(estimatedPrice);
-        orders[indexOrderId].dealtPrices.push(dealtPrice);
-        orders[indexOrderId].totalTokenAmounts.push(totalTokenAmount);
-        orders[indexOrderId].completedTokenAmounts.push(completedTokenAmount);
-        orders[indexOrderId].subStatuses.push(ExchangeProviderInterface.MarketOrderStatus.Pending);
-        orderTokenAmounts[indexOrderId][token] = weight;
+        orders[indexOrderId].tokens = tokens;
+        orders[indexOrderId].weights = weights;
+        orders[indexOrderId].estimatedPrices = estimatedPrices;
+        orders[indexOrderId].totalTokenAmounts = totalTokenAmounts;
+        uint i;
+        for (i = 0; i < tokens.length; i++ ) {
+            orders[indexOrderId].subStatuses.push(ExchangeProviderInterface.MarketOrderStatus.Pending);
+            orders[indexOrderId].dealtPrices.push(0);
+            orders[indexOrderId].completedTokenAmounts.push(0);
+
+            orderTokenAmounts[indexOrderId][tokens[i]] = weights[i];
+        }
     }
 
     function addOrderBasicFields(

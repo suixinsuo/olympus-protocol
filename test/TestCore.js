@@ -15,7 +15,7 @@ const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/
 const _ = require('lodash');
 const Promise = require('bluebird');
 const mockData = {
-  tokensum:3,
+  tokensum: 3,
   id: 0,
   name: "test",
   description: "test strategy",
@@ -23,7 +23,7 @@ const mockData = {
   tokenAddresses: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
   exchangesAddressHash: ["0x6269626f78", "0x1269626f78"],
   tokenOnePrice: [1000000, 20000],
-  addresses:["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
+  addresses: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
   tokenTwoPrice: [3000000, 40000],
   weights: [80, 20],
   follower: 0,
@@ -44,52 +44,52 @@ const OrderStatusErrored = 4;
 
 let provider;
 
-contract('Olympus-Protocol', function(accounts) {
-    it("They should be able to deploy.", function() {
-        return Promise.all([
-        OlympusStorage.deployed(),
-        PriceProvider.deployed(),
-        StrategyProvider.deployed(),
-        PermissionProvider.deployed(),
-        Core.deployed(),
-        ])
-        .spread((/*price, strategy, exchange,*/ core) =>  {
+contract('Olympus-Protocol', function (accounts) {
+  it("They should be able to deploy.", function () {
+    return Promise.all([
+      OlympusStorage.deployed(),
+      PriceProvider.deployed(),
+      StrategyProvider.deployed(),
+      PermissionProvider.deployed(),
+      Core.deployed(),
+    ])
+      .spread((/*price, strategy, exchange,*/ core) => {
         assert.ok(core, 'Core contract is not deployed.');
-        });
-    });
-    //test kyber
-    it("MockKyberNetwork should be able to trade.", async () => {
+      });
+  });
+  //test kyber
+  it("MockKyberNetwork should be able to trade.", async () => {
 
-        let mockKyber = await MockKyberNetwork.new(mockData.tokensum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        let tokens = await mockKyber.supportedTokens();
-        //provider = await PriceProvider.new(mockKyber.address);
+    let mockKyber = await MockKyberNetwork.new(mockData.tokensum);
+    let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
+    let tokens = await mockKyber.supportedTokens();
+    //provider = await PriceProvider.new(mockKyber.address);
 
-        assert.equal(tokens.length, mockData.tokensum);
-        let destAddress = accounts[0];
+    assert.equal(tokens.length, mockData.tokensum);
+    let destAddress = accounts[0];
 
-        for (var i = 0; i < tokens.length; i++) {
-            let rates = await mockKyber.getExpectedRate(ethToken, tokens[i], 0)
-            assert.ok(expectedRate.equals(rates[0]));
-            assert.ok(expectedRate.equals(rates[1]));
+    for (var i = 0; i < tokens.length; i++) {
+      let rates = await mockKyber.getExpectedRate(ethToken, tokens[i], 0)
+      assert.ok(expectedRate.equals(rates[0]));
+      assert.ok(expectedRate.equals(rates[1]));
 
-            let erc20Token = await SimpleERC20Token.at(tokens[i]);
-            let tokenBalance = await erc20Token.balanceOf(destAddress);
-            assert.ok(tokenBalance.equals(0));
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      let tokenBalance = await erc20Token.balanceOf(destAddress);
+      assert.ok(tokenBalance.equals(0));
 
-            let srcAmountETH = 1;
-            let result = await mockKyber.trade(
-                ethToken,
-                web3.toWei(srcAmountETH),
-                tokens[i],
-                destAddress,
-                0,
-                rates[1],
-                0, { value: web3.toWei(srcAmountETH) });
-            tokenBalance = await erc20Token.balanceOf(destAddress);
-            assert.ok(expectedRate.mul(srcAmountETH).equals(tokenBalance));
-        }
-    });
+      let srcAmountETH = 1;
+      let result = await mockKyber.trade(
+        ethToken,
+        web3.toWei(srcAmountETH),
+        tokens[i],
+        destAddress,
+        0,
+        rates[1],
+        0, { value: web3.toWei(srcAmountETH) });
+      tokenBalance = await erc20Token.balanceOf(destAddress);
+      assert.ok(expectedRate.mul(srcAmountETH).equals(tokenBalance));
+    }
+  });
 
 
 
@@ -104,7 +104,7 @@ contract('Olympus-Protocol', function(accounts) {
 
     mockData.addresses[0] = tokens[0];
     mockData.addresses[1] = tokens[1];
- 
+
     // without pre-deposit
     let srcAmountETH = 1;
     let needDeposit = srcAmountETH * tokens.length;
@@ -116,230 +116,235 @@ contract('Olympus-Protocol', function(accounts) {
     let expectedAllowanced = expectedRate.mul(srcAmountETH);
     for (var i = 0; i < tokens.length; i++) {
 
-        // Test getRate
-        let rate = await kyberExchange.getRate('', tokens[i], 0);
-        assert.ok(expectedRate.equals(rate));
+      // Test getRate
+      let rate = await kyberExchange.getRate('', tokens[i], 0);
+      assert.ok(expectedRate.equals(rate));
 
-        let deposit = accounts[0];
-        let srcAmountETH = 1;
-        // Test placeOrder
-        let result = await kyberExchange.placeOrder('', tokens[i], web3.toWei(srcAmountETH), rate, deposit);
+      let deposit = accounts[0];
+      let srcAmountETH = 1;
+      // Test placeOrder
+      let result = await kyberExchange.placeOrder('', tokens[i], web3.toWei(srcAmountETH), rate, deposit);
 
-        let placedOrderEvent = result.logs.find(log => {
-            return log.event === 'PlacedOrder';
-        });
-        assert.ok(placedOrderEvent);
-
-        let actualOrderId = parseInt(placedOrderEvent.args.orderId);
-        let expectedOrderId = i + 1;
-        assert.equal(actualOrderId, expectedOrderId);
-
-        let erc20Token = await SimpleERC20Token.at(tokens[i]);
-        let actualAllowance = await erc20Token.allowance(kyberExchange.address, deposit);
-        assert.ok(expectedAllowanced.equals(actualAllowance));
-
-        let orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
-        assert.equal(orderStatus, OrderStatusApproved);
-
-        // Test payOrder
-        await kyberExchange.payOrder(actualOrderId, { value: web3.toWei(srcAmountETH) });
-        orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
-        assert.equal(orderStatus, OrderStatusCompleted);
-    }
-})
-    //exchange init
-
-    it("should be able to set a exchange provider.", async () => {
-
-        let permissionInstance = await PermissionProvider.deployed();
-
-        let manager = await ExchangeAdapterManager.new(0);
-        let mockKyber = await MockKyberNetwork.new(2);
-        let tokens = await mockKyber.supportedTokens();
-
-        mockData.tokenAddresses[0] = tokens[0];
-        mockData.tokenAddresses[1] = tokens[1];
-
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        await manager.addExchange("kyber", kyberExchange.address);
-        let exchangeInstance = await ExchangeProvider.new(manager.address);
-        // let exchangeInstance = await ExchangeProvider.new(manager.address, permissionInstance.address);
-
-        let instance = await Core.deployed();
-        let result = await instance.setProvider(2, exchangeInstance.address);
-
-        let srcAmountETH = 1;
-        let totalSrcAmountETH = srcAmountETH * tokens.length;
-
-        await kyberExchange.send(web3.toWei(totalSrcAmountETH, 'ether'));
-        assert.equal(result.receipt.status, '0x01');                                      
-    })
-
-    //strategy provider
-    it("should be able to create a strategy.", async () => {
-        let instance = await StrategyProvider.deployed();
-        let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[0]});
-        assert.equal(result.receipt.status, '0x01');
-    })
-
-    it("should be able to set a strategy provider.", async () => {
-        let instance = await Core.deployed();
-        let strategyInstance = await StrategyProvider.deployed();
-
-        let result = await instance.setProvider(0,strategyInstance.address);
-        assert.equal(result.receipt.status, '0x01');                                  
-    })
-
-    it("should be able to get a strategy count.", async () => {
-        let instance = await Core.deployed();
-        let result = await instance.getStrategyCount.call();
-        assert.equal(result.toNumber(), 1);                                  
-    })
-
-    it("should be able to get a strategy by index.", async () => {
-        let instance = await Core.deployed();
-        let result = await instance.getStrategy.call(0);
-
-        assert.equal(result[0], mockData.name);          //asert name
-        assert.equal(result[1], mockData.description);   //asert description
-        assert.equal(result[2], mockData.category);      //asert category
-        assert.equal(result[3].toNumber(), mockData.follower);                            //asert follower
-        assert.equal(result[4].toNumber(), mockData.amount);                              //asert amount
-        assert.equal(result[5], '');                                     //asert exchangeId
-        assert.equal(result[6].toNumber(), 2);                              //asert amount
-    })
-
-    it("should be able to get a getStrategyTokenAndWeightByIndex.", async () => {
-        let instance = await Core.deployed();
-        let result = await instance.getStrategyTokenAndWeightByIndex.call(0,0);
-
-        assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[0].toLowerCase());          //asert name
-        assert.equal(result[1].toNumber(), mockData.weights[0]);   //asert description
-
-        result = await instance.getStrategyTokenAndWeightByIndex.call(0,1);
-
-        assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[1].toLowerCase());          //asert name
-        assert.equal(result[1].toNumber(), mockData.weights[1]);   //asert description
-    })
-
-    // //price provider
-    it("should be able to get prices from kyber.", async () => {
-        let result = await provider.getrates.call(mockData.addresses[0],1000000000);
-        assert.ok(result);
-    })
-
-    // //price init
-    it("should be able to changeTokens in price provider.", async () => {
-
-        let result = await provider.changeTokens(mockData.tokenAddresses, { from: accounts[0] });
-        assert.equal(result.receipt.status, '0x01');
-      })
-    
-      it("Should be able to update support exchanges.", async () => {
-        let result = await provider.changeExchanges(mockData.exchangesAddressHash, { from: accounts[0] });
-        assert.equal(result.receipt.status, '0x01');
-      })
-    
-      it("Should be able to update support Provider.", async () => {
-        let result1 = await provider.changeProviders([accounts[1], accounts[2]], mockData.tokenAddresses[0], { from: accounts[0] });
-        let result2 = await provider.changeProviders([accounts[2], accounts[1]], mockData.tokenAddresses[1], { from: accounts[0] });
-        assert.equal(result1.receipt.status, '0x01');
-        assert.equal(result2.receipt.status, '0x01');
-      })
-    
-      it("Should be able to update price.", async () => {
-        let result0 = await provider.updatePrice(mockData.tokenAddresses[0], mockData.exchangesAddressHash, mockData.tokenOnePrice, 0, { from: accounts[1] });
-        let result1 = await provider.updatePrice(mockData.tokenAddresses[1], mockData.exchangesAddressHash, mockData.tokenTwoPrice, 0, { from: accounts[2] });
-        assert.equal(result0.receipt.status, '0x01');
-        assert.equal(result1.receipt.status, '0x01');
+      let placedOrderEvent = result.logs.find(log => {
+        return log.event === 'PlacedOrder';
       });
-    
-      it("should be able to set a price provider.", async () => {
-        let instance = await Core.deployed();
-    
-        let result = await instance.setProvider(1, provider.address);
-        assert.equal(result.receipt.status, '0x01');
-      })
-    
+      assert.ok(placedOrderEvent);
+
+      let actualOrderId = parseInt(placedOrderEvent.args.orderId);
+      let expectedOrderId = i + 1;
+      assert.equal(actualOrderId, expectedOrderId);
+
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      let actualAllowance = await erc20Token.allowance(kyberExchange.address, deposit);
+      assert.ok(expectedAllowanced.equals(actualAllowance));
+
+      let orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
+      assert.equal(orderStatus, OrderStatusApproved);
+
+      // Test payOrder
+      await kyberExchange.payOrder(actualOrderId, { value: web3.toWei(srcAmountETH) });
+      orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
+      assert.equal(orderStatus, OrderStatusCompleted);
+    }
+  })
+  //exchange init
+
+  it("should be able to set a exchange provider.", async () => {
+
+    let permissionInstance = await PermissionProvider.deployed();
+
+    let manager = await ExchangeAdapterManager.new(0);
+    let mockKyber = await MockKyberNetwork.new(2);
+    let tokens = await mockKyber.supportedTokens();
+
+    mockData.tokenAddresses[0] = tokens[0];
+    mockData.tokenAddresses[1] = tokens[1];
+
+    let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
+    await manager.addExchange("kyber", kyberExchange.address);
+    let exchangeInstance = await ExchangeProvider.new(manager.address);
+    // let exchangeInstance = await ExchangeProvider.new(manager.address, permissionInstance.address);
+
+    let instance = await Core.deployed();
+    let result = await instance.setProvider(2, exchangeInstance.address);
+
+    let srcAmountETH = 1;
+    let totalSrcAmountETH = srcAmountETH * tokens.length;
+
+    await kyberExchange.send(web3.toWei(totalSrcAmountETH, 'ether'));
+    assert.equal(result.receipt.status, '0x01');
+  })
+
+  //strategy provider
+  it("should be able to create a strategy.", async () => {
+    let instance = await StrategyProvider.deployed();
+    let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[0] });
+    assert.equal(result.receipt.status, '0x01');
+  })
+
+  it("should be able to set a strategy provider.", async () => {
+    let instance = await Core.deployed();
+    let strategyInstance = await StrategyProvider.deployed();
+
+    let result = await instance.setProvider(0, strategyInstance.address);
+    assert.equal(result.receipt.status, '0x01');
+  })
+
+  it("should be able to get a strategy count.", async () => {
+    let instance = await Core.deployed();
+    let result = await instance.getStrategyCount.call();
+    assert.equal(result.toNumber(), 1);
+  })
+
+  it("should be able to get a strategy by index.", async () => {
+    let instance = await Core.deployed();
+    let result = await instance.getStrategy.call(0);
+
+    assert.equal(result[0], mockData.name);          //asert name
+    assert.equal(result[1], mockData.description);   //asert description
+    assert.equal(result[2], mockData.category);      //asert category
+    assert.equal(result[3].toNumber(), mockData.follower);                            //asert follower
+    assert.equal(result[4].toNumber(), mockData.amount);                              //asert amount
+    assert.equal(result[5], '');                                     //asert exchangeId
+    assert.equal(result[6].toNumber(), 2);                              //asert amount
+  })
+
+  it("should be able to get a getStrategyTokenAndWeightByIndex.", async () => {
+    let instance = await Core.deployed();
+    let result = await instance.getStrategyTokenAndWeightByIndex.call(0, 0);
+
+    assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[0].toLowerCase());          //asert name
+    assert.equal(result[1].toNumber(), mockData.weights[0]);   //asert description
+
+    result = await instance.getStrategyTokenAndWeightByIndex.call(0, 1);
+
+    assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[1].toLowerCase());          //asert name
+    assert.equal(result[1].toNumber(), mockData.weights[1]);   //asert description
+  })
+
+  // //price provider
+  it("should be able to get prices from kyber.", async () => {
+
+    let result = await provider.getrates.call(mockData.addresses[0], 1000000000);
+    assert.ok(result);
+  })
+
+  // //price init
+  it("should be able to changeTokens in price provider.", async () => {
+
+    let result = await provider.changeTokens(mockData.tokenAddresses, { from: accounts[0] });
+    assert.equal(result.receipt.status, '0x01');
+  })
+
+  it("Should be able to update support exchanges.", async () => {
+    let result = await provider.changeExchanges(mockData.exchangesAddressHash, { from: accounts[0] });
+    assert.equal(result.receipt.status, '0x01');
+  })
+
+  it("Should be able to update support Provider.", async () => {
+    let result1 = await provider.changeProviders([accounts[1], accounts[2]], mockData.tokenAddresses[0], { from: accounts[0] });
+    let result2 = await provider.changeProviders([accounts[2], accounts[1]], mockData.tokenAddresses[1], { from: accounts[0] });
+    assert.equal(result1.receipt.status, '0x01');
+    assert.equal(result2.receipt.status, '0x01');
+  })
+
+  it("Should be able to update price.", async () => {
+    let result0 = await provider.updatePrice(mockData.tokenAddresses[0], mockData.exchangesAddressHash, mockData.tokenOnePrice, 0, { from: accounts[1] });
+    let result1 = await provider.updatePrice(mockData.tokenAddresses[1], mockData.exchangesAddressHash, mockData.tokenTwoPrice, 0, { from: accounts[2] });
+    assert.equal(result0.receipt.status, '0x01');
+    assert.equal(result1.receipt.status, '0x01');
+  });
+
+  it("should be able to set a price provider.", async () => {
+    try {
+      let instance = await Core.deployed();
+
+      let result = await instance.setProvider(1, provider.address);
+      assert.equal(result.receipt.status, '0x01');
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  });
 
 
+  //////////////////////////////
 
-//////////////////////////////
+  //PLEASE USE provider to get price
 
-//PLEASE USE provider to get price 
+  //let result = await provider.getrates.call(mockData.addresses[0],1000000000);
 
-//let result = await provider.getrates.call(mockData.addresses[0],1000000000);
+  /////////////////////////////
 
-/////////////////////////////
+  //core price
 
-    //core price
+  it("should be able to get price.", async () => {
+    let instance = await Core.deployed();
+    let result0 = await instance.getPrice.call(mockData.tokenAddresses[0], 1000000000);
+    let result1 = await instance.getPrice.call(mockData.tokenAddresses[1], 1000000000);
+    // We can check for 0 here, in the price tests these values are checked properly
+    assert.equal(result0.toNumber(), 0);
+    assert.equal(result1.toNumber(), 0);
+  })
 
-    it("should be able to get price.", async () => {
-        let instance = await Core.deployed();
-        let result0 = await instance.getPrice.call(mockData.tokenAddresses[0]);
-        let result1 = await instance.getPrice.call(mockData.tokenAddresses[1]);
+  it("should be able to get strategy token price.", async () => {
+    let instance = await Core.deployed();
+    let result0 = await instance.getStragetyTokenPrice.call(0, 0);
+    let result1 = await instance.getStragetyTokenPrice.call(0, 1);
 
-        assert.equal(result0.toNumber(), mockData.tokenOnePrice[0]);
-        assert.equal(result1.toNumber(), mockData.tokenTwoPrice[0]);
-    })
+    // We can check for 0 here, in the price tests these values are checked properly
+    assert.equal(result0.toNumber(), 0);
+    assert.equal(result1.toNumber(), 0);
+  })
 
-    it("should be able to get strategy token price.", async () => {
-        let instance = await Core.deployed();
-        let result0 = await instance.getStragetyTokenPrice.call(0,0);
-        let result1 = await instance.getStragetyTokenPrice.call(0,1);
+  //storage provider
 
-        assert.equal(result0.toNumber(), mockData.tokenOnePrice[0]);
-        assert.equal(result1.toNumber(), mockData.tokenTwoPrice[0]);
-    })
+  it("should be able to set a storage provider.", async () => {
+    let instance = await Core.deployed();
+    let storageInstance = await OlympusStorage.deployed();
 
-    //storage provider
+    let result = await instance.setProvider(3, storageInstance.address);
+    assert.equal(result.receipt.status, '0x01');
+  })
 
-    it("should be able to set a storage provider.", async () => {
-        let instance = await Core.deployed();
-        let storageInstance = await OlympusStorage.deployed();
 
-        let result = await instance.setProvider(3, storageInstance.address);
-        assert.equal(result.receipt.status, '0x01');                                  
-    })
-    
+  it("should be able to adjustTradeRange.", async () => {
+    let instance = await Core.deployed();
+    let result = await instance.adjustTradeRange(mockData.minTradeFeeInWei, mockData.maxTradeFeeInWei, { from: accounts[0] });
+    assert.equal(result.receipt.status, '0x01');
+  })
 
-    it("should be able to adjustTradeRange.", async () => {
-        let instance = await Core.deployed();
-        let result = await instance.adjustTradeRange(mockData.minTradeFeeInWei, mockData.maxTradeFeeInWei, {from:accounts[0]});
-        assert.equal(result.receipt.status, '0x01');
-    })
+  it("should be able to adjustFee.", async () => {
+    let instance = await Core.deployed();
+    let result = await instance.adjustFee(10, { from: accounts[0] });
+    assert.equal(result.receipt.status, '0x01');
+  })
 
-    it("should be able to adjustFee.", async () => {
-        let instance = await Core.deployed();
-        let result = await instance.adjustFee(10, {from:accounts[0]});
-        assert.equal(result.receipt.status, '0x01');
-    })
-    
-    it("should be able to buy index.", async () => {
-        let instance = await Core.deployed();
+  it("should be able to buy index.", async () => {
+    let instance = await Core.deployed();
 
-        let result = await instance.buyIndex(0, accounts[1], {from:accounts[0], value: 3000000});
-        assert.equal(result.receipt.status, '0x01');
-    })
+    let result = await instance.buyIndex(0, accounts[1], { from: accounts[0], value: 3000000 });
+    assert.equal(result.receipt.status, '0x01');
+  })
 
-    it("should be able to get index order.", async () => {
-        let instance = await Core.deployed();
-        //TODO set the orderId to 1000000 
-        let result = await instance.getIndexOrder.call(1000000);
-        assert.equal(result[0].toNumber(), 0);
-        // assert.equal(result[1].toString(), 0);
-        // assert.equal(result[2].toString(), 0);
-        assert.equal(result[3].toNumber(), mockData.maxTradeFeeInWei);
-        assert.equal(result[4].toNumber(), mockData.tokenAddresses.length);
-    })
+  it("should be able to get index order.", async () => {
+    let instance = await Core.deployed();
+    //TODO set the orderId to 1000000
+    let result = await instance.getIndexOrder.call(1000000);
+    assert.equal(result[0].toNumber(), 0);
+    // assert.equal(result[1].toString(), 0);
+    // assert.equal(result[2].toString(), 0);
+    assert.equal(result[3].toNumber(), mockData.maxTradeFeeInWei);
+    assert.equal(result[4].toNumber(), mockData.tokenAddresses.length);
+  })
 
-    it("should be able to getSubOrderStatus.", async () => {
-        let instance = await Core.deployed();
+  it("should be able to getSubOrderStatus.", async () => {
+    let instance = await Core.deployed();
 
-        //TODO set the orderId to 1000000 
-        let result = await instance.getSubOrderStatus.call(1000000, mockData.tokenAddresses[0]);
+    //TODO set the orderId to 1000000
+    let result = await instance.getSubOrderStatus.call(1000000, mockData.tokenAddresses[0]);
 
-        assert.equal(result.toNumber(), 3);
-    })
+    assert.equal(result.toNumber(), 3);
+  })
 
 })
