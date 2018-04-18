@@ -136,11 +136,6 @@ contract KyberNetworkExchange is ExchangeAdapterBase {
         return true;
     }
 
-    function getExpectAmount(uint amount, uint rate) private pure returns(uint){
-         
-        return calcDstQty(amount, 18, 18, rate);
-    }
-
     function cancelOrder(uint adapterOrderId) external returns(bool){
         Order memory o = orders[adapterOrderId];
         require(o.amount > 0);
