@@ -52,20 +52,31 @@ contract StrategyProvider is StrategyProviderInterface {
 
     function getStrategy(uint _index) public _checkIndex(_index) view returns (
         uint id, 
-        bytes32 name, 
-        bytes32 description, 
-        bytes32 category,
+        string name, 
+        string description, 
+        string category,
+        address[] memory tokenAddresses,
+        uint[] memory weights,
         uint follower,
         uint amount,
         bytes32 exchangeId) 
     {
+        uint leng = comboHub[_index].tokenAddresses.length;
         Combo memory combo = comboHub[_index];
+        tokenAddresses = new address[](leng);
+        weights = new uint[](leng);
         // address owner = comboOwner[_index];
+        for (uint i = 0; i < leng; i++) {
+            tokenAddresses[i] = comboHub[_index].tokenAddresses[i];
+            weights[i] = comboHub[_index].weights[i];
+        }
         return (
             combo.id,
-            Converter.stringToBytes32(combo.name),
-            Converter.stringToBytes32(combo.description),
-            Converter.stringToBytes32(combo.category),
+            combo.name,
+            combo.description,
+            combo.category,
+            tokenAddresses,
+            weights,
             combo.follower,
             combo.amount,
             combo.exchangeId);
