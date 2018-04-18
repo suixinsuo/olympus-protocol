@@ -68,18 +68,17 @@ module.exports = function (deployer, network) {
     return deployer.deploy(PermissionProvider);
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
-  });
-  //   .then(() => {
-  //   console.log(Core.address);
-  //   return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
-  // }).then(() => {
-  //   return deployer.deploy(PriceProvider, PermissionProvider.address);
-  // }).then(() => {
-  //   return deployer.deploy(ExtendedStorage, PermissionProvider.address);
-  // }).then(() => {
-  //   return deployer.deploy(OlympusStorage, PermissionProvider.address);
-  // }).then(() => {
-  //   return deployExchangeProviderWrap(deployer, network);
-  // })
+  }).then(() => {
+    console.log(Core.address);
+    return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
+  }).then(() => {
+    return deployer.deploy(PriceProvider, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(ExtendedStorage, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(OlympusStorage, PermissionProvider.address);
+  }).then(() => {
+    return deployExchangeProviderWrap(deployer, network);
+  })
 
 }

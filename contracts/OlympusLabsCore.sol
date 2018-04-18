@@ -26,10 +26,11 @@ contract OlympusLabsCore is Manageable {
     StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x296b6FE67B9ee209B360a52fDFB67fbe4C14e952));
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x51e404a62CA2874398525C61366E2E914e3657Ab));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x2A47d5Cc7FfaF369C793188e8C7D1DB8dc447A15));
-    ERC20 private MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
+    ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
     uint public feePercentage = 100;
+    uint public MOTDiscount = 50;
     uint public constant DENOMINATOR = 10000;
 
     uint public minimumInWei = 0;
@@ -158,7 +159,7 @@ contract OlympusLabsCore is Manageable {
         uint[3] memory amounts;
         amounts[0] = msg.value; //uint totalAmount
         amounts[1] = getFeeAmount(amounts[0], feeIsMOT); // fee
-        amounts[2] = amounts[0] - amounts[1]; // payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
+        amounts[2] = payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
 
         bytes32 exchangeId = Converter.stringToBytes32(exchangeName);
 
@@ -305,6 +306,12 @@ contract OlympusLabsCore is Manageable {
         return true;
     }
 
+    function adjustMOTFeeDiscount(uint _newDiscountPercentage) public onlyOwner returns(bool success) {
+        require(_newDiscountPercentage < 100);
+        MOTDiscount = _newDiscountPercentage;
+        return true;
+    }
+
     function adjustTradeRange(uint _minInWei, uint _maxInWei) public onlyOwner returns (bool success) {
         require(_minInWei > 0);
         require(_maxInWei > _minInWei);
@@ -316,7 +323,7 @@ contract OlympusLabsCore is Manageable {
 
     function getFeeAmount(uint amountInWei, bool feeIsMOT) private view returns (uint){
         if(feeIsMOT){
-            return (amountInWei * feePercentage / DENOMINATOR) / 2;
+            return ((amountInWei * feePercentage / DENOMINATOR) * (100 - MOTDiscount)) / 100;
         } else {
             return amountInWei * feePercentage / DENOMINATOR;
         }
@@ -325,11 +332,13 @@ contract OlympusLabsCore is Manageable {
     function payFee(uint totalValue, uint feeValue, address sender, bool feeIsMOT) private view returns (uint){
         if(feeIsMOT){
             // Transfer MOT
-            // uint amount;
-            // uint allowance = MOT.allowance(sender,address(this));
-            // (,amount) = priceProvider.getrates(address(0xea1887835d177ba8052e5461a269f42f9d77a5af), feeValue);
-            // require(allowance >= amount);
-            // require(MOT.transferFrom(sender,address(this),amount));
+            uint amount;
+            uint allowance = MOT.allowance(sender,address(this));
+            // TODO: REPLACE THIS ADDRESS WITH THE MOT ADDRESS (is already a constant in this contract) AS SOON AS THE PRICE PROVIDER SUPPORTS IT!
+            // DON'T FORGET :)
+            (,amount) = priceProvider.getrates(address(0xea1887835d177ba8052e5461a269f42f9d77a5af), feeValue);
+            require(allowance >= amount);
+            require(MOT.transferFrom(sender,address(this),amount));
             return totalValue; // Use all sent ETH to buy, because fee is paid in MOT
         } else { // We use ETH as fee, so deduct that from the amount of ETH sent
             return totalValue - feeValue;
