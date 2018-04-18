@@ -5,6 +5,7 @@ const ExchangeAdapterManager = artifacts.require("../contracts/exchange/Exchange
 const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
 const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
 const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
+const CentralizedExchange = artifacts.require("CentralizedExchange");
 
 const tokenNum = 3;
 const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
@@ -125,7 +126,6 @@ contract('KyberNetworkExchange', (accounts) => {
         }
     })
 })
-
 
 const ExchangeStatusEnabled = 0;
 const ExchangeStatusDisabled = 1;
@@ -305,7 +305,7 @@ contract('ExchangeProvider', (accounts) => {
 
 contract('ExchangeProviderWrap', (accounts) => {
 
-    it("should be able to buy", async () => {
+    it("should be able to buy using KyberNetwork", async () => {
         let manager = await ExchangeAdapterManager.new(0);
         let mockKyber = await MockKyberNetwork.new(tokenNum);
         let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
@@ -334,5 +334,68 @@ contract('ExchangeProviderWrap', (accounts) => {
             let expectedBalance = expectedRate.mul(srcAmountETH);
             assert.ok(expectedBalance.equals(actualBalance));
         }
+    })
+
+    it("should be able to buy using CentralizedExchange", async () => {
+
+        // begin set up
+        let manager = await ExchangeAdapterManager.new(0);
+        let centralizedExchange = await CentralizedExchange.new();
+        let tokens = [];
+        let owner = accounts[0];
+        for (let i = 0; i < tokenNum; i++) {
+            let t = await SimpleERC20Token.new({ from: owner });
+            tokens.push(t.address);
+        }
+        let rates = tokens.map(()=>{return expectedRate;});
+        let result = await manager.addExchange('shipeshift',centralizedExchange.address);
+        let exchangeId = result.logs.find((l)=>{return l.event === 'AddedExchange'}).args.id;
+
+        await centralizedExchange.setRates(exchangeId, tokens, rates);
+
+        let exchangeProvider = await ExchangeProvider.new(manager.address);
+        let exchangeProviderWrap = await ExchangeProviderWrap.new(exchangeProvider.address);
+
+        await centralizedExchange.setAdapterOrderCallback(exchangeProvider.address);
+
+        let srcAmountETH = 1;
+        let totalSrcAmountETH = srcAmountETH * tokens.length;
+
+        let orderId = new Date().getTime();
+        let amounts = tokens.map(()=>{return web3.toWei(srcAmountETH,'ether')});
+        let deposit = accounts[1];
+
+        result = await exchangeProviderWrap.buy(orderId, tokens, amounts, rates, deposit, { value: web3.toWei(totalSrcAmountETH, 'ether') });
+        let fromBlock = result.receipt.blockNumber;
+        let e = centralizedExchange.PlacedOrder({}, { fromBlock: fromBlock, toBlock: 'latest' });// , function (error, log) {
+        
+        let logs = await (async () => { return new Promise(resolve => { e.get((err, logs) => { resolve(logs); }) }) })()
+        let payee = accounts[2];
+        let payeeBalance = await web3.eth.getBalance(payee);
+
+        for (let i = 0; i < logs.length; i++) {
+            // 1. send token to owner
+            let orderId = logs[i].args.orderId;
+            let orderInfo = await centralizedExchange.getOrderInfo(orderId);
+            let erc20Token = SimpleERC20Token.at(orderInfo[1]);
+            let orderDeposit = orderInfo[5];
+
+            // 2. owner approve token 
+            await erc20Token.approve(orderDeposit, expectedRate.mul(srcAmountETH));
+
+            // 3. callback
+            let result = await centralizedExchange.PlaceOrderCompletedCallback(orderInfo[6], owner, payee, orderId, web3.toWei(srcAmountETH));
+        }
+
+        // Let's check those tokens's balance of deposit account
+        for (let i = 0; i < tokens.length; i++) {
+            let erc20Token = await SimpleERC20Token.at(tokens[i]);
+            let actualBalance = await erc20Token.balanceOf(deposit);
+            let expectedBalance = expectedRate.mul(srcAmountETH);
+            assert.ok(expectedBalance.equals(actualBalance));
+        }
+
+        let afterPayeeBalance = await web3.eth.getBalance(payee);
+        assert.ok(afterPayeeBalance.sub(payeeBalance).equals(web3.toWei(tokenNum*srcAmountETH)));
     })
 })
