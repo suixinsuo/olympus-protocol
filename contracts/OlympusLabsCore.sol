@@ -158,7 +158,7 @@ contract OlympusLabsCore is Manageable {
         uint[3] memory amounts;
         amounts[0] = msg.value; //uint totalAmount
         amounts[1] = getFeeAmount(amounts[0], feeIsMOT); // fee
-        amounts[2] = payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
+        amounts[2] = amounts[0] - amounts[1]; // payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
 
         bytes32 exchangeId = Converter.stringToBytes32(exchangeName);
 
