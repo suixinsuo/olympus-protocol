@@ -18,67 +18,68 @@ const args = require('../scripts/libs/args')
 
 function deployOnDev(deployer, num) {
 
-    return deployer.then(() => {
-        return deployer.deploy(MockKyberNetwork, num);
-    }).then(() => {
-        return deployer.deploy(KyberNetworkExchange, MockKyberNetwork.address);
-    }).then(() => {
-        return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
-    }).then(() => {
-        // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
-        return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
-    }).then(() => {
-        return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
-    })
+  return deployer.then(() => {
+    return deployer.deploy(MockKyberNetwork, num);
+  }).then(() => {
+    return deployer.deploy(KyberNetworkExchange, MockKyberNetwork.address);
+  }).then(() => {
+    return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
+  }).then(() => {
+    // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
+    return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
+  }).then(() => {
+    return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+  })
 }
 
 function deployExchangeProviderWrap(deployer, network) {
 
-    let kyberNetwork = KyberConfig[network];
-    if (network === 'development'){
-        return deployOnDev(deployer, kyberNetwork.mockTokenNum);
-    }
+  let kyberNetwork = KyberConfig[network];
+  if (network === 'development') {
+    return deployOnDev(deployer, kyberNetwork.mockTokenNum);
+  }
 
-    let flags = args.parseArgs();
-    var isMockKyber = flags["mockkyber"];
-    if(isMockKyber){
-        return deployOnDev(deployer, kyberNetwork.mockTokenNum);
-    }
+  let flags = args.parseArgs();
+  var isMockKyber = flags["mockkyber"];
+  if (isMockKyber) {
+    return deployOnDev(deployer, kyberNetwork.mockTokenNum);
+  }
 
-    if (!kyberNetwork) {
-        console.error("unkown kyberNetwork address", network)
-        return;
-    }
+  if (!kyberNetwork) {
+    console.error("unkown kyberNetwork address", network)
+    return;
+  }
 
-    return deployer.then(() => {
-        return deployer.deploy(KyberNetworkExchange, kyberNetwork.network);
-    }).then(() => {
-        return deployer.deploy(ExchangeAdapterManager);
-    }).then(() => {
-        // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
-        return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
-    }).then(() => {
-        return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
-    })
+  return deployer.then(() => {
+    return deployer.deploy(KyberNetworkExchange, kyberNetwork.network);
+  }).then(() => {
+    return deployer.deploy(ExchangeAdapterManager);
+  }).then(() => {
+    // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
+    return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
+  }).then(() => {
+    return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+  })
 }
 
 module.exports = function (deployer, network) {
 
-  deployer.then( () => {
+  deployer.then(() => {
     return deployer.deploy(PermissionProvider);
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
-  }).then(() => {
-    console.log(Core.address);
-    return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
-  }).then(() => {
-    return deployer.deploy(PriceProvider, PermissionProvider.address);
-  }).then(() => {
-    return deployer.deploy(ExtendedStorage, PermissionProvider.address);
-  }).then(() => {
-    return deployer.deploy(OlympusStorage, PermissionProvider.address);
-  }).then(() => {
-    return deployExchangeProviderWrap(deployer, network);
-  })
+  });
+  //   .then(() => {
+  //   console.log(Core.address);
+  //   return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
+  // }).then(() => {
+  //   return deployer.deploy(PriceProvider, PermissionProvider.address);
+  // }).then(() => {
+  //   return deployer.deploy(ExtendedStorage, PermissionProvider.address);
+  // }).then(() => {
+  //   return deployer.deploy(OlympusStorage, PermissionProvider.address);
+  // }).then(() => {
+  //   return deployExchangeProviderWrap(deployer, network);
+  // })
 
 }

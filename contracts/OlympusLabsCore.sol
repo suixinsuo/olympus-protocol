@@ -25,7 +25,7 @@ contract OlympusLabsCore is Manageable {
     ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x9FC2267BeE84E56Fab30637dB70f9ceB0bCaDFD0));
     StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x296b6FE67B9ee209B360a52fDFB67fbe4C14e952));
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x51e404a62CA2874398525C61366E2E914e3657Ab));
-    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0xc82cCeEF63e095A56D6Bb0C17c1F3ec58567aF1C));
+    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x2A47d5Cc7FfaF369C793188e8C7D1DB8dc447A15));
     ERC20 private MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
@@ -316,7 +316,7 @@ contract OlympusLabsCore is Manageable {
 
     function getFeeAmount(uint amountInWei, bool feeIsMOT) private view returns (uint){
         if(feeIsMOT){
-            return amountInWei * feePercentage / DENOMINATOR;
+            return (amountInWei * feePercentage / DENOMINATOR) / 2;
         } else {
             return amountInWei * feePercentage / DENOMINATOR;
         }
