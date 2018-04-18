@@ -59,26 +59,24 @@ contract OlympusLabsCore is Manageable {
     }
 
     function getStrategy(uint strategyId) public view returns (
-        string name,
-        string description,
-        string category,
+        string  name,
+        string  description,
+        string  category,
+        address[] memory tokens,
+        uint[] memory weights,
         uint followers,
         uint amount,
-        string exchangeName,
-        uint tokenLength)
+        string exchangeName)
     {
-
+        bytes32 _exchangeName;
+        uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
         require(strategyId >= 0);
+        tokens = new address[](tokenLength);
+        weights = new uint[](tokenLength);
 
-        bytes32[4] memory bytesTemp;
-
-        (,bytesTemp[0], bytesTemp[1], bytesTemp[2], followers, amount, bytesTemp[3]) = strategyProvider.getStrategy(strategyId);
-        name = Converter.bytes32ToString(bytesTemp[0]);
-        description = Converter.bytes32ToString(bytesTemp[1]);
-        category = Converter.bytes32ToString(bytesTemp[2]);
-        exchangeName = Converter.bytes32ToString(bytesTemp[3]);
-
-        tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
+        (,name,description,category,,,followers,amount,_exchangeName) = strategyProvider.getStrategy(strategyId);
+        (,,,,tokens,weights,,,) = strategyProvider.getStrategy(strategyId);
+        exchangeName = Converter.bytes32ToString(_exchangeName);
     }
 
     function getStrategyTokenAndWeightByIndex(uint strategyId, uint index) public view returns (
@@ -105,7 +103,7 @@ contract OlympusLabsCore is Manageable {
         require(strategyId >= 0);
         uint totalLength;
 
-        (,,,,,totalLength) = getStrategy(strategyId);
+        uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
         require(tokenIndex < totalLength);
 
         address token;
@@ -145,9 +143,12 @@ contract OlympusLabsCore is Manageable {
         if(maximumInWei > 0){
             require(msg.value <= maximumInWei);
         }
-        string memory exchangeName;
-        (,,,,,exchangeName,) = getStrategy(strategyId);
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
+        address[] memory tokens = new address[](tokenLength);
+        uint[] memory weights = new uint[](tokenLength);
+        bytes32 exchangeId;
+        
+        (,,,,tokens,weights,,,exchangeId) = strategyProvider.getStrategy(strategyId);
 
         // can't buy an index without tokens.
         require(tokenLength > 0);
@@ -157,7 +158,6 @@ contract OlympusLabsCore is Manageable {
         amounts[1] = getFeeAmount(amounts[0]); // fee
         amounts[2] = amounts[0] - amounts[1]; // actualAmount
 
-        bytes32 exchangeId = Converter.stringToBytes32(exchangeName);
 
         // create order.
         indexOrderId = olympusStorage.addOrderBasicFields(
@@ -172,8 +172,6 @@ contract OlympusLabsCore is Manageable {
         // 0: token amounts
         // 1: estimatedPrices
 
-        address[] memory tokens = new address[](tokenLength);
-        uint[] memory weights = new uint[](tokenLength);
 
         subOrderTemp[0] = initializeArray(tokenLength);
         subOrderTemp[1] = initializeArray(tokenLength);
@@ -181,7 +179,7 @@ contract OlympusLabsCore is Manageable {
         emit LogNumber(indexOrderId);
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
         for (uint i = 0; i < tokenLength; i ++ ) {
-            (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
+            
             // ignore those tokens with zero weight.
             if(weights[i] <= 0) {
                 continue;
