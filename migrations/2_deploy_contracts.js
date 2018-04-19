@@ -34,21 +34,21 @@ function deployOnDev(deployer, num) {
 
 function deployExchangeProviderWrap(deployer, network) {
 
-    let kyberNetwork = KyberConfig[network];
-    if (network === 'development'){
-        return deployOnDev(deployer, kyberNetwork.mockTokenNum);
-    }
+  let kyberNetwork = KyberConfig[network];
+  if (network === 'development') {
+    return deployOnDev(deployer, kyberNetwork.mockTokenNum);
+  }
 
-    let flags = args.parseArgs();
-    var isMockKyber = flags["mockkyber"];
-    if(isMockKyber){
-        return deployOnDev(deployer, kyberNetwork.mockTokenNum);
-    }
+  let flags = args.parseArgs();
+  var isMockKyber = flags["mockkyber"];
+  if (isMockKyber) {
+    return deployOnDev(deployer, kyberNetwork.mockTokenNum);
+  }
 
-    if (!kyberNetwork) {
-        console.error("unkown kyberNetwork address", network)
-        return;
-    }
+  if (!kyberNetwork) {
+    console.error("unkown kyberNetwork address", network)
+    return;
+  }
 
     return deployer.then(() => {
         return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
@@ -63,7 +63,7 @@ function deployExchangeProviderWrap(deployer, network) {
 
 module.exports = function (deployer, network) {
 
-  deployer.then( () => {
+  deployer.then(() => {
     return deployer.deploy(PermissionProvider);
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
