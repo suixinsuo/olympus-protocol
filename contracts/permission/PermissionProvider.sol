@@ -76,6 +76,18 @@ contract PermissionProvider is PermissionProviderInterface {
     function hasExchangeOwner(address _addr) public view returns(bool success) {
         return hasRole(_addr, "ExchangeOwner") || hasRole(_addr, ROLE_ADMIN);
     }
+
+    function adminAddExchangeAdapterOwner(address _addr) onlyAdmin public {
+        adminAddRole(_addr, "ExchangeAdapterOwner");
+    }
+
+    function adminRemoveExchangeAdapterOwner(address _addr) onlyAdmin public {
+        adminRemoveRole(_addr, "ExchangeAdapterOwner");
+    }
+
+    function hasExchangeAdapterOwner(address _addr) public view returns(bool success) {
+        return hasRole(_addr, "ExchangeAdapterOwner") || hasRole(_addr, ROLE_ADMIN);
+    }
     
     function adminAddStorageOwner(address _addr) onlyAdmin public {
         adminAddRole(_addr, "StorageOwner");

@@ -30,6 +30,10 @@ contract PermissionProviderInterface is Provider, RBAC {
     function adminAddExchangeOwner(address addr) onlyAdmin public;
     function adminRemoveExchangeOwner(address addr) onlyAdmin public;
     function hasExchangeOwner(address addr) public view returns(bool success);
+
+    function adminAddExchangeAdapterOwner(address addr) onlyAdmin public;
+    function adminRemoveExchangeAdapterOwner(address addr) onlyAdmin public;
+    function hasExchangeAdapterOwner(address addr) public view returns(bool success);
     
     function adminAddStorageOwner(address addr) onlyAdmin public;
     function adminRemoveStorageOwner(address addr) onlyAdmin public;

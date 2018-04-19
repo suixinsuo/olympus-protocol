@@ -7,7 +7,7 @@ const PermissionProvider = artifacts.require("../contracts/permission/Permission
 const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 const CentralizedExchange = artifacts.require("CentralizedExchange");
 
-const tokenNum = 3;
+const tokenNum = 2;
 const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
 
@@ -26,47 +26,46 @@ const ExchangeStatusDisabled = 1;
 
 contract('CentralizedExchange', (accounts) => {
 
+    let testCase = [{
+        name: 'shipeshift'
+    }, {
+        name: 'binance'
+    }, {
+        name: 'okex'
+    }];
+
     it('test addExchange and enable/disable', async () => {
 
-        let id = 1;
-        let testCase = [{
-            exchangeId: web3.sha3(id++ + ''),
-            name: 'shipeshift'
-        }, {
-            exchangeId: web3.sha3(id++ + ''),
-            name: 'binance'
-        }, {
-            exchangeId: web3.sha3(id++ + ''),
-            name: 'okex'
-        }];
+        let id = 1000;
+        
+        let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
 
-        let centralizedExchange = await CentralizedExchange.new();
+        let centralizedExchange = await CentralizedExchange.deployed();
 
         for (let i = 0; i < testCase.length; i++) {
-            await centralizedExchange.addExchange(testCase[i].exchangeId, testCase[i].name);
-            result = await centralizedExchange.getExchange(testCase[i].exchangeId);
+            let result = await exchangeAdapterManager.addExchange(testCase[i].name, centralizedExchange.address);
+            let actualExchangeId = result.logs.find((l)=>{return l.event === 'AddedExchange'}).args.id;
+            testCase[i].exchangeId = actualExchangeId;
+
+            result = await centralizedExchange.getExchange(actualExchangeId);
             assert.equal(bytes32ToString(result[0]), testCase[i].name);
             assert.equal(result[1].toString(), ExchangeStatusEnabled+'');
-        }
 
-        // disable exchange
-        for (let i = 0; i < testCase.length; i++) {
-            await centralizedExchange.disable(testCase[i].exchangeId);
-            result = await centralizedExchange.isEnabled(testCase[i].exchangeId);
+            // disable exchange
+            await centralizedExchange.disable(actualExchangeId);
+            result = await centralizedExchange.isEnabled(actualExchangeId);
             assert.ok(!result);
-        }
 
         // enable exchange
-        for (let i = 0; i < testCase.length; i++) {
-            result = await centralizedExchange.enable(testCase[i].exchangeId);
-            result = await centralizedExchange.isEnabled(testCase[i].exchangeId);
+            result = await centralizedExchange.enable(actualExchangeId);
+            result = await centralizedExchange.isEnabled(actualExchangeId);
             assert.ok(result);
         }
     })
 
     it('test getRate', async () => {
 
-        let centralizedExchange = await CentralizedExchange.new();
+        let centralizedExchange = await CentralizedExchange.deployed();
         let tokens = [];
         for (var i = 0; i < 3; i++) {
             let t = await SimpleERC20Token.new();
@@ -79,8 +78,7 @@ contract('CentralizedExchange', (accounts) => {
         tokens.push(t.address);
         rates.push(-1);
 
-        let exchangeId = web3.sha3('1');
-        await centralizedExchange.addExchange(exchangeId, 'shipeshift');
+        let exchangeId = testCase[0].exchangeId;
 
         await centralizedExchange.setRates(exchangeId, tokens, rates);
 
@@ -96,13 +94,12 @@ contract('CentralizedExchange', (accounts) => {
 
     it('test placeOrder', async () => {
 
-        let centralizedExchange = await CentralizedExchange.new();
+        let centralizedExchange = await CentralizedExchange.deployed();
         let simpleToken = await SimpleERC20Token.new();
-        let exchangeId = web3.sha3('1');
+        let exchangeId = testCase[0].exchangeId;
         let token = simpleToken.address;
         let srcAmount = web3.toWei(1, 'ether');
         let deposit = accounts[1];
-        await centralizedExchange.addExchange(exchangeId, 'shipeshift');
         let orderIdOffset = 1000000;
 
         let result = await centralizedExchange.placeOrder(exchangeId, token, srcAmount, expectedRate, deposit);

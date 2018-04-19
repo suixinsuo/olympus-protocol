@@ -74,6 +74,23 @@ module.exports = function (callback) {
             let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
             await exchangeAdapterManager.addExchange('kyber',kyberExchangeInstance.address);
         })()
+    } else if (method === 'setup') {
+
+        // addKyber and deposit
+        (async () => {
+            let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+            let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+            await exchangeAdapterManager.addExchange('kyber',kyberExchangeInstance.address);
+
+            let r = await kyberExchangeInstance.send(web3.toWei(0.5, "ether"));
+            console.log(r.tx);
+        })()
+        
+    } else if (method === 'withdraw'){
+        (async () => {
+            let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+            await kyberExchangeInstance.withdraw(0);
+        })()
     } else {
         console.log("no method found, please !");
     }
