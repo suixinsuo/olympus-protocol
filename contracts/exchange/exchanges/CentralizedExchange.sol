@@ -2,8 +2,9 @@ pragma solidity ^0.4.17;
 
 import "../Interfaces.sol"; 
 import "../ExchangeAdapterBase.sol";
+import "../ExchangePermissions.sol";
 
-contract CentralizedExchange is ExchangeAdapterBase {
+contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
 
     IAdapterOrderCallback adapterOrderCallback;
 
@@ -26,12 +27,19 @@ contract CentralizedExchange is ExchangeAdapterBase {
     mapping (uint => Order) orders;
     uint orderId = 1000000;
 
-    // TODO: ownerable
-    function setAdapterOrderCallback(IAdapterOrderCallback _callback) public{
+    function CentralizedExchange(address _manager, address _exchange, address _permission) public
+    ExchangePermissions(_permission)
+    ExchangeAdapterBase(_manager,_exchange)
+    {
+    }
+
+    function setAdapterOrderCallback(IAdapterOrderCallback _callback)
+    public onlyExchangeOwner
+    {
         adapterOrderCallback = _callback;
     }
 
-    function addExchange(bytes32 _id, bytes32 _name)
+    function addExchange(bytes32 _id, bytes32 _name) onlyAdaptersManager
     public returns(bool)
     {
         require(!isEmpty(_name));
@@ -52,13 +60,13 @@ contract CentralizedExchange is ExchangeAdapterBase {
         return (e.name, e.status);
     }
 
-    function enable(bytes32 _id) public returns(bool){
+    function enable(bytes32 _id) public onlyExchangeOwner returns(bool){
         require(!isEmpty(exchanges[_id].name));
         exchanges[_id].status = Status.ENABLED;
         return true;
     }
 
-    function disable(bytes32 _id) public returns(bool){
+    function disable(bytes32 _id) public onlyExchangeOwner returns(bool){
         require(!isEmpty(exchanges[_id].name));
         exchanges[_id].status = Status.DISABLED;
         return true;
@@ -77,7 +85,9 @@ contract CentralizedExchange is ExchangeAdapterBase {
         return str == 0;
     }
 
-    function setRates(bytes32 exchangeId, ERC20[] tokens, int[] _rates) external returns(bool){
+    function setRates(bytes32 exchangeId, ERC20[] tokens, int[] _rates)
+    external onlyExchangeOwner returns(bool)
+    {
         require(_isEnabled(exchangeId));
         for(uint i = 0; i < tokens.length; i++){
             rates[exchangeId][address(tokens[i])] = _rates[i];
@@ -117,7 +127,9 @@ contract CentralizedExchange is ExchangeAdapterBase {
 
     // - If buy success, the owner should approved exchange provider to transfer and this method will callback exchange provider
     // to transfer token from owner to user and then send ether to owner. 
-    function PlaceOrderCompletedCallback(bytes32 exchangeId, address tokenOwner, address payee, uint adapterOrderId, uint completedAmount) public returns(bool){
+    function PlaceOrderCompletedCallback(bytes32 /*exchangeId*/, address tokenOwner, address payee, uint adapterOrderId, uint completedAmount)
+    public returns(bool)
+    {
 
         require(isValidOrder(adapterOrderId));
         Order memory order = orders[adapterOrderId];

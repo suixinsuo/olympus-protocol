@@ -7,7 +7,7 @@ const PermissionProvider = artifacts.require("../contracts/permission/Permission
 const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 const CentralizedExchange = artifacts.require("CentralizedExchange");
 
-const tokenNum = 3;
+const tokenNum = 2;
 const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
 
@@ -19,7 +19,7 @@ const Promise = require('bluebird');
 contract('MockKyberNetwork', (accounts) => {
 
     it("MockKyberNetwork should be able to trade.", async () => {
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
+        let mockKyber = await MockKyberNetwork.deployed();
         let tokens = await mockKyber.supportedTokens();
         assert.equal(tokens.length, tokenNum);
         let destAddress = accounts[0];
@@ -57,11 +57,23 @@ const OrderStatusErrored = 4;
 
 contract('KyberNetworkExchange', (accounts) => {
 
-    it("KyberNetworkExchange should be enable/disable.", async () => {
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
+    let exchangeId = "";
+    let mockKyber;
+    let kyberExchange;
+    let exchangeAdapterManager;
+    let tokens;
 
-        await kyberExchange.addExchange(0, "kyber");
+    before('setup contract', async () => {
+        mockKyber = await MockKyberNetwork.deployed();
+        kyberExchange = await KyberNetworkExchange.deployed();
+        exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+        let result = await exchangeAdapterManager.addExchange("kyber", kyberExchange.address);
+        exchangeId = result.logs.find(l => { return l.event == 'AddedExchange'; }).args.id;
+        tokens = await mockKyber.supportedTokens();
+    })
+
+    it("KyberNetworkExchange should be enable/disable.", async () => {
+
         // default is enabled
         let enabled = await kyberExchange.isEnabled(0);
         assert.ok(enabled);
@@ -76,10 +88,6 @@ contract('KyberNetworkExchange', (accounts) => {
     })
 
     it("KyberNetworkExchange should be able to placeOrder.", async () => {
-
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        let tokens = await mockKyber.supportedTokens();
 
         // without pre-deposit
         let srcAmountETH = 1;
@@ -101,7 +109,7 @@ contract('KyberNetworkExchange', (accounts) => {
             let deposit = accounts[0];
             let srcAmountETH = 1;
             // Test placeOrder
-            let result = await kyberExchange.placeOrder('', tokens[i], web3.toWei(srcAmountETH), rate, deposit);
+            let result = await kyberExchange.placeOrder(exchangeId, tokens[i], web3.toWei(srcAmountETH), rate, deposit);
 
             let placedOrderEvent = result.logs.find(log => {
                 return log.event === 'PlacedOrder';
@@ -132,24 +140,31 @@ const ExchangeStatusDisabled = 1;
 
 contract('ExchangeAdapterManager', (accounts) => {
 
-    it("ExchangeAdapterManager should be able to deploy and addExchange.", async () => {
+    let expectedExchangeName = "kyber";
+    let manager;
+    let mockKyber;
+    let kyberExchange;
+    let tokens;
+    let exchangeId;
 
-        let manager = await ExchangeAdapterManager.new();
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
+    before('setup ExchangeAdapterManager', async () => {
+        manager = await ExchangeAdapterManager.deployed();
+        mockKyber = await MockKyberNetwork.deployed();
+        kyberExchange = await KyberNetworkExchange.deployed();
+        tokens = await mockKyber.supportedTokens();
 
-        let expectedExchangeName = "kyber";
-        // Test addExchange
         let result = await manager.addExchange(expectedExchangeName,kyberExchange.address);
-        let addedEvent = result.logs.find(log => {
-            return log.event === 'AddedExchange';
-        })
+        let addedEvent = result.logs.find(log => { return log.event === 'AddedExchange'; })
 
         assert.ok(addedEvent, "expect emit AddedExchange event");
-        let exchangeId = addedEvent.args.id;
+        exchangeId = addedEvent.args.id;
+    })
 
+    it("ExchangeAdapterManager should be able to deploy and addExchange.", async () => {
+
+        // Test addExchange
         // Test getExchangeInfo
-        result = await manager.getExchangeInfo(exchangeId);
+        let result = await manager.getExchangeInfo(exchangeId);
         let actualExchangeName = bytes32ToString(result[0]);
         let actualExchangeStatus = result[1].toString();
         assert.equal(actualExchangeName, expectedExchangeName, `expect exchange name is ${expectedExchangeName}, but got ${actualExchangeName}`);
@@ -179,13 +194,6 @@ contract('ExchangeAdapterManager', (accounts) => {
 
     it("ExchangeAdapterManager checkTokenSupported.", async () => {
 
-        let manager = await ExchangeAdapterManager.new();
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        let expectedExchangeName = "kyber";
-        let result = await manager.addExchange(expectedExchangeName,kyberExchange.address);
-
-        let tokens = await mockKyber.supportedTokens();
         for (var i = 0; i < tokens.length; i++) {
             let isSupported = await manager.checkTokenSupported(tokens[i]);
             assert.ok(isSupported, `expect token ${tokens[i]} is supported`);
@@ -198,14 +206,6 @@ contract('ExchangeAdapterManager', (accounts) => {
 
     it("ExchangeAdapterManager pickExchange.", async () => {
 
-        let manager = await ExchangeAdapterManager.new();
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        let expectedExchangeName = "kyber";
-        let result = await manager.addExchange(expectedExchangeName,kyberExchange.address);
-        let exchangeId = result.logs.find(log => { return log.event === 'AddedExchange'; }).args.id;
-
-        let tokens = await mockKyber.supportedTokens();
         for (var i = 0; i < tokens.length; i++) {
             let actualExchangeId = await manager.pickExchange(tokens[i], 0, expectedRate)
             assert.ok(actualExchangeId, exchangeId, `expect token ${tokens[i]} is supported`);
@@ -225,24 +225,31 @@ const MarketOrderStatusCancelled = 4;
 const MarketOrderStatusErrored = 5;
 
 contract('ExchangeProvider', (accounts) => {
-    it("They should be able to deploy.", function() {
-        return Promise.all([
-        PermissionProvider.deployed(),
-        ])
-        .spread((/*price, strategy, exchange,*/ core) =>  {
-        assert.ok(core, 'Permission contract is not deployed.');
-        });
-    });
+
+
+    let expectedExchangeName = "kyber";
+    let manager;
+    let mockKyber;
+    let kyberExchange;
+    let tokens;
+    let exchangeId;
+
+    before('setup ExchangeAdapterManager', async () => {
+        manager = await ExchangeAdapterManager.deployed();
+        mockKyber = await MockKyberNetwork.deployed();
+        kyberExchange = await KyberNetworkExchange.deployed();
+        tokens = await mockKyber.supportedTokens();
+        exchangeProvider = await ExchangeProvider.deployed();
+
+        let result = await manager.addExchange(expectedExchangeName, kyberExchange.address);
+        let addedEvent = result.logs.find(log => { return log.event === 'AddedExchange'; })
+
+        assert.ok(addedEvent, "expect emit AddedExchange event");
+        exchangeId = addedEvent.args.id;
+    })
+    
     it("test placeOrder", async () => {
-        let permissionInstance = await PermissionProvider.deployed(); 
 
-        let manager = await ExchangeAdapterManager.new();
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        await manager.addExchange('kyber', kyberExchange.address);
-        let exchangeProvider = await ExchangeProvider.new(manager.address);
-
-        let tokens = await mockKyber.supportedTokens();
         let srcAmountETH = 1;
         let totalSrcAmountETH = srcAmountETH * tokens.length;
 
@@ -282,16 +289,6 @@ contract('ExchangeProvider', (accounts) => {
 
     it("test checkTokenSupported", async () => {
 
-        let manager = await ExchangeAdapterManager.new(0);
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        let expectedExchangeName = "kyber";
-        let result = await manager.addExchange(expectedExchangeName, kyberExchange.address);
-
-        let exchangeProvider = await ExchangeProvider.new(manager.address);
-
-        let tokens = await mockKyber.supportedTokens();
-
         for (let i = 0; i < tokens.length; i++) {
             let isSupported = await exchangeProvider.checkTokenSupported(tokens[i]);
             assert.ok(isSupported);
@@ -305,17 +302,25 @@ contract('ExchangeProvider', (accounts) => {
 
 contract('ExchangeProviderWrap', (accounts) => {
 
+    let expectedExchangeName = "kyber";
+    let manager;
+    let exchangeProvider;
+
+    before('setup ExchangeAdapterManager', async () => {
+        manager = await ExchangeAdapterManager.deployed();
+        exchangeProvider = await ExchangeProvider.deployed();
+        exchangeProviderWrap = await ExchangeProviderWrap.deployed();
+        await exchangeProvider.setMarketOrderCallback(exchangeProviderWrap.address);
+    })
+
     it("should be able to buy using KyberNetwork", async () => {
-        let manager = await ExchangeAdapterManager.new(0);
-        let mockKyber = await MockKyberNetwork.new(tokenNum);
-        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-        let expectedExchangeName = "kyber";
-        let result = await manager.addExchange(expectedExchangeName, kyberExchange.address);
 
-        let exchangeProvider = await ExchangeProvider.new(manager.address);
-        let exchangeProviderWrap = await ExchangeProviderWrap.new(exchangeProvider.address);
-
+        let mockKyber = await MockKyberNetwork.deployed();
+        let kyberExchange = await KyberNetworkExchange.deployed();
         let tokens = await mockKyber.supportedTokens();
+        let result = await manager.addExchange(expectedExchangeName, kyberExchange.address);
+        let addedEvent = result.logs.find(log => { return log.event === 'AddedExchange'; })
+
         let srcAmountETH = 1;
         let totalSrcAmountETH = srcAmountETH * tokens.length;
 
@@ -339,8 +344,8 @@ contract('ExchangeProviderWrap', (accounts) => {
     it("should be able to buy using CentralizedExchange", async () => {
 
         // begin set up
-        let manager = await ExchangeAdapterManager.new(0);
-        let centralizedExchange = await CentralizedExchange.new();
+        let manager = await ExchangeAdapterManager.deployed();
+        let centralizedExchange = await CentralizedExchange.deployed();
         let tokens = [];
         let owner = accounts[0];
         for (let i = 0; i < tokenNum; i++) {
@@ -352,9 +357,6 @@ contract('ExchangeProviderWrap', (accounts) => {
         let exchangeId = result.logs.find((l)=>{return l.event === 'AddedExchange'}).args.id;
 
         await centralizedExchange.setRates(exchangeId, tokens, rates);
-
-        let exchangeProvider = await ExchangeProvider.new(manager.address);
-        let exchangeProviderWrap = await ExchangeProviderWrap.new(exchangeProvider.address);
 
         await centralizedExchange.setAdapterOrderCallback(exchangeProvider.address);
 
