@@ -5,7 +5,7 @@ import "../../libs/SimpleERC20Token.sol";
 
 import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
-contract MockKyberNetwork is Utils {
+contract MockKyberNetwork {
 
     struct Token{
         SimpleERC20Token   token;
@@ -72,6 +72,6 @@ contract MockKyberNetwork is Utils {
 
     function getExpectAmount(uint amount, uint rate) private pure returns(uint){
          
-        return calcDstQty(amount, 18, 18, rate);
+        return Utils.calcDstQty(amount, 18, 18, rate);
     }
 }

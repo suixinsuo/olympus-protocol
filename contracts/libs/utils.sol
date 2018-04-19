@@ -1,6 +1,6 @@
 pragma solidity ^0.4.17;
 
-contract Utils {
+library Utils {
 
     uint  constant PRECISION = (10**18);
     uint  constant MAX_DECIMALS = 18;

@@ -15,7 +15,7 @@ const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/
 const _ = require('lodash');
 const Promise = require('bluebird');
 const mockData = {
-  tokensum: 3,
+  tokensum: 2,
   id: 0,
   name: "test",
   description: "test strategy",
@@ -42,7 +42,6 @@ const OrderStatusCompleted = 2;
 const OrderStatusCancelled = 3;
 const OrderStatusErrored = 4;
 
-let provider;
 
 contract('Olympus-Protocol', function (accounts) {
   it("They should be able to deploy.", function () {
@@ -57,122 +56,40 @@ contract('Olympus-Protocol', function (accounts) {
         assert.ok(core, 'Core contract is not deployed.');
       });
   });
-  //test kyber
-  it("MockKyberNetwork should be able to trade.", async () => {
 
-    let mockKyber = await MockKyberNetwork.new(mockData.tokensum);
-    let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-    let tokens = await mockKyber.supportedTokens();
-    //provider = await PriceProvider.new(mockKyber.address);
+  let Permission;
+  let mockKyber;
+  let provider;
+  let kyberExchange;
+  before('setup test env',async()=>{
+    Permission = await PermissionProvider.deployed(); 
+    mockKyber = await MockKyberNetwork.deployed();
+    mockData.addresses = await mockKyber.supportedTokens();
+    mockData.tokenAddresses = await mockKyber.supportedTokens();
+    provider = await PriceProvider.deployed();
+    await provider.setKyber(mockKyber.address);
 
-    assert.equal(tokens.length, mockData.tokensum);
-    let destAddress = accounts[0];
-
-    for (var i = 0; i < tokens.length; i++) {
-      let rates = await mockKyber.getExpectedRate(ethToken, tokens[i], 0)
-      assert.ok(expectedRate.equals(rates[0]));
-      assert.ok(expectedRate.equals(rates[1]));
-
-      let erc20Token = await SimpleERC20Token.at(tokens[i]);
-      let tokenBalance = await erc20Token.balanceOf(destAddress);
-      assert.ok(tokenBalance.equals(0));
-
-      let srcAmountETH = 1;
-      let result = await mockKyber.trade(
-        ethToken,
-        web3.toWei(srcAmountETH),
-        tokens[i],
-        destAddress,
-        0,
-        rates[1],
-        0, { value: web3.toWei(srcAmountETH) });
-      tokenBalance = await erc20Token.balanceOf(destAddress);
-      assert.ok(expectedRate.mul(srcAmountETH).equals(tokenBalance));
-    }
-  });
-
-
-
-  it("KyberNetworkExchange should be able to placeOrder.", async () => {
-
-    let mockKyber = await MockKyberNetwork.new(mockData.tokensum);
-    let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-    let Permission = await PermissionProvider.deployed();
-    provider = await PriceProvider.new(Permission.address);
-    let result2 = await provider.setKyber(mockKyber.address);
-    let tokens = await mockKyber.supportedTokens();
-
-    mockData.addresses[0] = tokens[0];
-    mockData.addresses[1] = tokens[1];
-
-    // without pre-deposit
-    let srcAmountETH = 1;
-    let needDeposit = srcAmountETH * tokens.length;
-    let balance = await web3.eth.getBalance(kyberExchange.address);
-    assert.ok(balance.equals(0), 'kyberExchange\'s balance should be 0 before deposit');
-    await kyberExchange.send(web3.toWei(needDeposit, 'ether'));
-    balance = await web3.eth.getBalance(kyberExchange.address);
-    assert.ok(balance.equals(web3.toWei(needDeposit)), `kyberExchange's balance should be ${web3.toWei(needDeposit, 'ether').toString()} after deposit`);
-    let expectedAllowanced = expectedRate.mul(srcAmountETH);
-    for (var i = 0; i < tokens.length; i++) {
-
-      // Test getRate
-      let rate = await kyberExchange.getRate('', tokens[i], 0);
-      assert.ok(expectedRate.equals(rate));
-
-      let deposit = accounts[0];
-      let srcAmountETH = 1;
-      // Test placeOrder
-      let result = await kyberExchange.placeOrder('', tokens[i], web3.toWei(srcAmountETH), rate, deposit);
-
-      let placedOrderEvent = result.logs.find(log => {
-        return log.event === 'PlacedOrder';
-      });
-      assert.ok(placedOrderEvent);
-
-      let actualOrderId = parseInt(placedOrderEvent.args.orderId);
-      let expectedOrderId = i + 1;
-      assert.equal(actualOrderId, expectedOrderId);
-
-      let erc20Token = await SimpleERC20Token.at(tokens[i]);
-      let actualAllowance = await erc20Token.allowance(kyberExchange.address, deposit);
-      assert.ok(expectedAllowanced.equals(actualAllowance));
-
-      let orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
-      assert.equal(orderStatus, OrderStatusApproved);
-
-      // Test payOrder
-      await kyberExchange.payOrder(actualOrderId, { value: web3.toWei(srcAmountETH) });
-      orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
-      assert.equal(orderStatus, OrderStatusCompleted);
-    }
+    let exchangeProvider = await ExchangeProvider.deployed();
+    kyberExchange = await KyberNetworkExchange.deployed();
+    // reserve
+    await kyberExchange.send(web3.toWei(mockData.tokensum, 'ether'));
+    let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+    // register kyber
+    await exchangeAdapterManager.addExchange("kyber", kyberExchange.address);
+    let instance = await Core.deployed();
+    // register exchange callback
+    await exchangeProvider.setMarketOrderCallback(instance.address);
   })
+
   //exchange init
 
   it("should be able to set a exchange provider.", async () => {
 
-    let permissionInstance = await PermissionProvider.deployed();
-
-    let manager = await ExchangeAdapterManager.new(0);
-    let mockKyber = await MockKyberNetwork.new(2);
-    let tokens = await mockKyber.supportedTokens();
-
-    mockData.tokenAddresses[0] = tokens[0];
-    mockData.tokenAddresses[1] = tokens[1];
-
-    let kyberExchange = await KyberNetworkExchange.new(mockKyber.address);
-    await manager.addExchange("kyber", kyberExchange.address);
-    let exchangeInstance = await ExchangeProvider.new(manager.address);
-    // let exchangeInstance = await ExchangeProvider.new(manager.address, permissionInstance.address);
-
+    let exchangeInstance = await ExchangeProvider.deployed();
     let instance = await Core.deployed();
     let result = await instance.setProvider(2, exchangeInstance.address);
-
-    let srcAmountETH = 1;
-    let totalSrcAmountETH = srcAmountETH * tokens.length;
-
-    await kyberExchange.send(web3.toWei(totalSrcAmountETH, 'ether'));
-    assert.equal(result.receipt.status, '0x01');
+    let name = result.logs.find(l=>{ return l.event === 'ProviderUpdated'; }).args.name;
+    assert.equal(name, "2");
   })
 
   //strategy provider
@@ -282,9 +199,8 @@ contract('Olympus-Protocol', function (accounts) {
     let instance = await Core.deployed();
     let result0 = await instance.getPrice.call(mockData.tokenAddresses[0], 1000000000);
     let result1 = await instance.getPrice.call(mockData.tokenAddresses[1], 1000000000);
-    // We can check for 0 here, in the price tests these values are checked properly
-    assert.equal(result0.toNumber(), 0);
-    assert.equal(result1.toNumber(), 0);
+    assert.ok(result0.equals(expectedRate));
+    assert.ok(result1.equals(expectedRate));
   })
 
   it("should be able to get strategy token price.", async () => {
@@ -293,8 +209,8 @@ contract('Olympus-Protocol', function (accounts) {
     let result1 = await instance.getStragetyTokenPrice.call(0, 1);
 
     // We can check for 0 here, in the price tests these values are checked properly
-    assert.equal(result0.toNumber(), 0);
-    assert.equal(result1.toNumber(), 0);
+    assert.ok(result0.equals(expectedRate));
+    assert.ok(result1.equals(expectedRate));
   })
 
   //storage provider
@@ -347,4 +263,7 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result.toNumber(), 3);
   })
 
+  after("clean", async () => {
+    await kyberExchange.withdraw(0);
+  })
 })
