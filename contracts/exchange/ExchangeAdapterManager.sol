@@ -1,14 +1,20 @@
 pragma solidity ^0.4.17;
 
 import "./Interfaces.sol";
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../permission/PermissionProviderInterface.sol";
+import "./ExchangePermissions.sol";
 
-// TODO: ownable
-contract ExchangeAdapterManager is Ownable {
+contract ExchangeAdapterManager is ExchangePermissions{
 
     mapping(bytes32 => IExchangeAdapter) public exchangeAdapters;
     bytes32[] public exchanges;
     uint private genExchangeId = 1000;
+    mapping(address=>uint) adapters;
+
+    function ExchangeAdapterManager(address _permission) public 
+    ExchangePermissions(_permission) 
+    {
+    }
 
     event AddedExchange(bytes32 id);
 
@@ -33,13 +39,14 @@ contract ExchangeAdapterManager is Ownable {
     }
 
     function addExchange(bytes32 name, address adapter)
-    public returns(bool)
+    public onlyExchangeOwner returns(bool)
     {
         require(adapter != 0x0);
         bytes32 id = keccak256(genExchangeId++);
         require(IExchangeAdapter(adapter).addExchange(id, name));
         exchanges.push(id);
         exchangeAdapters[id] = IExchangeAdapter(adapter);
+        adapters[adapter]++;
 
         emit AddedExchange(id);
         return true;
@@ -92,5 +99,9 @@ contract ExchangeAdapterManager is Ownable {
             }
         }
         return false;
+    }
+
+    function isValidAdapter(address adapter) external view returns (bool){
+        return adapters[adapter] > 0;
     }
 }

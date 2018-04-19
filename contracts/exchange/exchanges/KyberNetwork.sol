@@ -2,6 +2,7 @@ pragma solidity ^0.4.17;
 
 import "../ExchangeAdapterBase.sol";
 import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../ExchangePermissions.sol";
 
 contract KyberNetwork {
 
@@ -19,7 +20,7 @@ contract KyberNetwork {
         external payable returns(uint);
 }
 
-contract KyberNetworkExchange is ExchangeAdapterBase {
+contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
     KyberNetwork kyber;
     bytes32 name;
@@ -38,32 +39,35 @@ contract KyberNetworkExchange is ExchangeAdapterBase {
 
     event PlacedOrder(uint orderId);
 
-    function KyberNetworkExchange(KyberNetwork _kyber) public{
+    function KyberNetworkExchange(KyberNetwork _kyber, address _manager,address _exchange, address _permission) public
+    ExchangePermissions(_permission)
+    ExchangeAdapterBase(_manager, _exchange)
+    {
         require(address(_kyber) != 0x0);
         kyber = _kyber;
         status = Status.ENABLED;
     }
 
     function addExchange(bytes32 _id, bytes32 _name)
-    public returns(bool)
+    public onlyAdaptersManager returns(bool)
     {
         exchangeId = _id;
         name = _name;
         return true;
     }
 
-    function getExchange(bytes32 _id)
+    function getExchange(bytes32 /*_id*/)
     public view returns(bytes32, Status)
     {
         return (name, status);
     }
 
-    function enable(bytes32 /*_id*/) public returns(bool){
+    function enable(bytes32 /*_id*/) public onlyExchangeOwner returns(bool){
         status = Status.ENABLED;
         return true;
     }
 
-    function disable(bytes32 /*_id*/) public returns(bool){
+    function disable(bytes32 /*_id*/) public onlyExchangeOwner returns(bool){
         status = Status.DISABLED;
         return true;
     }
@@ -136,7 +140,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase {
         return true;
     }
 
-    function cancelOrder(uint adapterOrderId) external returns(bool){
+    function cancelOrder(uint adapterOrderId) external onlyExchangeOwner returns(bool){
         Order memory o = orders[adapterOrderId];
         require(o.amount > 0);
 
@@ -153,5 +157,16 @@ contract KyberNetworkExchange is ExchangeAdapterBase {
         return orders[adapterOrderId].status;
     }
     
-    function() public payable { }
+    function() public onlyExchangeOwner payable { }
+
+    function withdraw(uint amount) public onlyExchangeOwner {
+
+        require(amount<this.balance);
+
+        uint sendAmount = amount;
+        if(amount==0){
+            sendAmount = this.balance;
+        }
+        msg.sender.transfer(sendAmount);
+    }
 }
