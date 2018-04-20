@@ -32,11 +32,13 @@ contract StrategyProviderInterface is Provider {
     function getStrategyTokenCount(uint strategyId) public view returns (uint length);
     function getStrategyTokenByIndex(uint strategyId, uint tokenIndex) public view returns (address token, uint weight);
 
-    function getStrategy(uint _index) public _checkIndex(_index)  view returns (
-        uint id, // id of the strategy under the same owner.
-        bytes32 name,
-        bytes32 description,
-        bytes32 category,
+    function getStrategy(uint _index) public _checkIndex(_index) view returns (
+        uint id, 
+        string name, 
+        string description, 
+        string category,
+        address[] memory tokenAddresses,
+        uint[] memory weights,
         uint follower,
         uint amount,
         bytes32 exchangeId);
