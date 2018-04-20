@@ -37,14 +37,14 @@ contract('Olympus-Protocol-strategy', (accounts) => {
     it("Should be able to get a strategy.", async () => {
         let instance  = await Strategy.deployed();
         let result = await instance.getStrategy.call(0);
-
-        assert.equal(result[0].toNumber(), 0);                                            //asert id
-        assert.equal(web3.toAscii(result[1]).replace(/\0/g, ''), mockData.name);          //asert name
-        assert.equal(web3.toAscii(result[2]).replace(/\0/g, ''), mockData.description);   //asert description
-        assert.equal(web3.toAscii(result[3]).replace(/\0/g, ''), mockData.category);      //asert category
-        assert.equal(result[4].toNumber(), mockData.follower);                            //asert follower
-        assert.equal(result[5].toNumber(), mockData.amount);                              //asert amount
-        assert.equal(result[6], mockData.exchangeId);                                     //asert exchangeId
+        //console.log(result);
+        //assert.equal(result[0].toNumber(), 0);                                            //asert id
+        assert.equal(result[1], mockData.name);          //asert name
+        assert.equal(result[2], mockData.description);   //asert description
+        assert.equal(result[3], mockData.category);      //asert category
+        assert.equal(result[6].toNumber(), mockData.follower);                            //asert follower
+        assert.equal(result[7].toNumber(), mockData.amount);                              //asert amount
+        assert.equal(result[8], mockData.exchangeId);                                     //asert exchangeId
     })
 
     it("Should be able to get strategies.", async () => {

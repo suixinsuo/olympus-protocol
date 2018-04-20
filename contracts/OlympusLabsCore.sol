@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.22;
 // pragma experimental ABIEncoderV2;
 
 import "./libs/Manageable.sol";
@@ -21,6 +21,7 @@ contract OlympusLabsCore is Manageable {
     event LogAddress(address message);
     event LogAddresses(address[] message);
     event LogNumbers(uint[] numbers);
+    event LOGDEBUG(address);
 
     ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x9FC2267BeE84E56Fab30637dB70f9ceB0bCaDFD0));
     StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x296b6FE67B9ee209B360a52fDFB67fbe4C14e952));
@@ -108,13 +109,14 @@ contract OlympusLabsCore is Manageable {
         uint totalLength;
 
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
-        require(tokenIndex < totalLength);
-
-        address token;
-        (token,) = getStrategyTokenAndWeightByIndex(strategyId, tokenIndex);
+        require(tokenIndex <= totalLength);
+        address[] memory tokens;
+        uint[] memory weights;
+        (,,,,tokens,weights,,,) = strategyProvider.getStrategy(strategyId);
 
         //Default get the price for one Ether
-        return getPrice(token, 10**18);
+
+        return getPrice(tokens[tokenIndex], 10**18);
     }
 
     function setProvider(uint8 _id, address _providerAddress) public onlyOwner returns (bool success) {
