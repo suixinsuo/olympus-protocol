@@ -58,6 +58,7 @@ const OrderStatusCompleted = 2;
 const OrderStatusCancelled = 3;
 const OrderStatusErrored = 4;
 
+/*
 contract('KyberNetworkExchange', (accounts) => {
 
     it("KyberNetworkExchange should be able to placeOrder.", async () => {
@@ -111,6 +112,7 @@ contract('KyberNetworkExchange', (accounts) => {
         }
     })
 })
+*/
 
 contract('PriceProvider', (accounts) => {
   

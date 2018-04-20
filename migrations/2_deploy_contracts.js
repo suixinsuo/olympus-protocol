@@ -6,7 +6,6 @@ var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol")
 var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
 let premissionInstance, coreInstance;
 
-
 const KyberConfig = require('../scripts/libs/kyber_config');
 var KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
 var ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
@@ -14,22 +13,23 @@ var ExchangeProvider = artifacts.require("ExchangeProvider");
 var ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 var MockKyberNetwork = artifacts.require("MockKyberNetwork");
 var SimpleERC20Token = artifacts.require("SimpleERC20Token");
+var CentralizedExchange = artifacts.require("CentralizedExchange.sol");
 const args = require('../scripts/libs/args')
 
 function deployOnDev(deployer, num) {
-
-  return deployer.then(() => {
-    return deployer.deploy(MockKyberNetwork, num);
-  }).then(() => {
-    return deployer.deploy(KyberNetworkExchange, MockKyberNetwork.address);
-  }).then(() => {
-    return deployer.deploy(ExchangeAdapterManager, KyberNetworkExchange.address);
-  }).then(() => {
-    // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
-    return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
-  }).then(() => {
-    return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
-  })
+    return deployer.then(()=>{
+        return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
+    }).then(() => {
+        return deployer.deploy(MockKyberNetwork, num);
+    }).then(() => {
+        return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
+    }).then(()=>{
+        return deployer.deploy(KyberNetworkExchange, MockKyberNetwork.address, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
+    }).then(() => {
+        return deployer.deploy(CentralizedExchange, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
+    }).then(() => {
+        return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+    })
 }
 
 function deployExchangeProviderWrap(deployer, network) {
@@ -50,16 +50,15 @@ function deployExchangeProviderWrap(deployer, network) {
     return;
   }
 
-  return deployer.then(() => {
-    return deployer.deploy(KyberNetworkExchange, kyberNetwork.network);
-  }).then(() => {
-    return deployer.deploy(ExchangeAdapterManager);
-  }).then(() => {
-    // return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, premissionInstance.address);
-    return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
-  }).then(() => {
-    return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
-  })
+    return deployer.then(() => {
+        return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
+    }).then(() => {
+        return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
+    }).then(() => {
+        return deployer.deploy(KyberNetworkExchange, kyberNetwork.network, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
+    }).then(() => {
+        return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+    })
 }
 
 module.exports = function (deployer, network) {
