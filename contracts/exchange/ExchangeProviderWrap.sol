@@ -2,6 +2,7 @@ pragma solidity ^0.4.17;
 
 import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "./ExchangeProvider.sol";
+import { StorageTypeDefinitions as STD } from "../storage/OlympusStorage.sol";
 
 // for test
 contract ExchangeProviderWrap {
@@ -19,5 +20,12 @@ contract ExchangeProviderWrap {
             require(provider.addPlaceOrderItem(orderId,tokenAddresses[i],amounts[i],rates[i]));
         }
         require(provider.endPlaceOrder.value(msg.value)(orderId));
+    }
+
+    event OrderStatusUpdated(uint orderId, STD.OrderStatus status);
+
+    function updateOrderStatus(uint orderId, STD.OrderStatus status) external returns(bool){
+        emit OrderStatusUpdated(orderId,status);
+        return true;
     }
 }

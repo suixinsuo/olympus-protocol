@@ -16,8 +16,8 @@ contract ExchangeAdapterBase {
     enum OrderStatus {
         Pending,
         Approved,
-        Completed,
         PartiallyCompleted,
+        Completed,
         Cancelled,
         Errored
     }

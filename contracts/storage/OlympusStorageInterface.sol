@@ -43,7 +43,7 @@ contract OlympusStorageInterface {
         uint _actualPrice,
         uint _totalTokenAmount,
         uint _completedQuantity,
-        ExchangeProviderInterface.MarketOrderStatus status) external;
+        ExchangeAdapterBase.OrderStatus status) external;
 
     function getIndexToken(uint _orderId, uint tokenPosition) external view returns (address token);
 
