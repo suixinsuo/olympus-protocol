@@ -2,25 +2,24 @@ pragma solidity ^0.4.17;
 
 import "./Interfaces.sol";
 import "./ExchangeProviderInterface.sol";
-import "./ExchangeAdapterBase.sol";
-// import "../permission/PermissionProviderInterface.sol";
+import { ExchangeAdapterBase as EAB} from "./ExchangeAdapterBase.sol";
 import "./ExchangePermissions.sol";
 import "../libs/utils.sol";
+import { StorageTypeDefinitions as STD } from "../storage/OlympusStorage.sol";
 
 contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
-    IMarketOrderCallback marketOrderCallback;
-
+    IOlympusLabsCore core;
     IExchangeAdapterManager exchangeManager;
 
     struct MarketOrder {
-        ERC20[]                 tokens;
-        uint[]                  amounts; // TODO:optional
-        uint[]                  rates; // TODO:optional
-        bytes32[]               exchanges;
-        uint[]                  adapterOrdersId;
-        address                 deposit;
-        MarketOrderStatus       orderStatus;
+        ERC20[]         tokens;
+        uint[]          amounts;
+        uint[]          rates;
+        bytes32[]       exchanges;
+        uint[]          adapterOrdersId;
+        address         deposit;
+        STD.OrderStatus orderStatus;
     }
 
     mapping (uint => MarketOrder) private orders;
@@ -46,13 +45,13 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
     }
 
     // TODO: Lock 
-    function setMarketOrderCallback(IMarketOrderCallback _callback) public onlyExchangeOwner {
-        marketOrderCallback = _callback;
+    function setCore(IOlympusLabsCore _core) public onlyExchangeOwner {
+        core = _core;
         return;
     }
 
     modifier onlyCore(){
-        require(msg.sender == address(marketOrderCallback) || address(marketOrderCallback) == 0x0);
+        require(msg.sender == address(core) || address(core) == 0x0);
         _;
     }
 
@@ -76,7 +75,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             exchanges: new bytes32[](0),
             adapterOrdersId: new uint[](0),
             deposit: deposit,
-            orderStatus:MarketOrderStatus.Pending
+            orderStatus:STD.OrderStatus.New
         });
         return true;
     }
@@ -153,7 +152,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
             orders[orderId].adapterOrdersId.push(adapterOrderId);
             
-            if(adapter.getOrderStatus(adapterOrderId) == int(ExchangeAdapterBase.OrderStatus.Approved)){
+            if(adapter.getOrderStatus(adapterOrderId) == EAB.OrderStatus.Approved){
                 if(!adapterApprovedImmediately(orderId, adapterOrderId, adapter, order.tokens[i], order.amounts[i], order.rates[i], order.deposit)){
                     revert();
                     return false;
@@ -161,8 +160,8 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             }
             adapterOrders[keccak256(address(adapter),adapterOrderId)] = orderId;
         }
-        
-        orders[orderId].orderStatus = MarketOrderStatus.Completed;
+
+        updateOrderStatus(orderId);
         return true;
     }
     
@@ -202,8 +201,8 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         if(!adapter.payOrder.value(amount)(adapterOrderId)){
             return false;
         }
-        int status = adapter.getOrderStatus(adapterOrderId); 
-        return status == int(ExchangeAdapterBase.OrderStatus.Completed);
+        EAB.OrderStatus status = adapter.getOrderStatus(adapterOrderId); 
+        return status == EAB.OrderStatus.Completed;
     }
 
     // owner可以直接是msg.sender
@@ -243,38 +242,79 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         balances[orderId] -= completedAmount;
         payee.transfer(completedAmount);
 
-        // checkMarketOrderStatus(adapterOrderId);
+        updateOrderStatus(orderId);
         return true;
     }
    
-    // function checkMarketOrderStatus(uint orderId) private returns (bool){
+    function updateOrderStatus(uint orderId) private returns (bool){
 
-    //     MarketOrder memory order = orders[orderId];
-    //     for(uint i = 0; i < order.adapterOrdersId.length;i++){
-    //         // TODO: define 1 as done, including completed,failed,cancelled,etc.
-    //         if(order.exchanges[i].getOrderStatus(order.adapterOrdersId[i])!=1){
-    //             return false;
-    //         }
-    //     }
-    //     // all adapters order done,let's notify core smart contract;
-    //     if (address(marketOrderCallback) != 0x0){
-    //         marketOrderCallback.MarketOrderStatusUpdated(orderId, 1);
-    //     }
-        
-    //     return true;
-    // }
+        MarketOrder memory order = orders[orderId];
+        STD.OrderStatus status;
+
+        uint completedTotal = 0;
+        uint pendingTotal = 0;
+        uint partiallyCompletedTotal = 0;
+        uint erroredTotal = 0;
+        uint cancelledTotal = 0;
+
+        for(uint i = 0; i < order.adapterOrdersId.length;i++){
+
+            IExchangeAdapter adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
+            EAB.OrderStatus subStatus = adapter.getOrderStatus(order.adapterOrdersId[i]);
+
+            if (subStatus == EAB.OrderStatus.Pending) {
+                pendingTotal++;
+            } else if (subStatus == EAB.OrderStatus.Approved) {
+                // should not go to here
+            } else if (subStatus == EAB.OrderStatus.Completed) {
+                completedTotal++;
+            } else if (subStatus == EAB.OrderStatus.PartiallyCompleted) {
+                partiallyCompletedTotal++;
+            } else if (subStatus == EAB.OrderStatus.Errored) {
+                erroredTotal++;
+            } else if (subStatus == EAB.OrderStatus.Cancelled) {
+                cancelledTotal++;
+            }
+        }
+
+        if (completedTotal == order.adapterOrdersId.length){
+            status = STD.OrderStatus.Completed;
+        } else if (erroredTotal == order.adapterOrdersId.length){
+            status = STD.OrderStatus.Errored;
+        } else if (pendingTotal == order.adapterOrdersId.length){
+            status = STD.OrderStatus.Placed;
+        } else {
+            status = STD.OrderStatus.PartiallyCompleted;
+        }
+
+        if (address(core) != 0x0){
+            if(status != order.orderStatus){
+                require(core.updateOrderStatus(orderId, status));
+                orders[orderId].orderStatus = status;
+            }
+        }
+        return true;
+    }
 
     function cancelOrder(uint orderId)
     external onlyCore returns (bool success) {
         
         MarketOrder memory order = orders[orderId];
         require(order.tokens.length > 0);
-        require(order.orderStatus == MarketOrderStatus.Pending);
+
+        // those order status cann't cancel
+        require(order.orderStatus != STD.OrderStatus.Completed);
+        require(order.orderStatus != STD.OrderStatus.Cancelled);
+        require(order.orderStatus != STD.OrderStatus.Errored);
 
         uint i = 0;
         for(i = 0; i < order.tokens.length; i++) {
             IExchangeAdapter adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
             adapter.cancelOrder(order.adapterOrdersId[i]);
+        }
+
+        if (address(core) != 0x0){
+            core.updateOrderStatus(orderId, STD.OrderStatus.Cancelled);
         }
         return true;
     }
@@ -283,7 +323,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
     event LogBytes32(string desc, bytes32 value);
     event LogUint(string desc, uint value);
 
-    function getSubOrderStatus(uint orderId, ERC20 token) external view returns (MarketOrderStatus){
+    function getSubOrderStatus(uint orderId, ERC20 token) external view returns (EAB.OrderStatus){
 
         MarketOrder memory order = orders[orderId];
 
@@ -297,16 +337,8 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         require(found);
 
         IExchangeAdapter adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
-        ExchangeAdapterBase.OrderStatus status = ExchangeAdapterBase.OrderStatus(adapter.getOrderStatus(order.adapterOrdersId[i]));
-        if (status == ExchangeAdapterBase.OrderStatus.Pending || status == ExchangeAdapterBase.OrderStatus.Approved) {
-            return MarketOrderStatus.Pending;
-        } else if (status == ExchangeAdapterBase.OrderStatus.Completed) {
-            return MarketOrderStatus.Completed;
-        } else if (status == ExchangeAdapterBase.OrderStatus.Cancelled) {
-            return MarketOrderStatus.Cancelled; 
-        } else {
-            return MarketOrderStatus.Errored;
-        }
+        EAB.OrderStatus status = EAB.OrderStatus(adapter.getOrderStatus(order.adapterOrdersId[i]));
+        return status;
     }
 
     function checkTokenSupported(ERC20 token) external view returns (bool){

@@ -272,14 +272,14 @@ contract OlympusLabsCore is Manageable {
         uint tokenIndex;
         (completedTokenAmount, tokenIndex) = olympusStorage.getOrderTokenCompletedAmount(_orderId,_tokenAddress);
 
-        ExchangeProviderInterface.MarketOrderStatus status;
+        ExchangeAdapterBase.OrderStatus status;
 
         if(completedTokenAmount == 0 && _completedQuantity < completedTokenAmount){
-            status = ExchangeProviderInterface.MarketOrderStatus.PartiallyCompleted;
+            status = ExchangeAdapterBase.OrderStatus.PartiallyCompleted;
         }
 
         if(_completedQuantity >= completedTokenAmount){
-            status = ExchangeProviderInterface.MarketOrderStatus.Completed;
+            status = ExchangeAdapterBase.OrderStatus.Completed;
         }
         olympusStorage.updateIndexOrderToken(_orderId, tokenIndex, _totalTokenAmount, _actualPrice, _completedQuantity, status);
 
@@ -296,7 +296,7 @@ contract OlympusLabsCore is Manageable {
     }
 
     function getSubOrderStatus(uint _orderId, address _tokenAddress)
-        external view returns (ExchangeProviderInterface.MarketOrderStatus)
+        external view returns (ExchangeAdapterBase.OrderStatus)
     {
         return exchangeProvider.getSubOrderStatus(_orderId, ERC20(_tokenAddress));
     }
