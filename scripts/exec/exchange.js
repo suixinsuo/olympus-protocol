@@ -3,28 +3,28 @@ const KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
 const ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 const SimpleERC20Token = artifacts.require("SimpleERC20Token");
 const MockKyberNetwork = artifacts.require("MockKyberNetwork");
+const CentralizedExchange = artifacts.require("CentralizedExchange");
+const ExchangeProvider = artifacts.require("ExchangeProvider");
+
 const args = require('../libs/args')
 const KyberConfig = require('../libs/kyber_config');
 
-function buyOnDev() {
 
-    MockKyberNetwork.deployed().then(instance => {
-        return instance.supportedTokens();
-    }).then(tokens => {
-        console.log(tokens);
-        ExchangeProviderWrap.deployed().then(instance => {
-            let orderId = new Date().getTime();
-            let amounts = tokens.map(t => { return '50000000000000000'; });
-            let rates = tokens.map(t => { return '10000000000000000000'; });
-            let value = 0.05 * tokens.length;
-            let destAddress = '0xB878496B5a59c9AE84018F9846aB00419Bf0e682';
-            return instance.buy(orderId, tokens, amounts, rates, destAddress, { value: web3.toWei(value) });
-        }).then(res => {
-            console.log(JSON.stringify(res));
-        }).catch(e => {
-            console.log(e);
-        })
-    })
+function buyOnDev() {
+    (async()=>{
+
+        let mockkyber = await MockKyberNetwork.deployed();
+        let tokens = await mockkyber.supportedTokens();
+        let exchangeProviderWrap = await ExchangeProviderWrap.deployed();
+
+        let orderId = new Date().getTime();
+        let amounts = tokens.map(t => { return web3.toWei(0.5, 'ether') });
+        let rates = tokens.map(t => { return web3.toWei(1000, 'ether'); });
+        let value = 0.5 * tokens.length;
+        let destAddress = '0xB878496B5a59c9AE84018F9846aB00419Bf0e682';
+        await exchangeProviderWrap.buy(orderId, tokens, amounts, rates, destAddress, { value: web3.toWei(value) });
+        // console.log(JSON.stringify(result));
+    })()
 }
 
 module.exports = function (callback) {
@@ -68,20 +68,31 @@ module.exports = function (callback) {
                 console.log(r.tx);
             }).catch((res) => { })
         });
-    } else if (method === 'addKyber') {
+    } else if (method === 'setupCentralized') {
         (async () => {
-            let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+            let centralizedExchange = await CentralizedExchange.deployed();
             let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
-            await exchangeAdapterManager.addExchange('kyber',kyberExchangeInstance.address);
+            result = await exchangeAdapterManager.addExchange('bibox',centralizedExchange.address);
+            log = result.logs.find(l => { return l.event == 'AddedExchange' });
+            let biboxId = log.args.id;
+            console.info(`Added bibox exchange: id = ${biboxId}`);
+
+            let mockKyberNetwrok = await MockKyberNetwork.deployed();
+            let tokens = await mockKyberNetwrok.supportedTokens();
+            let rates = tokens.map(t => { return web3.toWei(1000, 'ether') });
+            await centralizedExchange.setRates(biboxId, tokens, rates);
+            let exchangeProvider = await ExchangeProvider.deployed();
+            await centralizedExchange.setAdapterOrderCallback(exchangeProvider.address);
         })()
-    } else if (method === 'setup') {
+    } else if (method === 'setupKyber') {
 
         // addKyber and deposit
         (async () => {
             let kyberExchangeInstance = await KyberNetworkExchange.deployed();
             let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
-            await exchangeAdapterManager.addExchange('kyber',kyberExchangeInstance.address);
-
+            let result = await exchangeAdapterManager.addExchange('kyber',kyberExchangeInstance.address);
+            let log = result.logs.find(l => { return l.event == 'AddedExchange' });
+            console.info(`Added kyber exchange: id = ${log.args.id}`);
             let r = await kyberExchangeInstance.send(web3.toWei(0.5, "ether"));
             console.log(r.tx);
         })()
