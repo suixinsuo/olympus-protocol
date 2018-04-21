@@ -428,6 +428,8 @@ contract('ExchangeProviderWrap', (accounts) => {
         let deposit = accounts[1];
 
         result = await exchangeProviderWrap.buy(orderId, tokens, amounts, rates, deposit, { value: web3.toWei(totalSrcAmountETH, 'ether') });
+
+        console.log(JSON.stringify(result));
         let fromBlock = result.receipt.blockNumber;
         let e = centralizedExchange.PlacedOrder({}, { fromBlock: fromBlock, toBlock: 'latest' });// , function (error, log) {
         
