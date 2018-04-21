@@ -153,7 +153,7 @@ contract OlympusLabsCore is Manageable {
         address[] memory tokens = new address[](tokenLength);
         uint[] memory weights = new uint[](tokenLength);
         bytes32 exchangeId;
-        
+
         (,,,,tokens,weights,,,exchangeId) = strategyProvider.getStrategy(strategyId);
 
         // can't buy an index without tokens.
@@ -185,7 +185,7 @@ contract OlympusLabsCore is Manageable {
         emit LogNumber(indexOrderId);
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
         for (uint i = 0; i < tokenLength; i ++ ) {
-            
+
             // ignore those tokens with zero weight.
             if(weights[i] <= 0) {
                 continue;
@@ -220,6 +220,7 @@ contract OlympusLabsCore is Manageable {
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
         strategyProvider.updateFollower(strategyId, true);
+        strategyProvider.incrementStatistics(strategyId, msg.value);
 
         // todo: send ethers to the clearing center.
         return indexOrderId;
