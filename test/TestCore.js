@@ -244,6 +244,7 @@ contract('Olympus-Protocol', function (accounts) {
     await OlympusStorage.deployed();
 
     let result = await instance.buyIndex(0, accounts[1], false, { from: accounts[0], value: 3000000 });
+    throw new Error();
     assert.equal(result.receipt.status, '0x01');
   })
 
