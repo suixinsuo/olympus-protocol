@@ -1,9 +1,11 @@
 pragma solidity ^0.4.17;
 
 import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import {StorageTypeDefinitions as STD} from "../storage/OlympusStorage.sol";
+import "./ExchangeAdapterBase.sol";
 
-interface IMarketOrderCallback {
-   function MarketOrderStatusUpdated(uint orderId, uint status) external;
+interface IOlympusLabsCore {
+    function updateOrderStatus(uint orderId, STD.OrderStatus status) external returns(bool);
 }
 
 interface IExchangeProvider{
@@ -35,7 +37,7 @@ interface IExchangeAdapter{
     // 根据adapter order id, 取消订单
     function cancelOrder(uint adapterOrderId) external returns(bool);
 
-    function getOrderStatus(uint adapterOrderId) external view returns(int);
+    function getOrderStatus(uint adapterOrderId) external view returns(ExchangeAdapterBase.OrderStatus);
 
     /// >0 : current exchange rate
     /// =0 : not support
@@ -43,7 +45,7 @@ interface IExchangeAdapter{
     function getRate(bytes32 exchangeId, ERC20 token, uint amount) external view returns (int);
     function isEnabled(bytes32 _id) external view returns (bool);
 
-    function getExchange(bytes32 _id) external view returns(bytes32 name, uint status);
+    function getExchange(bytes32 _id) external view returns(bytes32 name, ExchangeAdapterBase.Status status);
 
     function addExchange(bytes32 _id, bytes32 _name) external returns(bool);
 }
