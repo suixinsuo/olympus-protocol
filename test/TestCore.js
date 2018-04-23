@@ -78,7 +78,7 @@ contract('Olympus-Protocol', function (accounts) {
     await exchangeAdapterManager.addExchange("kyber", kyberExchange.address);
     let instance = await Core.deployed();
     // register exchange callback
-    await exchangeProvider.setMarketOrderCallback(instance.address);
+    await exchangeProvider.setCore(instance.address);
   })
 
   //exchange init
@@ -96,7 +96,6 @@ contract('Olympus-Protocol', function (accounts) {
   it("should be able to create a strategy.", async () => {
     let instance = await StrategyProvider.deployed();
     let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[0] });
-    console.log(mockData.tokenAddresses);
     assert.equal(result.receipt.status, '0x01');
   })
 
