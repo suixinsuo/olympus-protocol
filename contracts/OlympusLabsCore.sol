@@ -153,7 +153,7 @@ contract OlympusLabsCore is Manageable {
         address[] memory tokens = new address[](tokenLength);
         uint[] memory weights = new uint[](tokenLength);
         bytes32 exchangeId;
-        
+
         (,,,,tokens,weights,,,exchangeId) = strategyProvider.getStrategy(strategyId);
 
         // can't buy an index without tokens.
@@ -185,7 +185,7 @@ contract OlympusLabsCore is Manageable {
         emit LogNumber(indexOrderId);
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
         for (uint i = 0; i < tokenLength; i ++ ) {
-            
+
             // ignore those tokens with zero weight.
             if(weights[i] <= 0) {
                 continue;
@@ -329,19 +329,20 @@ contract OlympusLabsCore is Manageable {
         }
     }
 
-    function payFee(uint totalValue, uint feeValue, address sender, bool feeIsMOT) private view returns (uint){
+    function payFee(uint totalValue, uint feeValueInETH, address sender, bool feeIsMOT) private returns (uint){
         if(feeIsMOT){
             // Transfer MOT
             uint amount;
+            uint MOTPrice;
             uint allowance = MOT.allowance(sender,address(this));
-            // TODO: REPLACE THIS ADDRESS WITH THE MOT ADDRESS (is already a constant in this contract) AS SOON AS THE PRICE PROVIDER SUPPORTS IT!
-            // DON'T FORGET :)
-            (,amount) = priceProvider.getrates(address(0xea1887835d177ba8052e5461a269f42f9d77a5af), feeValue);
+
+            (MOTPrice,) = priceProvider.getrates(address(MOT), feeValueInETH);
+            amount = (feeValueInETH * MOTPrice) / 10**18;
             require(allowance >= amount);
             require(MOT.transferFrom(sender,address(this),amount));
             return totalValue; // Use all sent ETH to buy, because fee is paid in MOT
         } else { // We use ETH as fee, so deduct that from the amount of ETH sent
-            return totalValue - feeValue;
+            return totalValue - feeValueInETH;
         }
     }
 }
