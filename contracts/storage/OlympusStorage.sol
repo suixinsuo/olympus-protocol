@@ -38,7 +38,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         uint[] dealtPrices;
         uint[] totalTokenAmounts;
         uint[] completedTokenAmounts;
-        ExchangeProviderInterface.MarketOrderStatus[] subStatuses;
+        ExchangeAdapterBase.OrderStatus[] subStatuses;
         StorageTypeDefinitions.OrderStatus status;
         bytes32 exchangeId;
     }
@@ -78,7 +78,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         orders[indexOrderId].totalTokenAmounts = totalTokenAmounts;
         uint i;
         for (i = 0; i < tokens.length; i++ ) {
-            orders[indexOrderId].subStatuses.push(ExchangeProviderInterface.MarketOrderStatus.Pending);
+            orders[indexOrderId].subStatuses.push(ExchangeAdapterBase.OrderStatus.Pending);
             orders[indexOrderId].dealtPrices.push(0);
             orders[indexOrderId].completedTokenAmounts.push(0);
 
@@ -108,7 +108,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
             dealtPrices: new uint[](0),
             totalTokenAmounts: new uint[](0),
             completedTokenAmounts: new uint[](0),
-            subStatuses: new ExchangeProviderInterface.MarketOrderStatus[](0),
+            subStatuses: new ExchangeAdapterBase.OrderStatus[](0),
             status: StorageTypeDefinitions.OrderStatus.New,
             exchangeId: exchangeId
         });
@@ -176,7 +176,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         uint _actualPrice,
         uint _totalTokenAmount,
         uint _completedQuantity,
-        ExchangeProviderInterface.MarketOrderStatus _status) external onlyCore {
+        ExchangeAdapterBase.OrderStatus _status) external onlyCore {
         IndexOrder memory order = orders[_orderId];
 
         order.totalTokenAmounts[_tokenIndex] = _totalTokenAmount;

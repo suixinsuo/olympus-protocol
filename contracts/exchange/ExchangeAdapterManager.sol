@@ -24,7 +24,7 @@ contract ExchangeAdapterManager is ExchangePermissions{
     }
 
     function getExchangeInfo(bytes32 id)
-    public view returns(bytes32 name, uint status)
+    public view returns(bytes32 name, ExchangeAdapterBase.Status status)
     {
         IExchangeAdapter adapter = exchangeAdapters[id];
         require(address(adapter) != 0x0);
