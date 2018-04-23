@@ -51,9 +51,10 @@ contract('MockKyberNetwork', (accounts) => {
 
 const OrderStatusPending = 0;
 const OrderStatusApproved = 1;
-const OrderStatusCompleted = 2;
-const OrderStatusCancelled = 3;
-const OrderStatusErrored = 4;
+const OrderStatusPartiallyCompleted = 2;
+const OrderStatusCompleted = 3;
+const OrderStatusCancelled = 4;
+const OrderStatusErrored = 5;
 
 contract('KyberNetworkExchange', (accounts) => {
 
@@ -217,15 +218,7 @@ contract('ExchangeAdapterManager', (accounts) => {
     })
 })
 
-const MarketOrderStatusPending = 0;
-const MarketOrderStatusPlaced = 1;
-const MarketOrderStatusPartiallyCompleted = 2;
-const MarketOrderStatusCompleted = 3;
-const MarketOrderStatusCancelled = 4;
-const MarketOrderStatusErrored = 5;
-
 contract('ExchangeProvider', (accounts) => {
-
 
     let expectedExchangeName = "kyber";
     let manager;
@@ -283,7 +276,7 @@ contract('ExchangeProvider', (accounts) => {
         // Test getSubOrderStatus
         for (let i = 0; i < tokens.length; i++) {
             let status = await exchangeProvider.getSubOrderStatus(orderId, tokens[i]);
-            assert.equal(status, MarketOrderStatusCompleted);
+            assert.equal(status, OrderStatusCompleted);
         }
     })
 
@@ -310,7 +303,7 @@ contract('ExchangeProviderWrap', (accounts) => {
         manager = await ExchangeAdapterManager.deployed();
         exchangeProvider = await ExchangeProvider.deployed();
         exchangeProviderWrap = await ExchangeProviderWrap.deployed();
-        await exchangeProvider.setMarketOrderCallback(exchangeProviderWrap.address);
+        await exchangeProvider.setCore(exchangeProviderWrap.address);
     })
 
     it("should be able to buy using KyberNetwork", async () => {
@@ -339,6 +332,10 @@ contract('ExchangeProviderWrap', (accounts) => {
             let expectedBalance = expectedRate.mul(srcAmountETH);
             assert.ok(expectedBalance.equals(actualBalance));
         }
+
+        let orderInfo = result.logs.find(l => { return l.event === 'OrderStatusUpdated' }).args;
+        assert.equal(orderInfo.orderId, orderId);
+        assert.equal(orderInfo.status, OrderStatusCompleted)
     })
 
     it("should be able to buy using CentralizedExchange", async () => {
