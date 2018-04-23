@@ -51,7 +51,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     address coreAddress;
 
     modifier onlyCore() {
-        require(msg.sender == coreAddress);
+        require(msg.sender == coreAddress || coreAddress == 0x0);
         _;
     }
 

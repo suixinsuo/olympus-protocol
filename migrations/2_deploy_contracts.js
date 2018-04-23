@@ -62,20 +62,19 @@ function deployExchangeProviderWrap(deployer, network) {
 }
 
 module.exports = function (deployer, network) {
-
   deployer.then(() => {
     return deployer.deploy(PermissionProvider);
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {
-    console.log(Core.address);
     return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
   }).then(() => {
     return deployer.deploy(PriceProvider, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExtendedStorage, PermissionProvider.address);
   }).then(() => {
-    return deployer.deploy(OlympusStorage, PermissionProvider.address, Core.address);
+    return network === 'development' ? deployer.deploy(OlympusStorage, PermissionProvider.address, 0x0) :
+      deployer.deploy(OlympusStorage, PermissionProvider.address, Core.address);
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })
