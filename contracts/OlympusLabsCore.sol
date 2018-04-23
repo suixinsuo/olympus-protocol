@@ -220,6 +220,7 @@ contract OlympusLabsCore is Manageable {
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
         strategyProvider.updateFollower(strategyId, true);
+        strategyProvider.incrementStatistics(strategyId, msg.value);
 
         // todo: send ethers to the clearing center.
         return indexOrderId;
