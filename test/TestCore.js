@@ -58,15 +58,17 @@ contract('Olympus-Protocol', function (accounts) {
   });
 
   let Permission;
+  let storage;
   let mockKyber;
   let provider;
   let kyberExchange;
-  before('setup test env',async()=>{
-    Permission = await PermissionProvider.deployed(); 
+  before('setup test env', async () => {
+    Permission = await PermissionProvider.deployed();
     mockKyber = await MockKyberNetwork.deployed();
     mockData.addresses = await mockKyber.supportedTokens();
     mockData.tokenAddresses = await mockKyber.supportedTokens();
     provider = await PriceProvider.deployed();
+    storage = await OlympusStorage.deployed();
     await provider.setKyber(mockKyber.address);
 
     let exchangeProvider = await ExchangeProvider.deployed();
@@ -88,7 +90,7 @@ contract('Olympus-Protocol', function (accounts) {
     let exchangeInstance = await ExchangeProvider.deployed();
     let instance = await Core.deployed();
     let result = await instance.setProvider(2, exchangeInstance.address);
-    let name = result.logs.find(l=>{ return l.event === 'ProviderUpdated'; }).args.name;
+    let name = result.logs.find(l => { return l.event === 'ProviderUpdated'; }).args.name;
     assert.equal(name, "2");
   })
 
@@ -239,6 +241,7 @@ contract('Olympus-Protocol', function (accounts) {
 
   it("should be able to buy index.", async () => {
     let instance = await Core.deployed();
+    await OlympusStorage.deployed();
 
     let result = await instance.buyIndex(0, accounts[1], false, { from: accounts[0], value: 3000000 });
     assert.equal(result.receipt.status, '0x01');
