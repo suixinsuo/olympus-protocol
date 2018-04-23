@@ -81,7 +81,7 @@ contract StrategyProvider is StrategyProviderInterface {
             combo.amount,
             combo.exchangeId);
     }
-    
+    //TODO 加权限控制
     function createStrategy(
         string _name,
         string _description,
@@ -105,7 +105,7 @@ contract StrategyProvider is StrategyProviderInterface {
 
         return index;
     }
-
+    //TODO 加权限控制
     function updateStrategy(
         uint _index, 
         string _name, 
