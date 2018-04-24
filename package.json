@@ -24,7 +24,7 @@
     "ganache-cli": "^6.1.0",
     "run-with-testrpc": "^0.3.0",
     "solhint": "^1.1.10",
-    "solidity-coverage": "^0.4.15",
+    "solidity-coverage": "^0.5.0",
     "truffle": "^4.1.7"
   },
   "dependencies": {
