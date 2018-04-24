@@ -56,7 +56,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     }
 
     modifier onlyOwner() {
-        require(permissionProvider.hasPriceOwner(msg.sender));
+        require(permissionProvider.hasStorageOwner(msg.sender));
         _;
     }
     PermissionProviderInterface internal permissionProvider;
