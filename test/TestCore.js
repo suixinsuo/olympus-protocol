@@ -44,29 +44,18 @@ const OrderStatusErrored = 4;
 
 
 contract('Olympus-Protocol', function (accounts) {
-  it("They should be able to deploy.", function () {
-    return Promise.all([
-      OlympusStorage.deployed(),
-      PriceProvider.deployed(),
-      StrategyProvider.deployed(),
-      PermissionProvider.deployed(),
-      Core.deployed(),
-    ])
-      .spread((/*price, strategy, exchange,*/ core) => {
-        assert.ok(core, 'Core contract is not deployed.');
-      });
-  });
-
   let Permission;
+  let storage;
   let mockKyber;
   let provider;
   let kyberExchange;
-  before('setup test env',async()=>{
-    Permission = await PermissionProvider.deployed(); 
+  before('setup test env', async () => {
+    Permission = await PermissionProvider.deployed();
     mockKyber = await MockKyberNetwork.deployed();
     mockData.addresses = await mockKyber.supportedTokens();
     mockData.tokenAddresses = await mockKyber.supportedTokens();
     provider = await PriceProvider.deployed();
+    storage = await OlympusStorage.deployed();
     await provider.setKyber(mockKyber.address);
 
     let exchangeProvider = await ExchangeProvider.deployed();
@@ -81,6 +70,19 @@ contract('Olympus-Protocol', function (accounts) {
     await exchangeProvider.setCore(instance.address);
   })
 
+  it("They should be able to deploy.", async () => {
+    return await Promise.all([
+      OlympusStorage.deployed(),
+      PriceProvider.deployed(),
+      StrategyProvider.deployed(),
+      PermissionProvider.deployed(),
+      Core.deployed(),
+    ])
+      .spread((/*price, strategy, exchange,*/ core) => {
+        assert.ok(core, 'Core contract is not deployed.');
+      });
+  });
+
   //exchange init
 
   it("should be able to set a exchange provider.", async () => {
@@ -88,7 +90,7 @@ contract('Olympus-Protocol', function (accounts) {
     let exchangeInstance = await ExchangeProvider.deployed();
     let instance = await Core.deployed();
     let result = await instance.setProvider(2, exchangeInstance.address);
-    let name = result.logs.find(l=>{ return l.event === 'ProviderUpdated'; }).args.name;
+    let name = result.logs.find(l => { return l.event === 'ProviderUpdated'; }).args.name;
     assert.equal(name, "2");
   })
 

@@ -29,14 +29,14 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
     mapping (uint => uint) private balances;
 
-    function ExchangeProvider(address _exchangeManager, address _permission) public 
+    function ExchangeProvider(address _exchangeManager, address _permission) public
     ExchangePermissions(_permission)
     {
         if (_exchangeManager != 0x0) {
             _setExchangeManager(_exchangeManager);
         }
     }
-    
+
     function setExchangeManager(address _exchangeManager) public onlyExchangeOwner {
         _setExchangeManager(_exchangeManager);
     }
@@ -45,7 +45,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         exchangeManager = IExchangeAdapterManager(_exchangeManager);
     }
 
-    // TODO: Lock 
+    // TODO: Lock
     function setCore(IOlympusLabsCore _core) public onlyExchangeOwner {
         core = _core;
         return;
@@ -60,15 +60,15 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         require(exchangeManager.isValidAdapter(msg.sender));
         _;
     }
-   
+
     function startPlaceOrder(uint orderId, address deposit)
     external onlyCore returns(bool)
     {
-        
+
         if(orders[orderId].tokens.length > 0){
             return false;
         }
-        
+
         orders[orderId] = MarketOrder({
             tokens: new ERC20[](0),
             amounts: new uint[](0),
@@ -81,7 +81,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         });
         return true;
     }
-    
+
     function addPlaceOrderItem(uint orderId, ERC20 token, uint amount, uint rate)
     external onlyCore returns(bool)
     {
@@ -119,16 +119,16 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
     function endPlaceOrder(uint orderId)
     external onlyCore payable returns(bool)
     {
-        
+
         if(!checkOrderValid(orderId)){
             return false;
         }
         balances[orderId] = msg.value;
-        
+
         MarketOrder memory order = orders[orderId];
 
         for (uint i = 0; i < order.tokens.length; i++ ) {
-            
+
             IExchangeAdapter adapter;
             if(order.exchanges[i] != 0){
                 adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
@@ -144,9 +144,9 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
             uint adapterOrderId = adapter.placeOrder(
                 order.exchanges[i],
-                order.tokens[i], 
-                order.amounts[i], 
-                order.rates[i], 
+                order.tokens[i],
+                order.amounts[i],
+                order.rates[i],
                 this);
 
             if(adapterOrderId == 0){
@@ -154,7 +154,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             }
 
             orders[orderId].adapterOrdersId.push(adapterOrderId);
-            
+
             if(adapter.getOrderStatus(adapterOrderId) == EAB.OrderStatus.Approved){
 
                 uint destCompletedAmount = adapter.getDestCompletedAmount(adapterOrderId);
@@ -170,9 +170,9 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         updateOrderStatus(orderId);
         return true;
     }
-    
+
     function checkOrderValid(uint orderId) private view returns(bool) {
-        
+
         uint total = 0;
         MarketOrder memory order = orders[orderId];
         if(order.tokens.length == 0){
@@ -209,11 +209,11 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         }
         require(balances[orderId] >= amount);
         balances[orderId] -= amount;
-        // pay eth
+        //pay eth
         if(!adapter.payOrder.value(amount)(adapterOrderId)){
             return false;
         }
-        EAB.OrderStatus status = adapter.getOrderStatus(adapterOrderId); 
+        EAB.OrderStatus status = adapter.getOrderStatus(adapterOrderId);
         return status == EAB.OrderStatus.Completed;
     }
 
@@ -261,7 +261,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         updateOrderStatus(orderId);
         return true;
     }
-   
+
     function updateOrderStatus(uint orderId) private returns (bool){
 
         MarketOrder memory order = orders[orderId];
@@ -314,7 +314,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
     function cancelOrder(uint orderId)
     external onlyCore returns (bool success) {
-        
+
         MarketOrder memory order = orders[orderId];
         require(order.tokens.length > 0);
 
