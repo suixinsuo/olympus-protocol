@@ -10,6 +10,19 @@ contract PermissionProviderInterface is Provider, RBAC {
         checkRole(msg.sender, ROLE_ADMIN);
         _;
     }
+
+    string public constant CORE = "core";
+
+    modifier onlyCore()
+    {
+        checkRole(msg.sender, CORE);
+        _;
+    }
+    
+    function adminAddCore(address _addr) onlyAdmin public;
+    function adminRemoveCore(address _addr) onlyAdmin public;
+    function hasCore(address _addr) public view returns(bool success);
+
     function changeAdmin(address _newAdmin) onlyAdmin public returns(bool success); 
 
     function adminAddRoleControl(address addr, string roleName) onlyAdmin public;
