@@ -23,7 +23,7 @@ interface IExchangeAdapterManager {
 
 interface IAdapterOrderCallback{
     function adapterOrderStatusUpdated(address exchange, uint adapterOrderId) external returns(bool);
-    function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint completedAmount) external returns (bool);
+    function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint srcCompletedAmount, uint destCompletedAmount) external returns (bool);
 }
 
 interface IExchangeAdapter{
@@ -38,6 +38,7 @@ interface IExchangeAdapter{
     function cancelOrder(uint adapterOrderId) external returns(bool);
 
     function getOrderStatus(uint adapterOrderId) external view returns(ExchangeAdapterBase.OrderStatus);
+    function getDestCompletedAmount(uint adapterOrderId) external view returns(uint);
 
     /// >0 : current exchange rate
     /// =0 : not support

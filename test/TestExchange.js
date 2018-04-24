@@ -380,10 +380,11 @@ contract('ExchangeProviderWrap', (accounts) => {
             let orderDeposit = orderInfo[5];
 
             // 2. owner approve token 
-            await erc20Token.approve(orderDeposit, expectedRate.mul(srcAmountETH));
+            let destCompletedAmount = expectedRate.mul(srcAmountETH);
+            await erc20Token.approve(orderDeposit, destCompletedAmount);
 
             // 3. callback
-            let result = await centralizedExchange.PlaceOrderCompletedCallback(orderInfo[6], owner, payee, orderId, web3.toWei(srcAmountETH));
+            let result = await centralizedExchange.PlaceOrderCompletedCallback(orderInfo[6], owner, payee, orderId, web3.toWei(srcAmountETH), destCompletedAmount);
         }
 
         // Let's check those tokens's balance of deposit account
