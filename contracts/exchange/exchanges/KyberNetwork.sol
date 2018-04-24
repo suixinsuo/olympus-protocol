@@ -31,6 +31,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     struct Order{
         OrderStatus status;
         uint amount;
+        uint destCompletedAmount;
     }
 
     Status public status;
@@ -99,6 +100,8 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             return 0;
         }
 
+        uint beforeTokenBalance = dest.balanceOf(this);
+
         /*uint actualAmount = kyber.trade.value(amount)(*/
         kyber.trade.value(amount)(
             ETH_TOKEN_ADDRESS,
@@ -110,9 +113,14 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             0x0);
         uint expectAmount = getExpectAmount(amount, rate);
         
+        uint afterTokenBalance = dest.balanceOf(this);
+        assert(afterTokenBalance > beforeTokenBalance);
+
+        uint actualAmount = afterTokenBalance - beforeTokenBalance;
+        require(actualAmount >= expectAmount);
+ 
         /** 
         // Kyber Bug in Kovan that actualAmount returns always zero
-        // require(actualAmount > expectAmount);
         */
         
         if(!dest.approve(deposit, expectAmount)){
@@ -120,8 +128,10 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         }
         orders[++orderId] = Order({
             status:OrderStatus.Approved,
-            amount:amount
+            amount:amount,
+            destCompletedAmount:actualAmount
         });
+
         emit PlacedOrder(orderId);
         return orderId;
     }
@@ -155,6 +165,11 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     function getOrderStatus(uint adapterOrderId) external view returns(OrderStatus){
 
         return orders[adapterOrderId].status;
+    }
+
+    function getDestCompletedAmount(uint adapterOrderId) external view returns(uint){
+
+        return orders[adapterOrderId].destCompletedAmount;
     }
     
     function() public onlyExchangeOwner payable { }
