@@ -73,7 +73,8 @@ module.exports = function (deployer, network) {
   }).then(() => {
     return deployer.deploy(ExtendedStorage, PermissionProvider.address);
   }).then(() => {
-    return network === 'development' ? deployer.deploy(OlympusStorage, PermissionProvider.address, 0x0) :
+    return network === 'development' ?
+      deployer.deploy(OlympusStorage, PermissionProvider.address, 0x0) :
       deployer.deploy(OlympusStorage, PermissionProvider.address, Core.address);
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);

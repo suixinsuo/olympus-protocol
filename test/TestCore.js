@@ -44,19 +44,6 @@ const OrderStatusErrored = 4;
 
 
 contract('Olympus-Protocol', function (accounts) {
-  it("They should be able to deploy.", function () {
-    return Promise.all([
-      OlympusStorage.deployed(),
-      PriceProvider.deployed(),
-      StrategyProvider.deployed(),
-      PermissionProvider.deployed(),
-      Core.deployed(),
-    ])
-      .spread((/*price, strategy, exchange,*/ core) => {
-        assert.ok(core, 'Core contract is not deployed.');
-      });
-  });
-
   let Permission;
   let storage;
   let mockKyber;
@@ -82,6 +69,19 @@ contract('Olympus-Protocol', function (accounts) {
     // register exchange callback
     await exchangeProvider.setCore(instance.address);
   })
+
+  it("They should be able to deploy.", async () => {
+    return await Promise.all([
+      OlympusStorage.deployed(),
+      PriceProvider.deployed(),
+      StrategyProvider.deployed(),
+      PermissionProvider.deployed(),
+      Core.deployed(),
+    ])
+      .spread((/*price, strategy, exchange,*/ core) => {
+        assert.ok(core, 'Core contract is not deployed.');
+      });
+  });
 
   //exchange init
 
@@ -241,7 +241,6 @@ contract('Olympus-Protocol', function (accounts) {
 
   it("should be able to buy index.", async () => {
     let instance = await Core.deployed();
-    await OlympusStorage.deployed();
 
     let result = await instance.buyIndex(0, accounts[1], false, { from: accounts[0], value: 3000000 });
     throw new Error();
