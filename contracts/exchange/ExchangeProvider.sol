@@ -190,21 +190,19 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
         address owner = address(adapter);
         uint expectAmount = getExpectAmount(amount, rate);
-        //Why does this fail?
         if(token.allowance(owner, this) < expectAmount){
             return false;
         }
-        // if(!token.transferFrom(owner, deposit, expectAmount)){
-        //     return false;
-        // }
-        // balances[orderId] -= amount;
-        // //pay eth
-        // if(!adapter.payOrder.value(amount)(adapterOrderId)){
-        //     return false;
-        // }
+        if(!token.transferFrom(owner, deposit, expectAmount)){
+            return false;
+        }
+        balances[orderId] -= amount;
+        //pay eth
+        if(!adapter.payOrder.value(amount)(adapterOrderId)){
+            return false;
+        }
         EAB.OrderStatus status = adapter.getOrderStatus(adapterOrderId);
-        return true;
-        // return status == EAB.OrderStatus.Completed;
+        return status == EAB.OrderStatus.Completed;
     }
 
     // owner可以直接是msg.sender
