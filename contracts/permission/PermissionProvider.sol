@@ -29,6 +29,18 @@ contract PermissionProvider is PermissionProviderInterface {
         return true;
     }
 
+    function adminAddCore(address _addr) onlyAdmin public {
+        adminAddRoleControl(_addr, CORE);
+    }
+
+    function adminRemoveCore(address _addr) onlyAdmin public{
+        adminRemoveRoleControl(_addr, CORE);
+    }
+
+    function hasCore(address _addr) public view returns(bool success) {
+        return hasRole(_addr, CORE) || hasRole(_addr, ROLE_ADMIN); 
+    }
+
     function adminAddCoreOwner(address _addr) onlyAdmin public {
         adminAddRoleControl(_addr, "CoreOwner");
     }

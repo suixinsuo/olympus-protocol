@@ -83,6 +83,15 @@ contract('Olympus-Protocol', function (accounts) {
       });
   });
 
+  it("should be able to set a onlyCore.", async () => {
+
+    let instance = await Core.deployed();
+    let result = await PermissionProvider.deployed();
+    let name = await result.adminAddCore(instance.address);
+    console.log(name);
+    assert.equal(name.receipt.status, '0x01');
+  })
+  
   //exchange init
 
   it("should be able to set a exchange provider.", async () => {
