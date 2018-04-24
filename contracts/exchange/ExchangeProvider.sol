@@ -16,6 +16,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         ERC20[]         tokens;
         uint[]          amounts;
         uint[]          rates;
+        uint[]          destCompletedAmount;
         bytes32[]       exchanges;
         uint[]          adapterOrdersId;
         address         deposit;
@@ -72,6 +73,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             tokens: new ERC20[](0),
             amounts: new uint[](0),
             rates: new uint[](0),
+            destCompletedAmount: new uint[](0),
             exchanges: new bytes32[](0),
             adapterOrdersId: new uint[](0),
             deposit: deposit,
@@ -109,6 +111,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         orders[orderId].tokens.push(token);
         orders[orderId].amounts.push(amount);
         orders[orderId].rates.push(rate);
+        orders[orderId].destCompletedAmount.push(0);
         orders[orderId].exchanges.push(exchangeId);
         return true;
     }
@@ -153,7 +156,10 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             orders[orderId].adapterOrdersId.push(adapterOrderId);
             
             if(adapter.getOrderStatus(adapterOrderId) == EAB.OrderStatus.Approved){
-                if(!adapterApprovedImmediately(orderId, adapterOrderId, adapter, order.tokens[i], order.amounts[i], order.rates[i], order.deposit)){
+
+                uint destCompletedAmount = adapter.getDestCompletedAmount(adapterOrderId);
+                order.destCompletedAmount[i] = destCompletedAmount;
+                if(!adapterApprovedImmediately(orderId, adapterOrderId, adapter, order.tokens[i], order.amounts[i], order.rates[i], destCompletedAmount, order.deposit)){
                     revert();
                     return false;
                 }
@@ -186,16 +192,22 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         return Utils.calcDstQty(eth, 18, 18, rate);
     }
     
-    function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter adapter, ERC20 token, uint amount, uint rate, address deposit) private returns(bool){
+    function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter adapter, ERC20 token, uint amount, uint rate, uint destCompletedAmount, address deposit) private returns(bool){
 
         address owner = address(adapter);
         uint expectAmount = getExpectAmount(amount, rate);
-        if(token.allowance(owner, this) < expectAmount){
+        if(expectAmount > destCompletedAmount){
             return false;
         }
-        if(!token.transferFrom(owner, deposit, expectAmount)){
+
+        if(token.allowance(owner, this) < destCompletedAmount){
             return false;
         }
+
+        if(!token.transferFrom(owner, deposit, destCompletedAmount)){
+            return false;
+        }
+        require(balances[orderId] >= amount);
         balances[orderId] -= amount;
         // pay eth
         if(!adapter.payOrder.value(amount)(adapterOrderId)){
@@ -207,7 +219,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
     // owner可以直接是msg.sender
     // TODO: only to be called by adapters
-    function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint completedAmount)
+    function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint srcCompletedAmount, uint destCompletedAmount)
     external onlyAdapter returns (bool)
     {
 
@@ -231,16 +243,20 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
         ERC20 token = order.tokens[i];
 
-        uint expectAmount = getExpectAmount(completedAmount, order.rates[i]);
-        if(token.allowance(tokenOwner, this) < expectAmount){
+        uint expectAmount = getExpectAmount(srcCompletedAmount, order.rates[i]);
+        require(expectAmount >= destCompletedAmount);
+        if(token.allowance(tokenOwner, this) < destCompletedAmount){
             return false;
         }
 
-        if(!token.transferFrom(tokenOwner, order.deposit, expectAmount)){
+        if(!token.transferFrom(tokenOwner, order.deposit, destCompletedAmount)){
             return false;
         }
-        balances[orderId] -= completedAmount;
-        payee.transfer(completedAmount);
+        require(balances[orderId] >= srcCompletedAmount);
+        balances[orderId] -= srcCompletedAmount;
+        payee.transfer(srcCompletedAmount);
+
+        orders[orderId].destCompletedAmount[i] += destCompletedAmount;
 
         updateOrderStatus(orderId);
         return true;
