@@ -81,7 +81,7 @@ contract StrategyProvider is StrategyProviderInterface {
             combo.amount,
             combo.exchangeId);
     }
-    //TODO 加权限控制
+
     function createStrategy(
         string _name,
         string _description,
@@ -105,7 +105,7 @@ contract StrategyProvider is StrategyProviderInterface {
 
         return index;
     }
-    //TODO 加权限控制
+
     function updateStrategy(
         uint _index, 
         string _name, 
@@ -118,6 +118,7 @@ contract StrategyProvider is StrategyProviderInterface {
     {
         require(_checkCombo(_tokenAddresses, _weights));
         // require(isOwner(_index));
+        require(msg.sender == comboOwner[_index]);
 
         comboHub[_index].name = _name;
         comboHub[_index].description = _description;
