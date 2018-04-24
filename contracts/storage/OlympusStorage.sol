@@ -50,13 +50,17 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
 
     address coreAddress;
 
-    modifier onlyCore() {
-        require(msg.sender == coreAddress || coreAddress == 0x0);
-        _;
-    }
+    // modifier onlyCore() {
+    //     require(msg.sender == coreAddress || coreAddress == 0x0);
+    //     _;
+    // }
 
     modifier onlyOwner() {
         require(permissionProvider.hasStorageOwner(msg.sender));
+        _;
+    }
+    modifier onlyCore() {
+        require(permissionProvider.hasCore(msg.sender));
         _;
     }
     PermissionProviderInterface internal permissionProvider;
