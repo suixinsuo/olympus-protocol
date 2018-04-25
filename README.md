@@ -9,15 +9,18 @@
 ### v1.0.0-review-pending
 Core: 0xeEF996Ca4Fe62f826601aE5c1d6fe77d8193513c<br/>
 PermissionProvider: 0xdef673F4ecc19fC9439Dd7Ee1f934eE6a35d404C<br/>
-ExchangeProvider: 0x3298A95728caCaed2800D876a3135Da185E2c34F<br/>
+ExchangeProvider: 0x7DC3924b9580981A0ad45A76A58C242eD55c03aF<br/>
 PriceProvider: 0x3e27CdE65D2CC92F483968efD778d2E8bF047992<br/>
 StrategyProvider: 0x484c2bF3c3B986039D1fd7295F07B428F2ae6FA7<br/>
+WhitelistProvider: 0xe34c3c550C5b2Ca0a4C29614096A27f7261D3062<br/>
 Storage: 0x1a67e378f511a1E5e139bc34FD2955B8D3F45F21<br/>
 ExtendedStorage: 0xcEb51bD598ABb0caa8d2Da30D4D760f08936547B<br/>
 
+### Admins
 Owner: 0xd7b02e4c876c6920aadfe2b80a73df3ffea44c48<br/>
 priceOwner: 0x2576F5EF8309DBB23c39be29D62273B4c917D783<br/>
-exchangeOwner: 0xb878496b5a59c9ae84018f9846ab00419bf0e682<br/>
+exchangeOwner: 0xB878496B5a59c9AE84018F9846aB00419Bf0e682<br/>
+whitelistOwner: 0xB878496B5a59c9AE84018F9846aB00419Bf0e682<br/>
 
 
 # Deploy instructions
