@@ -123,7 +123,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         // Kyber Bug in Kovan that actualAmount returns always zero
         */
         
-        if(!dest.approve(deposit, expectAmount)){
+        if(!dest.approve(deposit, actualAmount)){
             return 0;
         }
         orders[++orderId] = Order({
