@@ -187,15 +187,14 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         return true;
     }
 
-    function getExpectAmount(uint eth, uint rate) internal pure returns(uint){
-        // TODO: asume all token decimals is 18
-        return Utils.calcDstQty(eth, 18, 18, rate);
+    function getExpectAmount(uint eth, uint destDecimals, uint rate) internal pure returns(uint){
+        return Utils.calcDstQty(eth, 18, destDecimals, rate);
     }
     
     function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter adapter, ERC20 token, uint amount, uint rate, uint destCompletedAmount, address deposit) private returns(bool){
 
         address owner = address(adapter);
-        uint expectAmount = getExpectAmount(amount, rate);
+        uint expectAmount = getExpectAmount(amount, token.decimals(), rate);
         if(expectAmount > destCompletedAmount){
             return false;
         }
@@ -243,7 +242,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
         ERC20 token = order.tokens[i];
 
-        uint expectAmount = getExpectAmount(srcCompletedAmount, order.rates[i]);
+        uint expectAmount = getExpectAmount(srcCompletedAmount, order.tokens[i].decimals(), order.rates[i]);
         require(expectAmount >= destCompletedAmount);
         if(token.allowance(tokenOwner, this) < destCompletedAmount){
             return false;
