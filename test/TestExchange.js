@@ -19,7 +19,13 @@ const Promise = require('bluebird');
 contract('MockKyberNetwork', (accounts) => {
 
     it("MockKyberNetwork should be able to trade.", async () => {
-        let mockKyber = await MockKyberNetwork.deployed();
+
+        let tokensTotal = 2;
+        let tokenDecimals = (new Date().getTime()) % 6 + 12;
+        console.info("test with token decimals = ", tokenDecimals);
+        let destRate = web3.toBigNumber('1000' + '0'.repeat(tokenDecimals));
+
+        let mockKyber = await MockKyberNetwork.new(tokensTotal, tokenDecimals);
         let tokens = await mockKyber.supportedTokens();
         assert.equal(tokens.length, tokenNum);
         let destAddress = accounts[0];
@@ -43,11 +49,11 @@ contract('MockKyberNetwork', (accounts) => {
                 rates[1],
                 0, { value: web3.toWei(srcAmountETH) });
             tokenBalance = await erc20Token.balanceOf(destAddress);
-            assert.ok(expectedRate.mul(srcAmountETH).equals(tokenBalance));
+            let expectedBalance =  destRate.mul(srcAmountETH);
+            assert.ok(expectedBalance.equals(tokenBalance));
         }
     });
 });
-
 
 const OrderStatusPending = 0;
 const OrderStatusApproved = 1;
@@ -112,6 +118,63 @@ contract('KyberNetworkExchange', (accounts) => {
             // Test placeOrder
             let result = await kyberExchange.placeOrder(exchangeId, tokens[i], web3.toWei(srcAmountETH), rate, deposit);
 
+            let placedOrderEvent = result.logs.find(log => {
+                return log.event === 'PlacedOrder';
+            });
+            assert.ok(placedOrderEvent);
+
+            let actualOrderId = parseInt(placedOrderEvent.args.orderId);
+            let expectedOrderId = i + 1;
+            assert.equal(actualOrderId, expectedOrderId);
+
+            let erc20Token = await SimpleERC20Token.at(tokens[i]);
+            let actualAllowance = await erc20Token.allowance(kyberExchange.address, deposit);
+            assert.ok(expectedAllowanced.equals(actualAllowance));
+
+            let orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
+            assert.equal(orderStatus, OrderStatusApproved);
+
+            // Test payOrder
+            await kyberExchange.payOrder(actualOrderId, { value: web3.toWei(srcAmountETH) });
+            orderStatus = await kyberExchange.getOrderStatus(actualOrderId);
+            assert.equal(orderStatus, OrderStatusCompleted);
+        }
+    })
+
+    it("KyberNetworkExchange should be able to placeOrder with other decimals.", async () => {
+
+        let tokensTotal = 2;
+        let tokenDecimals = (new Date().getTime()) % 6 + 12;
+        console.info("test with token decimals = ", tokenDecimals);
+
+        let destRate = web3.toBigNumber('1000' + '0'.repeat(tokenDecimals));
+        let permission = await PermissionProvider.new();
+        let mockKyber = await MockKyberNetwork.new(tokensTotal, tokenDecimals);
+        let kyberExchange = await KyberNetworkExchange.new(mockKyber.address, 0, 0, permission.address);
+
+        // without pre-deposit
+        let srcAmountETH = 1;
+        let needDeposit = srcAmountETH * tokensTotal;
+        let balance = await web3.eth.getBalance(kyberExchange.address);
+        assert.ok(balance.equals(0), 'kyberExchange\'s balance should be 0 before deposit');
+
+        await kyberExchange.send(web3.toWei(needDeposit, 'ether'));
+        balance = await web3.eth.getBalance(kyberExchange.address);
+        assert.ok(balance.equals(web3.toWei(needDeposit)), `kyberExchange's balance should be ${web3.toWei(needDeposit, 'ether').toString()} after deposit`);
+
+        let expectedAllowanced = destRate.mul(srcAmountETH);
+        let tokens = await mockKyber.supportedTokens();
+
+        for (var i = 0; i < tokens.length; i++) {
+
+            // Test getRate
+            let rate = await kyberExchange.getRate('', tokens[i], 0);
+            assert.ok(expectedRate.equals(rate));
+
+            let deposit = accounts[0];
+            let srcAmountETH = 1;
+            // Test placeOrder
+            let result = await kyberExchange.placeOrder(exchangeId, tokens[i], web3.toWei(srcAmountETH), rate, deposit);
             let placedOrderEvent = result.logs.find(log => {
                 return log.event === 'PlacedOrder';
             });
@@ -346,7 +409,7 @@ contract('ExchangeProviderWrap', (accounts) => {
         let tokens = [];
         let owner = accounts[0];
         for (let i = 0; i < tokenNum; i++) {
-            let t = await SimpleERC20Token.new({ from: owner });
+            let t = await SimpleERC20Token.new(18, { from: owner });
             tokens.push(t.address);
         }
         let rates = tokens.map(()=>{return expectedRate;});

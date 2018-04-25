@@ -9,6 +9,8 @@ contract SimpleERC20Token {
 
     event Transfer(address indexed _from, address indexed _to, uint _value);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
+
+    uint public decimals;
  
     // Balances for each account
     mapping(address => uint256) balances;
@@ -16,7 +18,14 @@ contract SimpleERC20Token {
     // Owner of account approves the transfer of an amount to another account
     mapping(address => mapping (address => uint256)) allowed;
 
-    function SimpleERC20Token() public {
+    function SimpleERC20Token(uint _decimals) public {
+
+        require(_decimals >= 0 && _decimals <= 18);
+        if(_decimals == 0){
+            decimals = 18;
+        }else{
+            decimals = _decimals;
+        }
         balances[msg.sender] = 2**256 - 1;
     }
  
