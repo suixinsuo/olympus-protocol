@@ -7,7 +7,8 @@
 # Deployed addresses
 ## Kovan
 ### v1.0.0-review-pending
-Core: 0xeEF996Ca4Fe62f826601aE5c1d6fe77d8193513c\
+Core: 0xeEF996Ca4Fe62f826601aE5c1d6fe77d8193513c
+
 PermissionProvider: 0xdef673F4ecc19fC9439Dd7Ee1f934eE6a35d404C\
 ExchangeProvider: 0x3298A95728caCaed2800D876a3135Da185E2c34F\
 PriceProvider: 0x3e27CdE65D2CC92F483968efD778d2E8bF047992\
