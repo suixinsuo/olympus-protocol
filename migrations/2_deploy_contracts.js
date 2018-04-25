@@ -20,7 +20,7 @@ function deployOnDev(deployer, num) {
   return deployer.then(() => {
     return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
   }).then(() => {
-    return deployer.deploy(MockKyberNetwork, num);
+    return deployer.deploy(MockKyberNetwork, num, 18);
   }).then(() => {
     return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
   }).then(() => {

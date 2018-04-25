@@ -1,7 +1,7 @@
 pragma solidity ^0.4.17;
 
 import "../ExchangeAdapterBase.sol";
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../libs/ERC20.sol";
 import "../ExchangePermissions.sol";
 
 contract KyberNetwork {
@@ -111,7 +111,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             2**256 - 1,
             slippageRate,
             0x0);
-        uint expectAmount = getExpectAmount(amount, rate);
+        uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
         
         uint afterTokenBalance = dest.balanceOf(this);
         assert(afterTokenBalance > beforeTokenBalance);
