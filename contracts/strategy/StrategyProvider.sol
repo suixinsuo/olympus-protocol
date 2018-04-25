@@ -7,6 +7,8 @@ import "../libs/Converter.sol";
 contract StrategyProvider is StrategyProviderInterface {
     event StrategyChanged(uint strategyId);
 
+    address owner;
+
     mapping(address => uint[]) public comboIndex;
     mapping(uint => address) public comboOwner;
 
@@ -20,6 +22,11 @@ contract StrategyProvider is StrategyProviderInterface {
     //     require(msg.sender == coreAddress);
     //     _;
     // }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
     modifier onlyCore() {
         require(permissionProvider.hasCore(msg.sender));
         _;
@@ -27,6 +34,7 @@ contract StrategyProvider is StrategyProviderInterface {
     function StrategyProvider(address _permissionProvider, address _core) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider); 
         coreAddress = _core;
+        owner = msg.sender;
     }
 
     function getStrategyCount() public view returns (uint length){
@@ -93,7 +101,7 @@ contract StrategyProvider is StrategyProviderInterface {
         address[] _tokenAddresses,
         uint[] _weights,
         bytes32 _exchangeId) 
-        public returns(uint)
+        public onlyOwner returns(uint)
     {
         address owner = msg.sender;
         require(_checkCombo(_tokenAddresses, _weights));
