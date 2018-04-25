@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.23;
 
 import "../exchange/ExchangeProviderInterface.sol";
 import "./OlympusStorageExtendedInterface.sol";
@@ -48,13 +48,25 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     bytes32 constant private dataKind = "Order";
     OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0xcEb51bD598ABb0caa8d2Da30D4D760f08936547B));
 
+    address coreAddress;
+
+    // modifier onlyCore() {
+    //     require(msg.sender == coreAddress || coreAddress == 0x0);
+    //     _;
+    // }
+
     modifier onlyOwner() {
-        require(permissionProvider.hasPriceOwner(msg.sender));
+        require(permissionProvider.hasStorageOwner(msg.sender));
+        _;
+    }
+    modifier onlyCore() {
+        require(permissionProvider.hasCore(msg.sender));
         _;
     }
     PermissionProviderInterface internal permissionProvider;
-    function OlympusStorage(address _permissionProvider) public {
+    constructor(address _permissionProvider, address _core) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
+        coreAddress = _core;
     }
 
     function addTokenDetails(
@@ -63,7 +75,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         uint[] weights,
         uint[] totalTokenAmounts,
         uint[] estimatedPrices
-    ) external {
+    ) external onlyCore {
         orders[indexOrderId].tokens = tokens;
         orders[indexOrderId].weights = weights;
         orders[indexOrderId].estimatedPrices = estimatedPrices;
@@ -84,7 +96,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         uint amountInWei,
         uint feeInWei,
         bytes32 exchangeId
-        ) external returns (uint indexOrderId) {
+        ) external onlyCore returns (uint indexOrderId) {
         indexOrderId = getOrderId();
 
         IndexOrder memory order = IndexOrder({
@@ -168,7 +180,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         uint _actualPrice,
         uint _totalTokenAmount,
         uint _completedQuantity,
-        ExchangeAdapterBase.OrderStatus _status) external {
+        ExchangeAdapterBase.OrderStatus _status) external onlyCore {
         IndexOrder memory order = orders[_orderId];
 
         order.totalTokenAmounts[_tokenIndex] = _totalTokenAmount;
@@ -184,7 +196,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         uint _orderId,
         bytes32 key,
         bytes32 value
-    ) external returns (bool success){
+    ) external onlyCore returns (bool success){
         return olympusStorageExtended.setCustomExtraData(dataKind,_orderId,key,value);
     }
 
@@ -196,7 +208,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     }
 
     function updateOrderStatus(uint _orderId, StorageTypeDefinitions.OrderStatus _status)
-        external returns (bool success){
+        external onlyCore returns (bool success){
 
         IndexOrder memory order = orders[_orderId];
         order.status = _status;
@@ -209,7 +221,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         return orderId++;
     }
 
-    function resetOrderIdTo(uint _start) external returns (uint) {
+    function resetOrderIdTo(uint _start) external onlyOwner returns (uint) {
         orderId = _start;
         return orderId;
     }

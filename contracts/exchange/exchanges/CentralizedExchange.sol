@@ -14,6 +14,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
         uint        amount;
         uint        rate;
         uint        completed;
+        uint        destCompletedAmount;
         address     deposit;
         bytes32     exchangeId;
     }
@@ -117,6 +118,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
             dest:dest,
             rate:rate,
             completed:0,
+            destCompletedAmount:0,
             deposit:deposit,
             exchangeId:exchangeId
         });
@@ -127,25 +129,27 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
 
     // - If buy success, the owner should approved exchange provider to transfer and this method will callback exchange provider
     // to transfer token from owner to user and then send ether to owner. 
-    function PlaceOrderCompletedCallback(bytes32 /*exchangeId*/, address tokenOwner, address payee, uint adapterOrderId, uint completedAmount)
+    function PlaceOrderCompletedCallback(bytes32 /*exchangeId*/, address tokenOwner, address payee, uint adapterOrderId, uint srcCompletedAmount, uint destCompletedAmount)
     public returns(bool)
     {
 
         require(isValidOrder(adapterOrderId));
         Order memory order = orders[adapterOrderId];
-        require(completedAmount <= order.amount);
-        require((completedAmount + order.completed) <= order.amount);
+        require(srcCompletedAmount <= order.amount);
+        require((srcCompletedAmount + order.completed) <= order.amount);
         require(order.status == OrderStatus.Pending);
 
-        uint destAmount = getExpectAmount(completedAmount, order.rate);
-        require(order.dest.allowance(tokenOwner, order.deposit) >= destAmount);
+        uint expectDestAmount = getExpectAmount(srcCompletedAmount, order.dest.decimals(), order.rate);
+        require(destCompletedAmount >= expectDestAmount);
+        require(order.dest.allowance(tokenOwner, order.deposit) >= destCompletedAmount);
 
-        orders[adapterOrderId].completed += completedAmount;
+        orders[adapterOrderId].completed += srcCompletedAmount;
         orders[adapterOrderId].status = OrderStatus.Approved;
+        orders[adapterOrderId].destCompletedAmount += destCompletedAmount;
         
         uint beforeBalance = payee.balance;
-        require(adapterOrderCallback.adapterApproved(adapterOrderId, tokenOwner, payee, completedAmount));
-        require((payee.balance - beforeBalance) == completedAmount);
+        require(adapterOrderCallback.adapterApproved(adapterOrderId, tokenOwner, payee, srcCompletedAmount, destCompletedAmount));
+        require((payee.balance - beforeBalance) == srcCompletedAmount);
 
         if(orders[adapterOrderId].completed == orders[adapterOrderId].amount){
             orders[adapterOrderId].status = OrderStatus.Completed;
@@ -162,6 +166,11 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
     function getOrderStatus(uint adapterOrderId) external view returns(OrderStatus){
 
         return orders[adapterOrderId].status;
+    }
+
+    function getDestCompletedAmount(uint adapterOrderId) external view returns(uint){
+
+        return orders[adapterOrderId].destCompletedAmount;
     }
 
     function getOrderInfo(uint adapterOrderId) public view 

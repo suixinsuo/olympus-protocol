@@ -3,7 +3,7 @@ pragma solidity ^0.4.17;
 import "../../libs/utils.sol";
 import "../../libs/SimpleERC20Token.sol";
 
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../libs/ERC20.sol";
 
 contract MockKyberNetwork {
 
@@ -13,11 +13,11 @@ contract MockKyberNetwork {
     }
 
     Token[] public supportedTokens;
-    function MockKyberNetwork(uint total) public {
+    function MockKyberNetwork(uint total,uint _decimals) public {
         require(total <= 50 && total > 0);
         for (uint i = 0; i < total; i++) {
             supportedTokens.push(Token({
-                token: new SimpleERC20Token(),
+                token: new SimpleERC20Token(_decimals),
                 slippageRate:10**18*1000
             }));
         }
@@ -65,13 +65,13 @@ contract MockKyberNetwork {
         (expectedRate, slippageRate) = _getExpectedRate(source,dest,srcAmount);
 
         require(slippageRate>=minConversionRate);
-        uint destAmount = getExpectAmount(srcAmount,minConversionRate);
+        uint destAmount = getExpectAmount(srcAmount, dest.decimals(), minConversionRate);
+
         dest.transfer(destAddress,destAmount);
         return destAmount;
     }
 
-    function getExpectAmount(uint amount, uint rate) private pure returns(uint){
-         
-        return Utils.calcDstQty(amount, 18, 18, rate);
+    function getExpectAmount(uint amount, uint destDecimals, uint rate) private pure returns(uint){
+        return Utils.calcDstQty(amount, 18, destDecimals, rate);
     }
 }
