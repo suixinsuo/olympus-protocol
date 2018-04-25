@@ -112,4 +112,16 @@ contract PermissionProvider is PermissionProviderInterface {
     function hasStorageOwner(address _addr) public view returns(bool success) {
         return hasRole(_addr, "StorageOwner") || hasRole(_addr, ROLE_ADMIN); 
     }
+
+    function adminAddWhitelistOwner(address _addr) onlyAdmin public {
+        adminAddRole(_addr, "WhitelistOwner");
+    }
+
+    function adminRemoveWhitelistOwner(address _addr) onlyAdmin public {
+        adminRemoveRole(_addr, "WhitelistOwner");
+    }
+
+    function hasWhitelistOwner(address _addr) public view returns(bool success) {
+        return hasRole(_addr, "WhitelistOwner") || hasRole(_addr, ROLE_ADMIN); 
+    }
 }
