@@ -24,10 +24,10 @@ contract OlympusLabsCore is Manageable {
     event LogNumbers(uint[] numbers);
     event LOGDEBUG(address);
 
-    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x9FC2267BeE84E56Fab30637dB70f9ceB0bCaDFD0));
-    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x296b6FE67B9ee209B360a52fDFB67fbe4C14e952));
-    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x51e404a62CA2874398525C61366E2E914e3657Ab));
-    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x2A47d5Cc7FfaF369C793188e8C7D1DB8dc447A15));
+    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x3298A95728caCaed2800D876a3135Da185E2c34F));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x484c2bF3c3B986039D1fd7295F07B428F2ae6FA7));
+    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x3e27CdE65D2CC92F483968efD778d2E8bF047992));
+    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x1a67e378f511a1E5e139bc34FD2955B8D3F45F21));
     WhitelistProviderInterface internal whitelistProvider;
     ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
