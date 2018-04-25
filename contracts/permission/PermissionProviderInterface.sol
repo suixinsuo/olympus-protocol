@@ -51,4 +51,8 @@ contract PermissionProviderInterface is Provider, RBAC {
     function adminAddStorageOwner(address addr) onlyAdmin public;
     function adminRemoveStorageOwner(address addr) onlyAdmin public;
     function hasStorageOwner(address addr) public view returns(bool success);
+
+    function adminAddWhitelistOwner(address _addr) onlyAdmin public;
+    function adminRemoveWhitelistOwner(address _addr) onlyAdmin public;
+    function hasWhitelistOwner(address _addr) public view returns(bool success);
 }
