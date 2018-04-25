@@ -10,6 +10,7 @@ import "./strategy/StrategyProviderInterface.sol";
 import "./permission/PermissionProviderInterface.sol";
 import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
 import { TypeDefinitions as TD, Provider } from "./libs/Provider.sol";
+import "./whitelist/WhitelistProviderInterface.sol";
 
 
 contract OlympusLabsCore is Manageable {
@@ -27,6 +28,7 @@ contract OlympusLabsCore is Manageable {
     StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x296b6FE67B9ee209B360a52fDFB67fbe4C14e952));
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x51e404a62CA2874398525C61366E2E914e3657Ab));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x2A47d5Cc7FfaF369C793188e8C7D1DB8dc447A15));
+    WhitelistProviderInterface internal whitelistProvider;
     ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
@@ -44,6 +46,11 @@ contract OlympusLabsCore is Manageable {
 
     modifier onlyOwner() {
         require(permissionProvider.hasPriceOwner(msg.sender));
+        _;
+    }
+
+    modifier onlyAllowed(){
+        require(address(whitelistProvider) == 0x0 || whitelistProvider.isAllowed(msg.sender));
         _;
     }
 
@@ -135,7 +142,10 @@ contract OlympusLabsCore is Manageable {
         } else if(_type == TD.ProviderType.Storage) {
             emit Log("StorageProvider");
             olympusStorage = OlympusStorageInterface(_providerAddress);
-          } else {
+        } else if(_type == TD.ProviderType.Whitelist) {
+            emit Log("WhitelistProvider");
+            whitelistProvider = WhitelistProviderInterface(_providerAddress);
+        } else {
             emit Log("Unknown provider type supplied.");
             revert();
         }
@@ -143,7 +153,8 @@ contract OlympusLabsCore is Manageable {
         return result;
     }
 
-    function buyIndex(uint strategyId, address depositAddress, bool feeIsMOT) public payable returns (uint indexOrderId)
+    function buyIndex(uint strategyId, address depositAddress, bool feeIsMOT)
+    public onlyAllowed payable returns (uint indexOrderId)
     {
         require(msg.value > minimumInWei);
         if(maximumInWei > 0){

@@ -9,7 +9,8 @@ library TypeDefinitions {
         Price,
         Exchange,
         Storage,
-        ExtendedStorage
+        ExtendedStorage,
+        Whitelist
     }
 
     struct ProviderStatistic {
