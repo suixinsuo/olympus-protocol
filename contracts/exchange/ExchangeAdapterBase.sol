@@ -1,6 +1,7 @@
 pragma solidity ^0.4.17;
 
 import "../libs/utils.sol";
+import "../libs/ERC20.sol";
 import "../permission/PermissionProviderInterface.sol";
 
 contract ExchangeAdapterBase {
@@ -27,9 +28,8 @@ contract ExchangeAdapterBase {
         exchangeExchange = _exchange;
     }
 
-    function getExpectAmount(uint eth, uint rate) internal pure returns(uint){
-        // TODO: asume all token decimals is 18
-        return Utils.calcDstQty(eth, 18, 18, rate);
+    function getExpectAmount(uint eth, uint destDecimals, uint rate) internal pure returns(uint){
+        return Utils.calcDstQty(eth, 18, destDecimals, rate);
     }
 
     modifier onlyAdaptersManager(){
