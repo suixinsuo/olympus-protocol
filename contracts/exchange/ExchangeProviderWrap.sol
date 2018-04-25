@@ -1,6 +1,5 @@
 pragma solidity ^0.4.17;
 
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "./ExchangeProvider.sol";
 import { StorageTypeDefinitions as STD } from "../storage/OlympusStorage.sol";
 

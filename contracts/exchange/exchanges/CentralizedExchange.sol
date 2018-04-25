@@ -139,7 +139,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
         require((srcCompletedAmount + order.completed) <= order.amount);
         require(order.status == OrderStatus.Pending);
 
-        uint expectDestAmount = getExpectAmount(srcCompletedAmount, order.rate);
+        uint expectDestAmount = getExpectAmount(srcCompletedAmount, order.dest.decimals(), order.rate);
         require(destCompletedAmount >= expectDestAmount);
         require(order.dest.allowance(tokenOwner, order.deposit) >= destCompletedAmount);
 

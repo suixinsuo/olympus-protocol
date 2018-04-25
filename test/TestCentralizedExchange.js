@@ -68,13 +68,13 @@ contract('CentralizedExchange', (accounts) => {
         let centralizedExchange = await CentralizedExchange.deployed();
         let tokens = [];
         for (var i = 0; i < 3; i++) {
-            let t = await SimpleERC20Token.new();
+            let t = await SimpleERC20Token.new(18);
             tokens.push(t.address)
         }
         let rates = tokens.map(() => { return expectedRate });
 
         // supported, but unkown rate
-        let t = await SimpleERC20Token.new();
+        let t = await SimpleERC20Token.new(18);
         tokens.push(t.address);
         rates.push(-1);
 
@@ -95,7 +95,7 @@ contract('CentralizedExchange', (accounts) => {
     it('test placeOrder', async () => {
 
         let centralizedExchange = await CentralizedExchange.deployed();
-        let simpleToken = await SimpleERC20Token.new();
+        let simpleToken = await SimpleERC20Token.new(18);
         let exchangeId = testCase[0].exchangeId;
         let token = simpleToken.address;
         let srcAmount = web3.toWei(1, 'ether');
