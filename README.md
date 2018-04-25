@@ -4,7 +4,6 @@
 
 [![coverage report](https://gitlab.com/aireach/olympus-protocol/badges/develop/coverage.svg)](https://gitlab.com/aireach/olympus-protocol/commits/develop)
 
-
 # Deployed addresses
 ## Kovan
 ### v1.0.0-review-pending
