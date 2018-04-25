@@ -16,8 +16,12 @@ contract StrategyProvider is StrategyProviderInterface {
     PermissionProviderInterface internal permissionProvider;
     address coreAddress;
 
+    // modifier onlyCore() {
+    //     require(msg.sender == coreAddress);
+    //     _;
+    // }
     modifier onlyCore() {
-        require(msg.sender == coreAddress);
+        require(permissionProvider.hasCore(msg.sender));
         _;
     }
     function StrategyProvider(address _permissionProvider, address _core) public {

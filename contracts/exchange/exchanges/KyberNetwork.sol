@@ -1,7 +1,7 @@
 pragma solidity ^0.4.17;
 
 import "../ExchangeAdapterBase.sol";
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../libs/ERC20.sol";
 import "../ExchangePermissions.sol";
 
 contract KyberNetwork {
@@ -31,6 +31,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     struct Order{
         OrderStatus status;
         uint amount;
+        uint destCompletedAmount;
     }
 
     Status public status;
@@ -99,6 +100,8 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             return 0;
         }
 
+        uint beforeTokenBalance = dest.balanceOf(this);
+
         /*uint actualAmount = kyber.trade.value(amount)(*/
         kyber.trade.value(amount)(
             ETH_TOKEN_ADDRESS,
@@ -108,11 +111,16 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             2**256 - 1,
             slippageRate,
             0x0);
-        uint expectAmount = getExpectAmount(amount, rate);
+        uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
         
+        uint afterTokenBalance = dest.balanceOf(this);
+        assert(afterTokenBalance > beforeTokenBalance);
+
+        uint actualAmount = afterTokenBalance - beforeTokenBalance;
+        require(actualAmount >= expectAmount);
+ 
         /** 
         // Kyber Bug in Kovan that actualAmount returns always zero
-        // require(actualAmount > expectAmount);
         */
         
         if(!dest.approve(deposit, expectAmount)){
@@ -120,8 +128,10 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         }
         orders[++orderId] = Order({
             status:OrderStatus.Approved,
-            amount:amount
+            amount:amount,
+            destCompletedAmount:actualAmount
         });
+
         emit PlacedOrder(orderId);
         return orderId;
     }
@@ -155,6 +165,11 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     function getOrderStatus(uint adapterOrderId) external view returns(OrderStatus){
 
         return orders[adapterOrderId].status;
+    }
+
+    function getDestCompletedAmount(uint adapterOrderId) external view returns(uint){
+
+        return orders[adapterOrderId].destCompletedAmount;
     }
     
     function() public onlyExchangeOwner payable { }
