@@ -88,7 +88,7 @@ contract('Olympus-Protocol', function (accounts) {
     let instance = await Core.deployed();
     let result = await PermissionProvider.deployed();
     let name = await result.adminAddCore(instance.address);
-    console.log(name);
+    
     assert.equal(name.receipt.status, '0x01');
   })
   
