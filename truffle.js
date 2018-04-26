@@ -19,6 +19,14 @@ module.exports = {
       },
       gasPrice: 1000000000,
       network_id: 42
+    },
+    mainnet: {
+      provider: function () {
+        mnemonics.mainnet = process.env.MNEMONICS || mnemonics.mainnet || prompt('network mainnet mnemonic: ');
+        return new HDWalletProvider(mnemonics.mainnet, "https://mainnet.infura.io/qajYHKaGssZt5WrdfzGP");
+      },
+      gasPrice: 1000000000,
+      network_id: 1
     }
   },
   // mocha: {
