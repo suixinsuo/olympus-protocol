@@ -255,6 +255,13 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result.receipt.status, '0x01');
   })
 
+  it("should be able to get ethfee.", async () => {
+    let instance = await Core.deployed();
+
+    let result = await instance.withdrawETH(accounts[1],{ from: accounts[0] });
+    assert.equal(result.receipt.status, '0x01');
+  })
+
   it("should be able to get index order.", async () => {
     let instance = await Core.deployed();
     //TODO set the orderId to 1000000
