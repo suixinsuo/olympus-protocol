@@ -11,7 +11,7 @@ contract StrategyProvider is StrategyProviderInterface {
 
     mapping(address => uint[]) public comboIndex;
     mapping(uint => address) public comboOwner;
-
+    mapping(address => bool) public StrategyWhiteList;
     event ComboCreated(uint id, string name);
     event ComboUpdated(uint id, string name);
 
@@ -27,14 +27,31 @@ contract StrategyProvider is StrategyProviderInterface {
         require(msg.sender == owner);
         _;
     }
+
+    modifier onlyWhitelist() {
+        require(StrategyWhiteList[msg.sender]);
+        _;
+    }
     modifier onlyCore() {
         require(permissionProvider.hasCore(msg.sender));
         _;
     }
+
+    function changeWhitelist(address[] whitelistaddress) public onlyOwner {
+        for (uint index = 0; index < whitelistaddress.length; index++) {
+            if (StrategyWhiteList[whitelistaddress[index]]) {
+                StrategyWhiteList[whitelistaddress[index]] = false;
+            } else {
+                StrategyWhiteList[whitelistaddress[index]] = true;
+            }
+        }
+    }
+
     function StrategyProvider(address _permissionProvider, address _core) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider); 
         coreAddress = _core;
         owner = msg.sender;
+        StrategyWhiteList[owner] = true;
     }
 
     function getStrategyCount() public view returns (uint length){
@@ -101,7 +118,7 @@ contract StrategyProvider is StrategyProviderInterface {
         address[] _tokenAddresses,
         uint[] _weights,
         bytes32 _exchangeId) 
-        public onlyOwner returns(uint)
+        public onlyWhitelist returns(uint)
     {
         address owner = msg.sender;
         require(_checkCombo(_tokenAddresses, _weights));
