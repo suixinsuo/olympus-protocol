@@ -34,6 +34,33 @@ contract('Olympus-Protocol-strategy', (accounts) => {
         assert.equal(result.receipt.status, '0x01');
     })
 
+    it("Should not  be able to create a strategy.", async () => {
+        let instance  = await Strategy.deployed();
+        try{
+            let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[1]});
+        }catch (error) {
+            //console.log(error);
+            const revertFound = error.message.search('revert') >= 0;
+            assert(revertFound, `Expected "revert", got ${error} instead`);
+        }
+    })
+    it("Should be able to update a strategy.", async () => {
+        let instance  = await Strategy.deployed();
+        let result = await instance.updateStrategy(0,mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[0]});
+        assert.equal(result.receipt.status, '0x01');
+    })
+
+    it("Should not  be able to update a strategy.", async () => {
+        let instance  = await Strategy.deployed();
+        try{
+            let result = await instance.updateStrategy(0,mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[1]});
+        }catch (error) {
+            //console.log(error);
+            const revertFound = error.message.search('revert') >= 0;
+            assert(revertFound, `Expected "revert", got ${error} instead`);
+        }
+    })
+
     it("Should be able to get a strategy.", async () => {
         let instance  = await Strategy.deployed();
         let result = await instance.getStrategy.call(0);
