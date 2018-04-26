@@ -357,4 +357,18 @@ contract OlympusLabsCore is Manageable {
             return totalValue - feeValueInETH;
         }
     }
+
+    function withdrawERC20(address reciveaddress,address _tokenaddress) public onlyOwner returns(bool success)
+    {
+        uint _balance = ERC20(_tokenaddress).balanceOf(address(this));
+        require(_tokenaddress != 0x0 && reciveaddress != 0x0 && _balance != 0);
+        require(ERC20(_tokenaddress).transfer(reciveaddress,_balance));
+        return true;
+    }
+    function withdrawETH(address reciveaddress) public onlyOwner returns(bool success)
+    {
+        require(reciveaddress != 0x0);
+        reciveaddress.transfer(this.balance);
+        return true;
+    }
 }
