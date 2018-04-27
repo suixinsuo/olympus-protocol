@@ -121,7 +121,7 @@ contract StrategyProvider is StrategyProviderInterface {
         bytes32 _exchangeId)
         public onlyWhitelist returns(uint)
     {
-        address owner = msg.sender;
+        address _owner = msg.sender;
         require(_checkCombo(_tokenAddresses, _weights));
         uint comboId = comboIndex[msg.sender].length;
         Combo memory myCombo = Combo(comboId, _name, _description, _category, _tokenAddresses, _weights, 0, 0, _exchangeId);
@@ -130,8 +130,8 @@ contract StrategyProvider is StrategyProviderInterface {
 
         uint index = comboHub.push(myCombo) - 1;
 
-        comboOwner[index] = owner;
-        comboIndex[owner].push(index);
+        comboOwner[index] = _owner;
+        comboIndex[_owner].push(index);
 
         return index;
     }
