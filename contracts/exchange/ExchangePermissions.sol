@@ -1,6 +1,7 @@
 pragma solidity ^0.4.17;
 import "../permission/PermissionProviderInterface.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 contract ExchangePermissions is Ownable {
 
@@ -11,17 +12,17 @@ contract ExchangePermissions is Ownable {
     }
 
     modifier onlyExchangeOwner() {
-        require(permissionProvider.hasExchangeOwner(msg.sender));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_EXCHANGE_OWNER()));
         _;
     }
 
     modifier onlyCoreOwner() {
-        require(permissionProvider.hasCoreOwner(msg.sender));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE_OWNER()));
         _;
     }
 
     modifier onlyAdapterOwner() {
-        require(permissionProvider.hasExchangeAdapterOwner(msg.sender));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_EXCHANGE_ADAPTER_OWNER()));
         _;
     }
 }

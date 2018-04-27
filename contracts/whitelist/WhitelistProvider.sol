@@ -1,5 +1,6 @@
 pragma solidity ^0.4.17;
 import "../permission/PermissionProviderInterface.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 contract WhitelistProvider {
 
@@ -13,7 +14,7 @@ contract WhitelistProvider {
     }
 
     modifier onlyWhitelistOwner() {
-        require(permissionProvider.hasWhitelistOwner(msg.sender));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_WHITELIST_OWNER()));
         _;
     }
 
