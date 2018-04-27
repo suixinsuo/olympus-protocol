@@ -7,6 +7,20 @@ contract PermissionProvider is PermissionProviderInterface {
     * A constant role name for indicating admins.
     */
     string public constant ROLE_ADMIN = "admin";
+    string public constant CORE = "core";
+    string public constant STORAGE = "storage";
+
+    modifier onlyCore()
+    {
+        checkRole(msg.sender, CORE);
+        _;
+    }
+
+    modifier onlyStorage()
+    {
+        checkRole(msg.sender, STORAGE);
+        _;
+    }
 
     /**
     * @dev constructor. Sets msg.sender as admin by default
@@ -21,7 +35,7 @@ contract PermissionProvider is PermissionProviderInterface {
 
     function adminRemoveRoleControl(address _addr, string _roleName) onlyAdmin public {
         removeRole(_addr, _roleName);
-    } 
+    }
 
     function changeAdmin(address _newAdmin) onlyAdmin public returns (bool success) {
         adminAddRole(_newAdmin, ROLE_ADMIN);
@@ -38,7 +52,7 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasCore(address _addr) public view returns(bool success) {
-        return hasRole(_addr, CORE) || hasRole(_addr, ROLE_ADMIN); 
+        return hasRole(_addr, CORE) || hasRole(_addr, ROLE_ADMIN);
     }
 
     function adminAddCoreOwner(address _addr) onlyAdmin public {
@@ -50,7 +64,7 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasCoreOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "CoreOwner") || hasRole(_addr, ROLE_ADMIN); 
+        return hasRole(_addr, "CoreOwner") || hasRole(_addr, ROLE_ADMIN);
     }
 
     function adminAddStrategyOwner(address _addr) onlyAdmin public {
@@ -62,21 +76,21 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasStrategyOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "StrategyOwner") || hasRole(_addr, ROLE_ADMIN); 
+        return hasRole(_addr, "StrategyOwner") || hasRole(_addr, ROLE_ADMIN);
     }
-    
+
     function adminAddPriceOwner(address _addr) onlyAdmin public {
         adminAddRole(_addr, "PriceOwner");
-    }    
-    
+    }
+
     function adminRemovePriceOwner(address _addr) onlyAdmin public {
         adminRemoveRole(_addr, "PriceOwner");
     }
 
     function hasPriceOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "PriceOwner") || hasRole(_addr, ROLE_ADMIN); 
+        return hasRole(_addr, "PriceOwner") || hasRole(_addr, ROLE_ADMIN);
     }
-    
+
     function adminAddExchangeOwner(address _addr) onlyAdmin public {
         adminAddRole(_addr, "ExchangeOwner");
     }
@@ -100,7 +114,7 @@ contract PermissionProvider is PermissionProviderInterface {
     function hasExchangeAdapterOwner(address _addr) public view returns(bool success) {
         return hasRole(_addr, "ExchangeAdapterOwner") || hasRole(_addr, ROLE_ADMIN);
     }
-    
+
     function adminAddStorageOwner(address _addr) onlyAdmin public {
         adminAddRole(_addr, "StorageOwner");
     }
@@ -110,7 +124,7 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasStorageOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "StorageOwner") || hasRole(_addr, ROLE_ADMIN); 
+        return hasRole(_addr, "StorageOwner") || hasRole(_addr, ROLE_ADMIN);
     }
 
     function adminAddWhitelistOwner(address _addr) onlyAdmin public {
@@ -122,6 +136,18 @@ contract PermissionProvider is PermissionProviderInterface {
     }
 
     function hasWhitelistOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "WhitelistOwner") || hasRole(_addr, ROLE_ADMIN); 
+        return hasRole(_addr, "WhitelistOwner") || hasRole(_addr, ROLE_ADMIN);
+    }
+
+    function adminAddStorage(address _addr) onlyAdmin public {
+        adminAddRoleControl(_addr, STORAGE);
+    }
+
+    function adminRemoveStorage(address _addr) onlyAdmin public{
+        adminRemoveRoleControl(_addr, STORAGE);
+    }
+
+    function hasStorage(address _addr) public view returns(bool success) {
+        return hasRole(_addr, STORAGE) || hasRole(_addr, ROLE_ADMIN);
     }
 }

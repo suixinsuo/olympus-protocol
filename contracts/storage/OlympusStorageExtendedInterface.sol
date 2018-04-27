@@ -38,10 +38,4 @@ contract OlympusStorageExtendedInterface {
      * @return A concatenation of the dataKind string and id as string, which can be used as lookup
      */
     function getAccessor(bytes32 dataKind, uint id) private pure returns(string accessor);
-    /*
-     * @dev This function converts a bytes32 value to string
-     * @param value any bytes32 value
-     * @return The previous bytes32 string, as a string
-     */
-    function bytes32ToString(bytes32 value) private pure returns(string result);
 }
