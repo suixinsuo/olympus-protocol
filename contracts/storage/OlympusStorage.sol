@@ -48,13 +48,6 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     bytes32 constant private dataKind = "Order";
     OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0xcEb51bD598ABb0caa8d2Da30D4D760f08936547B));
 
-    address coreAddress;
-
-    // modifier onlyCore() {
-    //     require(msg.sender == coreAddress || coreAddress == 0x0);
-    //     _;
-    // }
-
     modifier onlyOwner() {
         require(permissionProvider.hasStorageOwner(msg.sender));
         _;
@@ -64,9 +57,8 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         _;
     }
     PermissionProviderInterface internal permissionProvider;
-    constructor(address _permissionProvider, address _core) public {
+    constructor(address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
-        coreAddress = _core;
     }
 
     function addTokenDetails(

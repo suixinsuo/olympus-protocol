@@ -43,6 +43,7 @@ contract OlympusStorageInterface {
 const KyberConfig = require('../scripts/libs/kyber_config');
 const OlympusStorageExtended = artifacts.require("../contracts/storage/OlympusStorageExtended.sol");
 const OlympusStorage = artifacts.require("../contracts/storage/OlympusStorage.sol");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
@@ -268,6 +269,8 @@ contract('OlympusStorage', (accounts) => {
     try {
       const extendedInstance = await OlympusStorageExtended.deployed();
       const instance = await OlympusStorage.deployed();
+      let permissionProvider = await PermissionProvider.deployed();
+      await permissionProvider.adminAddStorage(instance.address);
 
       const resultSetProvider = await instance.setProvider.call(4, extendedInstance.address);
       const resultSetProviderTransaction = await instance.setProvider(4, extendedInstance.address);

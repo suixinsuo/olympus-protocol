@@ -31,9 +31,9 @@ const finalOverrideValue = 'overridden';
 
 contract('OlympusStorageExtended', (accounts) => {
 
-  it("Should be able to deploy.", () => {
-    return Promise.all([
-      OlympusStorageExtended.deployed()
+  it("Should be able to deploy.", async () => {
+    return await Promise.all([
+      OlympusStorageExtended.deployed(),
     ]).spread((storageExtended) => {
       assert.ok(storageExtended, 'OlympusStorageExtended contract is not deployed.');
     });
