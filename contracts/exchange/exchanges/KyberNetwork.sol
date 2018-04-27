@@ -83,11 +83,11 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, token, amount);
         return int(slippageRate);
     }
-    
+
     function placeOrder(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
     external payable returns(uint adapterOrderId)
     {
-        
+
         if (address(this).balance < amount) {
             return 0;
         }
@@ -110,19 +110,19 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             this,
             2**256 - 1,
             slippageRate,
-            0x0);
+            0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c);
         uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
-        
+
         uint afterTokenBalance = dest.balanceOf(this);
         assert(afterTokenBalance > beforeTokenBalance);
 
         uint actualAmount = afterTokenBalance - beforeTokenBalance;
         require(actualAmount >= expectAmount);
- 
-        /** 
+
+        /**
         // Kyber Bug in Kovan that actualAmount returns always zero
         */
-        
+
         if(!dest.approve(deposit, actualAmount)){
             return 0;
         }
@@ -171,7 +171,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
         return orders[adapterOrderId].destCompletedAmount;
     }
-    
+
     function() public onlyExchangeOwner payable { }
 
     function withdraw(uint amount) public onlyExchangeOwner {
