@@ -34,7 +34,7 @@ contract StrategyProvider is StrategyProviderInterface {
         _;
     }
     modifier onlyCore() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_CORE));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
 
