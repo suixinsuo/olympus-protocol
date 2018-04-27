@@ -45,7 +45,7 @@ contract OlympusLabsCore is Manageable {
     }
 
     modifier onlyOwner() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_PRICE_OWNER));
+        require(permissionProvider.has(msg.sender, TD.ROLE_CORE_OWNER));
         _;
     }
 

@@ -6,7 +6,7 @@ import "../libs/Ownable.sol";
 import "../libs/Converter.sol";
 import "./OlympusStorageExtendedInterface.sol";
 import "../permission/PermissionProviderInterface.sol";
-import { TypeDefinitions as TD } from "../libs/provider.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 contract OlympusStorageExtended is OlympusStorageExtendedInterface {
     using strings for *;
