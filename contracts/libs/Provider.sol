@@ -4,6 +4,7 @@ import "./Manageable.sol";
 
 
 library TypeDefinitions {
+
     enum ProviderType {
         Strategy,
         Price,

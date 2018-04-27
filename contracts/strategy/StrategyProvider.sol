@@ -3,6 +3,7 @@ pragma solidity ^0.4.22;
 import "./StrategyProviderInterface.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "../libs/Converter.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 contract StrategyProvider is StrategyProviderInterface {
     event StrategyChanged(uint strategyId);
@@ -33,7 +34,7 @@ contract StrategyProvider is StrategyProviderInterface {
         _;
     }
     modifier onlyCore() {
-        require(permissionProvider.hasCore(msg.sender));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
 
@@ -48,7 +49,7 @@ contract StrategyProvider is StrategyProviderInterface {
     }
 
     function StrategyProvider(address _permissionProvider, address _core) public {
-        permissionProvider = PermissionProviderInterface(_permissionProvider); 
+        permissionProvider = PermissionProviderInterface(_permissionProvider);
         coreAddress = _core;
         owner = msg.sender;
         StrategyWhiteList[owner] = true;
@@ -80,15 +81,15 @@ contract StrategyProvider is StrategyProviderInterface {
 
 
     function getStrategy(uint _index) public _checkIndex(_index) view returns (
-        uint id, 
-        string name, 
-        string description, 
+        uint id,
+        string name,
+        string description,
         string category,
         address[] memory tokenAddresses,
         uint[] memory weights,
         uint follower,
         uint amount,
-        bytes32 exchangeId) 
+        bytes32 exchangeId)
     {
         uint leng = comboHub[_index].tokenAddresses.length;
         Combo memory combo = comboHub[_index];
@@ -117,10 +118,10 @@ contract StrategyProvider is StrategyProviderInterface {
         string _category,
         address[] _tokenAddresses,
         uint[] _weights,
-        bytes32 _exchangeId) 
+        bytes32 _exchangeId)
         public onlyWhitelist returns(uint)
     {
-        address owner = msg.sender;
+        address _owner = msg.sender;
         require(_checkCombo(_tokenAddresses, _weights));
         uint comboId = comboIndex[msg.sender].length;
         Combo memory myCombo = Combo(comboId, _name, _description, _category, _tokenAddresses, _weights, 0, 0, _exchangeId);
@@ -129,21 +130,21 @@ contract StrategyProvider is StrategyProviderInterface {
 
         uint index = comboHub.push(myCombo) - 1;
 
-        comboOwner[index] = owner;
-        comboIndex[owner].push(index);
+        comboOwner[index] = _owner;
+        comboIndex[_owner].push(index);
 
         return index;
     }
 
     function updateStrategy(
-        uint _index, 
-        string _name, 
-        string _description, 
+        uint _index,
+        string _name,
+        string _description,
         string _category,
-        address[] _tokenAddresses, 
+        address[] _tokenAddresses,
         uint[] _weights,
-        bytes32 _exchangeId) 
-        public returns (bool success) 
+        bytes32 _exchangeId)
+        public returns (bool success)
     {
         require(_checkCombo(_tokenAddresses, _weights));
         // require(isOwner(_index));
@@ -173,7 +174,7 @@ contract StrategyProvider is StrategyProviderInterface {
             comboHub[_index].follower --;
         }
         return true;
-    }  
+    }
 
     function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool success) {
         require(_tokenAddresses.length == _weights.length);

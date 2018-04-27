@@ -42,6 +42,7 @@ const OrderStatusCompleted = 2;
 const OrderStatusCancelled = 3;
 const OrderStatusErrored = 4;
 
+const ROLE_CORE = "core";
 
 contract('Olympus-Protocol', function (accounts) {
   let Permission;
@@ -87,11 +88,11 @@ contract('Olympus-Protocol', function (accounts) {
 
     let instance = await Core.deployed();
     let result = await PermissionProvider.deployed();
-    let name = await result.adminAddCore(instance.address);
-    
+    let name = await result.adminAdd(instance.address, ROLE_CORE);
+
     assert.equal(name.receipt.status, '0x01');
   })
-  
+
   //exchange init
 
   it("should be able to set a exchange provider.", async () => {
@@ -258,7 +259,7 @@ contract('Olympus-Protocol', function (accounts) {
   it("should be able to get ethfee.", async () => {
     let instance = await Core.deployed();
 
-    let result = await instance.withdrawETH(accounts[1],{ from: accounts[0] });
+    let result = await instance.withdrawETH(accounts[1], { from: accounts[0] });
     assert.equal(result.receipt.status, '0x01');
   })
 
