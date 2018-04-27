@@ -1,7 +1,7 @@
 pragma solidity ^0.4.17;
 import "../permission/PermissionProviderInterface.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import { TypeDefinitions as TD } from "../libs/provider.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 contract ExchangePermissions is Ownable {
 

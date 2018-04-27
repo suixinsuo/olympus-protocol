@@ -1,6 +1,6 @@
 pragma solidity ^0.4.17;
 import "../permission/PermissionProviderInterface.sol";
-import { TypeDefinitions as TD } from "../libs/provider.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 contract WhitelistProvider {
 

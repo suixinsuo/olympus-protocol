@@ -6,7 +6,7 @@ pragma solidity ^0.4.22;
 import "../libs/SafeMath.sol";
 import "../libs/itMaps.sol";
 import "../permission/PermissionProviderInterface.sol";
-import { TypeDefinitions as TD } from "../libs/provider.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 // 正式合约
 // 思路是：
