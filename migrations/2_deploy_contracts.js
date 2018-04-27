@@ -32,6 +32,37 @@ function deployOnDev(deployer, num) {
   })
 }
 
+function deployOnMainnet(deployer) {
+
+  let kyberNetwrok = '0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e';
+  let permissionProviderAddress = '0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e';
+  let coreAddress = '0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9';
+  let preDepositETH = 0.1;
+
+  let deploy = deployer.then(() => {
+    return deployer.deploy(ExchangeAdapterManager, permissionProviderAddress);
+  }).then(() => {
+    return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, permissionProviderAddress);
+  }).then(() => {
+    return deployer.deploy(KyberNetworkExchange, kyberNetwrok, ExchangeAdapterManager.address, ExchangeProvider.address, permissionProviderAddress);
+  }).then(async () => {
+
+    let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+    let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+    let exchangeProvder = await ExchangeProvider.deployed();
+
+    console.info(`adding kyberExchange ${kyberExchangeInstance.address}`);
+    let result = await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
+
+    console.info(`send ${preDepositETH} ether to kyberExchange`);
+    let r = await kyberExchangeInstance.send(web3.toWei(preDepositETH, "ether"));
+
+    console.info('exchange provider set core');
+    await exchangeProvder.setCore(coreAddress);
+  })
+  return deploy;
+}
+
 function deployExchangeProviderWrap(deployer, network) {
 
   let kyberNetwork = KyberConfig[network];
@@ -62,7 +93,14 @@ function deployExchangeProviderWrap(deployer, network) {
 }
 
 module.exports = function (deployer, network) {
-  deployer.then(() => {
+
+  let flags = args.parseArgs();
+
+  if (network == 'mainnet' && flags.contract == "exchange") {
+    return deployOnMainnet(deployer, network);
+  }
+
+  return deployer.then(() => {
     return deployer.deploy(PermissionProvider);
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
@@ -79,5 +117,4 @@ module.exports = function (deployer, network) {
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })
-
 }
