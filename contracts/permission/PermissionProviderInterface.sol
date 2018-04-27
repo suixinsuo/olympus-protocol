@@ -4,6 +4,16 @@ import "../libs/Provider.sol";
 import "zeppelin-solidity/contracts/ownership/rbac/RBAC.sol";
 
 contract PermissionProviderInterface is Provider, RBAC {
+    string public constant ROLE_ADMIN = "admin";
+    string public constant ROLE_CORE = "core1";
+    string public constant ROLE_STORAGE = "storage";
+    string public constant ROLE_CORE_OWNER = "CoreOwner";
+    string public constant ROLE_STRATEGY_OWNER = "StrategyOwner";
+    string public constant ROLE_PRICE_OWNER = "PriceOwner";
+    string public constant ROLE_EXCHANGE_OWNER = "ExchangeOwner";
+    string public constant ROLE_EXCHANGE_ADAPTER_OWNER = "ExchangeAdapterOwner";
+    string public constant ROLE_STORAGE_OWNER = "StorageOwner";
+    string public constant ROLE_WHITELIST_OWNER = "WhitelistOwner";
 
     modifier onlyAdmin()
     {
@@ -11,44 +21,11 @@ contract PermissionProviderInterface is Provider, RBAC {
         _;
     }
 
-    function adminAddCore(address _addr) onlyAdmin public;
-    function adminRemoveCore(address _addr) onlyAdmin public;
-    function hasCore(address _addr) public view returns(bool success);
+    function adminAddRoleControl(address _addr, string _roleName) onlyAdmin public;
+    function adminRemoveRoleControl(address _addr, string _roleName) onlyAdmin public;
+    function changeAdmin(address _newAdmin) onlyAdmin public returns (bool success);
+    function adminAdd(string _roleName, address _addr) onlyAdmin public;
+    function adminRemove(string _roleName, address _addr) onlyAdmin public;
 
-    function adminAddStorage(address _addr) onlyAdmin public;
-    function adminRemoveStorage(address _addr) onlyAdmin public;
-    function hasStorage(address _addr) public view returns(bool success);
-
-    function changeAdmin(address _newAdmin) onlyAdmin public returns(bool success);
-
-    function adminAddRoleControl(address addr, string roleName) onlyAdmin public;
-    function adminRemoveRoleControl(address addr, string roleName) onlyAdmin public;
-
-    function adminAddCoreOwner(address addr) onlyAdmin public;
-    function adminRemoveCoreOwner(address addr) onlyAdmin public;
-    function hasCoreOwner(address addr) public view returns(bool success);
-
-    function adminAddStrategyOwner(address addr) onlyAdmin public;
-    function adminRemoveStrategyOwner(address addr) onlyAdmin public;
-    function hasStrategyOwner(address addr) public view returns(bool success);
-
-    function adminAddPriceOwner(address addr) onlyAdmin public;
-    function adminRemovePriceOwner(address addr) onlyAdmin public;
-    function hasPriceOwner(address addr) public view returns(bool success);
-
-    function adminAddExchangeOwner(address addr) onlyAdmin public;
-    function adminRemoveExchangeOwner(address addr) onlyAdmin public;
-    function hasExchangeOwner(address addr) public view returns(bool success);
-
-    function adminAddExchangeAdapterOwner(address addr) onlyAdmin public;
-    function adminRemoveExchangeAdapterOwner(address addr) onlyAdmin public;
-    function hasExchangeAdapterOwner(address addr) public view returns(bool success);
-
-    function adminAddStorageOwner(address addr) onlyAdmin public;
-    function adminRemoveStorageOwner(address addr) onlyAdmin public;
-    function hasStorageOwner(address addr) public view returns(bool success);
-
-    function adminAddWhitelistOwner(address _addr) onlyAdmin public;
-    function adminRemoveWhitelistOwner(address _addr) onlyAdmin public;
-    function hasWhitelistOwner(address _addr) public view returns(bool success);
+    function has(address _addr, string _roleName) public view returns(bool success);
 }

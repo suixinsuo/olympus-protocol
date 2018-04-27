@@ -14,7 +14,7 @@ contract WhitelistProvider {
     }
 
     modifier onlyWhitelistOwner() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_WHITELIST_OWNER));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_WHITELIST_OWNER()));
         _;
     }
 

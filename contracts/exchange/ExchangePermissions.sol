@@ -12,17 +12,17 @@ contract ExchangePermissions is Ownable {
     }
 
     modifier onlyExchangeOwner() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_EXCHANGE_OWNER));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_EXCHANGE_OWNER()));
         _;
     }
 
     modifier onlyCoreOwner() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_CORE_OWNER));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE_OWNER()));
         _;
     }
 
     modifier onlyAdapterOwner() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_EXCHANGE_ADAPTER_OWNER));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_EXCHANGE_ADAPTER_OWNER()));
         _;
     }
 }

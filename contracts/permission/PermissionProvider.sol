@@ -3,10 +3,6 @@ pragma solidity ^0.4.18;
 import "./PermissionProviderInterface.sol";
 
 contract PermissionProvider is PermissionProviderInterface {
-    /**
-    * A constant role name for indicating admins.
-    */
-    string public constant ROLE_ADMIN = "admin";
 
     modifier onlyBy(string _roleName)
     {
@@ -43,7 +39,7 @@ contract PermissionProvider is PermissionProviderInterface {
         adminRemoveRoleControl(_addr, _roleName);
     }
 
-    function has(string _roleName, address _addr) public view returns(bool success) {
+    function has(address _addr, string _roleName) public view returns(bool success) {
         return hasRole(_addr, _roleName) || hasRole(_addr, ROLE_ADMIN);
     }
 }

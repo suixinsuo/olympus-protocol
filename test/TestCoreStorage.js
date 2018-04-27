@@ -270,7 +270,7 @@ contract('OlympusStorage', (accounts) => {
       const extendedInstance = await OlympusStorageExtended.deployed();
       const instance = await OlympusStorage.deployed();
       let permissionProvider = await PermissionProvider.deployed();
-      await permissionProvider.adminAddStorage(instance.address);
+      await permissionProvider.adminAdd(instance.address, 'storage');
 
       const resultSetProvider = await instance.setProvider.call(4, extendedInstance.address);
       const resultSetProviderTransaction = await instance.setProvider(4, extendedInstance.address);

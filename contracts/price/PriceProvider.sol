@@ -108,12 +108,12 @@ contract PriceProvider {
   //初始化数据库
     itMaps.itMapBytes32Uint priceData;
 
-    PermissionProviderInterface internal permissionProvider;
-
     modifier onlyOwner() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_PRICE_OWNER));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_PRICE_OWNER()));
         _;
     }
+
+    PermissionProviderInterface internal permissionProvider;
 
     function PriceProvider (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);

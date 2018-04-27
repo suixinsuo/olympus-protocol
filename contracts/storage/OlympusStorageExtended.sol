@@ -17,7 +17,7 @@ contract OlympusStorageExtended is OlympusStorageExtendedInterface {
     PermissionProviderInterface internal permissionProvider;
 
     modifier onlyStorage() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_STORAGE));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_STORAGE()));
         _;
     }
 

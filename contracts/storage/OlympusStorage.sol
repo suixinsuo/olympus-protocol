@@ -49,11 +49,11 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     OlympusStorageExtendedInterface internal olympusStorageExtended = OlympusStorageExtendedInterface(address(0xcEb51bD598ABb0caa8d2Da30D4D760f08936547B));
 
     modifier onlyOwner() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_STORAGE_OWNER));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_STORAGE_OWNER()));
         _;
     }
     modifier onlyCore() {
-        require(permissionProvider.has(msg.sender, TD.ROLE_CORE));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
     PermissionProviderInterface internal permissionProvider;
