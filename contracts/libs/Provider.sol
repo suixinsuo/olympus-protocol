@@ -4,6 +4,16 @@ import "./Manageable.sol";
 
 
 library TypeDefinitions {
+    string public constant ROLE_CORE = "core";
+    string public constant ROLE_STORAGE = "storage";
+    string public constant ROLE_CORE_OWNER = "CoreOwner";
+    string public constant ROLE_STRATEGY_OWNER = "StrategyOwner";
+    string public constant ROLE_PRICE_OWNER = "PriceOwner";
+    string public constant ROLE_EXCHANGE_OWNER = "ExchangeOwner";
+    string public constant ROLE_EXCHANGE_ADAPTER_OWNER = "ExchangeAdapterOwner";
+    string public constant ROLE_STORAGE_OWNER = "StorageOwner";
+    string public constant ROLE_WHITELIST_OWNER = "WhitelistOwner";
+
     enum ProviderType {
         Strategy,
         Price,
