@@ -145,4 +145,24 @@ contract('Olympus-Protocol-permission', (accounts) => {
         assert.equal(result.receipt.status, 1); 
         assert.equal(resHasRole, false);
     })
+
+    it("should be able to create a storage.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminAddStorage(accounts[4], {from:accounts[0]});
+
+        let resHasRole = await instance.hasStorage.call(accounts[4]);
+
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, true);
+    })
+
+    it("should be able to remove a storage.", async () => {
+        let instance  = await PermissionProvider.deployed({from:accounts[0]});
+        let result = await instance.adminRemoveStorage(accounts[4], {from:accounts[0]});
+
+        let resHasRole = await instance.hasStorage.call(accounts[4]);
+
+        assert.equal(result.receipt.status, 1); 
+        assert.equal(resHasRole, false);
+    })    
 });
