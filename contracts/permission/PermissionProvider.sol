@@ -7,18 +7,19 @@ contract PermissionProvider is PermissionProviderInterface {
     * A constant role name for indicating admins.
     */
     string public constant ROLE_ADMIN = "admin";
-    string public constant CORE = "core";
-    string public constant STORAGE = "storage";
+    string public constant ROLE_Core = 'core';
+    string public constant ROLE_Storage = 'storage';
+    string public constant ROLE_CoreOwner = 'CoreOwner';
+    string public constant ROLE_StrategyOwner = 'StrategyOwner';
+    string public constant ROLE_PriceOwner = 'PriceOwner';
+    string public constant ROLE_ExchangeOwner = 'ExchangeOwner';
+    string public constant ROLE_ExchangeAdapterOwner = 'ExchangeAdapterOwner';
+    string public constant ROLE_StorageOwner = 'StorageOwner';
+    string public constant ROLE_WhitelistOwner = 'WhitelistOwner';
 
-    modifier onlyCore()
+    modifier onlyBy(string _roleName)
     {
-        checkRole(msg.sender, CORE);
-        _;
-    }
-
-    modifier onlyStorage()
-    {
-        checkRole(msg.sender, STORAGE);
+        checkRole(msg.sender, _roleName);
         _;
     }
 
@@ -43,111 +44,15 @@ contract PermissionProvider is PermissionProviderInterface {
         return true;
     }
 
-    function adminAddCore(address _addr) onlyAdmin public {
-        adminAddRoleControl(_addr, CORE);
+    function adminAdd(string _roleName, address _addr) onlyAdmin public {
+        adminAddRoleControl(_addr, _roleName);
     }
 
-    function adminRemoveCore(address _addr) onlyAdmin public{
-        adminRemoveRoleControl(_addr, CORE);
-    }
+    function adminRemove(string _roleName, address _addr) onlyAdmin public{
+        adminRemoveRoleControl(_addr, _roleName);
+    }    
 
-    function hasCore(address _addr) public view returns(bool success) {
-        return hasRole(_addr, CORE) || hasRole(_addr, ROLE_ADMIN);
-    }
-
-    function adminAddCoreOwner(address _addr) onlyAdmin public {
-        adminAddRoleControl(_addr, "CoreOwner");
-    }
-
-    function adminRemoveCoreOwner(address _addr) onlyAdmin public{
-        adminRemoveRoleControl(_addr, "CoreOwner");
-    }
-
-    function hasCoreOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "CoreOwner") || hasRole(_addr, ROLE_ADMIN);
-    }
-
-    function adminAddStrategyOwner(address _addr) onlyAdmin public {
-        adminAddRole(_addr, "StrategyOwner");
-    }
-
-    function adminRemoveStrategyOwner(address _addr) onlyAdmin public{
-        adminRemoveRole(_addr, "StrategyOwner");
-    }
-
-    function hasStrategyOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "StrategyOwner") || hasRole(_addr, ROLE_ADMIN);
-    }
-
-    function adminAddPriceOwner(address _addr) onlyAdmin public {
-        adminAddRole(_addr, "PriceOwner");
-    }
-
-    function adminRemovePriceOwner(address _addr) onlyAdmin public {
-        adminRemoveRole(_addr, "PriceOwner");
-    }
-
-    function hasPriceOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "PriceOwner") || hasRole(_addr, ROLE_ADMIN);
-    }
-
-    function adminAddExchangeOwner(address _addr) onlyAdmin public {
-        adminAddRole(_addr, "ExchangeOwner");
-    }
-
-    function adminRemoveExchangeOwner(address _addr) onlyAdmin public {
-        adminRemoveRole(_addr, "ExchangeOwner");
-    }
-
-    function hasExchangeOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "ExchangeOwner") || hasRole(_addr, ROLE_ADMIN);
-    }
-
-    function adminAddExchangeAdapterOwner(address _addr) onlyAdmin public {
-        adminAddRole(_addr, "ExchangeAdapterOwner");
-    }
-
-    function adminRemoveExchangeAdapterOwner(address _addr) onlyAdmin public {
-        adminRemoveRole(_addr, "ExchangeAdapterOwner");
-    }
-
-    function hasExchangeAdapterOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "ExchangeAdapterOwner") || hasRole(_addr, ROLE_ADMIN);
-    }
-
-    function adminAddStorageOwner(address _addr) onlyAdmin public {
-        adminAddRole(_addr, "StorageOwner");
-    }
-
-    function adminRemoveStorageOwner(address _addr) onlyAdmin public {
-        adminRemoveRole(_addr, "StorageOwner");
-    }
-
-    function hasStorageOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "StorageOwner") || hasRole(_addr, ROLE_ADMIN);
-    }
-
-    function adminAddWhitelistOwner(address _addr) onlyAdmin public {
-        adminAddRole(_addr, "WhitelistOwner");
-    }
-
-    function adminRemoveWhitelistOwner(address _addr) onlyAdmin public {
-        adminRemoveRole(_addr, "WhitelistOwner");
-    }
-
-    function hasWhitelistOwner(address _addr) public view returns(bool success) {
-        return hasRole(_addr, "WhitelistOwner") || hasRole(_addr, ROLE_ADMIN);
-    }
-
-    function adminAddStorage(address _addr) onlyAdmin public {
-        adminAddRoleControl(_addr, STORAGE);
-    }
-
-    function adminRemoveStorage(address _addr) onlyAdmin public{
-        adminRemoveRoleControl(_addr, STORAGE);
-    }
-
-    function hasStorage(address _addr) public view returns(bool success) {
-        return hasRole(_addr, STORAGE) || hasRole(_addr, ROLE_ADMIN);
-    }
+    function has(string _roleName, address _addr) public view returns(bool success) {
+        return hasRole(_addr, _roleName) || hasRole(_addr, ROLE_ADMIN);
+    }    
 }
