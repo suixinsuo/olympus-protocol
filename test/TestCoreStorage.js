@@ -75,6 +75,8 @@ const mockData = {
   fakeToken: '0xea1887835d177ba8052e5461a269f42f9d77a5a3'
 }
 
+const ROLE_STORAGE = "storage";
+
 contract('OlympusStorage', (accounts) => {
 
   it("Should be able to deploy.", () => {
@@ -270,7 +272,7 @@ contract('OlympusStorage', (accounts) => {
       const extendedInstance = await OlympusStorageExtended.deployed();
       const instance = await OlympusStorage.deployed();
       let permissionProvider = await PermissionProvider.deployed();
-      await permissionProvider.adminAdd(instance.address, 'storage');
+      await permissionProvider.adminAdd(instance.address, ROLE_STORAGE);
 
       const resultSetProvider = await instance.setProvider.call(4, extendedInstance.address);
       const resultSetProviderTransaction = await instance.setProvider(4, extendedInstance.address);

@@ -5,7 +5,7 @@ import "zeppelin-solidity/contracts/ownership/rbac/RBAC.sol";
 
 contract PermissionProviderInterface is Provider, RBAC {
     string public constant ROLE_ADMIN = "admin";
-    string public constant ROLE_CORE = "core1";
+    string public constant ROLE_CORE = "core";
     string public constant ROLE_STORAGE = "storage";
     string public constant ROLE_CORE_OWNER = "CoreOwner";
     string public constant ROLE_STRATEGY_OWNER = "StrategyOwner";
@@ -21,11 +21,9 @@ contract PermissionProviderInterface is Provider, RBAC {
         _;
     }
 
-    function adminAddRoleControl(address _addr, string _roleName) onlyAdmin public;
-    function adminRemoveRoleControl(address _addr, string _roleName) onlyAdmin public;
     function changeAdmin(address _newAdmin) onlyAdmin public returns (bool success);
-    function adminAdd(string _roleName, address _addr) onlyAdmin public;
-    function adminRemove(string _roleName, address _addr) onlyAdmin public;
+    function adminAdd(address _addr, string _roleName) onlyAdmin public;
+    function adminRemove(address _addr, string _roleName) onlyAdmin public;
 
     function has(address _addr, string _roleName) public view returns(bool success);
 }
