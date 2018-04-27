@@ -6,6 +6,7 @@ import "../libs/Ownable.sol";
 import "../libs/Converter.sol";
 import "./OlympusStorageExtendedInterface.sol";
 import "../permission/PermissionProviderInterface.sol";
+import { TypeDefinitions as TD } from "../libs/provider.sol";
 
 contract OlympusStorageExtended is OlympusStorageExtendedInterface {
     using strings for *;
@@ -16,7 +17,7 @@ contract OlympusStorageExtended is OlympusStorageExtendedInterface {
     PermissionProviderInterface internal permissionProvider;
 
     modifier onlyStorage() {
-        require(permissionProvider.hasStorage(msg.sender));
+        require(permissionProvider.has(msg.sender, TD.ROLE_STORAGE));
         _;
     }
 

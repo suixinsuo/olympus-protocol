@@ -7,15 +7,6 @@ contract PermissionProvider is PermissionProviderInterface {
     * A constant role name for indicating admins.
     */
     string public constant ROLE_ADMIN = "admin";
-    string public constant ROLE_Core = 'core';
-    string public constant ROLE_Storage = 'storage';
-    string public constant ROLE_CoreOwner = 'CoreOwner';
-    string public constant ROLE_StrategyOwner = 'StrategyOwner';
-    string public constant ROLE_PriceOwner = 'PriceOwner';
-    string public constant ROLE_ExchangeOwner = 'ExchangeOwner';
-    string public constant ROLE_ExchangeAdapterOwner = 'ExchangeAdapterOwner';
-    string public constant ROLE_StorageOwner = 'StorageOwner';
-    string public constant ROLE_WhitelistOwner = 'WhitelistOwner';
 
     modifier onlyBy(string _roleName)
     {
@@ -50,9 +41,9 @@ contract PermissionProvider is PermissionProviderInterface {
 
     function adminRemove(string _roleName, address _addr) onlyAdmin public{
         adminRemoveRoleControl(_addr, _roleName);
-    }    
+    }
 
     function has(string _roleName, address _addr) public view returns(bool success) {
         return hasRole(_addr, _roleName) || hasRole(_addr, ROLE_ADMIN);
-    }    
+    }
 }
