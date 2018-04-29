@@ -24,8 +24,8 @@ ExchangeProvider  0x5e0651f6e9c6d867c68b2df60b4d5ec855ca9337<br/>
 KyberNetworkExchange   0xe24fe01e5e415556a6a09b61cf9a6fd4a8672650<br/>   
 
 ### Kyber
-0x964F35fAe36d75B1e72770e244F6595B68508CF5    Kyber
-0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e    Mainnet Testkyber
+0x964F35fAe36d75B1e72770e244F6595B68508CF5    Kyber<br/>   
+0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e    Mainnet Testkyber<br/>   
 
 
 
