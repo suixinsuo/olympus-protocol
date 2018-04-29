@@ -18,6 +18,17 @@ Storage: 0x9ff1a52be89f728f058cce9f91661260e5614fd1<br/>
 ExtendedStorage: 0xDf52c174d6595bceE998A4f751f464D5Ef13f1B5<br/>
 ExchangeManager: 0x1bfc5f6ccf99b99388c03773eb65a5d7ca8f1386<br/>
 KyberNetworkExchange: 0x71A65496612224077bDB42CA56265F42e65096A7<br/>
+### NEW EXCHANGE
+ExchangeManager  0x0f7c1afa57b1b4ceb9edc5e89b0091253738cbff<br/>
+ExchangeProvider  0x5e0651f6e9c6d867c68b2df60b4d5ec855ca9337<br/>
+KyberNetworkExchange   0xe24fe01e5e415556a6a09b61cf9a6fd4a8672650<br/>   
+
+### Kyber
+0x964F35fAe36d75B1e72770e244F6595B68508CF5    Kyber
+0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e    Mainnet Testkyber
+
+
+
 ## Kovan
 ### v1.0.0-review-pending
 Core: 0xeEF996Ca4Fe62f826601aE5c1d6fe77d8193513c<br/>
