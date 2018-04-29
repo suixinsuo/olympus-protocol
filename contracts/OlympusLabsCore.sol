@@ -176,7 +176,7 @@ contract OlympusLabsCore is Manageable {
         amounts[1] = getFeeAmount(amounts[0], feeIsMOT); // fee
         amounts[2] = payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
 
-        // GAS USED: 45248 - 2.2% (+2.2)
+        // GAS USED: 45248 - 2.2% (+2.2) / same
         // create order.
         indexOrderId = olympusStorage.addOrderBasicFields(
           strategyId,
@@ -185,7 +185,7 @@ contract OlympusLabsCore is Manageable {
           amounts[1],
           exchangeId
         );
-        // GAS USED: 200277 - 9.8% (+7.6)
+        // GAS USED: 200277 - 9.8% (+7.6) / same
 
         uint[][4] memory subOrderTemp;
         // 0: token amounts
@@ -197,9 +197,9 @@ contract OlympusLabsCore is Manageable {
 
         emit LogNumber(indexOrderId);
 
-        // GAS USED: 202070 - 9.9% (+0.1)
+        // GAS USED: 202070 - 9.9% (+0.1) / same
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
-        // GAS USED: 264106 - 12.9% (+3)
+        // GAS USED: 264106 - 12.9% (+3) /same
         for (uint i = 0; i < tokenLength; i ++ ) {
 
             // ignore those tokens with zero weight.
@@ -217,7 +217,7 @@ contract OlympusLabsCore is Manageable {
                 emit Log("Price provider doesn't support");
                 revert();
             }
-            // GAS USED: 299685 - 14.6% (+1.7)
+            // GAS USED: 299685 - 14.6% (+1.7) / same
 
             subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
             subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
@@ -225,25 +225,25 @@ contract OlympusLabsCore is Manageable {
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
             emit LogNumber(subOrderTemp[1][i]);
-            // GAS USED: 322696 - 15.8% (+1.2)
+            // GAS USED: 322696 - 15.8% (+1.2) / same
             require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
-            // GAS USED: 609112 - 29.8% (+14)
+            // GAS USED: 609112 - 29.8% (+14) / 600498
         }
 
         olympusStorage.addTokenDetails(
             indexOrderId,
             tokens, weights, subOrderTemp[0], subOrderTemp[1]
         );
-        // GAS USED: 1011864 - 49.4% (+19.6)
+        // GAS USED: 1011864 - 49.4% (+19.6) / 895038
 
         emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
-        // GAS USED: 1987672 - 97.1% (+47.7)
+        // GAS USED: 1987672 - 97.1% (+47.7) / 1598086
 
-        strategyProvider.updateFollower(strategyId, true);
-        // GAS USED: 2017207 - 98.6% (+1.5)
-        strategyProvider.incrementStatistics(strategyId, msg.value);
-        // GAS USED: 2046600 - 100% (+1.4)
+        // strategyProvider.updateFollower(strategyId, true);
+        // GAS USED: 2017207 - 98.6% (+1.5) / 1627621
+        // strategyProvider.incrementStatistics(strategyId, msg.value);
+        // GAS USED: 2046600 - 100% (+1.4) / 1657014
         // todo: send ethers to the clearing center.
         return indexOrderId;
     }
