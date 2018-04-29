@@ -29,11 +29,11 @@ module.exports = {
       network_id: 1
     }
   },
-  // mocha: {
-  //   reporter: 'eth-gas-reporter',
-  //   reporterOptions: {
-  //     currency: 'CNY',
-  //     gasPrice: 2
-  //   }
-  // }
+  mocha: {
+    reporter: 'eth-gas-reporter',
+    reporterOptions: {
+      currency: 'CNY',
+      gasPrice: 2
+    }
+  }
 }
