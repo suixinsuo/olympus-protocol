@@ -16,7 +16,7 @@ StrategyProvider: 0x18c54b043efc6d4c15bdab8a2ce499388b4bf6b3<br/>
 WhitelistProvider: 0x73eb1e6ad565e907f486d9fc7a807e50d38ca200<br/>
 Storage: 0x9ff1a52be89f728f058cce9f91661260e5614fd1<br/>
 ExtendedStorage: 0xDf52c174d6595bceE998A4f751f464D5Ef13f1B5<br/>
-ExchangeManager: 0x1bfc5f6ccf99b99388c03773eb65a5d7ca8f1386<br/>
+//ExchangeManager: 0x1bfc5f6ccf99b99388c03773eb65a5d7ca8f1386<br/>
 KyberNetworkExchange: 0x71A65496612224077bDB42CA56265F42e65096A7<br/>
 ### NEW EXCHANGE
 ExchangeManager  0x0f7c1afa57b1b4ceb9edc5e89b0091253738cbff<br/>
