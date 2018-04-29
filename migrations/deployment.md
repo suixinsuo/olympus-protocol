@@ -18,8 +18,6 @@
    
 5. deploy ExtendedStorage (with PermissionProvider.address)
 
-   OlympusStorage.setProvider(4, ExtendedStorage.address);
-
 6. deploy OlympusStorage (with PermissionProvider.address)
 
    core.setProvider(3, OlympusStorage.address);
