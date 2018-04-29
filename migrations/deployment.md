@@ -18,11 +18,10 @@
    
 5. deploy ExtendedStorage (with PermissionProvider.address)
 
-   core.setProvider(4, PriceProvider.address);
-
 6. deploy OlympusStorage (with PermissionProvider.address)
 
-   core.setProvider(3, PriceProvider.address);
+   core.setProvider(3, OlympusStorage.address);
+   OlympusStorage.setProvider(4, ExtendedStorage.address);
 
 7. deploy WhitelistProvider (with PermissionProvider.address)
 
