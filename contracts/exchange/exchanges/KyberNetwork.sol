@@ -186,11 +186,11 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
     function withdraw(uint amount) public onlyExchangeOwner {
 
-        require(amount<this.balance);
+        require(amount <= address(this).balance);
 
         uint sendAmount = amount;
         if(amount==0){
-            sendAmount = this.balance;
+            sendAmount = address(this).balance;
         }
         msg.sender.transfer(sendAmount);
     }
