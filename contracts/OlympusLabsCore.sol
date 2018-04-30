@@ -156,6 +156,7 @@ contract OlympusLabsCore is Manageable {
     function buyIndex(uint strategyId, address depositAddress, bool feeIsMOT)
     public onlyAllowed payable returns (uint indexOrderId)
     {
+        // GAS USED: 0 - 0% (+0)
         require(msg.value > minimumInWei);
         if(maximumInWei > 0){
             require(msg.value <= maximumInWei);
@@ -175,7 +176,7 @@ contract OlympusLabsCore is Manageable {
         amounts[1] = getFeeAmount(amounts[0], feeIsMOT); // fee
         amounts[2] = payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
 
-
+        // GAS USED: 45248
         // create order.
         indexOrderId = olympusStorage.addOrderBasicFields(
           strategyId,
@@ -184,6 +185,7 @@ contract OlympusLabsCore is Manageable {
           amounts[1],
           exchangeId
         );
+        // GAS USED: 200277
 
         uint[][4] memory subOrderTemp;
         // 0: token amounts
@@ -194,7 +196,10 @@ contract OlympusLabsCore is Manageable {
         subOrderTemp[1] = initializeArray(tokenLength);
 
         emit LogNumber(indexOrderId);
+
+        // GAS USED: 202070
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
+        // GAS USED: 264106
         for (uint i = 0; i < tokenLength; i ++ ) {
 
             // ignore those tokens with zero weight.
@@ -212,6 +217,7 @@ contract OlympusLabsCore is Manageable {
                 emit Log("Price provider doesn't support");
                 revert();
             }
+            // GAS USED: 299685
 
             subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
             subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
@@ -219,20 +225,25 @@ contract OlympusLabsCore is Manageable {
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
             emit LogNumber(subOrderTemp[1][i]);
+            // GAS USED: 322696
             require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
+            // GAS USED: 600498
         }
 
         olympusStorage.addTokenDetails(
             indexOrderId,
             tokens, weights, subOrderTemp[0], subOrderTemp[1]
         );
+        // GAS USED: 895038
 
         emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
+        // GAS USED: 1598086
 
         strategyProvider.updateFollower(strategyId, true);
+        // GAS USED: 1627621
         strategyProvider.incrementStatistics(strategyId, msg.value);
-
+        // GAS USED: 1657014
         // todo: send ethers to the clearing center.
         return indexOrderId;
     }
