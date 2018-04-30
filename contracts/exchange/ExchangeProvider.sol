@@ -102,8 +102,9 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
     }
 
     function _addPlaceOrderItem(uint orderId, bytes32 exchangeId, ERC20 token, uint amount, uint rate) private returns (bool){
-        for (uint i = 0; i < orders[orderId].tokens.length; i++) {
-            if(address(orders[orderId].tokens[i]) == address(token)){
+        MarketOrder memory order = orders[orderId];
+        for (uint i = 0; i < order.tokens.length; i++) {
+            if(address(order.tokens[i]) == address(token)){
                 return false;
             }
         }
@@ -123,58 +124,50 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
         balances[orderId] = msg.value;
+
         MarketOrder memory order = orders[orderId];
 
-        // GAS USED 1057371 / 940413
-        for (uint i = 0; i < orders[orderId].tokens.length; i++ ) {
+        for (uint i = 0; i < order.tokens.length; i++ ) {
 
             IExchangeAdapter adapter;
-            if(orders[orderId].exchanges[i] != 0){
-                adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(orders[orderId].exchanges[i]));
+            if(order.exchanges[i] != 0){
+                adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
             }else{
-                bytes32 exchangeId = exchangeManager.pickExchange(orders[orderId].tokens[i],orders[orderId].amounts[i],orders[orderId].rates[i]);
+                bytes32 exchangeId = exchangeManager.pickExchange(order.tokens[i],order.amounts[i],order.rates[i]);
                 if(exchangeId == 0){
                     return false;
                 }
                 adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
                 orders[orderId].exchanges[i] = exchangeId;
+                order.exchanges[i] = exchangeId;
             }
-            // GAS USED 1129542 / 1017464
 
             uint adapterOrderId = adapter.placeOrder(
-                orders[orderId].exchanges[i],
-                orders[orderId].tokens[i],
-                orders[orderId].amounts[i],
-                orders[orderId].rates[i],
+                order.exchanges[i],
+                order.tokens[i],
+                order.amounts[i],
+                order.rates[i],
                 this);
-            // GAS USED 1443959 / 1335953
 
             if(adapterOrderId == 0){
                 return false;
             }
 
             orders[orderId].adapterOrdersId.push(adapterOrderId);
-            // GAS USED 1509777 / 1401835
 
             if(adapter.getOrderStatus(adapterOrderId) == EAB.OrderStatus.Approved){
 
                 uint destCompletedAmount = adapter.getDestCompletedAmount(adapterOrderId);
-                orders[orderId].destCompletedAmount[i] = destCompletedAmount;
-
-                if(!adapterApprovedImmediately(
-                    orderId, adapterOrderId, adapter, order.tokens[i],
-                    order.amounts[i], order.rates[i], destCompletedAmount, order.deposit)){
+                order.destCompletedAmount[i] = destCompletedAmount;
+                if(!adapterApprovedImmediately(orderId, adapterOrderId, adapter, order.tokens[i], order.amounts[i], order.rates[i], destCompletedAmount, order.deposit)){
                     revert();
                     return false;
                 }
-                // GAS USED 1519602 / 1504854
             }
             adapterOrders[keccak256(address(adapter),adapterOrderId)] = orderId;
-            // GAS USED 1612746 / 1545336
         }
 
         updateOrderStatus(orderId);
-        //
         return true;
     }
 
@@ -270,19 +263,20 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
     function updateOrderStatus(uint orderId) private returns (bool){
 
+        MarketOrder memory order = orders[orderId];
         STD.OrderStatus status;
-        // GAS USED 1620708
+
         uint completedTotal = 0;
         uint pendingTotal = 0;
         uint partiallyCompletedTotal = 0;
         uint erroredTotal = 0;
         uint cancelledTotal = 0;
 
-        for(uint i = 0; i < orders[orderId].adapterOrdersId.length;i++){
+        for(uint i = 0; i < order.adapterOrdersId.length;i++){
 
-            IExchangeAdapter adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(orders[orderId].exchanges[i]));
-            EAB.OrderStatus subStatus = adapter.getOrderStatus(orders[orderId].adapterOrdersId[i]);
-            // GAS USED 1630889
+            IExchangeAdapter adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(order.exchanges[i]));
+            EAB.OrderStatus subStatus = adapter.getOrderStatus(order.adapterOrdersId[i]);
+
             if (subStatus == EAB.OrderStatus.Pending) {
                 pendingTotal++;
             } else if (subStatus == EAB.OrderStatus.Approved) {
@@ -296,26 +290,24 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             } else if (subStatus == EAB.OrderStatus.Cancelled) {
                 cancelledTotal++;
             }
-            // GAS USED 1631421
         }
 
-        if (completedTotal == orders[orderId].adapterOrdersId.length){
+        if (completedTotal == order.adapterOrdersId.length){
             status = STD.OrderStatus.Completed;
-        } else if (erroredTotal == orders[orderId].adapterOrdersId.length){
+        } else if (erroredTotal == order.adapterOrdersId.length){
             status = STD.OrderStatus.Errored;
-        } else if (pendingTotal == orders[orderId].adapterOrdersId.length){
+        } else if (pendingTotal == order.adapterOrdersId.length){
             status = STD.OrderStatus.Placed;
         } else {
             status = STD.OrderStatus.PartiallyCompleted;
         }
-        // GAS USED 1631421
+
         if (address(core) != 0x0){
-            if(status != orders[orderId].orderStatus){
+            if(status != order.orderStatus){
                 require(core.updateOrderStatus(orderId, status));
                 orders[orderId].orderStatus = status;
             }
         }
-        // GAS USED 1987672 / 1598086
         return true;
     }
 
