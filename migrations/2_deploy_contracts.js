@@ -139,7 +139,7 @@ function deployonkovan(deployer, num) {
       }).then(() => {
         return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
       }).then(() => {
-          kyberNetwrokAddress = '0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e';
+          kyberNetwrokAddress = '0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50';
         return deployer.deploy(KyberNetworkExchange, kyberNetwrokAddress, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
       }).then( async() => {
         console.info('setPriceProvider');
