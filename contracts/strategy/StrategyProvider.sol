@@ -3,7 +3,6 @@ pragma solidity ^0.4.22;
 import "./StrategyProviderInterface.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "../libs/Converter.sol";
-import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 contract StrategyProvider is StrategyProviderInterface {
     event StrategyChanged(uint strategyId);
