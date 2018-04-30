@@ -240,9 +240,9 @@ contract OlympusLabsCore is Manageable {
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
         // GAS USED: 1987672 - 97.1% (+47.7) / 1598086
 
-        // strategyProvider.updateFollower(strategyId, true);
+        strategyProvider.updateFollower(strategyId, true);
         // GAS USED: 2017207 - 98.6% (+1.5) / 1627621
-        // strategyProvider.incrementStatistics(strategyId, msg.value);
+        strategyProvider.incrementStatistics(strategyId, msg.value);
         // GAS USED: 2046600 - 100% (+1.4) / 1657014
         // todo: send ethers to the clearing center.
         return indexOrderId;
