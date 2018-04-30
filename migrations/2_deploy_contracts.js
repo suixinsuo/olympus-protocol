@@ -98,6 +98,8 @@ module.exports = function (deployer, network) {
 
   if (network == 'mainnet' && flags.contract == "exchange") {
     return deployOnMainnet(deployer, network);
+  }else if(network == 'kovan'){
+      return deployonkovan(deployer,network);
   }
 
   return deployer.then(() => {
@@ -115,4 +117,78 @@ module.exports = function (deployer, network) {
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })
+}
+
+function deployonkovan(deployer, num) {
+    return deployer.then(() => {
+        return deployer.deploy(PermissionProvider);
+      }).then((err, result) => {
+        return deployer.deploy(Core, PermissionProvider.address);
+      }).then(() =>{
+        return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
+      }).then(() => {
+        return deployer.deploy(PriceProvider, PermissionProvider.address);
+      }).then(() => {
+        return deployer.deploy(ExtendedStorage, PermissionProvider.address);
+      }).then(() => {
+        return deployer.deploy(OlympusStorage, PermissionProvider.address);
+      }).then(() => {
+        return deployer.deploy(WhitelistProvider, PermissionProvider.address);
+      }).then(() => {
+        return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
+      }).then(() => {
+        return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
+      }).then(() => {
+          kyberNetwrokAddress = '0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50';
+        return deployer.deploy(KyberNetworkExchange, kyberNetwrokAddress, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
+      }).then( async() => {
+        console.info('setPriceProvider');
+        let core = await Core.deployed();
+        let strategy = await StrategyProvider.deployed();
+        let price = await PriceProvider.deployed();
+        let extended = await ExtendedStorage.deployed();
+        let storage = await OlympusStorage.deployed();
+        let whitelist = await WhitelistProvider.deployed();
+        let permission = await PermissionProvider.deployed();
+        let exchange = await ExchangeProvider.deployed();
+        let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+        let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+        let exchangeProvder = await ExchangeProvider.deployed();
+    
+        console.info(`adding kyberExchange ${kyberExchangeInstance.address}`);
+        await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
+    
+    
+        //需要往这个地址打以太坊作为押金 kyberExchange 
+        //console.info(`send ${preDepositETH} ether to kyberExchange`);
+        //await kyberExchangeInstance.send(web3.toWei(preDepositETH, "ether"));
+    
+    
+    
+        console.info('exchange provider set core');
+        await exchangeProvder.setCore(core.address);
+    
+        console.info('setStrategyProvider');
+        await core.setProvider(0, strategy.address);
+    
+        console.info('setPriceProvider');
+        await core.setProvider(1, price.address);
+    
+        console.info('setExtendedStorageProvider');
+        await core.setProvider(2, exchangeProvder.address);
+    
+        console.info('setExtendedStorageProvider');
+        await storage.setProvider(4, extended.address);
+    
+        console.info('setStorageProvider');
+        await core.setProvider(3, storage.address);
+    
+        console.info('setSWhitelistProvider');
+        await core.setProvider(5, whitelist.address);
+    
+        console.info('SetCore');
+        await permission.adminAdd(Core.address,"core");
+      }).then(() => {
+        //return deployExchangeProviderWrap(deployer, network);
+      })
 }
