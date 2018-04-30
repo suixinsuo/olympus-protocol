@@ -15,7 +15,7 @@
     
    core.setProvider(1, PriceProvider.address);
    PriceProvider.SetKyber(kyberNetwork) //主网测试网络地址不同
-   
+   //0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50 onkovan
 5. deploy ExtendedStorage (with PermissionProvider.address)
 
 6. deploy OlympusStorage (with PermissionProvider.address)
@@ -37,6 +37,7 @@
 
 11. deploy KyberNetworkExchange(with 
 kyberNetwork,  //主网测试网络地址不同
+//0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50 onkovan
 ExchangeAdapterManager.address, 
 ExchangeProvider.address, 
 PermissionProvider.address)
