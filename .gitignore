@@ -8,3 +8,4 @@ coverage.json
 coverageEnv
 .node-xml*
 scTopics
+npm-debug.log

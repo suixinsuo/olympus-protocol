@@ -193,6 +193,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
     function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter adapter, ERC20 token, uint amount, uint rate, uint destCompletedAmount, address deposit) private returns(bool){
 
+        require(balances[orderId] >= amount);
         address owner = address(adapter);
         uint expectAmount = getExpectAmount(amount, token.decimals(), rate);
         if(expectAmount > destCompletedAmount){
@@ -206,7 +207,6 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         if(!token.transferFrom(owner, deposit, destCompletedAmount)){
             return false;
         }
-        require(balances[orderId] >= amount);
         balances[orderId] -= amount;
         //pay eth
         if(!adapter.payOrder.value(amount)(adapterOrderId)){
@@ -239,6 +239,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         if (!found){
             return false;
         }
+        require(balances[orderId] >= srcCompletedAmount);
 
         ERC20 token = order.tokens[i];
 
@@ -251,7 +252,6 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         if(!token.transferFrom(tokenOwner, order.deposit, destCompletedAmount)){
             return false;
         }
-        require(balances[orderId] >= srcCompletedAmount);
         balances[orderId] -= srcCompletedAmount;
         payee.transfer(srcCompletedAmount);
 
