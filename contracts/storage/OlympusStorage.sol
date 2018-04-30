@@ -73,7 +73,12 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         orders[indexOrderId].estimatedPrices = estimatedPrices;
         orders[indexOrderId].totalTokenAmounts = totalTokenAmounts;
         uint i;
+
         for (i = 0; i < tokens.length; i++ ) {
+            orders[indexOrderId].subStatuses.push(ExchangeAdapterBase.OrderStatus.Pending);
+            orders[indexOrderId].dealtPrices.push(0);
+            orders[indexOrderId].completedTokenAmounts.push(0);
+
             orderTokenAmounts[indexOrderId][tokens[i]] = weights[i];
         }
     }
@@ -143,9 +148,11 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     }
 
     function getOrderTokenCompletedAmount(uint _orderId, address _tokenAddress) external view returns (uint, uint){
+        IndexOrder memory order = orders[_orderId];
+
         int index = -1;
-        for(uint i = 0 ; i < orders[_orderId].tokens.length; i++){
-            if(orders[_orderId].tokens[i] == _tokenAddress) {
+        for(uint i = 0 ; i < order.tokens.length; i++){
+            if(order.tokens[i] == _tokenAddress) {
                 index = int(i);
                 break;
             }
@@ -156,7 +163,8 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
             revert();
         }
 
-        return (orders[_orderId].completedTokenAmounts[uint(index)], uint(index));
+        return (order.completedTokenAmounts[uint(index)], uint(index));
+
     }
 
     function updateIndexOrderToken(
