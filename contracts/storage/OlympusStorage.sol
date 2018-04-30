@@ -5,7 +5,7 @@ import "./OlympusStorageExtendedInterface.sol";
 import "./OlympusStorageInterface.sol";
 import "../libs/Manageable.sol";
 import "../libs/SafeMath.sol";
-import { TypeDefinitions as TD, Provider } from "../libs/Provider.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 import "../permission/PermissionProviderInterface.sol";
 
 library StorageTypeDefinitions {

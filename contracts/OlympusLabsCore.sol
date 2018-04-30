@@ -82,7 +82,6 @@ contract OlympusLabsCore is Manageable {
     {
         bytes32 _exchangeName;
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
-        require(strategyId >= 0);
         tokens = new address[](tokenLength);
         weights = new uint[](tokenLength);
 
@@ -96,8 +95,6 @@ contract OlympusLabsCore is Manageable {
         uint weight
         )
     {
-        require(strategyId >= 0);
-
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
         require(index < tokenLength);
 
@@ -112,7 +109,6 @@ contract OlympusLabsCore is Manageable {
     }
 
     function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
-        require(strategyId >= 0);
         uint totalLength;
 
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
@@ -162,14 +158,13 @@ contract OlympusLabsCore is Manageable {
             require(msg.value <= maximumInWei);
         }
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
+        // can't buy an index without tokens.
+        require(tokenLength > 0);
         address[] memory tokens = new address[](tokenLength);
         uint[] memory weights = new uint[](tokenLength);
         bytes32 exchangeId;
 
         (,,,,tokens,weights,,,exchangeId) = strategyProvider.getStrategy(strategyId);
-
-        // can't buy an index without tokens.
-        require(tokenLength > 0);
 
         uint[3] memory amounts;
         amounts[0] = msg.value; //uint totalAmount
@@ -325,6 +320,7 @@ contract OlympusLabsCore is Manageable {
     }
 
     function adjustFee(uint _newFeePercentage) public onlyOwner returns (bool success) {
+        require(_newFeePercentage < DENOMINATOR);
         feePercentage = _newFeePercentage;
         return true;
     }
@@ -355,12 +351,10 @@ contract OlympusLabsCore is Manageable {
     function payFee(uint totalValue, uint feeValueInETH, address sender, bool feeIsMOT) private returns (uint){
         if(feeIsMOT){
             // Transfer MOT
-            uint amount;
             uint MOTPrice;
             uint allowance = MOT.allowance(sender,address(this));
-
             (MOTPrice,) = priceProvider.getrates(address(MOT), feeValueInETH);
-            amount = (feeValueInETH * MOTPrice) / 10**18;
+            uint amount = (feeValueInETH * MOTPrice) / 10**18;
             require(allowance >= amount);
             require(MOT.transferFrom(sender,address(this),amount));
             return totalValue; // Use all sent ETH to buy, because fee is paid in MOT
@@ -369,17 +363,17 @@ contract OlympusLabsCore is Manageable {
         }
     }
 
-    function withdrawERC20(address reciveaddress,address _tokenaddress) public onlyOwner returns(bool success)
+    function withdrawERC20(address receiveAddress,address _tokenAddress) public onlyOwner returns(bool success)
     {
-        uint _balance = ERC20(_tokenaddress).balanceOf(address(this));
-        require(_tokenaddress != 0x0 && reciveaddress != 0x0 && _balance != 0);
-        require(ERC20(_tokenaddress).transfer(reciveaddress,_balance));
+        uint _balance = ERC20(_tokenAddress).balanceOf(address(this));
+        require(_tokenAddress != 0x0 && receiveAddress != 0x0 && _balance != 0);
+        require(ERC20(_tokenAddress).transfer(receiveAddress,_balance));
         return true;
     }
-    function withdrawETH(address reciveaddress) public onlyOwner returns(bool success)
+    function withdrawETH(address receiveAddress) public onlyOwner returns(bool success)
     {
-        require(reciveaddress != 0x0);
-        reciveaddress.transfer(this.balance);
+        require(receiveAddress != 0x0);
+        receiveAddress.transfer(this.balance);
         return true;
     }
 }
