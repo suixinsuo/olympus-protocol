@@ -190,7 +190,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
     function getExpectAmount(uint eth, uint destDecimals, uint rate) internal pure returns(uint){
         return Utils.calcDstQty(eth, 18, destDecimals, rate);
     }
-    
+
     function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter adapter, ERC20 token, uint amount, uint rate, uint destCompletedAmount, address deposit) private returns(bool){
 
         address owner = address(adapter);
