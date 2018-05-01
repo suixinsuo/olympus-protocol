@@ -2,8 +2,9 @@ var Core = artifacts.require("./OlympusLabsCore.sol");
 var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
 var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol");
 var PriceProvider = artifacts.require("./price/PriceProvider.sol");
-var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol")
+var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol");
 var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
+var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider.sol");
 let premissionInstance, coreInstance;
 
 const KyberConfig = require('../scripts/libs/kyber_config');
@@ -160,8 +161,8 @@ function deployonkovan(deployer, num) {
     
     
         //需要往这个地址打以太坊作为押金 kyberExchange 
-        //console.info(`send ${preDepositETH} ether to kyberExchange`);
-        //await kyberExchangeInstance.send(web3.toWei(preDepositETH, "ether"));
+        console.info(`send 0.1 ether to kyberExchange`);
+        await kyberExchangeInstance.send(web3.toWei(0.1, "ether"));
     
     
     
@@ -188,6 +189,13 @@ function deployonkovan(deployer, num) {
     
         console.info('SetCore');
         await permission.adminAdd(Core.address,"core");
+
+        console.info('add strategy');
+        await strategy.createStrategy('MOT','MOT','MOT',['0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a'],[100],"0x0000000000000000000000000000000000000000000000000000000000000000");
+
+        console.info('add token support');
+        await price.changeTokens(["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a", "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x7dc75361d616f4d5748a9f050d7cbb8ca3781b0b"]);
+
       }).then(() => {
         //return deployExchangeProviderWrap(deployer, network);
       })
