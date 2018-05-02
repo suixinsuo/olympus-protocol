@@ -315,7 +315,7 @@ contract OlympusLabsCore is Manageable {
     }
 
     function adjustMOTFeeDiscount(uint _newDiscountPercentage) public onlyOwner returns(bool success) {
-        require(_newDiscountPercentage < 100);
+        require(_newDiscountPercentage <= 100);
         MOTDiscount = _newDiscountPercentage;
         return true;
     }
