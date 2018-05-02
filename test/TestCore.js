@@ -218,8 +218,8 @@ contract('Olympus-Protocol', function (accounts) {
   it("should be able to get strategy token price.", async () => {
     //TODOlist
     // let instance = await Core.deployed();
-    // let result0 = await instance.getStragetyTokenPrice(0, 0);
-    // let result1 = await instance.getStragetyTokenPrice(0, 1);
+    // let result0 = await instance.getStrategyTokenPrice(0, 0);
+    // let result1 = await instance.getStrategyTokenPrice(0, 1);
 
     // // We can check for 0 here, in the price tests these values are checked properly
     // assert.ok(result0.equals(expectedRate));
