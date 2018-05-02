@@ -45,7 +45,6 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         exchangeManager = IExchangeAdapterManager(_exchangeManager);
     }
 
-    // TODO: Lock
     function setCore(IOlympusLabsCore _core) public onlyExchangeOwner {
         core = _core;
         return;
@@ -217,7 +216,6 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
     }
 
     // owner can be msg.sender
-    // TODO: only to be called by adapters
     function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint srcCompletedAmount, uint destCompletedAmount)
     external onlyAdapter returns (bool)
     {
@@ -227,7 +225,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
 
-        // TODO: valid order stauts
+        // TODO: validate order status
         MarketOrder memory order = orders[orderId];
         bool found = false;
         for(uint i = 0; i < order.adapterOrdersId.length; i++){
