@@ -3,7 +3,6 @@ pragma solidity ^0.4.17;
 import "./ExchangeProvider.sol";
 import { StorageTypeDefinitions as STD } from "../storage/OlympusStorage.sol";
 
-// for test
 contract ExchangeProviderWrap {
   
     ExchangeProvider provider;

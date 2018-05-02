@@ -136,7 +136,7 @@ contract StrategyProvider is StrategyProviderInterface {
         address[] _tokenAddresses,
         uint[] _weights,
         bytes32 _exchangeId)
-        public returns (bool success)
+        public onlyWhitelist returns  (bool success)
     {
         require(_checkCombo(_tokenAddresses, _weights));
         // require(isOwner(_index));
@@ -153,12 +153,12 @@ contract StrategyProvider is StrategyProviderInterface {
         return true;
     }
 
-    //TODO require core contract address
+
     function incrementStatistics(uint _index, uint _amountInEther) external  onlyCore returns (bool success){
         comboHub[_index].amount += _amountInEther;
         return true;
     }
-    //TODO require core contract address
+
     function updateFollower(uint _index, bool follow) external onlyCore returns (bool success){
         if (follow) {
             comboHub[_index].follower ++;

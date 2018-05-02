@@ -5,11 +5,7 @@ import "../libs/itMaps.sol";
 import "../permission/PermissionProviderInterface.sol";
 import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
-// Library storage (
-//     hash(provider_address,TokenAddress,ExchangeHash), price;
-//   )
 contract DecentralizationExchanges {
-    //Kyber
     function getExpectedRate(address src, address dest, uint srcQty) external view returns (uint expectedRate, uint slippageRate);
 }
 
@@ -28,54 +24,31 @@ contract PriceProviderInterface {
 contract PriceProvider {
     using SafeMath for uint256;
 
-    // standard database like.
     using itMaps for itMaps.itMapBytes32Uint;
-
-    // Provider[_tokenAddress][0] is the default provider.
-    // allowed exchanges.
     mapping(bytes32 => bool) internal ExchangeList;
-
-    // allowed provider list. Tokenaddress => (Provider => bool)
     mapping(address => mapping(address => bool)) internal ProviderList;
-
-    // allowed token list.
     mapping(address => bool) internal TokenList;
-
-    // calculate nonce for each account separately.
     mapping(address => mapping(address => uint)) internal Nonce;
-
     mapping(bytes32 => uint) internal Weight;
 
-    // exchage.Token.Provider local record.
     bytes32[] internal _EXCHANGE;
     address[] internal _TOKEN;
-    // token address
     mapping(address =>address[]) internal _Provider;
 
-    // Kyber address
     address eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
-    //address kyber = 0x65b1faad1b4d331fd0ea2a50d5be2c20abe42e50;
     DecentralizationExchanges _kyber ;
-
-    // instant price record.
-    //(Provider => (Token => Price))
     mapping(address =>mapping(address=>uint)) internal Price;
-
-
 
     // events
     event UpdatePrice(address _tokenAddress,bytes32 _exchange,uint price);
     event ExchangeUpdate(bytes32[] oldExchanges,bytes32[] newExchanges);
     event TokenUpdate(address[] oldToken,address[] newToken);
-    //Token_address,oldProvider,newProvider
     event ProviderUpdate(address Tokenaddress,address[] oldProviders,address[] newProviders);
     event DefaultProviderUpdate(address _tokenaddress,address OldDefaultProvider,address NewDefaultProvider);
     event _GetPrice(address _provider,address token,uint price);
     event ChangeWeight(bytes32 exchnage,uint weight);
     event SetKyber(address _KYBER);
 
-
-    // init db.
     itMaps.itMapBytes32Uint priceData;
 
     modifier onlyOwner() {
@@ -120,14 +93,12 @@ contract PriceProvider {
         return true;
     }
 
-    // new interfaces
     function getNewDefaultPrice(address _tokenAddress) public view returns(uint){
-        // Provider[_tokenAddress][0] is the default provider
         uint _defaultprice = Price[_Provider[_tokenAddress][0]][_tokenAddress];
-
         emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress, _defaultprice);
         return _defaultprice;
     }
+
     function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint){
         uint _customprice = Price[_provider][_tokenAddress];
         emit _GetPrice(_provider,_tokenAddress, _customprice);
@@ -145,9 +116,7 @@ contract PriceProvider {
         emit ExchangeUpdate(_EXCHANGE,_newExchanges);
         _EXCHANGE = _newExchanges;
 
-        // todo?
-        // priceData.destroy();
-
+        //priceData.destroy();
         return true;
     }
 
@@ -162,7 +131,6 @@ contract PriceProvider {
         emit TokenUpdate(_TOKEN,_newTokens);
         _TOKEN = _newTokens;
 
-        // todo?
         //priceData.destroy();
 
         return true;
@@ -181,7 +149,6 @@ contract PriceProvider {
         emit ProviderUpdate(_tokenAddress,_Provider[_tokenAddress],_newProviders);
         _Provider[_tokenAddress] = _newProviders;
 
-        // todo?
         // priceData.destroy();
 
         return true;
@@ -189,7 +156,6 @@ contract PriceProvider {
 
     // kyber
     function getrates(address dest, uint srcQty)  public view returns (uint expectedRate,uint slippageRate){
-        //require(dest != 0x0);
         (expectedRate,slippageRate) = _kyber.getExpectedRate(eth_token, dest, srcQty);
         return(expectedRate,slippageRate);
     }
@@ -201,7 +167,6 @@ contract PriceProvider {
         return true;
     }
 
-    // internal weight function
     function PriceWeight(uint[] _prices) internal returns(uint _price){
         return _prices[0];
     }
@@ -234,8 +199,3 @@ contract PriceProvider {
         return ProviderList[tokenAddress][providerAddress];
     }
 }
-
-
-// TODO: support different tokens and different exchanges.
-// TODO: weights cusutomization.
-// TODO: Nounce per token.
