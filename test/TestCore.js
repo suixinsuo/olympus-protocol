@@ -265,11 +265,8 @@ contract('Olympus-Protocol', function (accounts) {
 
   it("should be able to get index order.", async () => {
     let instance = await Core.deployed();
-    //TODO set the orderId to 1000000
     let result = await instance.getIndexOrder.call(1000000);
     assert.equal(result[0].toNumber(), 0);
-    // assert.equal(result[1].toString(), 0);
-    // assert.equal(result[2].toString(), 0);
     assert.equal(result[3].toNumber(), mockData.maxTradeFeeInWei);
     assert.equal(result[4].toNumber(), mockData.tokenAddresses.length);
   })
@@ -277,7 +274,6 @@ contract('Olympus-Protocol', function (accounts) {
   it("should be able to getSubOrderStatus.", async () => {
     let instance = await Core.deployed();
 
-    //TODO set the orderId to 1000000
     let result = await instance.getSubOrderStatus.call(1000000, mockData.tokenAddresses[0]);
 
     assert.equal(result.toNumber(), 3);
