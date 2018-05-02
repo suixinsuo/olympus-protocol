@@ -26,13 +26,17 @@ contract StrategyProviderInterface is Provider {
    // To core smart contract
     function getStrategyCount() public view returns (uint length);
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 46309b71b309439e1dcb5d2934529593a32b973b
     function getStrategyTokenCount(uint strategyId) public view returns (uint length);
     function getStrategyTokenByIndex(uint strategyId, uint tokenIndex) public view returns (address token, uint weight);
 
     function getStrategy(uint _index) public _checkIndex(_index) view returns (
-        uint id, 
-        string name, 
-        string description, 
+        uint id,
+        string name,
+        string description,
         string category,
         address[] memory tokenAddresses,
         uint[] memory weights,
@@ -40,7 +44,6 @@ contract StrategyProviderInterface is Provider {
         uint amount,
         bytes32 exchangeId);
 
-   // To clients
     function createStrategy(
         string name,
         string description,
