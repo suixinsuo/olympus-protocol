@@ -33,7 +33,7 @@ contract OlympusLabsCore is Manageable {
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
     uint public feePercentage = 100;
-    uint public MOTDiscount = 50;
+    uint public MOTDiscount = 25;
     uint public constant DENOMINATOR = 10000;
 
     uint public minimumInWei = 0;

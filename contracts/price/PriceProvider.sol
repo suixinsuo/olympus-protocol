@@ -1,19 +1,13 @@
 pragma solidity ^0.4.22;
 
-//这个合约控制数据库
-
-// import "../libs/Ownable.sol";
 import "../libs/SafeMath.sol";
 import "../libs/itMaps.sol";
 import "../permission/PermissionProviderInterface.sol";
 import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
-// 正式合约
-// 思路是：
-// Library存放(
-//     hash(provider_address,TokenAddress,ExchangeHash),price;
+// Library storage (
+//     hash(provider_address,TokenAddress,ExchangeHash), price;
 //   )
-
 contract DecentralizationExchanges {
     //Kyber
     function getExpectedRate(address src, address dest, uint srcQty) external view returns (uint expectedRate, uint slippageRate);
@@ -22,90 +16,66 @@ contract DecentralizationExchanges {
 
 
 contract PriceProviderInterface {
-
     function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
-
     function getNewDefaultPrice(address _tokenAddress) public view returns(uint);
-
     function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint);
-
     function GetNonce(address providerAddress,address tokenAddress) public view returns(uint);
-
     function checkTokenSupported(address tokenAddress)  public view returns(bool success);
-
     function checkExchangeSupported(bytes32 Exchanges)  public view returns(bool success);
-
     function checkProviderSupported(address providerAddress,address tokenAddress)  public view returns(bool success);
-
 }
 
 contract PriceProvider {
+    using SafeMath for uint256;
 
-  //防止计算下坠攻击
-  //using math for SafeMath;
-
-  //标准数据库
+    // standard database like.
     using itMaps for itMaps.itMapBytes32Uint;
 
-    //规定Provider[_tokenAddress][0] 为默认provider
-
-
-    //mapping(address =>address) public defaultProvider;
-
-    //允许的交易所list
+    // Provider[_tokenAddress][0] is the default provider.
+    // allowed exchanges.
     mapping(bytes32 => bool) internal ExchangeList;
 
-    //允许的Providerlist
-    //Tokenaddress => (Provider => bool)
+    // allowed provider list. Tokenaddress => (Provider => bool)
     mapping(address => mapping(address => bool)) internal ProviderList;
 
-    //允许的Tokenlist
+    // allowed token list.
     mapping(address => bool) internal TokenList;
 
-    //单独计算每个账户的Token的Nonce
-
+    // calculate nonce for each account separately.
     mapping(address => mapping(address => uint)) internal Nonce;
 
     mapping(bytes32 => uint) internal Weight;
 
-    //交易所.Token.Provider 本地记录
+    // exchage.Token.Provider local record.
     bytes32[] internal _EXCHANGE;
     address[] internal _TOKEN;
-    //token address
+    // token address
     mapping(address =>address[]) internal _Provider;
 
-    //Kyber address
+    // Kyber address
     address eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     //address kyber = 0x65b1faad1b4d331fd0ea2a50d5be2c20abe42e50;
     DecentralizationExchanges _kyber ;
 
-    //实时价格记录
+    // instant price record.
     //(Provider => (Token => Price))
     mapping(address =>mapping(address=>uint)) internal Price;
 
 
 
-    //日志记录
-
+    // events
     event UpdatePrice(address _tokenAddress,bytes32 _exchange,uint price);
-
     event ExchangeUpdate(bytes32[] oldExchanges,bytes32[] newExchanges);
-
     event TokenUpdate(address[] oldToken,address[] newToken);
-
     //Token_address,oldProvider,newProvider
     event ProviderUpdate(address Tokenaddress,address[] oldProviders,address[] newProviders);
-
     event DefaultProviderUpdate(address _tokenaddress,address OldDefaultProvider,address NewDefaultProvider);
-
     event _GetPrice(address _provider,address token,uint price);
-
     event ChangeWeight(bytes32 exchnage,uint weight);
-
     event SetKyber(address _KYBER);
 
 
-  //初始化数据库
+    // init db.
     itMaps.itMapBytes32Uint priceData;
 
     modifier onlyOwner() {
@@ -150,61 +120,18 @@ contract PriceProvider {
         return true;
     }
 
-    // function getDefaultPrice(address _tokenAddress) public returns(uint){
-    //     //定义函数内部变长数组
-    //     uint length = _EXCHANGE.length;
-    //     uint[] memory _priceNow = new uint[](length);
-
-    //     for (uint i = 0 ; i < _EXCHANGE.length ; i ++ ){
-    //         //priceData.getValueByIndex(k);
-    //         bytes32 _data = keccak256(_Provider[_tokenAddress][0],_tokenAddress,_EXCHANGE[i]);
-    //         _priceNow[i] = (priceData.get(_data));
-    //     }
-
-    //     uint _price = PriceWeight(_priceNow);
-
-    //     emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress,_price);
-
-    //     return _price;
-
-    // }
-
-    // function getCustomPrice(address _provider,address _tokenAddress) public returns(uint){
-    //     //定义函数内部变长数组
-    //     uint[] memory _priceNow = new uint[](_EXCHANGE.length);
-
-    //     for (uint i = 0 ; i < _EXCHANGE.length; i ++){
-
-    //         bytes32 _data = keccak256(_provider, _tokenAddress,_EXCHANGE[i]);
-    //         _priceNow[i] = (priceData.get(_data));
-
-    //     }
-
-    //     uint _price = PriceWeight(_priceNow);
-
-    //     emit _GetPrice(_provider,_tokenAddress,_price);
-
-    //     return _price;
-    // }
-
-    //新接口
-
+    // new interfaces
     function getNewDefaultPrice(address _tokenAddress) public view returns(uint){
-        //规定Provider[_tokenAddress][0] 为默认provider
+        // Provider[_tokenAddress][0] is the default provider
         uint _defaultprice = Price[_Provider[_tokenAddress][0]][_tokenAddress];
 
         emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress, _defaultprice);
         return _defaultprice;
-
-
     }
     function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint){
-
         uint _customprice = Price[_provider][_tokenAddress];
-
         emit _GetPrice(_provider,_tokenAddress, _customprice);
         return _customprice;
-
     }
 
     function changeExchanges(bytes32[] _newExchanges) public onlyOwner returns(bool success) {
@@ -218,12 +145,12 @@ contract PriceProvider {
         emit ExchangeUpdate(_EXCHANGE,_newExchanges);
         _EXCHANGE = _newExchanges;
 
-        //是否清除数据 待测试
-        //priceData.destroy();
+        // todo?
+        // priceData.destroy();
 
         return true;
     }
-    //TODO
+
     function changeTokens(address[] _newTokens) public onlyOwner returns(bool success) {
         for (uint i = 0; i < _TOKEN.length; i ++){
             TokenList[_TOKEN[i]] = false;
@@ -235,16 +162,16 @@ contract PriceProvider {
         emit TokenUpdate(_TOKEN,_newTokens);
         _TOKEN = _newTokens;
 
-        //是否清除数据 待测试
+        // todo?
         //priceData.destroy();
 
         return true;
     }
-    function changeProviders(address[] _newProviders,address _tokenAddress) public onlyOwner returns(bool success) {
 
+    function changeProviders(address[] _newProviders,address _tokenAddress) public onlyOwner returns(bool success) {
         for (uint i = 0; i < _Provider[_tokenAddress].length; i ++){
             ProviderList[_tokenAddress][_Provider[_tokenAddress][i]] = false;
-             //清空Nonce
+             // clear the nonce.
             Nonce[_tokenAddress][_Provider[_tokenAddress][i]] = 0;
         }
 
@@ -254,48 +181,39 @@ contract PriceProvider {
         emit ProviderUpdate(_tokenAddress,_Provider[_tokenAddress],_newProviders);
         _Provider[_tokenAddress] = _newProviders;
 
-
-        //是否清除数据 待测试
-        //priceData.destroy();
+        // todo?
+        // priceData.destroy();
 
         return true;
     }
 
-    //kyber
+    // kyber
     function getrates(address dest, uint srcQty)  public view returns (uint expectedRate,uint slippageRate){
         //require(dest != 0x0);
-        (expectedRate,slippageRate ) = _kyber.getExpectedRate(eth_token, dest , srcQty);
+        (expectedRate,slippageRate) = _kyber.getExpectedRate(eth_token, dest, srcQty);
         return(expectedRate,slippageRate);
     }
 
-    //修改默认Provider
-
+    // change default Provider
     function changeDefaultProviders(address _newProvider,address _tokenAddress) public onlyOwner returns(bool success) {
         emit DefaultProviderUpdate(_tokenAddress,_Provider[_tokenAddress][0],_newProvider);
         _Provider[_tokenAddress][0] = _newProvider;
         return true;
     }
 
-    //内部处理权重函数
+    // internal weight function
     function PriceWeight(uint[] _prices) internal returns(uint _price){
-        //Weight权重处理
         return _prices[0];
     }
 
     function NewPriceWeight(address _providerAddress, address _tokenAddress, bytes32[] _Exchange,uint[] _prices) internal returns(uint _price){
-        //Weight权重处理
         return _prices[0];
     }
 
     function changeWeight(bytes32[] _exchanges,uint[] _newWeights) onlyOwner public returns(bool success) {
-
         for(uint i = 0; i<_exchanges.length; i++){
-
             Weight[_exchanges[i]] = _newWeights[i];
-
             emit ChangeWeight(_exchanges[i],_newWeights[i]);
-
-
         }
 
         return true;
@@ -318,11 +236,6 @@ contract PriceProvider {
 }
 
 
-// TODO
-// 支持不同Token不同交易所和权重处理
-// 支持自定义权重
-
-
-
-// TODO
-// 支持Nonce 分token处理
+// TODO: support different tokens and different exchanges.
+// TODO: weights cusutomization.
+// TODO: Nounce per token.
