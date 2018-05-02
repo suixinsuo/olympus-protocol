@@ -27,7 +27,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     bytes32 exchangeId;
     ERC20 constant ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     uint orderId = 0;
-    address walltedId = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
+    address walletId = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
 
     struct Order{
         OrderStatus status;
@@ -50,12 +50,12 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         status = Status.ENABLED;
     }
 
-    function configKyberNetwork(KyberNetwork _kyber,address _walltedId ) public onlyExchangeOwner {
+    function configKyberNetwork(KyberNetwork _kyber,address _walletId ) public onlyExchangeOwner {
         if(address(_kyber) != 0x0){
             kyber = _kyber;
         }
-        if(_walltedId != 0x0){
-            walltedId = _walltedId;
+        if(_walletId != 0x0){
+            walletId = _walletId;
         }
     }
 
@@ -120,7 +120,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             this,
             2**256 - 1,
             slippageRate,
-            walltedId);
+            walletId);
         uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
         uint afterTokenBalance = dest.balanceOf(this);
@@ -150,11 +150,9 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         Order memory o = orders[adapterOrderId];
         if(o.status != OrderStatus.Approved){
             revert();
-            return false;
         }
         if(o.amount != msg.value){
             revert();
-            return false;
         }
         orders[adapterOrderId].status = OrderStatus.Completed;
         return true;

@@ -1,8 +1,6 @@
 const Core = artifacts.require("../contracts/OlympusLabsCore.sol");
 const StrategyProvider = artifacts.require("../contracts/strategy/StrategyProvider.sol");
 const PriceProvider = artifacts.require("../contracts/price/PriceProvider.sol");
-// const KyberMock = artifacts.require("./helper/KyberNetworkMock.sol");
-// const Exchange = artifacts.require("../contracts/exchange/ExchangeProviderWrap.sol");
 const ExchangeAdapterManager = artifacts.require("../contracts/exchange/ExchangeAdapterManager.sol");
 const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
 const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
@@ -84,7 +82,7 @@ contract('Olympus-Protocol', function (accounts) {
       });
   });
 
-  it("should be able to set a onlyCore.", async () => {
+  it("Should be able to set a onlyCore.", async () => {
 
     let instance = await Core.deployed();
     let result = await PermissionProvider.deployed();
@@ -95,7 +93,7 @@ contract('Olympus-Protocol', function (accounts) {
 
   //exchange init
 
-  it("should be able to set a exchange provider.", async () => {
+  it("Should be able to set a exchange provider.", async () => {
 
     let exchangeInstance = await ExchangeProvider.deployed();
     let instance = await Core.deployed();
@@ -105,13 +103,13 @@ contract('Olympus-Protocol', function (accounts) {
   })
 
   //strategy provider
-  it("should be able to create a strategy.", async () => {
+  it("Should be able to create a strategy.", async () => {
     let instance = await StrategyProvider.deployed();
     let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[0] });
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("should be able to set a strategy provider.", async () => {
+  it("Should be able to set a strategy provider.", async () => {
     let instance = await Core.deployed();
     let strategyInstance = await StrategyProvider.deployed();
 
@@ -119,13 +117,13 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("should be able to get a strategy count.", async () => {
+  it("Should be able to get a strategy count.", async () => {
     let instance = await Core.deployed();
     let result = await instance.getStrategyCount.call();
     assert.equal(result.toNumber(), 1);
   })
 
-  it("should be able to get a strategy by index.", async () => {
+  it("Should be able to get a strategy by index.", async () => {
     let instance = await Core.deployed();
     let result = await instance.getStrategy.call(0);
 
@@ -138,7 +136,7 @@ contract('Olympus-Protocol', function (accounts) {
     //assert.equal(result[6].toNumber(), 2);                              //asert amount
   })
 
-  it("should be able to get a getStrategyTokenAndWeightByIndex.", async () => {
+  it("Should be able to get a getStrategyTokenAndWeightByIndex.", async () => {
     let instance = await Core.deployed();
     let result = await instance.getStrategyTokenAndWeightByIndex.call(0, 0);
 
@@ -152,9 +150,9 @@ contract('Olympus-Protocol', function (accounts) {
   })
 
   // //price provider
-  it("should be able to get prices from kyber.", async () => {
+  it("Should be able to get prices from kyber.", async () => {
 
-    let result = await provider.getrates.call(mockData.addresses[0], 1000000000);
+    let result = await provider.getRates.call(mockData.addresses[0], 1000000000);
     assert.ok(result);
   })
 
@@ -165,12 +163,12 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("Should be able to update support exchanges.", async () => {
+  it("Should be able to update supported exchanges.", async () => {
     let result = await provider.changeExchanges(mockData.exchangesAddressHash, { from: accounts[0] });
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("Should be able to update support Provider.", async () => {
+  it("Should be able to update supported Provider.", async () => {
     let result1 = await provider.changeProviders([accounts[1], accounts[2]], mockData.tokenAddresses[0], { from: accounts[0] });
     let result2 = await provider.changeProviders([accounts[2], accounts[1]], mockData.tokenAddresses[1], { from: accounts[0] });
     assert.equal(result1.receipt.status, '0x01');
@@ -184,7 +182,7 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result1.receipt.status, '0x01');
   });
 
-  it("should be able to set a price provider.", async () => {
+  it("Should be able to set a price provider.", async () => {
     try {
       let instance = await Core.deployed();
 
@@ -207,7 +205,7 @@ contract('Olympus-Protocol', function (accounts) {
 
   //core price
 
-  it("should be able to get price.", async () => {
+  it("Should be able to get price.", async () => {
     let instance = await Core.deployed();
     let result0 = await instance.getPrice.call(mockData.tokenAddresses[0], 1000000000);
     let result1 = await instance.getPrice.call(mockData.tokenAddresses[1], 1000000000);
@@ -215,7 +213,7 @@ contract('Olympus-Protocol', function (accounts) {
     assert.ok(result1.equals(expectedRate));
   })
 
-  it("should be able to get strategy token price.", async () => {
+  it("Should be able to get strategy token price.", async () => {
     //TODOlist
     // let instance = await Core.deployed();
     // let result0 = await instance.getStrategyTokenPrice(0, 0);
@@ -228,7 +226,7 @@ contract('Olympus-Protocol', function (accounts) {
 
   //storage provider
 
-  it("should be able to set a storage provider.", async () => {
+  it("Should be able to set a storage provider.", async () => {
     let instance = await Core.deployed();
     let storageInstance = await OlympusStorage.deployed();
 
@@ -237,33 +235,33 @@ contract('Olympus-Protocol', function (accounts) {
   })
 
 
-  it("should be able to adjustTradeRange.", async () => {
+  it("Should be able to adjustTradeRange.", async () => {
     let instance = await Core.deployed();
     let result = await instance.adjustTradeRange(mockData.minTradeFeeInWei, mockData.maxTradeFeeInWei, { from: accounts[0] });
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("should be able to adjustFee.", async () => {
+  it("Should be able to adjustFee.", async () => {
     let instance = await Core.deployed();
     let result = await instance.adjustFee(10, { from: accounts[0] });
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("should be able to buy index.", async () => {
+  it("Should be able to buy index.", async () => {
     let instance = await Core.deployed();
 
     let result = await instance.buyIndex(0, accounts[1], false, { from: accounts[0], value: 3000000 });
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("should be able to get ethfee.", async () => {
+  it("Should be able to get ethfee.", async () => {
     let instance = await Core.deployed();
 
     let result = await instance.withdrawETH(accounts[1], { from: accounts[0] });
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("should be able to get index order.", async () => {
+  it("Should be able to get index order.", async () => {
     let instance = await Core.deployed();
     let result = await instance.getIndexOrder.call(1000000);
     assert.equal(result[0].toNumber(), 0);
@@ -271,7 +269,7 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result[4].toNumber(), mockData.tokenAddresses.length);
   })
 
-  it("should be able to getSubOrderStatus.", async () => {
+  it("Should be able to getSubOrderStatus.", async () => {
     let instance = await Core.deployed();
 
     let result = await instance.getSubOrderStatus.call(1000000, mockData.tokenAddresses[0]);

@@ -11,8 +11,8 @@ const tokenNum = 2;
 const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
 
-function bytes32ToString(bytes32){
-    return web3.toAscii(bytes32).replace(/\u0000/g,'');
+function bytes32ToString(bytes32) {
+  return web3.toAscii(bytes32).replace(/\u0000/g, '');
 }
 
 const OrderStatusPending = 0;
@@ -26,88 +26,88 @@ const ExchangeStatusDisabled = 1;
 
 contract('CentralizedExchange', (accounts) => {
 
-    let testCase = [{
-        name: 'shipeshift'
-    }, {
-        name: 'binance'
-    }, {
-        name: 'okex'
-    }];
+  let testCase = [{
+    name: 'shapeshift'
+  }, {
+    name: 'binance'
+  }, {
+    name: 'okex'
+  }];
 
-    it('test addExchange and enable/disable', async () => {
+  it('test addExchange and enable/disable', async () => {
 
-        let id = 1000;
-        
-        let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+    let id = 1000;
 
-        let centralizedExchange = await CentralizedExchange.deployed();
+    let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
 
-        for (let i = 0; i < testCase.length; i++) {
-            let result = await exchangeAdapterManager.addExchange(testCase[i].name, centralizedExchange.address);
-            let actualExchangeId = result.logs.find((l)=>{return l.event === 'AddedExchange'}).args.id;
-            testCase[i].exchangeId = actualExchangeId;
+    let centralizedExchange = await CentralizedExchange.deployed();
 
-            result = await centralizedExchange.getExchange(actualExchangeId);
-            assert.equal(bytes32ToString(result[0]), testCase[i].name);
-            assert.equal(result[1].toString(), ExchangeStatusEnabled+'');
+    for (let i = 0; i < testCase.length; i++) {
+      let result = await exchangeAdapterManager.addExchange(testCase[i].name, centralizedExchange.address);
+      let actualExchangeId = result.logs.find((l) => { return l.event === 'AddedExchange' }).args.id;
+      testCase[i].exchangeId = actualExchangeId;
 
-            // disable exchange
-            await centralizedExchange.disable(actualExchangeId);
-            result = await centralizedExchange.isEnabled(actualExchangeId);
-            assert.ok(!result);
+      result = await centralizedExchange.getExchange(actualExchangeId);
+      assert.equal(bytes32ToString(result[0]), testCase[i].name);
+      assert.equal(result[1].toString(), ExchangeStatusEnabled + '');
 
-        // enable exchange
-            result = await centralizedExchange.enable(actualExchangeId);
-            result = await centralizedExchange.isEnabled(actualExchangeId);
-            assert.ok(result);
-        }
-    })
+      // disable exchange
+      await centralizedExchange.disable(actualExchangeId);
+      result = await centralizedExchange.isEnabled(actualExchangeId);
+      assert.ok(!result);
 
-    it('test getRate', async () => {
+      // enable exchange
+      result = await centralizedExchange.enable(actualExchangeId);
+      result = await centralizedExchange.isEnabled(actualExchangeId);
+      assert.ok(result);
+    }
+  })
 
-        let centralizedExchange = await CentralizedExchange.deployed();
-        let tokens = [];
-        for (var i = 0; i < 3; i++) {
-            let t = await SimpleERC20Token.new(18);
-            tokens.push(t.address)
-        }
-        let rates = tokens.map(() => { return expectedRate });
+  it('test getRate', async () => {
 
-        // supported, but unkown rate
-        let t = await SimpleERC20Token.new(18);
-        tokens.push(t.address);
-        rates.push(-1);
+    let centralizedExchange = await CentralizedExchange.deployed();
+    let tokens = [];
+    for (var i = 0; i < 3; i++) {
+      let t = await SimpleERC20Token.new(18);
+      tokens.push(t.address)
+    }
+    let rates = tokens.map(() => { return expectedRate });
 
-        let exchangeId = testCase[0].exchangeId;
+    // Supported, but unknown rate
+    let t = await SimpleERC20Token.new(18);
+    tokens.push(t.address);
+    rates.push(-1);
 
-        await centralizedExchange.setRates(exchangeId, tokens, rates);
+    let exchangeId = testCase[0].exchangeId;
 
-        for (let i = 0; i < tokens.length; i++) {
-            let rate = await centralizedExchange.getRate(exchangeId, tokens[i], 0);
-            assert.ok(rate.equals(rates[i]));
-        }
+    await centralizedExchange.setRates(exchangeId, tokens, rates);
 
-        // unsupported
-        let rate = await centralizedExchange.getRate(exchangeId, ethToken, 0);
-        assert.ok(rate.equals(0));
-    })
+    for (let i = 0; i < tokens.length; i++) {
+      let rate = await centralizedExchange.getRate(exchangeId, tokens[i], 0);
+      assert.ok(rate.equals(rates[i]));
+    }
 
-    it('test placeOrder', async () => {
+    // unsupported
+    let rate = await centralizedExchange.getRate(exchangeId, ethToken, 0);
+    assert.ok(rate.equals(0));
+  })
 
-        let centralizedExchange = await CentralizedExchange.deployed();
-        let simpleToken = await SimpleERC20Token.new(18);
-        let exchangeId = testCase[0].exchangeId;
-        let token = simpleToken.address;
-        let srcAmount = web3.toWei(1, 'ether');
-        let deposit = accounts[1];
-        let orderIdOffset = 1000000;
+  it('test placeOrder', async () => {
 
-        let result = await centralizedExchange.placeOrder(exchangeId, token, srcAmount, expectedRate, deposit);
-        let orderInfo = result.logs.find((r)=>{return r.event == 'PlacedOrder';});
+    let centralizedExchange = await CentralizedExchange.deployed();
+    let simpleToken = await SimpleERC20Token.new(18);
+    let exchangeId = testCase[0].exchangeId;
+    let token = simpleToken.address;
+    let srcAmount = web3.toWei(1, 'ether');
+    let deposit = accounts[1];
+    let orderIdOffset = 1000000;
 
-        assert.equal(orderInfo.args.exchangeId, exchangeId);
-        assert.equal(orderInfo.args.orderId.toString(), orderIdOffset++ + '');
-    })
+    let result = await centralizedExchange.placeOrder(exchangeId, token, srcAmount, expectedRate, deposit);
+    let orderInfo = result.logs.find((r) => { return r.event == 'PlacedOrder'; });
+
+    assert.equal(orderInfo.args.exchangeId, exchangeId);
+    assert.equal(orderInfo.args.orderId.toString(), orderIdOffset++ + '');
+  })
 })
 
 

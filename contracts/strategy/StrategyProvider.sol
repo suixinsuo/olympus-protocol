@@ -31,12 +31,12 @@ contract StrategyProvider is StrategyProviderInterface {
         _;
     }
 
-    function changeWhitelist(address[] whitelistaddress) public onlyOwner {
-        for (uint index = 0; index < whitelistaddress.length; index++) {
-            if (StrategyWhiteList[whitelistaddress[index]]) {
-                StrategyWhiteList[whitelistaddress[index]] = false;
+    function changeWhitelist(address[] whitelistAddresses) public onlyOwner {
+        for (uint index = 0; index < whitelistAddresses.length; index++) {
+            if (StrategyWhiteList[whitelistAddresses[index]]) {
+                StrategyWhiteList[whitelistAddresses[index]] = false;
             } else {
-                StrategyWhiteList[whitelistaddress[index]] = true;
+                StrategyWhiteList[whitelistAddresses[index]] = true;
             }
         }
     }
@@ -79,7 +79,7 @@ contract StrategyProvider is StrategyProviderInterface {
         string category,
         address[] memory tokenAddresses,
         uint[] memory weights,
-        uint follower,
+        uint followers,
         uint amount,
         bytes32 exchangeId)
     {
@@ -152,7 +152,6 @@ contract StrategyProvider is StrategyProviderInterface {
         emit ComboUpdated(comboHub[_index].id, comboHub[_index].name);
         return true;
     }
-
 
     function incrementStatistics(uint _index, uint _amountInEther) external  onlyCore returns (bool success){
         comboHub[_index].amount += _amountInEther;

@@ -69,9 +69,9 @@ contract OlympusLabsCore is Manageable {
     }
 
     function getStrategy(uint strategyId) public view returns (
-        string  name,
-        string  description,
-        string  category,
+        string name,
+        string description,
+        string category,
         address[] memory tokens,
         uint[] memory weights,
         uint followers,
@@ -102,7 +102,7 @@ contract OlympusLabsCore is Manageable {
     // Forward to Price smart contract.
     function getPrice(address tokenAddress, uint srcQty) public view returns (uint price){
         require(tokenAddress != address(0));
-        (, price) = priceProvider.getrates(tokenAddress, srcQty);
+        (, price) = priceProvider.getRates(tokenAddress, srcQty);
         return price;
     }
 
@@ -342,7 +342,7 @@ contract OlympusLabsCore is Manageable {
             // Transfer MOT
             uint MOTPrice;
             uint allowance = MOT.allowance(sender,address(this));
-            (MOTPrice,) = priceProvider.getrates(address(MOT), feeValueInETH);
+            (MOTPrice,) = priceProvider.getRates(address(MOT), feeValueInETH);
             uint amount = (feeValueInETH * MOTPrice) / 10**18;
             require(allowance >= amount);
             require(MOT.transferFrom(sender,address(this),amount));
