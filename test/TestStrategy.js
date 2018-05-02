@@ -5,115 +5,113 @@ const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
 const Promise = require('bluebird');
-const mockData = { 
-    id: 0,
-    name: "test",
-    description: "test strategy",
-    category: "multiple",
-    tokenAddresses: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af","0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
-    weights: [80,20],
-    follower: 0,
-    amount: 0,
-    exchangeId: "0x0000000000000000000000000000000000000000000000000000000000000000" 
+const mockData = {
+  id: 0,
+  name: "test",
+  description: "test strategy",
+  category: "multiple",
+  tokenAddresses: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
+  weights: [80, 20],
+  follower: 0,
+  amount: 0,
+  exchangeId: "0x0000000000000000000000000000000000000000000000000000000000000000"
 }
 contract('Olympus-Protocol-strategy', (accounts) => {
-  
-    it("They should be able to deploy.", () => {
-        return Promise.all([
-        Core.deployed(),
-        Strategy.deployed(),
-        // Exchange.deployed(),
-    ]).spread((/*price, strategy, exchange,*/ core) =>  {
-        assert.ok(core, 'Strategy contract is not deployed.');
-        });
+
+  it("They should be able to deploy.", () => {
+    return Promise.all([
+      Core.deployed(),
+      Strategy.deployed(),
+    ]).spread((/*price, strategy, exchange,*/ core) => {
+      assert.ok(core, 'Strategy contract is not deployed.');
     });
+  });
 
-    it("Should be able to create a strategy.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[0]});
-        assert.equal(result.receipt.status, '0x01');
-    })
+  it("Should be able to create a strategy.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[0] });
+    assert.equal(result.receipt.status, '0x01');
+  })
 
-    it("Should not  be able to create a strategy.", async () => {
-        let instance  = await Strategy.deployed();
-        try{
-            let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[1]});
-        }catch (error) {
-            //console.log(error);
-            const revertFound = error.message.search('revert') >= 0;
-            assert(revertFound, `Expected "revert", got ${error} instead`);
-        }
-    })
-    it("Should be able to update a strategy.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.updateStrategy(0,mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[0]});
-        assert.equal(result.receipt.status, '0x01');
-    })
+  it("Should not be able to create a strategy.", async () => {
+    let instance = await Strategy.deployed();
+    try {
+      let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[1] });
+    } catch (error) {
+      //console.log(error);
+      const revertFound = error.message.search('revert') >= 0;
+      assert(revertFound, `Expected "revert", got ${error} instead`);
+    }
+  })
+  it("Should be able to update a strategy.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.updateStrategy(0, mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[0] });
+    assert.equal(result.receipt.status, '0x01');
+  })
 
-    it("Should not  be able to update a strategy.", async () => {
-        let instance  = await Strategy.deployed();
-        try{
-            let result = await instance.updateStrategy(0,mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, {from:accounts[1]});
-        }catch (error) {
-            //console.log(error);
-            const revertFound = error.message.search('revert') >= 0;
-            assert(revertFound, `Expected "revert", got ${error} instead`);
-        }
-    })
+  it("Should not be able to update a strategy.", async () => {
+    let instance = await Strategy.deployed();
+    try {
+      let result = await instance.updateStrategy(0, mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[1] });
+    } catch (error) {
+      //console.log(error);
+      const revertFound = error.message.search('revert') >= 0;
+      assert(revertFound, `Expected "revert", got ${error} instead`);
+    }
+  })
 
-    it("Should be able to get a strategy.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.getStrategy.call(0);
-        //console.log(result);
-        //assert.equal(result[0].toNumber(), 0);                                            //asert id
-        assert.equal(result[1], mockData.name);          //asert name
-        assert.equal(result[2], mockData.description);   //asert description
-        assert.equal(result[3], mockData.category);      //asert category
-        assert.equal(result[6].toNumber(), mockData.follower);                            //asert follower
-        assert.equal(result[7].toNumber(), mockData.amount);                              //asert amount
-        assert.equal(result[8], mockData.exchangeId);                                     //asert exchangeId
-    })
+  it("Should be able to get a strategy.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.getStrategy.call(0);
+    //assert.equal(result[0].toNumber(), 0);                                            //asert id
+    assert.equal(result[1], mockData.name);          //asert name
+    assert.equal(result[2], mockData.description);   //asert description
+    assert.equal(result[3], mockData.category);      //asert category
+    assert.equal(result[6].toNumber(), mockData.follower);                            //asert follower
+    assert.equal(result[7].toNumber(), mockData.amount);                              //asert amount
+    assert.equal(result[8], mockData.exchangeId);                                     //asert exchangeId
+  })
 
-    it("Should be able to get strategies.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.getStrategies.call(accounts[0]);
+  it("Should be able to get strategies.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.getStrategies.call(accounts[0]);
 
-        assert.equal(result[0].toNumber(), 0);                                            //asert id
-    })
+    assert.equal(result[0].toNumber(), 0);                                            //asert id
+  })
 
-    it("Should be able to get my strategies.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.getMyStrategies.call({from: accounts[0]});
+  it("Should be able to get my strategies.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.getMyStrategies.call({ from: accounts[0] });
 
-        assert.equal(result[0].toNumber(), 0);                                            //asert id
-    })
+    assert.equal(result[0].toNumber(), 0);                                            //asert id
+  })
 
-    it("Should be able to get strategy token by index.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.getStrategyTokenByIndex.call(0,0);
+  it("Should be able to get strategy token by index.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.getStrategyTokenByIndex.call(0, 0);
 
-        assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[0].toLowerCase());                              //token
-        assert.equal(result[1].toNumber(), mockData.weights[0]);                          //weight
-    })
+    assert.equal(result[0].toLowerCase(), mockData.tokenAddresses[0].toLowerCase());                              //token
+    assert.equal(result[1].toNumber(), mockData.weights[0]);                          //weight
+  })
 
-    it("Should be able to get strategy token count by index.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.getStrategyTokenCount.call(0);
+  it("Should be able to get strategy token count by index.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.getStrategyTokenCount.call(0);
 
-        assert.equal(result.toNumber(), 2);                          //token length
-    })
+    assert.equal(result.toNumber(), 2);                          //token length
+  })
 
-    it("Should be able to get strategy count.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.getStrategyCount.call();
+  it("Should be able to get strategy count.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.getStrategyCount.call();
 
-        assert.equal(result.toNumber(), 1);                          //strategy count
-    })
+    assert.equal(result.toNumber(), 1);                          //strategy count
+  })
 
-    it("Should be able to update strategy.", async () => {
-        let instance  = await Strategy.deployed();
-        let result = await instance.updateStrategy(0, "update name", "update desc", "update category", ["0x86fa049857e0209aa7d9e616f7eb3b3b78ecfdb0", "0xd26114cd6ee289accf82350c8d8487fedb8a0c07"], [30,70], web3.toAscii('testExchange'));
+  it("Should be able to update strategy.", async () => {
+    let instance = await Strategy.deployed();
+    let result = await instance.updateStrategy(0, "update name", "update desc", "update category", ["0x86fa049857e0209aa7d9e616f7eb3b3b78ecfdb0", "0xd26114cd6ee289accf82350c8d8487fedb8a0c07"], [30, 70], web3.toAscii('testExchange'));
 
-        assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);                          
-    })
+    assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);
+  })
 });
