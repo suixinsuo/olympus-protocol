@@ -5,7 +5,7 @@ contract WhitelistProvider {
 
     PermissionProviderInterface internal permissionProvider;
 
-    mapping (address=>bool) allow;
+    mapping (address=>bool) whitelistAddresses;
     bool public enabled;
 
     function WhitelistProvider(address _permissionProvider) public {
@@ -25,16 +25,16 @@ contract WhitelistProvider {
         enabled = false;
     }
 
-    function setAllow(address[] accounts, bool isAllow) public onlyWhitelistOwner returns(bool){
+    function setAllowed(address[] accounts, bool isAllowed) public onlyWhitelistOwner returns(bool){
 
         for(uint i = 0; i < accounts.length; i++){
             require(accounts[i] != 0x0);
-            allow[accounts[i]] = isAllow;
+            whitelistAddresses[accounts[i]] = isAllowed;
         }
         return true;
     }
 
     function isAllowed(address account) external view returns(bool){
-        return enabled? allow[account]:true;
+        return enabled ? whitelistAddresses[account] : true;
     }
 }
