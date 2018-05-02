@@ -106,7 +106,7 @@ contract OlympusLabsCore is Manageable {
         return price;
     }
 
-    function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
+    function getStrategyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
         uint totalLength;
 
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
