@@ -317,7 +317,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         MarketOrder memory order = orders[orderId];
         require(order.tokens.length > 0);
 
-        // those order status cann't cancel
+        // These order statuses can't cancel
         require(order.orderStatus != STD.OrderStatus.Completed);
         require(order.orderStatus != STD.OrderStatus.Cancelled);
         require(order.orderStatus != STD.OrderStatus.Errored);

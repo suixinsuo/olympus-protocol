@@ -24,10 +24,10 @@ contract OlympusLabsCore is Manageable {
     event LogNumbers(uint[] numbers);
     event LOGDEBUG(address);
 
-    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x7DC3924b9580981A0ad45A76A58C242eD55c03aF));
-    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x484c2bF3c3B986039D1fd7295F07B428F2ae6FA7));
-    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x3e27CdE65D2CC92F483968efD778d2E8bF047992));
-    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x1a67e378f511a1E5e139bc34FD2955B8D3F45F21));
+    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x0));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x0));
+    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0));
+    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x0));
     WhitelistProviderInterface internal whitelistProvider;
     ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
@@ -71,9 +71,9 @@ contract OlympusLabsCore is Manageable {
     }
 
     function getStrategy(uint strategyId) public view returns (
-        string  name,
-        string  description,
-        string  category,
+        string name,
+        string description,
+        string category,
         address[] memory tokens,
         uint[] memory weights,
         uint followers,
@@ -104,7 +104,7 @@ contract OlympusLabsCore is Manageable {
     // Forward to Price smart contract.
     function getPrice(address tokenAddress, uint srcQty) public view returns (uint price){
         require(tokenAddress != address(0));
-        (, price) = priceProvider.getrates(tokenAddress, srcQty);
+        (, price) = priceProvider.getRates(tokenAddress, srcQty);
         return price;
     }
 
@@ -353,7 +353,7 @@ contract OlympusLabsCore is Manageable {
             // Transfer MOT
             uint MOTPrice;
             uint allowance = MOT.allowance(sender,address(this));
-            (MOTPrice,) = priceProvider.getrates(address(MOT), feeValueInETH);
+            (MOTPrice,) = priceProvider.getRates(address(MOT), feeValueInETH);
             uint amount = (feeValueInETH * MOTPrice) / 10**18;
             require(allowance >= amount);
             require(MOT.transferFrom(sender,address(this),amount));
