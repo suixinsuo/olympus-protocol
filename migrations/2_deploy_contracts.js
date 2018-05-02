@@ -107,7 +107,7 @@ module.exports = function (deployer, network) {
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {
-    return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
+    return deployer.deploy(StrategyProvider, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(PriceProvider, PermissionProvider.address);
   }).then(() => {
@@ -125,7 +125,7 @@ function deployOnKovan(deployer, num) {
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {
-    return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
+    return deployer.deploy(StrategyProvider, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(PriceProvider, PermissionProvider.address);
   }).then(() => {

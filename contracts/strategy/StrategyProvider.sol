@@ -16,7 +16,6 @@ contract StrategyProvider is StrategyProviderInterface {
     event ComboUpdated(uint id, string name);
 
     PermissionProviderInterface internal permissionProvider;
-    address coreAddress;
 
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -42,9 +41,8 @@ contract StrategyProvider is StrategyProviderInterface {
         }
     }
 
-    function StrategyProvider(address _permissionProvider, address _core) public {
+    function StrategyProvider(address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
-        coreAddress = _core;
         owner = msg.sender;
         StrategyWhiteList[owner] = true;
     }

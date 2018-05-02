@@ -1,63 +1,41 @@
 pragma solidity ^0.4.22;
 
-
-
-
 import "../libs/SafeMath.sol";
 import "../libs/itMaps.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "./PriceProviderInterface.sol";
 import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
-
-
 contract DecentralizationExchanges {
     function getExpectedRate(address src, address dest, uint srcQty) external view returns (uint expectedRate, uint slippageRate);
 }
 
 contract PriceProvider {
-
+    using SafeMath for uint256;
 
     using itMaps for itMaps.itMapBytes32Uint;
-
-
     mapping(bytes32 => bool) internal ExchangeList;
-
     mapping(address => mapping(address => bool)) internal ProviderList;
-
     mapping(address => bool) internal TokenList;
-
-
     mapping(address => mapping(address => uint)) internal Nonce;
-
     mapping(bytes32 => uint) internal Weight;
 
     bytes32[] internal _EXCHANGE;
     address[] internal _TOKEN;
-
     mapping(address =>address[]) internal _Provider;
 
-
-    address eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
-    //address kyber = 0x65b1faad1b4d331fd0ea2a50d5be2c20abe42e50;
+    address constant eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     DecentralizationExchanges _kyber ;
-
     mapping(address =>mapping(address=>uint)) internal Price;
 
+    // events
     event UpdatePrice(address _tokenAddress,bytes32 _exchange,uint price);
-
     event ExchangeUpdate(bytes32[] oldExchanges,bytes32[] newExchanges);
-
     event TokenUpdate(address[] oldToken,address[] newToken);
-
     event ProviderUpdate(address Tokenaddress,address[] oldProviders,address[] newProviders);
-
     event DefaultProviderUpdate(address _tokenaddress,address OldDefaultProvider,address NewDefaultProvider);
-
     event _GetPrice(address _provider,address token,uint price);
-
     event ChangeWeight(bytes32 exchnage,uint weight);
-
     event SetKyber(address _KYBER);
 
     itMaps.itMapBytes32Uint priceData;
@@ -105,21 +83,15 @@ contract PriceProvider {
     }
 
     function getNewDefaultPrice(address _tokenAddress) public view returns(uint){
-
-        uint _defaultPrice = Price[_Provider[_tokenAddress][0]][_tokenAddress];
-
-        emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress, _defaultPrice);
-        return _defaultPrice;
-
-
+        uint _defaultprice = Price[_Provider[_tokenAddress][0]][_tokenAddress];
+        emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress, _defaultprice);
+        return _defaultprice;
     }
+
     function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint){
-
-        uint _customPrice = Price[_provider][_tokenAddress];
-
-        emit _GetPrice(_provider,_tokenAddress, _customPrice);
-        return _customPrice;
-
+        uint _customprice = Price[_provider][_tokenAddress];
+        emit _GetPrice(_provider,_tokenAddress, _customprice);
+        return _customprice;
     }
 
     function changeExchanges(bytes32[] _newExchanges) public onlyOwner returns(bool success) {
@@ -133,9 +105,7 @@ contract PriceProvider {
         emit ExchangeUpdate(_EXCHANGE,_newExchanges);
         _EXCHANGE = _newExchanges;
 
-
         //priceData.destroy();
-
         return true;
     }
 
@@ -154,11 +124,10 @@ contract PriceProvider {
 
         return true;
     }
-    function changeProviders(address[] _newProviders,address _tokenAddress) public onlyOwner returns(bool success) {
 
+    function changeProviders(address[] _newProviders,address _tokenAddress) public onlyOwner returns(bool success) {
         for (uint i = 0; i < _Provider[_tokenAddress].length; i ++){
             ProviderList[_tokenAddress][_Provider[_tokenAddress][i]] = false;
-
             Nonce[_tokenAddress][_Provider[_tokenAddress][i]] = 0;
         }
 
@@ -168,7 +137,7 @@ contract PriceProvider {
         emit ProviderUpdate(_tokenAddress,_Provider[_tokenAddress],_newProviders);
         _Provider[_tokenAddress] = _newProviders;
 
-        //priceData.destroy();
+        // priceData.destroy();
 
         return true;
     }
@@ -185,24 +154,17 @@ contract PriceProvider {
     }
 
     function PriceWeight(uint[] _prices) internal returns(uint _price){
-
         return _prices[0];
     }
 
     function NewPriceWeight(address _providerAddress, address _tokenAddress, bytes32[] _Exchange,uint[] _prices) internal returns(uint _price){
-
         return _prices[0];
     }
 
     function changeWeight(bytes32[] _exchanges,uint[] _newWeights) onlyOwner public returns(bool success) {
-
         for(uint i = 0; i<_exchanges.length; i++){
-
             Weight[_exchanges[i]] = _newWeights[i];
-
             emit ChangeWeight(_exchanges[i],_newWeights[i]);
-
-
         }
 
         return true;
@@ -223,4 +185,3 @@ contract PriceProvider {
         return ProviderList[tokenAddress][providerAddress];
     }
 }
-
