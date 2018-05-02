@@ -6,6 +6,7 @@ pragma solidity ^0.4.22;
 import "../libs/SafeMath.sol";
 import "../libs/itMaps.sol";
 import "../permission/PermissionProviderInterface.sol";
+import "./PriceProviderInterface.sol";
 import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 // 正式合约
@@ -17,26 +18,6 @@ import { TypeDefinitions as TD } from "../libs/Provider.sol";
 contract DecentralizationExchanges {
     //Kyber
     function getExpectedRate(address src, address dest, uint srcQty) external view returns (uint expectedRate, uint slippageRate);
-}
-
-
-
-contract PriceProviderInterface {
-
-    function updatePrice(address _tokenAddress,bytes32[] _exchanges,uint[] _prices,uint _nonce) public returns(bool success);
-
-    function getNewDefaultPrice(address _tokenAddress) public view returns(uint);
-
-    function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint);
-
-    function GetNonce(address providerAddress,address tokenAddress) public view returns(uint);
-
-    function checkTokenSupported(address tokenAddress)  public view returns(bool success);
-
-    function checkExchangeSupported(bytes32 Exchanges)  public view returns(bool success);
-
-    function checkProviderSupported(address providerAddress,address tokenAddress)  public view returns(bool success);
-
 }
 
 contract PriceProvider {
@@ -133,7 +114,7 @@ contract PriceProvider {
         require(ProviderList[_tokenAddress][msg.sender]);
         require(TokenList[_tokenAddress]);
         require(Nonce[msg.sender][_tokenAddress] == _nonce);
-        require(_exchanges.length == _prices.length&&_prices.length == _EXCHANGE.length);
+        require(_exchanges.length == _prices.length && _prices.length == _EXCHANGE.length);
 
         for(uint i = 0; i < _exchanges.length; i++){
             require(ExchangeList[_exchanges[i]]);
@@ -191,19 +172,19 @@ contract PriceProvider {
 
     function getNewDefaultPrice(address _tokenAddress) public view returns(uint){
         //规定Provider[_tokenAddress][0] 为默认provider
-        uint _defaultprice = Price[_Provider[_tokenAddress][0]][_tokenAddress];
+        uint _defaultPrice = Price[_Provider[_tokenAddress][0]][_tokenAddress];
 
-        emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress, _defaultprice);
-        return _defaultprice;
+        emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress, _defaultPrice);
+        return _defaultPrice;
 
 
     }
     function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint){
 
-        uint _customprice = Price[_provider][_tokenAddress];
+        uint _customPrice = Price[_provider][_tokenAddress];
 
-        emit _GetPrice(_provider,_tokenAddress, _customprice);
-        return _customprice;
+        emit _GetPrice(_provider,_tokenAddress, _customPrice);
+        return _customPrice;
 
     }
 
@@ -262,9 +243,9 @@ contract PriceProvider {
     }
 
     //kyber
-    function getrates(address dest, uint srcQty)  public view returns (uint expectedRate,uint slippageRate){
+    function getRates(address dest, uint srcQty)  public view returns (uint expectedRate,uint slippageRate){
         //require(dest != 0x0);
-        (expectedRate,slippageRate ) = _kyber.getExpectedRate(eth_token, dest , srcQty);
+        (expectedRate,slippageRate ) = _kyber.getExpectedRate(eth_token, dest, srcQty);
         return(expectedRate,slippageRate);
     }
 
@@ -301,7 +282,7 @@ contract PriceProvider {
         return true;
     }
 
-    function GetNonce(address providerAddress,address tokenAddress) public view returns(uint){
+    function getNonce(address providerAddress,address tokenAddress) public view returns(uint){
         return Nonce[providerAddress][tokenAddress];
     }
 

@@ -21,11 +21,11 @@ KyberNetworkExchange: 0x71A65496612224077bDB42CA56265F42e65096A7<br/>
 ### NEW EXCHANGE
 ExchangeManager  0x0f7c1afa57b1b4ceb9edc5e89b0091253738cbff<br/>
 ExchangeProvider  0x5e0651f6e9c6d867c68b2df60b4d5ec855ca9337<br/>
-KyberNetworkExchange   0xe24fe01e5e415556a6a09b61cf9a6fd4a8672650<br/>   
+KyberNetworkExchange   0xe24fe01e5e415556a6a09b61cf9a6fd4a8672650<br/>
 
 ### Kyber
-0x964F35fAe36d75B1e72770e244F6595B68508CF5    Kyber<br/>   
-0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e    Mainnet Testkyber<br/>   
+0x964F35fAe36d75B1e72770e244F6595B68508CF5    Kyber<br/>
+0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e    Mainnet Testkyber<br/>
 
 
 
@@ -48,6 +48,7 @@ whitelistOwner: 0xB878496B5a59c9AE84018F9846aB00419Bf0e682<br/>
 
 
 # Deploy instructions
+For more detail, see migrations/deployment.md
 ## Mainnet
 For the mainnet, don't forget to change the MOT address in Core to the mainnet MOT address
 

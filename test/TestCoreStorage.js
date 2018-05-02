@@ -123,7 +123,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Should not be able to get amount for non-existing token", async () => {
+  it("Should not be able to get amount for non-existing token.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
       const result = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.fakeToken);
@@ -136,7 +136,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Should be able to get order token completed amount", async () => {
+  it("Should be able to get order token completed amount.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
       const firstResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[0]);
@@ -150,7 +150,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Should be able to get order details", async () => {
+  it("Should be able to get order details.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
       const firstPart = await instance.getIndexOrder1.call(mockData.startOrderId);
@@ -168,7 +168,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Should be able to update order token", async () => {
+  it("Should be able to update order token.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
       const firstTransactionResult = await instance.updateIndexOrderToken(
@@ -198,7 +198,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Should be able to get index token", async () => {
+  it("Should be able to get index token.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
       const firstResult = await instance.getIndexToken.call(mockData.startOrderId, 0);
@@ -211,7 +211,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Should be able to update order details", async () => {
+  it("Should be able to update order details.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
       const result = await instance.updateOrderStatus(mockData.startOrderId, mockData.statusNew);
@@ -224,7 +224,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Admin should be able to reset the order id", async () => {
+  it("Admin should be able to reset the order id.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
       const resultTransaction = await instance.resetOrderIdTo(5);
@@ -237,7 +237,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Should be able to set Provider", async () => {
+  it("Should be able to set Provider.", async () => {
     try {
       const extendedInstance = await OlympusStorageExtended.deployed();
       const instance = await OlympusStorage.deployed();
@@ -252,7 +252,7 @@ contract('OlympusStorage', (accounts) => {
     }
   });
 
-  it("Should not be able to set unsupported Provider", async () => {
+  it("Should not be able to set unsupported Provider.", async () => {
     try {
       const extendedInstance = await OlympusStorageExtended.deployed();
       const instance = await OlympusStorage.deployed();
@@ -267,7 +267,7 @@ contract('OlympusStorage', (accounts) => {
     }
   })
 
-  it("Should be able to set and get a custom value for order", async () => {
+  it("Should be able to set and get a custom value for order.", async () => {
     try {
       const extendedInstance = await OlympusStorageExtended.deployed();
       const instance = await OlympusStorage.deployed();
