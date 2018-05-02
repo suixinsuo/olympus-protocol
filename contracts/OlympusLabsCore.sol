@@ -32,7 +32,7 @@ contract OlympusLabsCore is Manageable {
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
     uint public feePercentage = 100;
-    uint public MOTDiscount = 50;
+    uint public MOTDiscount = 25;
     uint public constant DENOMINATOR = 10000;
 
     uint public minimumInWei = 0;
@@ -106,7 +106,7 @@ contract OlympusLabsCore is Manageable {
         return price;
     }
 
-    function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
+    function getStrategyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
         uint totalLength;
 
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
@@ -315,7 +315,7 @@ contract OlympusLabsCore is Manageable {
     }
 
     function adjustMOTFeeDiscount(uint _newDiscountPercentage) public onlyOwner returns(bool success) {
-        require(_newDiscountPercentage < 100);
+        require(_newDiscountPercentage <= 100);
         MOTDiscount = _newDiscountPercentage;
         return true;
     }

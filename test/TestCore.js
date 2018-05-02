@@ -216,8 +216,8 @@ contract('Olympus-Protocol', function (accounts) {
   it("Should be able to get strategy token price.", async () => {
     //TODOlist
     // let instance = await Core.deployed();
-    // let result0 = await instance.getStragetyTokenPrice(0, 0);
-    // let result1 = await instance.getStragetyTokenPrice(0, 1);
+    // let result0 = await instance.getStrategyTokenPrice(0, 0);
+    // let result1 = await instance.getStrategyTokenPrice(0, 1);
 
     // // We can check for 0 here, in the price tests these values are checked properly
     // assert.ok(result0.equals(expectedRate));
@@ -263,11 +263,8 @@ contract('Olympus-Protocol', function (accounts) {
 
   it("Should be able to get index order.", async () => {
     let instance = await Core.deployed();
-    //TODO set the orderId to 1000000
     let result = await instance.getIndexOrder.call(1000000);
     assert.equal(result[0].toNumber(), 0);
-    // assert.equal(result[1].toString(), 0);
-    // assert.equal(result[2].toString(), 0);
     assert.equal(result[3].toNumber(), mockData.maxTradeFeeInWei);
     assert.equal(result[4].toNumber(), mockData.tokenAddresses.length);
   })
@@ -275,7 +272,6 @@ contract('Olympus-Protocol', function (accounts) {
   it("Should be able to getSubOrderStatus.", async () => {
     let instance = await Core.deployed();
 
-    //TODO set the orderId to 1000000
     let result = await instance.getSubOrderStatus.call(1000000, mockData.tokenAddresses[0]);
 
     assert.equal(result.toNumber(), 3);
