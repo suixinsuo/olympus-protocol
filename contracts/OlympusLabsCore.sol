@@ -1,5 +1,4 @@
 pragma solidity ^0.4.22;
-// pragma experimental ABIEncoderV2;
 
 import "./libs/Manageable.sol";
 import "./libs/SafeMath.sol";
@@ -64,7 +63,6 @@ contract OlympusLabsCore is Manageable {
         revert();
     }
 
-    // Forward to Strategy smart contract.
     function getStrategyCount() public view returns (uint length)
     {
         return strategyProvider.getStrategyCount();
@@ -152,7 +150,6 @@ contract OlympusLabsCore is Manageable {
     function buyIndex(uint strategyId, address depositAddress, bool feeIsMOT)
     public onlyAllowed payable returns (uint indexOrderId)
     {
-        // GAS USED: 0 - 0% (+0)
         require(msg.value > minimumInWei);
         if(maximumInWei > 0){
             require(msg.value <= maximumInWei);
@@ -171,7 +168,6 @@ contract OlympusLabsCore is Manageable {
         amounts[1] = getFeeAmount(amounts[0], feeIsMOT); // fee
         amounts[2] = payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
 
-        // GAS USED: 45248
         // create order.
         indexOrderId = olympusStorage.addOrderBasicFields(
           strategyId,
@@ -180,21 +176,18 @@ contract OlympusLabsCore is Manageable {
           amounts[1],
           exchangeId
         );
-        // GAS USED: 200277
 
         uint[][4] memory subOrderTemp;
         // 0: token amounts
         // 1: estimatedPrices
-
-
         subOrderTemp[0] = initializeArray(tokenLength);
         subOrderTemp[1] = initializeArray(tokenLength);
 
         emit LogNumber(indexOrderId);
 
-        // GAS USED: 202070
+
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
-        // GAS USED: 264106
+
         for (uint i = 0; i < tokenLength; i ++ ) {
 
             // ignore those tokens with zero weight.
@@ -212,7 +205,6 @@ contract OlympusLabsCore is Manageable {
                 emit Log("Price provider doesn't support");
                 revert();
             }
-            // GAS USED: 299685
 
             subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
             subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
@@ -220,26 +212,23 @@ contract OlympusLabsCore is Manageable {
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
             emit LogNumber(subOrderTemp[1][i]);
-            // GAS USED: 322696
             require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
-            // GAS USED: 600498
         }
 
         olympusStorage.addTokenDetails(
             indexOrderId,
             tokens, weights, subOrderTemp[0], subOrderTemp[1]
         );
-        // GAS USED: 895038
+
 
         emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
-        // GAS USED: 1598086
+
 
         strategyProvider.updateFollower(strategyId, true);
-        // GAS USED: 1627621
+
         strategyProvider.incrementStatistics(strategyId, msg.value);
-        // GAS USED: 1657014
-        // todo: send ethers to the clearing center.
+
         return indexOrderId;
     }
 
@@ -265,7 +254,7 @@ contract OlympusLabsCore is Manageable {
         bytes32[] memory exchangeId = new bytes32[](1);
         STD.OrderStatus[] memory status = new STD.OrderStatus[](1);
 
-        // Stack too deep, so should be split up
+
         (orderPartial[0], buyer[0], status[0], orderPartial[1]) = olympusStorage.getIndexOrder1(_orderId);
         (orderPartial[2], orderPartial[3], orderPartial[4], exchangeId[0]) = olympusStorage.getIndexOrder2(_orderId);
         address[] memory tokens = new address[](orderPartial[4]);
