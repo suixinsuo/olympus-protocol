@@ -108,7 +108,7 @@ module.exports = function (deployer, network) {
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {
-    return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
+    return deployer.deploy(StrategyProvider, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(PriceProvider, PermissionProvider.address);
   }).then(() => {
@@ -126,7 +126,7 @@ function deployonkovan(deployer, num) {
       }).then((err, result) => {
         return deployer.deploy(Core, PermissionProvider.address);
       }).then(() =>{
-        return deployer.deploy(StrategyProvider, PermissionProvider.address, Core.address);
+        return deployer.deploy(StrategyProvider, PermissionProvider.address);
       }).then(() => {
         return deployer.deploy(PriceProvider, PermissionProvider.address);
       }).then(() => {
@@ -160,7 +160,7 @@ function deployonkovan(deployer, num) {
         await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
     
     
-        //需要往这个地址打以太坊作为押金 kyberExchange 
+        // Need to send funds to this kyberExchange.
         console.info(`send 0.1 ether to kyberExchange`);
         await kyberExchangeInstance.send(web3.toWei(0.1, "ether"));
     

@@ -216,7 +216,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         return status == EAB.OrderStatus.Completed;
     }
 
-    // owner可以直接是msg.sender
+    // owner can be msg.sender
     // TODO: only to be called by adapters
     function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint srcCompletedAmount, uint destCompletedAmount)
     external onlyAdapter returns (bool)
