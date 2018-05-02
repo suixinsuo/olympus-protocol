@@ -36,7 +36,7 @@ contract StrategyProviderInterface is Provider {
         string category,
         address[] memory tokenAddresses,
         uint[] memory weights,
-        uint follower,
+        uint followers,
         uint amount,
         bytes32 exchangeId);
 

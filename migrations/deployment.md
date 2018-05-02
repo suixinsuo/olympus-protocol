@@ -10,12 +10,12 @@
 3. deploy StrategyProvider (with PermissionProvider.address Core.address)
 
    core.setProvider(0, StrategyProvider.address);
-   
+
 4. deploy PriceProvider (with PermissionProvider.address)
-    
+
    core.setProvider(1, PriceProvider.address);
    PriceProvider.SetKyber(kyberNetwork) // be careful kyber address is different on kovan / mainnet.
-   //0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50 onkovan
+   //0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50 kovan
 5. deploy ExtendedStorage (with PermissionProvider.address)
 
 6. deploy OlympusStorage (with PermissionProvider.address)
@@ -35,11 +35,11 @@
 
 10. deploy ExchangeProvider (with ExchangeAdapterManager.address, PermissionProvider.address)
 
-11. deploy KyberNetworkExchange(with 
+11. deploy KyberNetworkExchange(with
 kyberNetwork,  // be careful of kyber has different addresses on kovan / mainnet.
 //0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50 onkovan
-ExchangeAdapterManager.address, 
-ExchangeProvider.address, 
+ExchangeAdapterManager.address,
+ExchangeProvider.address,
 PermissionProvider.address)
 
 12. exchangeAdapterManager.addExchange('kyber', KyberNetworkExchange.address)

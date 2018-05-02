@@ -5,7 +5,6 @@ var PriceProvider = artifacts.require("./price/PriceProvider.sol");
 var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol");
 var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
 var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider.sol");
-let premissionInstance, coreInstance;
 
 const KyberConfig = require('../scripts/libs/kyber_config');
 var KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
@@ -35,7 +34,7 @@ function deployOnDev(deployer, num) {
 
 function deployOnMainnet(deployer) {
 
-  let kyberNetwrok = '0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e';
+  let kyberNetwork = '0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e';
   let permissionProviderAddress = '0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e';
   let coreAddress = '0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9';
   let preDepositETH = 0.1;
@@ -45,12 +44,12 @@ function deployOnMainnet(deployer) {
   }).then(() => {
     return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, permissionProviderAddress);
   }).then(() => {
-    return deployer.deploy(KyberNetworkExchange, kyberNetwrok, ExchangeAdapterManager.address, ExchangeProvider.address, permissionProviderAddress);
+    return deployer.deploy(KyberNetworkExchange, kyberNetwork, ExchangeAdapterManager.address, ExchangeProvider.address, permissionProviderAddress);
   }).then(async () => {
 
     let kyberExchangeInstance = await KyberNetworkExchange.deployed();
     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
-    let exchangeProvder = await ExchangeProvider.deployed();
+    let exchangeProvider = await ExchangeProvider.deployed();
 
     console.info(`adding kyberExchange ${kyberExchangeInstance.address}`);
     let result = await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
@@ -59,7 +58,7 @@ function deployOnMainnet(deployer) {
     let r = await kyberExchangeInstance.send(web3.toWei(preDepositETH, "ether"));
 
     console.info('exchange provider set core');
-    await exchangeProvder.setCore(coreAddress);
+    await exchangeProvider.setCore(coreAddress);
   })
   return deploy;
 }
@@ -78,7 +77,7 @@ function deployExchangeProviderWrap(deployer, network) {
   }
 
   if (!kyberNetwork) {
-    console.error("unkown kyberNetwork address", network)
+    console.error("Unknown KyberNetwork address", network)
     return;
   }
 
@@ -99,8 +98,8 @@ module.exports = function (deployer, network) {
 
   if (network == 'mainnet' && flags.contract == "exchange") {
     return deployOnMainnet(deployer, network);
-  }else if(network == 'kovan'){
-      return deployonkovan(deployer,network);
+  } else if (network == 'kovan') {
+    return deployOnKovan(deployer, network);
   }
 
   return deployer.then(() => {
@@ -120,83 +119,81 @@ module.exports = function (deployer, network) {
   })
 }
 
-function deployonkovan(deployer, num) {
-    return deployer.then(() => {
-        return deployer.deploy(PermissionProvider);
-      }).then((err, result) => {
-        return deployer.deploy(Core, PermissionProvider.address);
-      }).then(() =>{
-        return deployer.deploy(StrategyProvider, PermissionProvider.address);
-      }).then(() => {
-        return deployer.deploy(PriceProvider, PermissionProvider.address);
-      }).then(() => {
-        return deployer.deploy(ExtendedStorage, PermissionProvider.address);
-      }).then(() => {
-        return deployer.deploy(OlympusStorage, PermissionProvider.address);
-      }).then(() => {
-        return deployer.deploy(WhitelistProvider, PermissionProvider.address);
-      }).then(() => {
-        return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
-      }).then(() => {
-        return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
-      }).then(() => {
-          kyberNetwrokAddress = '0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50';
-        return deployer.deploy(KyberNetworkExchange, kyberNetwrokAddress, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
-      }).then( async() => {
-        console.info('setPriceProvider');
-        let core = await Core.deployed();
-        let strategy = await StrategyProvider.deployed();
-        let price = await PriceProvider.deployed();
-        let extended = await ExtendedStorage.deployed();
-        let storage = await OlympusStorage.deployed();
-        let whitelist = await WhitelistProvider.deployed();
-        let permission = await PermissionProvider.deployed();
-        let exchange = await ExchangeProvider.deployed();
-        let kyberExchangeInstance = await KyberNetworkExchange.deployed();
-        let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
-        let exchangeProvder = await ExchangeProvider.deployed();
-    
-        console.info(`adding kyberExchange ${kyberExchangeInstance.address}`);
-        await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
-    
-    
-        // Need to send funds to this kyberExchange.
-        console.info(`send 0.1 ether to kyberExchange`);
-        await kyberExchangeInstance.send(web3.toWei(0.1, "ether"));
-    
-    
-    
-        console.info('exchange provider set core');
-        await exchangeProvder.setCore(core.address);
-    
-        console.info('setStrategyProvider');
-        await core.setProvider(0, strategy.address);
-    
-        console.info('setPriceProvider');
-        await core.setProvider(1, price.address);
-    
-        console.info('setExtendedStorageProvider');
-        await core.setProvider(2, exchangeProvder.address);
-    
-        console.info('setExtendedStorageProvider');
-        await storage.setProvider(4, extended.address);
-    
-        console.info('setStorageProvider');
-        await core.setProvider(3, storage.address);
-    
-        console.info('setSWhitelistProvider');
-        await core.setProvider(5, whitelist.address);
-    
-        console.info('SetCore');
-        await permission.adminAdd(Core.address,"core");
+function deployOnKovan(deployer, num) {
+  return deployer.then(() => {
+    return deployer.deploy(PermissionProvider);
+  }).then((err, result) => {
+    return deployer.deploy(Core, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(StrategyProvider, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(PriceProvider, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(ExtendedStorage, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(OlympusStorage, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(WhitelistProvider, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
+  }).then(() => {
+    kyberNetworkAddress = '0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50';
+    return deployer.deploy(KyberNetworkExchange, kyberNetworkAddress, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
+  }).then(async () => {
+    console.info('Setting providers');
+    let core = await Core.deployed();
+    let strategy = await StrategyProvider.deployed();
+    let price = await PriceProvider.deployed();
+    let extended = await ExtendedStorage.deployed();
+    let storage = await OlympusStorage.deployed();
+    let whitelist = await WhitelistProvider.deployed();
+    let permission = await PermissionProvider.deployed();
+    let exchange = await ExchangeProvider.deployed();
+    let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+    let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+    let exchangeProvider = await ExchangeProvider.deployed();
 
-        console.info('add strategy');
-        await strategy.createStrategy('MOT','MOT','MOT',['0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a'],[100],"0x0000000000000000000000000000000000000000000000000000000000000000");
+    console.info(`Adding kyberExchange ${kyberExchangeInstance.address}`);
+    await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
 
-        console.info('add token support');
-        await price.changeTokens(["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a", "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x7dc75361d616f4d5748a9f050d7cbb8ca3781b0b"]);
 
-      }).then(() => {
-        //return deployExchangeProviderWrap(deployer, network);
-      })
+    //需要往这个地址打以太坊作为押金 kyberExchange
+    console.info(`Sending 0.1 Ether to kyberExchange`);
+    await kyberExchangeInstance.send(web3.toWei(0.1, "ether"));
+
+
+
+    console.info('Exchange provider set core');
+    await exchangeProvider.setCore(core.address);
+
+    console.info('setStrategyProvider');
+    await core.setProvider(0, strategy.address);
+
+    console.info('setPriceProvider');
+    await core.setProvider(1, price.address);
+
+    console.info('setExtendedStorageProvider');
+    await core.setProvider(2, exchangeProvider.address);
+
+    console.info('setExtendedStorageProvider');
+    await storage.setProvider(4, extended.address);
+
+    console.info('setStorageProvider');
+    await core.setProvider(3, storage.address);
+
+    console.info('setWhitelistProvider');
+    await core.setProvider(5, whitelist.address);
+
+    console.info('SetCore');
+    await permission.adminAdd(Core.address, "core");
+
+    console.info('add strategy');
+    await strategy.createStrategy('MOT', 'MOT', 'MOT', ['0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a'], [100], "0x0000000000000000000000000000000000000000000000000000000000000000");
+
+    console.info('add token support');
+    await price.changeTokens(["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a", "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b", "0x7dc75361d616f4d5748a9f050d7cbb8ca3781b0b"]);
+
+  });
 }
