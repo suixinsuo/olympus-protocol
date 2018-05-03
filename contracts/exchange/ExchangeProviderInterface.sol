@@ -1,40 +1,13 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.17;
 
-import "../libs/Ownable.sol";
-import "../libs/Provider.sol";
+import "../libs/ERC20.sol";
+import "./ExchangeAdapterBase.sol";
 
-
-contract ExchangeProviderInterface is Provider {
-    event OrderStatusChanged(string orderId, MarketOrderStatus status);
-
-    enum MarketOrderStatus {
-        Pending,
-        Placed,
-        PartiallyCompleted,
-        Completed,
-        Cancelled,
-        Errored
-    }
-
-    struct MarketOrder {
-        address token;
-        uint quantity;
-        uint rate;
-        uint timestamp;
-        uint exchangeId;
-        MarketOrderStatus status;
-    }
-
-    function checkTokenSupported(address tokenAddress) external view returns (bool);
-
-    function getSubOrderStatus(uint orderId, address tokenAddress) external view returns (MarketOrderStatus);
-
-    function cancelOrder(uint orderId) external returns (bool success);
-    // increment statistics
-    // function incrementStatistics(address id, uint amountInEther) external returns (bool success);
-
+contract ExchangeProviderInterface {
     function startPlaceOrder(uint orderId, address deposit) external returns(bool);
-    function addPlaceOrderItem(uint orderId, address token,uint amount,uint rate) external returns(bool);
+    function addPlaceOrderItem(uint orderId, ERC20 token, uint amount, uint rate) external returns(bool);
     function endPlaceOrder(uint orderId) external payable returns(bool);
-
+    function getSubOrderStatus(uint orderId, ERC20 token) external view returns (ExchangeAdapterBase.OrderStatus);
+    function cancelOrder(uint orderId) external returns (bool success);
+    function checkTokenSupported(ERC20 token) external view returns (bool);
 }

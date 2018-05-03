@@ -14,6 +14,7 @@ contract StrategyProviderInterface is Provider {
         uint[] weights;      //total is 100
         uint follower;
         uint amount;
+        bytes32 exchangeId;
     }
 
     Combo[] public comboHub;
@@ -24,28 +25,28 @@ contract StrategyProviderInterface is Provider {
 
    // To core smart contract
     function getStrategyCount() public view returns (uint length);
-    // function getStrategies(address _owner) public view returns (uint[] ids);
-    // function getMyStrategies() public view returns (uint[] ids);
+
     function getStrategyTokenCount(uint strategyId) public view returns (uint length);
     function getStrategyTokenByIndex(uint strategyId, uint tokenIndex) public view returns (address token, uint weight);
 
-    function getStrategy(uint _index) public _checkIndex(_index)  view returns (
-        uint id, // id of the strategy under the same owner.
-        bytes32 name,
-        bytes32 description,
-        bytes32 category,
-        uint follower,
+    function getStrategy(uint _index) public _checkIndex(_index) view returns (
+        uint id,
+        string name,
+        string description,
+        string category,
+        address[] memory tokenAddresses,
+        uint[] memory weights,
+        uint followers,
         uint amount,
         bytes32 exchangeId);
 
-   // To clients
     function createStrategy(
         string name,
         string description,
         string category,
         address[] tokenAddresses,
         uint[] weights,
-        bool isPrivate)
+        bytes32 exchangeId)
         public returns (uint strategyId);
 
     function updateStrategy(
@@ -53,12 +54,12 @@ contract StrategyProviderInterface is Provider {
         string name,
         string description,
         string category,
-        bool isPricate,
         address[] tokenAddresses,
-        uint[] weights)
+        uint[] weights,
+        bytes32 exchangeId)
         public returns (bool success);
 
     // increment statistics
-    // TODO atuh the core contract address
     function incrementStatistics(uint id, uint amountInEther) external returns (bool success);
+    function updateFollower(uint id, bool follow) external returns (bool success);
 }

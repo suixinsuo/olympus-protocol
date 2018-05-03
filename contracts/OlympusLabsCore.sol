@@ -1,5 +1,4 @@
-pragma solidity ^0.4.19;
-// pragma experimental ABIEncoderV2;
+pragma solidity ^0.4.22;
 
 import "./libs/Manageable.sol";
 import "./libs/SafeMath.sol";
@@ -7,28 +6,34 @@ import "./libs/Converter.sol";
 import "./exchange/ExchangeProviderInterface.sol";
 import "./price/PriceProviderInterface.sol";
 import "./strategy/StrategyProviderInterface.sol";
+import "./permission/PermissionProviderInterface.sol";
+import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
 import { TypeDefinitions as TD, Provider } from "./libs/Provider.sol";
+import "./whitelist/WhitelistProviderInterface.sol";
 
 
 contract OlympusLabsCore is Manageable {
     using SafeMath for uint256;
 
     event IndexOrderUpdated (uint orderId);
-
     event Log(string message);
     event LogNumber(uint number);
     event LogAddress(address message);
     event LogAddresses(address[] message);
     event LogNumbers(uint[] numbers);
+    event LOGDEBUG(address);
 
-    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x00b31e55fec5704a9b09cf2c1ba65a276ec7a453b1));
-    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x44F961821Bdb76eB2D8B06193F86f64a4C2bBDb8));
-    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0088c80fcaae06323e17ddcd4ff8e0fbe06d9799e6));
-    mapping (uint => IndexOrder) public orders;
-    mapping(uint => mapping(address => uint)) public orderTokenAmounts;
+    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x0));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x0));
+    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0));
+    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x0));
+    WhitelistProviderInterface internal whitelistProvider;
+    ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
+    // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
+
     uint public feePercentage = 100;
+    uint public MOTDiscount = 25;
     uint public constant DENOMINATOR = 10000;
-    uint public orderId = 1000000;
 
     uint public minimumInWei = 0;
     uint public maximumInWei;
@@ -38,38 +43,26 @@ contract OlympusLabsCore is Manageable {
         _;
     }
 
-    struct IndexOrder {
-        address buyer;
-        uint64 strategyId;
-        uint amountInWei;
-        uint feeInWei;
-        uint dateCreated;
-        uint dateCompleted;
-        address[] tokens;
-        uint[] weights;
-        uint[] estimatedPrices;
-        uint[] dealtPrices;
-        uint[] totalTokenAmounts;
-        uint[] completedTokenAmounts;
-        ExchangeProviderInterface.MarketOrderStatus[] subStatuses;
-        OrderStatus status;
-        bytes32 exchangeId;
+    modifier onlyOwner() {
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE_OWNER()));
+        _;
     }
 
-    enum OrderStatus {
-        New,
-        Placed,
-        PartiallyCompleted,
-        Completed,
-        Cancelled,
-        Errored
+    modifier onlyAllowed(){
+        require(address(whitelistProvider) == 0x0 || whitelistProvider.isAllowed(msg.sender));
+        _;
+    }
+
+    PermissionProviderInterface internal permissionProvider;
+
+    function OlympusLabsCore(address _permissionProvider) public {
+        permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
     function() payable public {
         revert();
     }
 
-    // Forward to Strategy smart contract.
     function getStrategyCount() public view returns (uint length)
     {
         return strategyProvider.getStrategyCount();
@@ -79,23 +72,20 @@ contract OlympusLabsCore is Manageable {
         string name,
         string description,
         string category,
+        address[] memory tokens,
+        uint[] memory weights,
         uint followers,
         uint amount,
-        string exchangeName,
-        uint tokenLength)
+        string exchangeName)
     {
+        bytes32 _exchangeName;
+        uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
+        tokens = new address[](tokenLength);
+        weights = new uint[](tokenLength);
 
-        require(strategyId >= 0);
-
-        bytes32[4] memory bytesTemp;
-
-        (,bytesTemp[0], bytesTemp[1], bytesTemp[2], followers, amount, bytesTemp[3]) = strategyProvider.getStrategy(strategyId);
-        name = Converter.bytes32ToString(bytesTemp[0]);
-        description = Converter.bytes32ToString(bytesTemp[1]);
-        category = Converter.bytes32ToString(bytesTemp[2]);
-        exchangeName = Converter.bytes32ToString(bytesTemp[3]);
-
-        tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
+        (,name,description,category,,,followers,amount,_exchangeName) = strategyProvider.getStrategy(strategyId);
+        (,,,,tokens,weights,,,) = strategyProvider.getStrategy(strategyId);
+        exchangeName = Converter.bytes32ToString(_exchangeName);
     }
 
     function getStrategyTokenAndWeightByIndex(uint strategyId, uint index) public view returns (
@@ -103,8 +93,6 @@ contract OlympusLabsCore is Manageable {
         uint weight
         )
     {
-        require(strategyId >= 0);
-
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
         require(index < tokenLength);
 
@@ -112,27 +100,29 @@ contract OlympusLabsCore is Manageable {
     }
 
     // Forward to Price smart contract.
-    function getPrice(address tokenAddress) public view returns (uint price){
+    function getPrice(address tokenAddress, uint srcQty) public view returns (uint price){
         require(tokenAddress != address(0));
-        return priceProvider.getNewDefaultPrice(tokenAddress);
+        (, price) = priceProvider.getRates(tokenAddress, srcQty);
+        return price;
     }
 
-    function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
-        require(strategyId != 0);
+    function getStrategyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
         uint totalLength;
 
-        (,,,,,totalLength) = getStrategy(strategyId);
-        require(tokenIndex < totalLength);
+        uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
+        require(tokenIndex <= totalLength);
+        address[] memory tokens;
+        uint[] memory weights;
+        (,,,,tokens,weights,,,) = strategyProvider.getStrategy(strategyId);
 
-        address token;
-        (token,) = getStrategyTokenAndWeightByIndex(strategyId, tokenIndex);
+        //Default get the price for one Ether
 
-        return getPrice(token);
+        return getPrice(tokens[tokenIndex], 10**18);
     }
 
-    function setProvider(uint8 _name, address _providerAddress) public onlyOwner returns (bool success) {
-        bool result = super.setProvider(_name, _providerAddress);
-        TD.ProviderType _type = TD.ProviderType(_name);
+    function setProvider(uint8 _id, address _providerAddress) public onlyOwner returns (bool success) {
+        bool result = super.setProvider(_id, _providerAddress);
+        TD.ProviderType _type = TD.ProviderType(_id);
 
         if(_type == TD.ProviderType.Strategy) {
             emit Log("StrategyProvider");
@@ -143,75 +133,69 @@ contract OlympusLabsCore is Manageable {
         } else if(_type == TD.ProviderType.Price) {
             emit Log("PriceProvider");
             priceProvider = PriceProviderInterface(_providerAddress);
+        } else if(_type == TD.ProviderType.Storage) {
+            emit Log("StorageProvider");
+            olympusStorage = OlympusStorageInterface(_providerAddress);
+        } else if(_type == TD.ProviderType.Whitelist) {
+            emit Log("WhitelistProvider");
+            whitelistProvider = WhitelistProviderInterface(_providerAddress);
         } else {
-            emit Log("Unknow provider tyep supplied.");
+            emit Log("Unknown provider type supplied.");
             revert();
         }
 
         return result;
     }
 
-    function buyIndex(uint strategyId, address depositAddress) public payable returns (uint indexOrderId)
+    function buyIndex(uint strategyId, address depositAddress, bool feeIsMOT)
+    public onlyAllowed payable returns (uint indexOrderId)
     {
         require(msg.value > minimumInWei);
         if(maximumInWei > 0){
             require(msg.value <= maximumInWei);
         }
-        string memory exchangeName;
-        (,,,,,exchangeName,) = getStrategy(strategyId);
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
-
         // can't buy an index without tokens.
         require(tokenLength > 0);
+        address[] memory tokens = new address[](tokenLength);
+        uint[] memory weights = new uint[](tokenLength);
+        bytes32 exchangeId;
+
+        (,,,,tokens,weights,,,exchangeId) = strategyProvider.getStrategy(strategyId);
 
         uint[3] memory amounts;
         amounts[0] = msg.value; //uint totalAmount
-        amounts[1] = getFeeAmount(amounts[0]); // fee
-        amounts[2] = amounts[0] - amounts[1]; // actualAmount
+        amounts[1] = getFeeAmount(amounts[0], feeIsMOT); // fee
+        amounts[2] = payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
 
         // create order.
-        indexOrderId = getOrderId();
+        indexOrderId = olympusStorage.addOrderBasicFields(
+          strategyId,
+          msg.sender,
+          amounts[0],
+          amounts[1],
+          exchangeId
+        );
 
         uint[][4] memory subOrderTemp;
         // 0: token amounts
         // 1: estimatedPrices
-        // 2: dealtPrices
-        // 3: completedTokenAmounts
-        bytes32 exchangeId = Converter.stringToBytes32(exchangeName);
-        ExchangeProviderInterface.MarketOrderStatus[] memory statuses;
-
-        address[] memory tokens = new address[](tokenLength);
-        uint[] memory weights = new uint[](tokenLength);
-
         subOrderTemp[0] = initializeArray(tokenLength);
         subOrderTemp[1] = initializeArray(tokenLength);
-        subOrderTemp[2] = initializeArray(tokenLength);
-        subOrderTemp[3] = initializeArray(tokenLength);
-
-        IndexOrder memory order = IndexOrder({
-            strategyId: uint64(strategyId),
-            buyer: msg.sender,
-            amountInWei: amounts[0],
-            feeInWei: amounts[1],
-            status: OrderStatus.New,
-            dateCreated: now,
-            dateCompleted: 0,
-            tokens: tokens,
-            weights: weights,
-            totalTokenAmounts: subOrderTemp[0],
-            estimatedPrices: subOrderTemp[1],
-            dealtPrices: subOrderTemp[2],
-            completedTokenAmounts: subOrderTemp[3],
-            subStatuses: statuses,
-            exchangeId: exchangeId
-        });
 
         emit LogNumber(indexOrderId);
+
+
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
+
         for (uint i = 0; i < tokenLength; i ++ ) {
-            (tokens[i],weights[i]) = getStrategyTokenAndWeightByIndex(strategyId, i);
+
+            // ignore those tokens with zero weight.
+            if(weights[i] <= 0) {
+                continue;
+            }
             // token has to be supported by exchange provider.
-            if(!exchangeProvider.checkTokenSupported(tokens[i])){
+            if(!exchangeProvider.checkTokenSupported(ERC20(tokens[i]))){
                 emit Log("Exchange provider doesn't support");
                 revert();
             }
@@ -222,28 +206,29 @@ contract OlympusLabsCore is Manageable {
                 revert();
             }
 
-            // ignore those tokens with zero weight.
-            if(weights[i] <= 0) {
-                continue;
-            }
-
             subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
-            subOrderTemp[1][i] = getPrice(tokens[i]);
-
-            orderTokenAmounts[indexOrderId][tokens[i]] = subOrderTemp[0][i];
+            subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
 
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
             emit LogNumber(subOrderTemp[1][i]);
-            require(exchangeProvider.addPlaceOrderItem(indexOrderId, tokens[i], subOrderTemp[0][i], subOrderTemp[1][i]));
+            require(exchangeProvider.addPlaceOrderItem(indexOrderId, ERC20(tokens[i]), subOrderTemp[0][i], subOrderTemp[1][i]));
         }
+
+        olympusStorage.addTokenDetails(
+            indexOrderId,
+            tokens, weights, subOrderTemp[0], subOrderTemp[1]
+        );
+
 
         emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
-        orders[indexOrderId] = order;
 
-        // todo: send ethers to the clearing center.
+        strategyProvider.updateFollower(strategyId, true);
+
+        strategyProvider.incrementStatistics(strategyId, msg.value);
+
         return indexOrderId;
     }
 
@@ -251,28 +236,34 @@ contract OlympusLabsCore is Manageable {
         return new uint[](length);
     }
 
+    function resetOrderIdTo(uint _start) external onlyOwner returns (uint) {
+        return olympusStorage.resetOrderIdTo(_start);
+    }
+
     // For app/3rd-party clients to check details / status.
-    function getIndexOrder(uint _orderId) public view returns (
-        uint strategyId,
-        address buyer,
-        OrderStatus status,
-        uint dateCreated,
-        uint dateCompleted,
-        uint amountInWei,
-        address[] tokens,
-        bytes32 exchangeId
-        )
+    function getIndexOrder(uint _orderId) public view returns
+    (uint[])
     {
-        IndexOrder memory order = orders[_orderId];
+        // 0 strategyId
+        // 1 dateCreated
+        // 2 dateCompleted
+        // 3 amountInWei
+        // 4 tokenLength
+        uint[] memory orderPartial = new uint[](5);
+        address[] memory buyer = new address[](1);
+        bytes32[] memory exchangeId = new bytes32[](1);
+        STD.OrderStatus[] memory status = new STD.OrderStatus[](1);
+
+
+        (orderPartial[0], buyer[0], status[0], orderPartial[1]) = olympusStorage.getIndexOrder1(_orderId);
+        (orderPartial[2], orderPartial[3], orderPartial[4], exchangeId[0]) = olympusStorage.getIndexOrder2(_orderId);
+        address[] memory tokens = new address[](orderPartial[4]);
+
+        for(uint i = 0; i < orderPartial[4]; i++){
+            tokens[i] = olympusStorage.getIndexToken(_orderId, i);
+        }
         return (
-            order.strategyId,
-            order.buyer,
-            order.status,
-            order.dateCreated,
-            order.dateCompleted,
-            order.amountInWei,
-            order.tokens,
-            order.exchangeId
+          orderPartial
         );
     }
 
@@ -282,63 +273,50 @@ contract OlympusLabsCore is Manageable {
         uint _actualPrice,
         uint _totalTokenAmount,
         uint _completedQuantity
-    ) external allowProviderOnly(TD.ProviderType.Exchange)  returns (bool success)
+    ) external allowProviderOnly(TD.ProviderType.Exchange) returns (bool success)
     {
-        IndexOrder memory order = orders[_orderId];
-        int index = -1;
-        for(uint i = 0 ; i < order.tokens.length; i ++){
-            if(order.tokens[i] == _tokenAddress) {
-                index = int(i);
-                break;
-            }
+        uint completedTokenAmount;
+        uint tokenIndex;
+        (completedTokenAmount, tokenIndex) = olympusStorage.getOrderTokenCompletedAmount(_orderId,_tokenAddress);
+
+        ExchangeAdapterBase.OrderStatus status;
+
+        if(completedTokenAmount == 0 && _completedQuantity < completedTokenAmount){
+            status = ExchangeAdapterBase.OrderStatus.PartiallyCompleted;
         }
 
-        if(index == -1) {
-            // token not found.
-            revert();
+        if(_completedQuantity >= completedTokenAmount){
+            status = ExchangeAdapterBase.OrderStatus.Completed;
         }
-
-        ExchangeProviderInterface.MarketOrderStatus status;
-
-        if(order.completedTokenAmounts[uint(index)] == 0 && _completedQuantity < order.completedTokenAmounts[uint(index)]){
-            status = ExchangeProviderInterface.MarketOrderStatus.PartiallyCompleted;
-        }
-
-        if(_completedQuantity >= order.completedTokenAmounts[uint(index)]){
-            status = ExchangeProviderInterface.MarketOrderStatus.Completed;
-        }
-
-        order.totalTokenAmounts[uint(index)] = _totalTokenAmount;
-        order.dealtPrices[uint(index)] = _actualPrice;
-        order.completedTokenAmounts[uint(index)] = _completedQuantity;
-
-
-        order.subStatuses[uint(index)];
-
-        orders[_orderId] = order;
+        olympusStorage.updateIndexOrderToken(_orderId, tokenIndex, _totalTokenAmount, _actualPrice, _completedQuantity, status);
 
         return true;
     }
 
-    function updateOrderStatus(uint _orderId, OrderStatus _status)
+    function updateOrderStatus(uint _orderId, STD.OrderStatus _status)
         external allowProviderOnly(TD.ProviderType.Exchange)
         returns (bool success)
     {
-        IndexOrder memory order = orders[_orderId];
-        order.status = _status;
-        orders[_orderId] = order;
+        olympusStorage.updateOrderStatus(_orderId, _status);
 
         return true;
     }
 
     function getSubOrderStatus(uint _orderId, address _tokenAddress)
-        external view returns (ExchangeProviderInterface.MarketOrderStatus)
+        external view returns (ExchangeAdapterBase.OrderStatus)
     {
-        return exchangeProvider.getSubOrderStatus(_orderId, _tokenAddress);
+        return exchangeProvider.getSubOrderStatus(_orderId, ERC20(_tokenAddress));
     }
 
-    function ajustFee(uint _newFeePercentage) public onlyOwner returns (bool success) {
+    function adjustFee(uint _newFeePercentage) public onlyOwner returns (bool success) {
+        require(_newFeePercentage < DENOMINATOR);
         feePercentage = _newFeePercentage;
+        return true;
+    }
+
+    function adjustMOTFeeDiscount(uint _newDiscountPercentage) public onlyOwner returns(bool success) {
+        require(_newDiscountPercentage <= 100);
+        MOTDiscount = _newDiscountPercentage;
         return true;
     }
 
@@ -351,16 +329,40 @@ contract OlympusLabsCore is Manageable {
         return true;
     }
 
-    function resetOrderIdTo(uint _start) public onlyOwner returns (uint) {
-        orderId = _start;
-        return orderId;
+    function getFeeAmount(uint amountInWei, bool feeIsMOT) private view returns (uint){
+        if(feeIsMOT){
+            return ((amountInWei * feePercentage / DENOMINATOR) * (100 - MOTDiscount)) / 100;
+        } else {
+            return amountInWei * feePercentage / DENOMINATOR;
+        }
     }
 
-    function getOrderId() private returns (uint) {
-        return orderId++;
+    function payFee(uint totalValue, uint feeValueInETH, address sender, bool feeIsMOT) private returns (uint){
+        if(feeIsMOT){
+            // Transfer MOT
+            uint MOTPrice;
+            uint allowance = MOT.allowance(sender,address(this));
+            (MOTPrice,) = priceProvider.getRates(address(MOT), feeValueInETH);
+            uint amount = (feeValueInETH * MOTPrice) / 10**18;
+            require(allowance >= amount);
+            require(MOT.transferFrom(sender,address(this),amount));
+            return totalValue; // Use all sent ETH to buy, because fee is paid in MOT
+        } else { // We use ETH as fee, so deduct that from the amount of ETH sent
+            return totalValue - feeValueInETH;
+        }
     }
 
-    function getFeeAmount(uint amountInWei) private view returns (uint){
-        return amountInWei * feePercentage / DENOMINATOR;
+    function withdrawERC20(address receiveAddress,address _tokenAddress) public onlyOwner returns(bool success)
+    {
+        uint _balance = ERC20(_tokenAddress).balanceOf(address(this));
+        require(_tokenAddress != 0x0 && receiveAddress != 0x0 && _balance != 0);
+        require(ERC20(_tokenAddress).transfer(receiveAddress,_balance));
+        return true;
+    }
+    function withdrawETH(address receiveAddress) public onlyOwner returns(bool success)
+    {
+        require(receiveAddress != 0x0);
+        receiveAddress.transfer(this.balance);
+        return true;
     }
 }

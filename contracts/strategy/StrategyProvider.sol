@@ -1,132 +1,180 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
-// import "./StrategyProviderInterface.sol";
-// import "../libs/Converter.sol";
+import "./StrategyProviderInterface.sol";
+import "../permission/PermissionProviderInterface.sol";
+import "../libs/Converter.sol";
 
-// contract StrategyProvider is StrategyProviderInterface {
-//     event StrategyChanged(uint strategyId);
+contract StrategyProvider is StrategyProviderInterface {
+    event StrategyChanged(uint strategyId);
 
-//     mapping(address => uint[]) public comboIndex;
-//     mapping(uint => address) public comboOwner;
+    address owner;
 
-//     event ComboCreated(uint id, string name);
-//     event ComboUpdated(uint id, string name);
+    mapping(address => uint[]) public comboIndex;
+    mapping(uint => address) public comboOwner;
+    mapping(address => bool) public StrategyWhiteList;
+    event ComboCreated(uint id, string name);
+    event ComboUpdated(uint id, string name);
 
-//     function createStrategy(
-//         string _name,
-//         string _description,
-//         string _category,
-//         address[] _tokenAddresses,
-//         uint[] _weights
-//         // bool _isPrivate
-//         )
-//         public returns(uint)
-//     {
+    PermissionProviderInterface internal permissionProvider;
 
-//         address owner = msg.sender;
-//         require(_checkCombo(_tokenAddresses, _weights));
-//         uint comboId = comboIndex[msg.sender].length;
-//         Combo memory myCombo = Combo(comboId, _name, _description, _category, /*_isPrivate,*/ _tokenAddresses, _weights, 0, 0);
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-//         ComboCreated(myCombo.id, myCombo.name);
+    modifier onlyWhitelist() {
+        require(StrategyWhiteList[msg.sender]);
+        _;
+    }
+    modifier onlyCore() {
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
+        _;
+    }
 
-//         uint index = comboHub.push(myCombo) - 1;
+    function changeWhitelist(address[] whitelistAddresses) public onlyOwner {
+        for (uint index = 0; index < whitelistAddresses.length; index++) {
+            if (StrategyWhiteList[whitelistAddresses[index]]) {
+                StrategyWhiteList[whitelistAddresses[index]] = false;
+            } else {
+                StrategyWhiteList[whitelistAddresses[index]] = true;
+            }
+        }
+    }
 
-//         comboOwner[index] = owner;
-//         comboIndex[owner].push(index);
+    function StrategyProvider(address _permissionProvider) public {
+        permissionProvider = PermissionProviderInterface(_permissionProvider);
+        owner = msg.sender;
+        StrategyWhiteList[owner] = true;
+    }
 
-//         return index;
-//     }
-
-//     function updateStrategy(
-//         uint _index,
-//         string _name,
-//         string _description,
-//         string _category,
-//         // bool _isPrivate,
-//         address[] _tokenAddresses,
-//         uint[] _weights)
-//         public returns (bool success)
-//     {
-
-//         require(_checkCombo(_tokenAddresses, _weights));
-//         require(isOwner(_index));
-
-//         comboHub[_index].name = _name;
-//         comboHub[_index].description = _description;
-//         comboHub[_index].category = _category;
-//         // comboHub[_index].isPrivate = _isPrivate;
-//         comboHub[_index].tokenAddresses = _tokenAddresses;
-//         comboHub[_index].weights = _weights;
-
-//         ComboUpdated(comboHub[_index].id, comboHub[_index].name);
-//         return true;
-//     }
-
-//     // function isPrivate(uint _index) public _checkIndex(_index) view returns(bool) {
-//     //     return comboHub[_index].isPrivate;
-//     // }
-
-//     function isOwner(uint _index) public _checkIndex(_index)  view returns(bool) {
-//         return comboOwner[_index] == msg.sender;
-//     }
-
-//     function getMyStrategies() public view returns (uint[]) {
-//         return comboIndex[msg.sender];
-//     }
-
-//     function getStrategies(address _owner) public view returns (uint[]) {
-//         return comboIndex[_owner];
-//     }
-
-//     function getStrategy(uint _index) public _checkIndex(_index) view returns (
-//         uint id,
-//         bytes32 name,
-//         bytes32 description,
-//         bytes32 category,
-//         address indexOwner,
-//         // address[] tokenAddresses,
-//         // uint[] weights,
-//         uint follower,
-//         uint amount)
-//     {
-
-//         if ((isOwner(_index)/* || !isPrivate(_index)*/)) {
-//             Combo storage combo = comboHub[_index];
-//             address owner = comboOwner[_index];
-//             return (
-//                 combo.id,
-//                 Converter.stringToBytes32(combo.name),
-//                 Converter.stringToBytes32(combo.description),
-//                 Converter.stringToBytes32(combo.category),
-//                 owner,
-//                 // combo.tokenAddresses,
-//                 // combo.weights,
-//                 combo.follower,
-//                 combo.amount);
-//         } else {
-//             //TODO
-//             revert();
-//             // address[] memory tokenAddresses;
-//             // uint[] memory weights;
-//             // string memory name;
-//             // string memory description;
-//             // return (0, name,description, tokenAddresses[0], tokenAddresses, weights, false, 0);
-//         }
-//     }
-//     //TODO require core contract address
-//     function incrementStatistics(uint _index, uint _amountInEther) external returns (bool){
-//         comboHub[_index].amount += _amountInEther;
-//     }
-
-//     function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool) {
-//         require(_tokenAddresses.length == _weights.length);
-//         uint total = 0;
-//         for (uint i = 0; i < _weights.length; ++i) {
-//             total += _weights[i];
-//         }
-//         return total == 100;
-//     }
+    function getStrategyCount() public view returns (uint length){
+        return comboHub.length;
+    }
 
 
-// }
+    function getStrategies(address _owner) public view returns (uint[]) {
+        return comboIndex[_owner];
+    }
+
+
+    function getMyStrategies() public view returns (uint[]) {
+        return comboIndex[msg.sender];
+    }
+
+
+    function getStrategyTokenCount(uint _index) public view returns (uint length){
+        return comboHub[_index].tokenAddresses.length;
+    }
+
+
+    function getStrategyTokenByIndex(uint _index, uint tokenIndex) public view returns (address token, uint weight){
+        return (comboHub[_index].tokenAddresses[tokenIndex], comboHub[_index].weights[tokenIndex]);
+    }
+
+
+    function getStrategy(uint _index) public _checkIndex(_index) view returns (
+        uint id,
+        string name,
+        string description,
+        string category,
+        address[] memory tokenAddresses,
+        uint[] memory weights,
+        uint followers,
+        uint amount,
+        bytes32 exchangeId)
+    {
+        uint leng = comboHub[_index].tokenAddresses.length;
+        Combo memory combo = comboHub[_index];
+        tokenAddresses = new address[](leng);
+        weights = new uint[](leng);
+        // address owner = comboOwner[_index];
+        for (uint i = 0; i < leng; i++) {
+            tokenAddresses[i] = comboHub[_index].tokenAddresses[i];
+            weights[i] = comboHub[_index].weights[i];
+        }
+        return (
+            combo.id,
+            combo.name,
+            combo.description,
+            combo.category,
+            tokenAddresses,
+            weights,
+            combo.follower,
+            combo.amount,
+            combo.exchangeId);
+    }
+
+    function createStrategy(
+        string _name,
+        string _description,
+        string _category,
+        address[] _tokenAddresses,
+        uint[] _weights,
+        bytes32 _exchangeId)
+        public onlyWhitelist returns(uint)
+    {
+        address _owner = msg.sender;
+        require(_checkCombo(_tokenAddresses, _weights));
+        uint comboId = comboIndex[msg.sender].length;
+        Combo memory myCombo = Combo(comboId, _name, _description, _category, _tokenAddresses, _weights, 0, 0, _exchangeId);
+
+        emit ComboCreated(myCombo.id, myCombo.name);
+
+        uint index = comboHub.push(myCombo) - 1;
+
+        comboOwner[index] = _owner;
+        comboIndex[_owner].push(index);
+
+        return index;
+    }
+
+    function updateStrategy(
+        uint _index,
+        string _name,
+        string _description,
+        string _category,
+        address[] _tokenAddresses,
+        uint[] _weights,
+        bytes32 _exchangeId)
+        public onlyWhitelist returns  (bool success)
+    {
+        require(_checkCombo(_tokenAddresses, _weights));
+        // require(isOwner(_index));
+        require(msg.sender == comboOwner[_index]);
+
+        comboHub[_index].name = _name;
+        comboHub[_index].description = _description;
+        comboHub[_index].category = _category;
+        comboHub[_index].tokenAddresses = _tokenAddresses;
+        comboHub[_index].weights = _weights;
+        comboHub[_index].exchangeId = _exchangeId;
+
+        emit ComboUpdated(comboHub[_index].id, comboHub[_index].name);
+        return true;
+    }
+
+    function incrementStatistics(uint _index, uint _amountInEther) external  onlyCore returns (bool success){
+        comboHub[_index].amount += _amountInEther;
+        return true;
+    }
+
+    function updateFollower(uint _index, bool follow) external onlyCore returns (bool success){
+        if (follow) {
+            comboHub[_index].follower ++;
+        } else {
+            comboHub[_index].follower --;
+        }
+        return true;
+    }
+
+    function _checkCombo(address[] _tokenAddresses, uint[] _weights) internal pure returns(bool success) {
+        require(_tokenAddresses.length == _weights.length);
+        uint total = 0;
+        for (uint i = 0; i < _weights.length; ++i) {
+            total += _weights[i];
+        }
+        return total == 100;
+    }
+
+
+}
