@@ -12,7 +12,8 @@
     "deploy": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network development' ",
     "deploytestnet": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network kovan' ",
     "linting": "#solhint 'contracts/**/*.sol'",
-    "coverage": "./node_modules/.bin/solidity-coverage"
+    "coverage": "./node_modules/.bin/solidity-coverage",
+    "publish": "./node_modules/.bin/truffle-flattener ./contracts/OlympusLabsCore.sol > ./build/OlympusLabsCore.sol"
   },
   "repository": {
     "type": "git",
@@ -25,7 +26,8 @@
     "run-with-testrpc": "^0.3.0",
     "solhint": "^1.1.10",
     "solidity-coverage": "^0.5.0",
-    "truffle": "^4.1.7"
+    "truffle": "^4.1.7",
+    "truffle-flattener": "^1.2.5"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
