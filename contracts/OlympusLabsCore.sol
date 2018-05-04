@@ -8,7 +8,7 @@ import "./price/PriceProviderInterface.sol";
 import "./strategy/StrategyProviderInterface.sol";
 import "./permission/PermissionProviderInterface.sol";
 import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
-import { TypeDefinitions as TD } from "./libs/Provider.sol";
+import { TypeDefinitions as TD, Provider } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
 
 
