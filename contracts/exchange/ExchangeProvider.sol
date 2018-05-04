@@ -203,9 +203,8 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
 
-        if(!token.transferFrom(owner, deposit, destCompletedAmount)){
-            return false;
-        }
+        token.transferFrom(owner, deposit, destCompletedAmount);
+
         balances[orderId] -= amount;
         //pay eth
         if(!adapter.payOrder.value(amount)(adapterOrderId)){
@@ -247,9 +246,8 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
 
-        if(!token.transferFrom(tokenOwner, order.deposit, destCompletedAmount)){
-            return false;
-        }
+        token.transferFrom(tokenOwner, order.deposit, destCompletedAmount);
+
         balances[orderId] -= srcCompletedAmount;
         payee.transfer(srcCompletedAmount);
 
