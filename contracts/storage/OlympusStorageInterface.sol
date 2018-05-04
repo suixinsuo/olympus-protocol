@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 import "../exchange/ExchangeProviderInterface.sol";
-import { StorageTypeDefinitions as STD } from "./OlympusStorage.sol";
+import { StorageTypeDefinitions as STD } from "./StorageDefinitions.sol";
 
 contract OlympusStorageInterface {
 
