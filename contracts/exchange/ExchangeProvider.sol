@@ -203,7 +203,9 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
 
+        uint currentBalance = token.balanceOf(deposit);
         token.transferFrom(owner, deposit, destCompletedAmount);
+        require(token.balanceOf(deposit) == currentBalance + destCompletedAmount);
 
         balances[orderId] -= amount;
         //pay eth
@@ -246,7 +248,9 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
 
+        uint currentBalance = token.balanceOf(order.deposit);
         token.transferFrom(tokenOwner, order.deposit, destCompletedAmount);
+        require(token.balanceOf(order.deposit) == currentBalance + destCompletedAmount);
 
         balances[orderId] -= srcCompletedAmount;
         payee.transfer(srcCompletedAmount);
