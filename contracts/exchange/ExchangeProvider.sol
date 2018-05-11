@@ -203,10 +203,9 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
 
-        uint currentBalance = token.balanceOf(deposit);
-        token.transferFrom(owner, deposit, destCompletedAmount);
-        require(token.balanceOf(deposit) == currentBalance + destCompletedAmount);
-
+        if(!token.transferFrom(owner, deposit, destCompletedAmount)){
+            return false;
+        }
         balances[orderId] -= amount;
         //pay eth
         if(!adapter.payOrder.value(amount)(adapterOrderId)){
@@ -248,10 +247,9 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
 
-        uint currentBalance = token.balanceOf(order.deposit);
-        token.transferFrom(tokenOwner, order.deposit, destCompletedAmount);
-        require(token.balanceOf(order.deposit) == currentBalance + destCompletedAmount);
-
+        if(!token.transferFrom(tokenOwner, order.deposit, destCompletedAmount)){
+            return false;
+        }
         balances[orderId] -= srcCompletedAmount;
         payee.transfer(srcCompletedAmount);
 
