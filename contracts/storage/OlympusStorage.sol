@@ -7,17 +7,7 @@ import "../libs/Manageable.sol";
 import "../libs/SafeMath.sol";
 import { TypeDefinitions as TD } from "../libs/Provider.sol";
 import "../permission/PermissionProviderInterface.sol";
-
-library StorageTypeDefinitions {
-    enum OrderStatus {
-        New,
-        Placed,
-        PartiallyCompleted,
-        Completed,
-        Cancelled,
-        Errored
-    }
-}
+import "./StorageDefinitions.sol";
 
 contract OlympusStorage is Manageable, OlympusStorageInterface {
     using SafeMath for uint256;
