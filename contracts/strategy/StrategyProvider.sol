@@ -67,6 +67,9 @@ contract StrategyProvider is StrategyProviderInterface {
         return comboHub[_index].tokenAddresses.length;
     }
 
+    function getStrategywhitelist() public view returns (address[] whitelistusers ){
+        return whitelistuser;
+    }
 
     function getStrategyTokenByIndex(uint _index, uint tokenIndex) public view returns (address token, uint weight){
         return (comboHub[_index].tokenAddresses[tokenIndex], comboHub[_index].weights[tokenIndex]);
