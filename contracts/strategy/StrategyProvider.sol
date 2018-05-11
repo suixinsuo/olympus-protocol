@@ -8,7 +8,7 @@ contract StrategyProvider is StrategyProviderInterface {
     event StrategyChanged(uint strategyId);
 
     address owner;
-
+    address[] public whitelistuser;
     mapping(address => uint[]) public comboIndex;
     mapping(uint => address) public comboOwner;
     mapping(address => bool) public StrategyWhiteList;
@@ -32,13 +32,14 @@ contract StrategyProvider is StrategyProviderInterface {
     }
 
     function changeWhitelist(address[] whitelistAddresses) public onlyOwner {
-        for (uint index = 0; index < whitelistAddresses.length; index++) {
-            if (StrategyWhiteList[whitelistAddresses[index]]) {
-                StrategyWhiteList[whitelistAddresses[index]] = false;
-            } else {
-                StrategyWhiteList[whitelistAddresses[index]] = true;
-            }
+        
+        for (var i = 0; i < whitelistuser.length; i++) {
+            StrategyWhiteList[whitelistuser[i]] = false;
         }
+        for (uint index = 0; index < whitelistAddresses.length; index++) {
+            StrategyWhiteList[whitelistAddresses[index]] = true;
+        }
+        whitelistuser = whitelistAddresses;
     }
 
     function StrategyProvider(address _permissionProvider) public {
