@@ -24,5 +24,7 @@ contract StrategyProviderInterface {
         address owner;
     }
     
+
+    
     
 }

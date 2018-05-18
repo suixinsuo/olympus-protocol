@@ -56,5 +56,13 @@ contract TokenizationIndex is TokenizationIndexInterface  {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
-
+    function CreatFUND(
+        string _name,
+        string _description,
+        string _category,
+        address[] _tokenAddresses,
+        uint[] _weights
+    ) public OnlyWhitelist {
+        
+    }
 }
