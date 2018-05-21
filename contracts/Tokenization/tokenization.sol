@@ -9,6 +9,7 @@ import "./fundtemplate.sol"
 contract TokenizationIndex is TokenizationIndexInterface  {
     
     using SafeMath for uint256;
+    
     //Permission Control
     PermissionProviderInterface internal permissionProvider;
 
@@ -26,11 +27,14 @@ contract TokenizationIndex is TokenizationIndexInterface  {
     //event
 
 
+    //status
+    uint Fundlength;
+
 
     //mapping
 
     mapping (uint => address) FundIndex;
-
+    mapping (uint => address) FundOwner;
 
     //function 
 
@@ -44,12 +48,14 @@ contract TokenizationIndex is TokenizationIndexInterface  {
         string _category,
         address[] _tokenAddresses,
         uint[] _weights
-    ) public OnlyWhitelist
+    ) public 
     returns (address FundID) 
     {
         require(_checkLength(_tokenAddresses, _weights));
         Fund  = new fundtemplate(_name,_description,_category,_tokenAddresses,_weights);
-        
+        FundOwner[Fundlength] = tx.origin;
+        fundIndex[Fundlength] = Fund;
+        Fundlength += 1;
         return Fund;
     }
 
