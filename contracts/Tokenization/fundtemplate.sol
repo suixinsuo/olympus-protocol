@@ -37,7 +37,8 @@ contract fundtemplate {
         string _description,
         string _category,
         address[] memory _tokenAddresses,
-        uint[] memory _weights
+        uint[] memory _weights,
+        uint _withdrawcycle
     )public 
     {
         _FUND.id = _id;
@@ -47,7 +48,12 @@ contract fundtemplate {
         _FUND.tokenAddresses = _tokenAddresses;
         _FUND.weights = _weights;
         _FUND.status = FUNDstatus.Active;
+        _FUND.withdrawcycle = _withdrawcycle;
         _FUNDExtend.owner = tx.origin;
-        
+        _FUNDExtend.riskcontrol = true;
     }
+
+
+
+
 }
