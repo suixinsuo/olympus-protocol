@@ -3,7 +3,8 @@ pragma solidity ^0.4.23;
 
 import "../permission/PermissionProviderInterface.sol";
 
-contract fundfundtemplate {
+contract fundtemplate {
+
     enum FUNDstatus { Pause, Close , Active }
     
     struct FUND {
@@ -26,5 +27,23 @@ contract fundfundtemplate {
         address owner;
     }
     
+    FUND          public         _FUND;
+    FUNDExtend    public         _FUNDExtend;
     
+    function fundtemplate(
+        uint _id,
+        string _name,
+        string _description,
+        string _category,
+        address[] memory _tokenAddresses,
+        uint[] memory _weights
+    )public 
+    {
+        _FUND.id = _id;
+        _FUND.name = _name;
+        _FUND.description = _description;
+        _FUND.tokenAddresses = _tokenAddresses;
+        _FUND.weights = _weights;
+        _FUND.status = Active;
+    }
 }
