@@ -33,8 +33,8 @@ contract TokenizationIndex {
 
     //mapping
 
-    mapping (uint => address) FundIndex;
-    mapping (uint => address) FundOwner;
+    mapping (uint => address) public FundIndex;
+    mapping (uint => address) public FundOwner;
 
     //function 
 
@@ -42,7 +42,7 @@ contract TokenizationIndex {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
-    
+
     //Create
     function CreatFUND(
         string _name,
@@ -62,6 +62,8 @@ contract TokenizationIndex {
     }
 
 
+
+
     //Get
     function getFUND(uint _FundIndex) public returns(
         string _name,
@@ -71,6 +73,7 @@ contract TokenizationIndex {
         uint[] memory _weights
     ){
         require(_FundIndex<=Fundlength);
+        
 
     }
 

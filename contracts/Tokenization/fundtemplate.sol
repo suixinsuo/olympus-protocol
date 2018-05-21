@@ -17,7 +17,6 @@ contract fundtemplate {
         uint managementfee;
         uint withdrawcycle; //*hours;
         uint deposit;       //押金
-        bool riskcontrol;   //default true;
         FUNDstatus status;
         //uint follower; 放到另一个 struct 里面
         //uint amount;   放到另一个 struct 里面
@@ -25,6 +24,8 @@ contract fundtemplate {
     }
     struct FUNDExtend {
         address owner;
+        bool riskcontrol;   //default true;
+        
     }
     
     FUND          public         _FUND;
@@ -46,5 +47,7 @@ contract fundtemplate {
         _FUND.tokenAddresses = _tokenAddresses;
         _FUND.weights = _weights;
         _FUND.status = FUNDstatus.Active;
+        _FUNDExtend.owner = tx.origin;
+        
     }
 }
