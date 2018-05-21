@@ -25,7 +25,7 @@ contract TokenizationIndex {
         _;
     }
     //event
-
+    event TransferOwnerShip(uint _fundindex, address _newowner);
 
     //status
     uint Fundlength;
@@ -49,12 +49,13 @@ contract TokenizationIndex {
         string _description,
         string _category,
         address[] memory _tokenAddresses,
-        uint[] memory _weights
+        uint[] memory _weights,
+        uint _withdrawcycle
     ) public 
     returns (address FundID) 
     {
         require(_checkLength(_tokenAddresses, _weights));
-        Fund = new fundtemplate(Fundlength,_name,  _description, _category, _tokenAddresses, _weights);
+        Fund = new fundtemplate(Fundlength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawcycle);
         FundOwner[Fundlength] = tx.origin;
         fundIndex[Fundlength] = Fund;
         Fundlength += 1;
@@ -70,12 +71,23 @@ contract TokenizationIndex {
         string _description,
         string _category,
         address[] memory _tokenAddresses,
-        uint[] memory _weights
+        uint[] memory _weights,
+        uint _withdrawcycle
     ){
         require(_FundIndex<=Fundlength);
-        
+
 
     }
+
+    function transferOwnership(uint _FundIndex, address _newOwner) public returns(bool success){
+        require(FundOwner[_FundIndex] == tx.origin);
+        FundOwner[_FundIndex] = _newOwner;
+        fundtemplate _fundtemplate;
+        _fundtemplate = fundtemplate(FundIndex[_FundIndex]);
+        _fundtemplate.transferOwnership(_newOwner);
+
+    }
+
 
     function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
         require(_tokenAddresses.length == _weights.length);
