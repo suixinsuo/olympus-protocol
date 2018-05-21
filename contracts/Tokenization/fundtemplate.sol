@@ -42,8 +42,9 @@ contract fundtemplate {
         _FUND.id = _id;
         _FUND.name = _name;
         _FUND.description = _description;
+        _FUND.category = _category;
         _FUND.tokenAddresses = _tokenAddresses;
         _FUND.weights = _weights;
-        _FUND.status = Active;
+        _FUND.status = FUNDstatus.Active;
     }
 }
