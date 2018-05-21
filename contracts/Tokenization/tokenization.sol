@@ -2,36 +2,13 @@ pragma solidity ^0.4.23;
 
 import "../permission/PermissionProviderInterface.sol";
 import "./TokenizationIndexInterface.sol";
-
-//白名单控制
-
-// Fund Name
-// 描述
-// 分类
-// tokens / percentage for index
-// Rebalance 频率
-// 购买频率（时间）
-// 购买频率 （数量）
-// 管理费率
-// 管理费提现周期
-// 业绩费率
-// 业绩费提现周期
-// deposit
-// 设置底舱
-// 风控合约接口（验证每笔交易操作，返回true）
-// owner invest amount
-// owner invest 锁定期
-// fund owner
-// Fund Status: Pause、Close、Active
-// transferOwnership
-// withdrawFee
-// operator
-
-
+import "../lib/SafeMath.sol";
+import "./fundtemplate.sol"
 
 
 contract TokenizationIndex is TokenizationIndexInterface  {
     
+    using SafeMath for uint256;
     //Permission Control
     PermissionProviderInterface internal permissionProvider;
 
@@ -42,12 +19,17 @@ contract TokenizationIndex is TokenizationIndexInterface  {
         _;
     }
 
+    modifier onlyWhitelist() {
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
+        _;
+    }
     //event
 
 
 
     //mapping
 
+    mapping (uint => address) FundIndex;
 
 
     //function 
@@ -62,7 +44,21 @@ contract TokenizationIndex is TokenizationIndexInterface  {
         string _category,
         address[] _tokenAddresses,
         uint[] _weights
-    ) public OnlyWhitelist {
+    ) public OnlyWhitelist
+    returns (address FundID) 
+    {
+        require(_checkLength(_tokenAddresses, _weights));
+        Fund  = new fundtemplate(_name,_description,_category,_tokenAddresses,_weights);
         
+        return Fund;
+    }
+
+    function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
+        require(_tokenAddresses.length == _weights.length);
+        uint total = 0;
+        for (uint i = 0; i < _weights.length; ++i) {
+            total += _weights[i];
+        }
+        return (total <= 100&&total > 0);
     }
 }
