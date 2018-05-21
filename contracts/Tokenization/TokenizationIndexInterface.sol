@@ -24,7 +24,6 @@ contract StrategyProviderInterface {
         address owner;
     }
     
-
-    
+    FUND[] public FundHub; 
     
 }
