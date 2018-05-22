@@ -10,7 +10,7 @@ contract fundtemplate {
     PermissionProviderInterface internal permissionProvider;
 
     //enum
-    enum FUNDstatus { Pause, Close , Active };
+    enum FUNDstatus { Pause, Close , Active }
 
     //Modifier
 
@@ -24,7 +24,7 @@ contract fundtemplate {
         _;
     }
     modifier  OnlyTokenizedandFundOwner() {
-        require(msg.sender == owner &&tx.origin == _FUNDExtend.owner);
+        require(msg.sender == owner && tx.origin == _FUNDExtend.owner);
         _;
     }
 
@@ -90,9 +90,16 @@ contract fundtemplate {
 
     function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) public {
         require(balances[msg.sender] >= _value && _value > 0);
-        balances[msg.sender] -= _value;
-        balances[_recipient] += _value;
-        emit Transfer(msg.sender, _recipient, _value);        
+        if (_recipient == owner) {
+            balances[msg.sender] -= _value;
+            totalSupply -= _value;
+            emit Destroy(msg.sender, _value);
+            //GetMoneyBack
+        } else {
+            balances[msg.sender] -= _value;
+            balances[msg.sender] -= _value;
+            emit Transfer(msg.sender, _recipient, _value);
+        } 
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public {
@@ -162,5 +169,9 @@ contract fundtemplate {
 		address indexed _owner,
 		address indexed _spender,
 		uint256 _value
+    );
+    event Destroy(
+        address indexed _spender,
+        uint256 _value
     );
 }
