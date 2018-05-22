@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 import "../libs/SafeMath.sol";
-import "../libs/SimpleERC20Token.sol";
+import "../libs/ERC20Standard.sol";
 import "../permission/PermissionProviderInterface.sol";
 
 contract fundtemplate is SimpleERC20Token {

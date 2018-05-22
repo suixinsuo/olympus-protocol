@@ -4,6 +4,7 @@ import "../permission/PermissionProviderInterface.sol";
 // import "./TokenizationIndexInterface.sol";
 import "../libs/SafeMath.sol";
 import "./fundtemplate.sol";
+import "../libs/fundtemplate.sol";
 
 
 contract TokenizationIndex {
@@ -46,16 +47,24 @@ contract TokenizationIndex {
     //Create
     function CreatFUND(
         string _name,
+        string _symbol,
+        uint _totalSupply,
         string _description,
         string _category,
         address[] memory _tokenAddresses,
         uint[] memory _weights,
         uint _withdrawcycle
     ) public 
-    returns (address FundID) 
+    returns (address FundAddress) 
     {
         require(_checkLength(_tokenAddresses, _weights));
-        Fund = new fundtemplate(Fundlength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawcycle);
+        FundAddress = new fundtemplate(_totalSupply,_symbol,_name);
+
+        //fundtemplate
+        fundtemplate  _newfund;
+        _newfund = fundtemplate(FundAddress);
+        require(_newfund.fundDetail(Fundlength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawcycle));
+
         FundOwner[Fundlength] = tx.origin;
         fundIndex[Fundlength] = Fund;
         Fundlength += 1;
