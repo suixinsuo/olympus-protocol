@@ -1,12 +1,36 @@
 pragma solidity ^0.4.23;
 
-
+import "../libs/SafeMath.sol";
+import "../libs/SimpleERC20Token.sol";
 import "../permission/PermissionProviderInterface.sol";
 
-contract fundtemplate {
+contract fundtemplate is SimpleERC20Token {
 
+    using SafeMath for uint256;
+
+    //enum
     enum FUNDstatus { Pause, Close , Active }
     
+    //constant
+    
+    uint public Managementfee;
+    uint public FundBalance;
+
+    //mapping 
+
+    mapping(address => uint) public balances;
+    
+    //modifier
+    modifier  OnlyFundOwner() {
+        require(tx.origin == _FUNDExtend.owner );
+        _;
+    }
+
+    //event
+
+    event BuyIndex(address buyer, uint _buyindex);
+
+    //struct 
     struct FUND {
         uint id;
         string name;
@@ -47,13 +71,31 @@ contract fundtemplate {
         _FUND.category = _category;
         _FUND.tokenAddresses = _tokenAddresses;
         _FUND.weights = _weights;
+        _FUND.managementfee = 1;
         _FUND.status = FUNDstatus.Active;
         _FUND.withdrawcycle = _withdrawcycle;
         _FUNDExtend.owner = tx.origin;
         _FUNDExtend.riskcontrol = true;
     }
 
+    function buyFund() public payable returns(bool success) {
+        require(_FUND.status == FUNDstatus.Active);
+        require(_FUNDExtend.riskcontrol);
+        
+        Managementfee += msg.value * _FUND.managementfee/100;
+        balances[tx.origin] = msg.value - (msg.value * _FUND.managementfee/100);
+        FundBalance += sg.value - (msg.value * _FUND.managementfee/100);
+        emit BuyIndex(tx.origin, msg.value);
+    }
 
+    //FundBack
+    function () public {}
 
+    //ManageableInterface
 
+    function ChangeFund()public OnlyFundOwner {}
+
+    function transferOwnership(address _newOwner) OnlyFundOwner returns(bool success){
+
+    }
 }
