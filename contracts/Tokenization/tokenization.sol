@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 import "../permission/PermissionProviderInterface.sol";
 // import "./TokenizationIndexInterface.sol";
 import "../libs/SafeMath.sol";
-import "./fundtemplate.sol";
+
 import "../libs/fundtemplate.sol";
 
 
@@ -66,9 +66,10 @@ contract TokenizationIndex {
         require(_newfund.fundDetail(Fundlength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawcycle));
 
         FundOwner[Fundlength] = tx.origin;
-        fundIndex[Fundlength] = Fund;
+        fundIndex[Fundlength] = FundAddress;
         Fundlength += 1;
         return Fund;
+
     }
 
 
@@ -79,12 +80,10 @@ contract TokenizationIndex {
         string _name,
         string _description,
         string _category,
-        address[] memory _tokenAddresses,
-        uint[] memory _weights,
+        address[] _tokenAddresses,
+        uint[] _weights,
         uint _withdrawcycle
     ){
-        require(_FundIndex<=Fundlength);
-
 
     }
 
