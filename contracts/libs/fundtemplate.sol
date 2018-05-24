@@ -57,6 +57,7 @@ contract fundtemplate {
 
     
     //Costant
+    uint    public Managementfee;
     uint256 public totalSupply;
     string public name;
     uint256 public decimals;
@@ -192,25 +193,33 @@ contract fundtemplate {
         PersonalLock[tx.origin].unlocktime = now + _hours * 3600 ;
         emit PersonalLocked(tx.origin,PersonalLock[tx.origin].locktime,_hours);
     } 
-
-/////////////////////////////////druft  
+    //Minimal 0.1 ETH
     function buyFund() public payable returns(bool success) {
+        uint _fee;
+        uint _RealBalance;
         require(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active));
-        require(msg.value >  0 );
-        balances[owner] -= msg.value;
-        balances[tx.origin]  += msg.value;
-        emit BuyFund(tx.origin, msg.value);
+        require(msg.value >  10**17 );
+        (_fee,_RealBalance) = calculatefee(msg.value/10**15);
+        balances[owner] -= _RealBalance;
+        balances[tx.origin] += _RealBalance;
+        Managementfee += _fee;
+        emit Transfer(owner, tx.origin, _RealBalance);
+        emit BuyFund(tx.origin, _RealBalance);
     }
 
-
+    function calculatefee(uint invest) internal view returns(uint _realbalance,uint _managementfee){
+        _managementfee = invest / 100 * _FUND.managementfee;
+        _realbalance = invest - _managementfee;
+    }
+/////////////////////////////////druft 
+    //function withdrawfee() public 
 /////////////////////////////////Event 
 	//Event which is triggered to log all transfers to this contract's event log
     event Transfer(
 		address indexed _from,
 		address indexed _to,
 		uint256 _value
-    );
-		
+    );	
 	//Event which is triggered whenever an owner approves a new allowance for a spender.
     event Approval(
 		address indexed _owner,

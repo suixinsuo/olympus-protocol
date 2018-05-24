@@ -87,16 +87,7 @@ contract TokenizationIndex {
 
     }
 
-    function transferOwnership(uint _FundIndex, address _newOwner) public returns(bool success){
-        require(FundOwner[_FundIndex] == tx.origin);
-        FundOwner[_FundIndex] = _newOwner;
-        fundtemplate _fundtemplate;
-        _fundtemplate = fundtemplate(FundIndex[_FundIndex]);
-        _fundtemplate.transferOwnership(_newOwner);
-
-    }
-
-
+    
     function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
         require(_tokenAddresses.length == _weights.length);
         uint total = 0;
