@@ -28,13 +28,13 @@ interface IAdapterOrderCallback{
 
 interface IExchangeAdapter{
 
-    // 成功返回Adapter自己定义的adapter's order id, 跟orderId无关
+    // returns the order id from the adapter, if success. Nothing to do with the real order Id.
     function placeOrder(bytes32 exchangeId, ERC20 dest, uint amount, uint rate, address deposit) external payable returns(uint adapterOrderId);
 
-    // 订单成功后付款
+    // pay when the order is succeeded.
     function payOrder(uint adapterOrderId) external payable returns(bool);
 
-    // 根据adapter order id, 取消订单
+    // cancel the order according to the orderId of the adatper.
     function cancelOrder(uint adapterOrderId) external returns(bool);
 
     function getOrderStatus(uint adapterOrderId) external view returns(ExchangeAdapterBase.OrderStatus);

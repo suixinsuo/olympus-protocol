@@ -26,14 +26,14 @@ contract('Olympus-Protocol-permission', (accounts) => {
     });
   });
 
-  it("should be able to create a admin.", async () => {
+  it("Should be able to create an admin.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.has.call(accounts[0], ROLE_ADMIN);
 
     assert.equal(result, true);
   })
 
-  it("should be able to create a role.", async () => {
+  it("Should be able to create a role.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminAdd(accounts[1], ROLE_STRATEGY_OWNER, { from: accounts[0] });
     let resHasRole = await instance.has.call(accounts[1], ROLE_STRATEGY_OWNER);
@@ -42,7 +42,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, true);
   })
 
-  it("should be able to remove a role.", async () => {
+  it("Should be able to remove a role.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminRemove(accounts[1], ROLE_STRATEGY_OWNER, { from: accounts[0] });
     let resHasRole = await instance.has.call(accounts[1], ROLE_STRATEGY_OWNER);
@@ -51,14 +51,14 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, false);
   })
 
-  it("should be able to check a role.", async () => {
+  it("Should be able to check a role.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let resHasRole = await instance.has.call(accounts[0], ROLE_ADMIN);
     // Should be true, because we deployed the permission provider, so we are admin.
     assert.equal(resHasRole, true);
   })
 
-  it("should be able to create a core owner.", async () => {
+  it("Should be able to create a core owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminAdd(accounts[1], ROLE_CORE_OWNER, { from: accounts[0] });
 
@@ -68,7 +68,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, true);
   })
 
-  it("should be able to remove a core owner.", async () => {
+  it("Should be able to remove a core owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminRemove(accounts[1], ROLE_CORE_OWNER, { from: accounts[0] });
 
@@ -78,7 +78,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, false);
   })
 
-  it("should be able to create a strategy owner.", async () => {
+  it("Should be able to create a strategy owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminAdd(accounts[1], ROLE_STRATEGY_OWNER, { from: accounts[0] });
 
@@ -88,7 +88,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, true);
   })
 
-  it("should be able to remove a strategy owner.", async () => {
+  it("Should be able to remove a strategy owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminRemove(accounts[1], ROLE_STRATEGY_OWNER, { from: accounts[0] });
 
@@ -98,7 +98,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, false);
   })
 
-  it("should be able to create a price owner.", async () => {
+  it("Should be able to create a price owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminAdd(accounts[2], ROLE_PRICE_OWNER, { from: accounts[0] });
 
@@ -108,7 +108,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, true);
   })
 
-  it("should be able to remove a price owner.", async () => {
+  it("Should be able to remove a price owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminRemove(accounts[2], ROLE_PRICE_OWNER, { from: accounts[0] });
 
@@ -118,7 +118,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, false);
   })
 
-  it("should be able to create a exchange owner.", async () => {
+  it("Should be able to create a exchange owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminAdd(accounts[3], ROLE_EXCHANGE_OWNER, { from: accounts[0] });
 
@@ -128,7 +128,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, true);
   })
 
-  it("should be able to remove a exchange owner.", async () => {
+  it("Should be able to remove a exchange owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminRemove(accounts[3], ROLE_EXCHANGE_OWNER, { from: accounts[0] });
 
@@ -138,7 +138,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, false);
   })
 
-  it("should be able to create a storage owner.", async () => {
+  it("Should be able to create a storage owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminAdd(accounts[4], ROLE_STORAGE_OWNER, { from: accounts[0] });
 
@@ -148,7 +148,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, true);
   })
 
-  it("should be able to remove a storage owner.", async () => {
+  it("Should be able to remove a storage owner.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminRemove(accounts[4], ROLE_STORAGE_OWNER, { from: accounts[0] });
 
@@ -158,7 +158,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, false);
   })
 
-  it("should be able to create a storage.", async () => {
+  it("Should be able to create a storage.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminAdd(accounts[4], ROLE_STORAGE, { from: accounts[0] });
 
@@ -168,7 +168,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     assert.equal(resHasRole, true);
   })
 
-  it("should be able to remove a storage.", async () => {
+  it("Should be able to remove a storage.", async () => {
     let instance = await PermissionProvider.deployed({ from: accounts[0] });
     let result = await instance.adminRemove(accounts[4], ROLE_STORAGE, { from: accounts[0] });
 

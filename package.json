@@ -35,8 +35,8 @@
     "lodash": "^4.17.5",
     "mocha": "^5.0.5",
     "mongodb": "^3.0.7",
-    "node-2fa": "^1.1.2",
     "prompt-sync": "^4.1.6",
+    "solc": "^0.4.23",
     "truffle-hdwallet-provider": "0.0.3",
     "zeppelin-solidity": "^1.8.0"
   }

@@ -45,7 +45,6 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         exchangeManager = IExchangeAdapterManager(_exchangeManager);
     }
 
-    // TODO: Lock
     function setCore(IOlympusLabsCore _core) public onlyExchangeOwner {
         core = _core;
         return;
@@ -190,9 +189,10 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
     function getExpectAmount(uint eth, uint destDecimals, uint rate) internal pure returns(uint){
         return Utils.calcDstQty(eth, 18, destDecimals, rate);
     }
-    
+
     function adapterApprovedImmediately(uint orderId, uint adapterOrderId, IExchangeAdapter adapter, ERC20 token, uint amount, uint rate, uint destCompletedAmount, address deposit) private returns(bool){
 
+        require(balances[orderId] >= amount);
         address owner = address(adapter);
         uint expectAmount = getExpectAmount(amount, token.decimals(), rate);
         if(expectAmount > destCompletedAmount){
@@ -206,7 +206,6 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         if(!token.transferFrom(owner, deposit, destCompletedAmount)){
             return false;
         }
-        require(balances[orderId] >= amount);
         balances[orderId] -= amount;
         //pay eth
         if(!adapter.payOrder.value(amount)(adapterOrderId)){
@@ -216,8 +215,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         return status == EAB.OrderStatus.Completed;
     }
 
-    // owner可以直接是msg.sender
-    // TODO: only to be called by adapters
+    // owner can be msg.sender
     function adapterApproved(uint adapterOrderId, address tokenOwner, address payee, uint srcCompletedAmount, uint destCompletedAmount)
     external onlyAdapter returns (bool)
     {
@@ -227,7 +225,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             return false;
         }
 
-        // TODO: valid order stauts
+        // TODO: validate order status
         MarketOrder memory order = orders[orderId];
         bool found = false;
         for(uint i = 0; i < order.adapterOrdersId.length; i++){
@@ -239,6 +237,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         if (!found){
             return false;
         }
+        require(balances[orderId] >= srcCompletedAmount);
 
         ERC20 token = order.tokens[i];
 
@@ -251,7 +250,6 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         if(!token.transferFrom(tokenOwner, order.deposit, destCompletedAmount)){
             return false;
         }
-        require(balances[orderId] >= srcCompletedAmount);
         balances[orderId] -= srcCompletedAmount;
         payee.transfer(srcCompletedAmount);
 
@@ -317,7 +315,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         MarketOrder memory order = orders[orderId];
         require(order.tokens.length > 0);
 
-        // those order status cann't cancel
+        // These order statuses can't cancel
         require(order.orderStatus != STD.OrderStatus.Completed);
         require(order.orderStatus != STD.OrderStatus.Cancelled);
         require(order.orderStatus != STD.OrderStatus.Errored);
