@@ -212,7 +212,9 @@ contract fundtemplate {
         _realbalance = invest - _managementfee;
     }
 /////////////////////////////////druft 
-    //function withdrawfee() public 
+    function withdrawfee() public OnlyFundOwner {
+        
+    }
 /////////////////////////////////Event 
 	//Event which is triggered to log all transfers to this contract's event log
     event Transfer(
