@@ -5,19 +5,9 @@ import "./OlympusStorageExtendedInterface.sol";
 import "./OlympusStorageInterface.sol";
 import "../libs/Manageable.sol";
 import "../libs/SafeMath.sol";
-import { TypeDefinitions as TD, Provider } from "../libs/Provider.sol";
+import { TypeDefinitions as TD } from "../libs/Provider.sol";
 import "../permission/PermissionProviderInterface.sol";
-
-library StorageTypeDefinitions {
-    enum OrderStatus {
-        New,
-        Placed,
-        PartiallyCompleted,
-        Completed,
-        Cancelled,
-        Errored
-    }
-}
+import "./StorageDefinitions.sol";
 
 contract OlympusStorage is Manageable, OlympusStorageInterface {
     using SafeMath for uint256;
@@ -73,6 +63,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         orders[indexOrderId].estimatedPrices = estimatedPrices;
         orders[indexOrderId].totalTokenAmounts = totalTokenAmounts;
         uint i;
+
         for (i = 0; i < tokens.length; i++ ) {
             orders[indexOrderId].subStatuses.push(ExchangeAdapterBase.OrderStatus.Pending);
             orders[indexOrderId].dealtPrices.push(0);
@@ -143,8 +134,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     }
 
     function getIndexToken(uint _orderId, uint tokenPosition) external view returns (address token){
-        IndexOrder memory order = orders[_orderId];
-        return order.tokens[tokenPosition];
+        return orders[_orderId].tokens[tokenPosition];
     }
 
     function getOrderTokenCompletedAmount(uint _orderId, address _tokenAddress) external view returns (uint, uint){
@@ -164,6 +154,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         }
 
         return (order.completedTokenAmounts[uint(index)], uint(index));
+
     }
 
     function updateIndexOrderToken(
@@ -173,15 +164,11 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         uint _totalTokenAmount,
         uint _completedQuantity,
         ExchangeAdapterBase.OrderStatus _status) external onlyCore {
-        IndexOrder memory order = orders[_orderId];
 
-        order.totalTokenAmounts[_tokenIndex] = _totalTokenAmount;
-        order.dealtPrices[_tokenIndex] = _actualPrice;
-        order.completedTokenAmounts[_tokenIndex] = _completedQuantity;
-        order.subStatuses[_tokenIndex] = _status;
-
-        orders[_orderId] = order;
-
+        orders[_orderId].totalTokenAmounts[_tokenIndex] = _totalTokenAmount;
+        orders[_orderId].dealtPrices[_tokenIndex] = _actualPrice;
+        orders[_orderId].completedTokenAmounts[_tokenIndex] = _completedQuantity;
+        orders[_orderId].subStatuses[_tokenIndex] = _status;
     }
 
     function addCustomField(
@@ -202,10 +189,7 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     function updateOrderStatus(uint _orderId, StorageTypeDefinitions.OrderStatus _status)
         external onlyCore returns (bool success){
 
-        IndexOrder memory order = orders[_orderId];
-        order.status = _status;
-        orders[_orderId] = order;
-
+        orders[_orderId].status = _status;
         return true;
     }
 

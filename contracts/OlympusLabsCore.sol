@@ -1,5 +1,4 @@
 pragma solidity ^0.4.22;
-// pragma experimental ABIEncoderV2;
 
 import "./libs/Manageable.sol";
 import "./libs/SafeMath.sol";
@@ -9,7 +8,7 @@ import "./price/PriceProviderInterface.sol";
 import "./strategy/StrategyProviderInterface.sol";
 import "./permission/PermissionProviderInterface.sol";
 import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
-import { TypeDefinitions as TD, Provider } from "./libs/Provider.sol";
+import { TypeDefinitions as TD } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
 
 
@@ -24,16 +23,16 @@ contract OlympusLabsCore is Manageable {
     event LogNumbers(uint[] numbers);
     event LOGDEBUG(address);
 
-    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x7DC3924b9580981A0ad45A76A58C242eD55c03aF));
-    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x484c2bF3c3B986039D1fd7295F07B428F2ae6FA7));
-    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x3e27CdE65D2CC92F483968efD778d2E8bF047992));
-    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x1a67e378f511a1E5e139bc34FD2955B8D3F45F21));
+    ExchangeProviderInterface internal exchangeProvider =  ExchangeProviderInterface(address(0x0));
+    StrategyProviderInterface internal strategyProvider = StrategyProviderInterface(address(0x0));
+    PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0));
+    OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x0));
     WhitelistProviderInterface internal whitelistProvider;
     ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
     uint public feePercentage = 100;
-    uint public MOTDiscount = 50;
+    uint public MOTDiscount = 25;
     uint public constant DENOMINATOR = 10000;
 
     uint public minimumInWei = 0;
@@ -64,16 +63,15 @@ contract OlympusLabsCore is Manageable {
         revert();
     }
 
-    // Forward to Strategy smart contract.
     function getStrategyCount() public view returns (uint length)
     {
         return strategyProvider.getStrategyCount();
     }
 
     function getStrategy(uint strategyId) public view returns (
-        string  name,
-        string  description,
-        string  category,
+        string name,
+        string description,
+        string category,
         address[] memory tokens,
         uint[] memory weights,
         uint followers,
@@ -82,7 +80,6 @@ contract OlympusLabsCore is Manageable {
     {
         bytes32 _exchangeName;
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
-        require(strategyId >= 0);
         tokens = new address[](tokenLength);
         weights = new uint[](tokenLength);
 
@@ -96,8 +93,6 @@ contract OlympusLabsCore is Manageable {
         uint weight
         )
     {
-        require(strategyId >= 0);
-
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
         require(index < tokenLength);
 
@@ -107,12 +102,11 @@ contract OlympusLabsCore is Manageable {
     // Forward to Price smart contract.
     function getPrice(address tokenAddress, uint srcQty) public view returns (uint price){
         require(tokenAddress != address(0));
-        (, price) = priceProvider.getrates(tokenAddress, srcQty);
+        (, price) = priceProvider.getRates(tokenAddress, srcQty);
         return price;
     }
 
-    function getStragetyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
-        require(strategyId >= 0);
+    function getStrategyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
         uint totalLength;
 
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
@@ -161,20 +155,18 @@ contract OlympusLabsCore is Manageable {
             require(msg.value <= maximumInWei);
         }
         uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
+        // can't buy an index without tokens.
+        require(tokenLength > 0);
         address[] memory tokens = new address[](tokenLength);
         uint[] memory weights = new uint[](tokenLength);
         bytes32 exchangeId;
 
         (,,,,tokens,weights,,,exchangeId) = strategyProvider.getStrategy(strategyId);
 
-        // can't buy an index without tokens.
-        require(tokenLength > 0);
-
         uint[3] memory amounts;
         amounts[0] = msg.value; //uint totalAmount
         amounts[1] = getFeeAmount(amounts[0], feeIsMOT); // fee
         amounts[2] = payFee(amounts[0], amounts[1], msg.sender, feeIsMOT);
-
 
         // create order.
         indexOrderId = olympusStorage.addOrderBasicFields(
@@ -188,13 +180,14 @@ contract OlympusLabsCore is Manageable {
         uint[][4] memory subOrderTemp;
         // 0: token amounts
         // 1: estimatedPrices
-
-
         subOrderTemp[0] = initializeArray(tokenLength);
         subOrderTemp[1] = initializeArray(tokenLength);
 
         emit LogNumber(indexOrderId);
+
+
         require(exchangeProvider.startPlaceOrder(indexOrderId, depositAddress));
+
         for (uint i = 0; i < tokenLength; i ++ ) {
 
             // ignore those tokens with zero weight.
@@ -227,13 +220,15 @@ contract OlympusLabsCore is Manageable {
             tokens, weights, subOrderTemp[0], subOrderTemp[1]
         );
 
+
         emit LogNumber(amounts[2]);
         require((exchangeProvider.endPlaceOrder.value(amounts[2])(indexOrderId)));
 
+
         strategyProvider.updateFollower(strategyId, true);
+
         strategyProvider.incrementStatistics(strategyId, msg.value);
 
-        // todo: send ethers to the clearing center.
         return indexOrderId;
     }
 
@@ -259,7 +254,7 @@ contract OlympusLabsCore is Manageable {
         bytes32[] memory exchangeId = new bytes32[](1);
         STD.OrderStatus[] memory status = new STD.OrderStatus[](1);
 
-        // Stack too deep, so should be split up
+
         (orderPartial[0], buyer[0], status[0], orderPartial[1]) = olympusStorage.getIndexOrder1(_orderId);
         (orderPartial[2], orderPartial[3], orderPartial[4], exchangeId[0]) = olympusStorage.getIndexOrder2(_orderId);
         address[] memory tokens = new address[](orderPartial[4]);
@@ -314,12 +309,13 @@ contract OlympusLabsCore is Manageable {
     }
 
     function adjustFee(uint _newFeePercentage) public onlyOwner returns (bool success) {
+        require(_newFeePercentage < DENOMINATOR);
         feePercentage = _newFeePercentage;
         return true;
     }
 
     function adjustMOTFeeDiscount(uint _newDiscountPercentage) public onlyOwner returns(bool success) {
-        require(_newDiscountPercentage < 100);
+        require(_newDiscountPercentage <= 100);
         MOTDiscount = _newDiscountPercentage;
         return true;
     }
@@ -344,12 +340,10 @@ contract OlympusLabsCore is Manageable {
     function payFee(uint totalValue, uint feeValueInETH, address sender, bool feeIsMOT) private returns (uint){
         if(feeIsMOT){
             // Transfer MOT
-            uint amount;
             uint MOTPrice;
             uint allowance = MOT.allowance(sender,address(this));
-
-            (MOTPrice,) = priceProvider.getrates(address(MOT), feeValueInETH);
-            amount = (feeValueInETH * MOTPrice) / 10**18;
+            (MOTPrice,) = priceProvider.getRates(address(MOT), feeValueInETH);
+            uint amount = (feeValueInETH * MOTPrice) / 10**18;
             require(allowance >= amount);
             require(MOT.transferFrom(sender,address(this),amount));
             return totalValue; // Use all sent ETH to buy, because fee is paid in MOT
@@ -358,17 +352,17 @@ contract OlympusLabsCore is Manageable {
         }
     }
 
-    function withdrawERC20(address reciveaddress,address _tokenaddress) public onlyOwner returns(bool success)
+    function withdrawERC20(address receiveAddress,address _tokenAddress) public onlyOwner returns(bool success)
     {
-        uint _balance = ERC20(_tokenaddress).balanceOf(address(this));
-        require(_tokenaddress != 0x0 && reciveaddress != 0x0 && _balance != 0);
-        require(ERC20(_tokenaddress).transfer(reciveaddress,_balance));
+        uint _balance = ERC20(_tokenAddress).balanceOf(address(this));
+        require(_tokenAddress != 0x0 && receiveAddress != 0x0 && _balance != 0);
+        require(ERC20(_tokenAddress).transfer(receiveAddress,_balance));
         return true;
     }
-    function withdrawETH(address reciveaddress) public onlyOwner returns(bool success)
+    function withdrawETH(address receiveAddress) public onlyOwner returns(bool success)
     {
-        require(reciveaddress != 0x0);
-        reciveaddress.transfer(this.balance);
+        require(receiveAddress != 0x0);
+        receiveAddress.transfer(this.balance);
         return true;
     }
 }

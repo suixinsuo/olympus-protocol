@@ -3,13 +3,12 @@ pragma solidity ^0.4.22;
 import "./StrategyProviderInterface.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "../libs/Converter.sol";
-import { TypeDefinitions as TD } from "../libs/Provider.sol";
 
 contract StrategyProvider is StrategyProviderInterface {
     event StrategyChanged(uint strategyId);
 
     address owner;
-
+    address[] public whitelistuser;
     mapping(address => uint[]) public comboIndex;
     mapping(uint => address) public comboOwner;
     mapping(address => bool) public StrategyWhiteList;
@@ -17,12 +16,6 @@ contract StrategyProvider is StrategyProviderInterface {
     event ComboUpdated(uint id, string name);
 
     PermissionProviderInterface internal permissionProvider;
-    address coreAddress;
-
-    // modifier onlyCore() {
-    //     require(msg.sender == coreAddress);
-    //     _;
-    // }
 
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -38,19 +31,19 @@ contract StrategyProvider is StrategyProviderInterface {
         _;
     }
 
-    function changeWhitelist(address[] whitelistaddress) public onlyOwner {
-        for (uint index = 0; index < whitelistaddress.length; index++) {
-            if (StrategyWhiteList[whitelistaddress[index]]) {
-                StrategyWhiteList[whitelistaddress[index]] = false;
-            } else {
-                StrategyWhiteList[whitelistaddress[index]] = true;
-            }
+    function changeWhitelist(address[] whitelistAddresses) public onlyOwner {
+        
+        for (var i = 0; i < whitelistuser.length; i++) {
+            StrategyWhiteList[whitelistuser[i]] = false;
         }
+        for (uint index = 0; index < whitelistAddresses.length; index++) {
+            StrategyWhiteList[whitelistAddresses[index]] = true;
+        }
+        whitelistuser = whitelistAddresses;
     }
 
-    function StrategyProvider(address _permissionProvider, address _core) public {
+    function StrategyProvider(address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
-        coreAddress = _core;
         owner = msg.sender;
         StrategyWhiteList[owner] = true;
     }
@@ -74,6 +67,9 @@ contract StrategyProvider is StrategyProviderInterface {
         return comboHub[_index].tokenAddresses.length;
     }
 
+    function getStrategywhitelist() public view returns (address[] whitelistusers ){
+        return whitelistuser;
+    }
 
     function getStrategyTokenByIndex(uint _index, uint tokenIndex) public view returns (address token, uint weight){
         return (comboHub[_index].tokenAddresses[tokenIndex], comboHub[_index].weights[tokenIndex]);
@@ -87,7 +83,7 @@ contract StrategyProvider is StrategyProviderInterface {
         string category,
         address[] memory tokenAddresses,
         uint[] memory weights,
-        uint follower,
+        uint followers,
         uint amount,
         bytes32 exchangeId)
     {
@@ -144,7 +140,7 @@ contract StrategyProvider is StrategyProviderInterface {
         address[] _tokenAddresses,
         uint[] _weights,
         bytes32 _exchangeId)
-        public returns (bool success)
+        public onlyWhitelist returns  (bool success)
     {
         require(_checkCombo(_tokenAddresses, _weights));
         // require(isOwner(_index));
@@ -161,12 +157,11 @@ contract StrategyProvider is StrategyProviderInterface {
         return true;
     }
 
-    //TODO require core contract address
     function incrementStatistics(uint _index, uint _amountInEther) external  onlyCore returns (bool success){
         comboHub[_index].amount += _amountInEther;
         return true;
     }
-    //TODO require core contract address
+
     function updateFollower(uint _index, bool follow) external onlyCore returns (bool success){
         if (follow) {
             comboHub[_index].follower ++;
