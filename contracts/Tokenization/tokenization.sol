@@ -80,14 +80,14 @@ contract TokenizationIndex {
         string _name,
         string _description,
         string _category,
-        address[] _tokenAddresses,
+110        address[] _tokenAddresses,
         uint[] _weights,
         uint _withdrawcycle
     ){
 
     }
 
-    
+
     function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
         require(_tokenAddresses.length == _weights.length);
         uint total = 0;
