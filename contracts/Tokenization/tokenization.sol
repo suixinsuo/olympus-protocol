@@ -5,7 +5,7 @@ import "../libs/SafeMath.sol";
 import "../libs/fundtemplate.sol";
 
 
-contract TokenizationIndex {
+contract Tokenization {
     
     using SafeMath for uint256;
     
