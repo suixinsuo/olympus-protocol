@@ -15,7 +15,7 @@ contract fundtemplate {
     //Modifier
 
     modifier  OnlyFundOwner() {
-        require(tx.origin == _FUNDExtend.owner );
+        require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
         _;
     }
 
@@ -29,7 +29,7 @@ contract fundtemplate {
     }
 
     //struct 
-    struct Lock{
+    struct _Lock{
         uint locktime;
         uint unlocktime;
     }
@@ -153,7 +153,6 @@ contract fundtemplate {
     }
 
     function getFundDetail() public view returns(
-        uint _id,
         address _owner,
         string _name,
         string _symbol,
@@ -161,11 +160,9 @@ contract fundtemplate {
         string _description,
         string _category,
         address[]  _tokenAddresses,
-        uint[]  _weights,
-        uint _withdrawcycle
+        uint[]  _weights
     )   
     {
-        _id = _FUND.id;
         _name = _FUND.name;
         _owner = _FUNDExtend.owner;
         _totalSupply = totalSupply;
@@ -173,10 +170,9 @@ contract fundtemplate {
         _category = _FUND.category;
         _tokenAddresses = _FUND.tokenAddresses;
         _weights = _FUND.weights;
-        _withdrawcycle = _FUND.withdrawcycle;
     }    
 
-    function getFundDetail() public view returns(bool success) {
+    function getFundKYCDetail() public view returns(bool success) {
         if(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active)){
             return true;
         }
@@ -184,7 +180,7 @@ contract fundtemplate {
 
 /////////////////////////////////mapping 
 
-    mapping (address => Lock ) PersonalLock;
+    mapping (address => _Lock ) PersonalLock;
 
     function Lock (uint _hours) public returns(bool success){
         require(balances[tx.origin]> 0 );
@@ -213,7 +209,8 @@ contract fundtemplate {
     }
 /////////////////////////////////druft 
     function withdrawfee() public OnlyFundOwner {
-        
+        require(Managementfee > 0 );
+        _FUNDExtend.owner.transfer(Managementfee);
     }
 /////////////////////////////////Event 
 	//Event which is triggered to log all transfers to this contract's event log

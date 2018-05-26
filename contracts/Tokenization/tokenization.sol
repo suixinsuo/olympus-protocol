@@ -1,9 +1,7 @@
 pragma solidity ^0.4.23;
 
 import "../permission/PermissionProviderInterface.sol";
-// import "./TokenizationIndexInterface.sol";
 import "../libs/SafeMath.sol";
-
 import "../libs/fundtemplate.sol";
 
 
@@ -66,27 +64,12 @@ contract TokenizationIndex {
         require(_newfund.fundDetail(Fundlength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawcycle));
 
         FundOwner[Fundlength] = tx.origin;
-        fundIndex[Fundlength] = FundAddress;
+        FundIndex[Fundlength] = FundAddress;
         Fundlength += 1;
-        return Fund;
-
+        return FundAddress;
     }
-
-
-
 
     //Get
-    function getFUND(uint _FundIndex) public returns(
-        string _name,
-        string _description,
-        string _category,
-110        address[] _tokenAddresses,
-        uint[] _weights,
-        uint _withdrawcycle
-    ){
-
-    }
-
 
     function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
         require(_tokenAddresses.length == _weights.length);
