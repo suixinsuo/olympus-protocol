@@ -11,7 +11,8 @@ library TypeDefinitions {
         Exchange,
         Storage,
         ExtendedStorage,
-        Whitelist
+        Whitelist,
+        Tokenization
     }
 
     struct ProviderStatistic {
