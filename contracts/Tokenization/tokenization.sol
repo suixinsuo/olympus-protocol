@@ -70,6 +70,29 @@ contract TokenizationIndex {
     }
 
     //Get
+    function getFundDetail(uint _fundID) public view returns(
+        address _owner,
+        string _name,
+        string _symbol,
+        uint _totalSupply,
+        string _description,
+        string _category,
+        address[]  _tokenAddresses,
+        uint[]  _weights
+    ){
+        fundtemplate  _newfund;
+        _newfund = fundtemplate(FundIndex[_fundID]);
+        (       ,
+            _name,
+            _symbol,
+            _totalSupply,
+            _description,
+            _category,
+            _tokenAddresses,
+            _weights
+        )  = _newfund.getFundDetail();
+        _owner = FundOwner[_fundID];
+    }
 
     function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
         require(_tokenAddresses.length == _weights.length);
