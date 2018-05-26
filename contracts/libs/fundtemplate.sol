@@ -195,7 +195,7 @@ contract fundtemplate {
         uint _RealBalance;
         require(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active));
         require(msg.value >  10**17 );
-        (_fee,_RealBalance) = calculatefee(msg.value/10**15);
+        (_RealBalance,_fee) = calculatefee(msg.value/10**15);
         balances[owner] -= _RealBalance;
         balances[tx.origin] += _RealBalance;
         Managementfee += _fee;
