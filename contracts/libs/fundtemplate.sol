@@ -164,6 +164,7 @@ contract fundtemplate {
     )   
     {
         _name = _FUND.name;
+        _symbol = symbol;
         _owner = _FUNDExtend.owner;
         _totalSupply = totalSupply;
         _description = _FUND.description;
