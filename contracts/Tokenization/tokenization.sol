@@ -1,6 +1,4 @@
 pragma solidity ^0.4.23;
-
-import "../permission/PermissionProviderInterface.sol";
 import "../libs/SafeMath.sol";
 import "../libs/fundtemplate.sol";
 
