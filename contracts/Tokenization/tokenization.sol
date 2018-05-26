@@ -94,6 +94,15 @@ contract TokenizationIndex {
         _owner = FundOwner[_fundID];
     }
 
+
+    function getFundOwner(uint _fundid) public view returns(address _fundowner) {
+        return FundOwner[_fundid];
+    }
+
+    function getFundAddress(uint _fundid) public view returns(address _fundaddress) {
+        return FundIndex[_fundid];
+    }
+
     function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
         require(_tokenAddresses.length == _weights.length);
         uint total = 0;
