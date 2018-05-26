@@ -196,12 +196,12 @@ contract fundtemplate {
         uint _RealBalance;
         require(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active));
         require(msg.value >  10**17 );
-        (_RealBalance,_fee) = calculatefee(msg.value/10**15);
-        balances[owner] -= _RealBalance;
-        balances[tx.origin] += _RealBalance;
+        (_RealBalance,_fee) = calculatefee(msg.value);
+        balances[owner] -= _RealBalance/10**15;
+        balances[tx.origin] += _RealBalance/10**15;
         Managementfee += _fee;
-        emit Transfer(owner, tx.origin, _RealBalance);
-        emit BuyFund(tx.origin, _RealBalance);
+        emit Transfer(owner, tx.origin, _RealBalance/10**15);
+        emit BuyFund(tx.origin, _RealBalance/10**15);
     }
 
     function calculatefee(uint invest) internal view returns(uint _realbalance,uint _managementfee){
