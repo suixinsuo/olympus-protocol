@@ -3,7 +3,7 @@ import "../libs/SafeMath.sol";
 import "../libs/fundtemplate.sol";
 
 
-contract Tokenization {
+contract TokenizationProvider {
     
     using SafeMath for uint256;
     
