@@ -141,8 +141,8 @@ contract OlympusLabsCore is Manageable {
         } else if(_type == TD.ProviderType.Whitelist) {
             emit Log("WhitelistProvider");
             whitelistProvider = WhitelistProviderInterface(_providerAddress);
-        } else if(_type == TD.ProviderType.Whitelist) {
-            emit Log("WhitelistProvider");
+        } else if(_type == TD.ProviderType.TokenizationProvider) {
+            emit Log("TokenizationProvider");
             _Tokenization = TokenizationProvider(_providerAddress);
         } else {
             emit Log("Unknown provider type supplied.");

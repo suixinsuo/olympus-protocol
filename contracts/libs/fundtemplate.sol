@@ -191,9 +191,10 @@ contract fundtemplate {
         emit PersonalLocked(tx.origin,PersonalLock[tx.origin].locktime,_hours);
     } 
     //Minimal 0.1 ETH
-    function buyFund() public payable returns(bool success) {
+    function () public payable returns(bool success) {
         uint _fee;
         uint _RealBalance;
+        require(getFundKYCDetail());
         require(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active));
         require(msg.value >=  10**17 );
         (_RealBalance,_fee) = calculatefee(msg.value);

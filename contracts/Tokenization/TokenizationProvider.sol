@@ -18,7 +18,7 @@ contract TokenizationProvider {
     }
 
     modifier onlyWhitelist() {
-        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
         _;
     }
     //event
@@ -51,6 +51,7 @@ contract TokenizationProvider {
         uint[] memory _weights,
         uint _withdrawcycle
     ) public 
+    onlyWhitelist
     returns (address FundAddress) 
     {
         require(_checkLength(_tokenAddresses, _weights));
