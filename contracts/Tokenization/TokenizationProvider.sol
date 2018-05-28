@@ -18,7 +18,8 @@ contract TokenizationProvider {
     }
 
     modifier onlyWhitelist() {
-        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
+        //require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
         _;
     }
     //event

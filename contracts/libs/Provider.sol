@@ -12,7 +12,7 @@ library TypeDefinitions {
         Storage,
         ExtendedStorage,
         Whitelist,
-        Tokenization
+        TokenizationProvider
     }
 
     struct ProviderStatistic {
