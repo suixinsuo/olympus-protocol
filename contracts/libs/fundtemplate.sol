@@ -203,6 +203,7 @@ contract fundtemplate {
         Managementfee += _fee;
         emit Transfer(owner, tx.origin, _RealBalance/10**15);
         emit BuyFund(tx.origin, _RealBalance/10**15);
+        return true;
     }
 
     function calculatefee(uint invest) internal view returns(uint _realbalance,uint _managementfee){
