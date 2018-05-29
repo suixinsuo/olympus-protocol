@@ -51,7 +51,8 @@ contract FundTemplate {
     }
     struct FUNDExtend {
         address owner;
-        bool riskcontrol;   //default true;
+        bool riskControl;   //default true;
+        bool limit;
         
     }
 
@@ -77,11 +78,18 @@ contract FundTemplate {
         symbol = _symbol;
         name = _name;
         owner = msg.sender;
-        totalSupply = _totalSupply * (10 ** decimals);
-        balances[msg.sender] = totalSupply;
         _FUNDExtend.owner = tx.origin;
         _FUND.status = FUNDstatus.Pause;
-
+        //totalSupply = _totalSupply * (10 ** decimals);
+        //balances[msg.sender] = totalSupply;
+        if(_totalSupply == 0 ){
+            totalSupply = 0;
+            _FUNDExtend.limit = false;
+        }else{
+            _FUNDExtend.limit = true;
+            balances[msg.sender] = totalSupply;
+            totalSupply = _totalSupply * (10 ** decimals);
+        }
     }
 	//Fix for short address attack against ERC20
     modifier onlyPayloadSize(uint size) {
@@ -96,7 +104,7 @@ contract FundTemplate {
     function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) public {
         require(balances[msg.sender] >= _value && _value > 0);
         require(PersonalLock[msg.sender].unlocktime < now );
-        require(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active));
+        require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
         if (_recipient == owner) {
             balances[msg.sender] -= _value;
             totalSupply -= _value;
@@ -111,7 +119,7 @@ contract FundTemplate {
 
     function transferFrom(address _from, address _to, uint256 _value) public {
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);
-        require(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active));
+        require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
         require(PersonalLock[_from].unlocktime < now );
         balances[_to] += _value;
         balances[_from] -= _value;
@@ -148,7 +156,7 @@ contract FundTemplate {
         _FUND.managementfee = 1;
         _FUND.status = FUNDstatus.Active;
         _FUND.withdrawcycle = _withdrawCycle;
-        _FUNDExtend.riskcontrol = true;
+        _FUNDExtend.riskControl = true;
         return true;
     }
 
@@ -174,7 +182,7 @@ contract FundTemplate {
     }    
 
     function getFundKYCDetail() public view returns(bool success) {
-        if(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active)){
+        if(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active)){
             return true;
         }
     }
@@ -195,12 +203,18 @@ contract FundTemplate {
         uint _fee;
         uint _RealBalance;
         require(getFundKYCDetail());
-        require(_FUNDExtend.riskcontrol&&(_FUND.status == FUNDstatus.Active));
+        require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
         require(msg.value >=  10**17 );
         (_RealBalance,_fee) = calculatefee(msg.value);
-        balances[owner] -= _RealBalance/10**15;
-        balances[tx.origin] += _RealBalance/10**15;
         Managementfee += _fee;
+        if(_FUNDExtend.limit){
+            totalSupply += _RealBalance/10**15;
+            balances[tx.origin] += _RealBalance/10**15;
+        }else{
+            require((balances[owner] - _RealBalance/10**15) > 0);
+            balances[owner] -= _RealBalance/10**15;
+            balances[tx.origin] += _RealBalance/10**15;
+        }
         emit Transfer(owner, tx.origin, _RealBalance/10**15);
         emit BuyFund(tx.origin, _RealBalance/10**15);
     }
