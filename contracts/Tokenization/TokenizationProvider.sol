@@ -50,7 +50,8 @@ contract TokenizationProvider {
         string _category,
         address[] memory _tokenAddresses,
         uint[] memory _weights,
-        uint _withdrawCycle
+        uint _withdrawCycle,
+        uint _lockTime
     ) public 
     onlyWhitelist
     returns (address FundAddress) 
@@ -62,10 +63,11 @@ contract TokenizationProvider {
         FundTemplate  _newFund;
         _newFund = FundTemplate(FundAddress);
         require(_newFund.createFundDetails(fundLength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawCycle));
-
+        require(_newFund.lockFund(_lockTime));
         fundOwner[fundLength] = tx.origin;
         fundIndex[fundLength] = FundAddress;
         fundLength += 1;
+
         return FundAddress;
     }
 
@@ -102,6 +104,7 @@ contract TokenizationProvider {
     function getFundAddress(uint _fundId) public view returns(address _fundAddress) {
         return fundIndex[_fundId];
     }
+
 
     function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
         require(_tokenAddresses.length == _weights.length);
