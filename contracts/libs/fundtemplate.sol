@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 import "../libs/SafeMath.sol";
 import "../permission/PermissionProviderInterface.sol";
 
-contract fundtemplate {
+contract FundTemplate {
 
     using SafeMath for uint256;
 
@@ -14,16 +14,16 @@ contract fundtemplate {
 
     //Modifier
 
-    modifier  OnlyFundOwner() {
+    modifier  onlyFundOwner() {
         require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
         _;
     }
 
-    modifier  OnlyTokenizedOwner() {
+    modifier  onlyTokenizedOwner() {
         require(msg.sender == owner );
         _;
     }
-    modifier  OnlyTokenizedandFundOwner() {
+    modifier  onlyTokenizedAndFundOwner() {
         require(msg.sender == owner && tx.origin == _FUNDExtend.owner);
         _;
     }
@@ -72,7 +72,7 @@ contract fundtemplate {
     mapping (address => mapping (address => uint256)) allowed;
 
 /////////////////////////////////ERC20 Standard
-    function fundtemplate(uint256 _totalSupply, string _symbol, string _name) public {
+    function FundTemplate(uint256 _totalSupply, string _symbol, string _name) public {
         decimals = 3;
         symbol = _symbol;
         name = _name;
@@ -129,15 +129,15 @@ contract fundtemplate {
     }
 
 /////////////////////////////////Tokenlized
-    function fundDetail(
+    function createFundDetails(
         uint _id,
         string _name,
         string _description,
         string _category,
         address[] memory _tokenAddresses,
         uint[] memory _weights,
-        uint _withdrawcycle
-    )public OnlyTokenizedandFundOwner returns(bool success)
+        uint _withdrawCycle
+    )public onlyTokenizedAndFundOwner returns(bool success)
     {
         _FUND.id = _id;
         _FUND.name = _name;
@@ -147,12 +147,12 @@ contract fundtemplate {
         _FUND.weights = _weights;
         _FUND.managementfee = 1;
         _FUND.status = FUNDstatus.Active;
-        _FUND.withdrawcycle = _withdrawcycle;
+        _FUND.withdrawcycle = _withdrawCycle;
         _FUNDExtend.riskcontrol = true;
         return true;
     }
 
-    function getFundDetail() public view returns(
+    function getFundDetails() public view returns(
         address _owner,
         string _name,
         string _symbol,
@@ -210,7 +210,7 @@ contract fundtemplate {
         _realbalance = invest - _managementfee;
     }
 /////////////////////////////////druft 
-    function withdrawfee() public OnlyFundOwner {
+    function withdrawfee() public onlyFundOwner {
         require(Managementfee > 0 );
         _FUNDExtend.owner.transfer(Managementfee);
     }

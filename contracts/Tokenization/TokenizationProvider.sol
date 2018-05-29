@@ -1,6 +1,6 @@
 pragma solidity ^0.4.23;
 import "../libs/SafeMath.sol";
-import "../libs/fundtemplate.sol";
+import "../libs/FundTemplate.sol";
 
 
 contract TokenizationProvider {
@@ -23,16 +23,16 @@ contract TokenizationProvider {
         _;
     }
     //event
-    event TransferOwnerShip(uint _fundindex, address _newowner);
+    event TransferOwnership(uint _fundIndex, address _newOwner);
 
     //status
-    uint Fundlength;
+    uint fundLength;
 
 
     //mapping
 
-    mapping (uint => address) public FundIndex;
-    mapping (uint => address) public FundOwner;
+    mapping (uint => address) public fundIndex;
+    mapping (uint => address) public fundOwner;
 
     //function 
 
@@ -42,7 +42,7 @@ contract TokenizationProvider {
 
 
     //Create
-    function CreatFUND(
+    function createFund(
         string _name,
         string _symbol,
         uint _totalSupply,
@@ -50,27 +50,27 @@ contract TokenizationProvider {
         string _category,
         address[] memory _tokenAddresses,
         uint[] memory _weights,
-        uint _withdrawcycle
+        uint _withdrawCycle
     ) public 
     onlyWhitelist
     returns (address FundAddress) 
     {
         require(_checkLength(_tokenAddresses, _weights));
-        FundAddress = new fundtemplate(_totalSupply,_symbol,_name);
+        FundAddress = new FundTemplate(_totalSupply,_symbol,_name);
 
-        //fundtemplate
-        fundtemplate  _newfund;
-        _newfund = fundtemplate(FundAddress);
-        require(_newfund.fundDetail(Fundlength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawcycle));
+        //FundTemplate
+        FundTemplate  _newFund;
+        _newFund = FundTemplate(FundAddress);
+        require(_newFund.createFundDetails(fundLength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawCycle));
 
-        FundOwner[Fundlength] = tx.origin;
-        FundIndex[Fundlength] = FundAddress;
-        Fundlength += 1;
+        fundOwner[fundLength] = tx.origin;
+        fundIndex[fundLength] = FundAddress;
+        fundLength += 1;
         return FundAddress;
     }
 
     //Get
-    function getFundDetail(uint _fundID) public view returns(
+    function getFundDetails(uint _fundId) public view returns(
         address _owner,
         string _name,
         string _symbol,
@@ -80,8 +80,8 @@ contract TokenizationProvider {
         address[]  _tokenAddresses,
         uint[]  _weights
     ){
-        fundtemplate  _newfund;
-        _newfund = fundtemplate(FundIndex[_fundID]);
+        FundTemplate  _newFund;
+        _newFund = FundTemplate(fundIndex[_fundId]);
         (       ,
             _name,
             _symbol,
@@ -90,17 +90,17 @@ contract TokenizationProvider {
             _category,
             _tokenAddresses,
             _weights
-        )  = _newfund.getFundDetail();
-        _owner = FundOwner[_fundID];
+        )  = _newFund.getFundDetails();
+        _owner = fundOwner[_fundId];
     }
 
 
-    function getFundOwner(uint _fundid) public view returns(address _fundowner) {
-        return FundOwner[_fundid];
+    function getfundOwner(uint _fundId) public view returns(address _fundOwner) {
+        return fundOwner[_fundId];
     }
 
-    function getFundAddress(uint _fundid) public view returns(address _fundaddress) {
-        return FundIndex[_fundid];
+    function getFundAddress(uint _fundId) public view returns(address _fundAddress) {
+        return fundIndex[_fundId];
     }
 
     function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
@@ -109,6 +109,6 @@ contract TokenizationProvider {
         for (uint i = 0; i < _weights.length; ++i) {
             total += _weights[i];
         }
-        return (total <= 100&&total > 0);
+        return (total <= 100 && total > 0);
     }
 }
