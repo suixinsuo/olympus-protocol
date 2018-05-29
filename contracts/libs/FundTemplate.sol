@@ -64,6 +64,7 @@ contract FundTemplate {
     uint256 public decimals;
     string public symbol;
     address public owner;
+    uint public withdrawTime;
      
     FUND          public         _FUND;
     FUNDExtend    public         _FUNDExtend;
@@ -155,7 +156,8 @@ contract FundTemplate {
         _FUND.weights = _weights;
         _FUND.managementfee = 1;
         _FUND.status = FUNDstatus.Active;
-        _FUND.withdrawcycle = _withdrawCycle;
+        _FUND.withdrawcycle = _withdrawCycle * 3600 + now;
+        withdrawTime = _withdrawCycle;
         _FUNDExtend.riskControl = true;
         return true;
     }
@@ -226,6 +228,8 @@ contract FundTemplate {
 /////////////////////////////////druft 
     function withdrawfee() public onlyFundOwner {
         require(Managementfee > 0 );
+        require(_FUND.withdrawcycle < now);
+        _FUND.withdrawcycle = withdrawTime * 3600 + now;
         _FUNDExtend.owner.transfer(Managementfee);
     }
 /////////////////////////////////Event 
