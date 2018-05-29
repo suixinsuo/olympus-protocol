@@ -10,3 +10,4 @@ coverageEnv
 .node-xml*
 scTopics
 npm-debug.log
+package-lock.json
