@@ -29,11 +29,7 @@ contract FundTemplate {
     }
 
     //struct 
-    struct _Lock{
-        uint locktime;
-        uint unlocktime;
-    }
-    
+
     struct FUND {
         uint id;
         string name;
@@ -42,7 +38,7 @@ contract FundTemplate {
         address[] tokenAddresses;
         uint[] weights;
         uint managementfee;
-        uint withdrawcycle; //*hours;
+        uint withdrawCycle; //*hours;
         uint deposit;       //押金
         FUNDstatus status;
         //uint follower; 放到另一个 struct 里面
@@ -53,12 +49,12 @@ contract FundTemplate {
         address owner;
         bool riskControl;   //default true;
         bool limit;
-        
+        uint lockTime;
     }
 
     
     //Costant
-    uint    public Managementfee;
+    uint    public managementFee;
     uint256 public totalSupply;
     string public name;
     uint256 public decimals;
@@ -104,10 +100,11 @@ contract FundTemplate {
 
     function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) public {
         require(balances[msg.sender] >= _value && _value > 0);
-        require(PersonalLock[msg.sender].unlocktime < now );
+        require(_FUNDExtend.lockTime < now );
         require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
         if (_recipient == owner) {
             balances[msg.sender] -= _value;
+            require(totalSupply - _value > 0);
             totalSupply -= _value;
             emit Destroy(msg.sender, _value);
             //GetMoneyBack
@@ -121,7 +118,7 @@ contract FundTemplate {
     function transferFrom(address _from, address _to, uint256 _value) public {
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);
         require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
-        require(PersonalLock[_from].unlocktime < now );
+        require(_FUNDExtend.lockTime < now );
         balances[_to] += _value;
         balances[_from] -= _value;
         allowed[_from][msg.sender] -= _value;
@@ -156,7 +153,7 @@ contract FundTemplate {
         _FUND.weights = _weights;
         _FUND.managementfee = 1;
         _FUND.status = FUNDstatus.Active;
-        _FUND.withdrawcycle = _withdrawCycle * 3600 + now;
+        _FUND.withdrawCycle = _withdrawCycle * 3600 + now;
         withdrawTime = _withdrawCycle;
         _FUNDExtend.riskControl = true;
         return true;
@@ -191,46 +188,45 @@ contract FundTemplate {
 
 /////////////////////////////////mapping 
 
-    mapping (address => _Lock ) PersonalLock;
 
-    function Lock (uint _hours) public returns(bool success){
-        require(balances[tx.origin]> 0 );
-        require(PersonalLock[tx.origin].unlocktime < now );
-        PersonalLock[tx.origin].locktime = now;
-        PersonalLock[tx.origin].unlocktime = now + _hours * 3600 ;
-        emit PersonalLocked(tx.origin,PersonalLock[tx.origin].locktime,_hours);
+    function lockFund (uint _hours) public onlyTokenizedAndFundOwner  returns(bool success){
+        _FUNDExtend.lockTime += now + _hours * 3600;
+        return true;
     } 
     //Minimal 0.1 ETH
     function () public payable {
         uint _fee;
-        uint _RealBalance;
+        uint _realBalance;
         require(getFundKYCDetail());
         require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
         require(msg.value >=  10**17 );
-        (_RealBalance,_fee) = calculatefee(msg.value);
-        Managementfee += _fee;
+        (_realBalance,_fee) = calculatefee(msg.value);
+        managementFee += _fee;
         if(_FUNDExtend.limit){
-            totalSupply += _RealBalance/10**15;
-            balances[tx.origin] += _RealBalance/10**15;
+            totalSupply += _realBalance/10**15;
+            balances[tx.origin] += _realBalance/10**15;
         }else{
-            require((balances[owner] - _RealBalance/10**15) > 0);
-            balances[owner] -= _RealBalance/10**15;
-            balances[tx.origin] += _RealBalance/10**15;
+            require((balances[owner] - _realBalance/10**15) > 0);
+            balances[owner] -= _realBalance/10**15;
+            balances[tx.origin] += _realBalance/10**15;
         }
-        emit Transfer(owner, tx.origin, _RealBalance/10**15);
-        emit BuyFund(tx.origin, _RealBalance/10**15);
+        emit Transfer(owner, tx.origin, _realBalance/10**15);
+        emit BuyFund(tx.origin, _realBalance/10**15);
     }
 
-    function calculatefee(uint invest) internal view returns(uint _realbalance,uint _managementfee){
+    function calculatefee(uint invest) internal view returns(uint _realBalance,uint _managementfee){
         _managementfee = invest / 100 * _FUND.managementfee;
-        _realbalance = invest - _managementfee;
+        _realBalance = invest - _managementfee;
     }
 /////////////////////////////////druft 
     function withdrawfee() public onlyFundOwner {
-        require(Managementfee > 0 );
-        require(_FUND.withdrawcycle < now);
-        _FUND.withdrawcycle = withdrawTime * 3600 + now;
-        _FUNDExtend.owner.transfer(Managementfee);
+        require(managementFee > 0 );
+        require(_FUND.withdrawCycle < now);
+        _FUND.withdrawCycle = withdrawTime * 3600 + now;
+        _FUNDExtend.owner.transfer(managementFee);
+    }
+    function hasRisk(bool _risk) public onlyTokenizedOwner returns(bool success){
+        _FUNDExtend.riskControl = _risk;
     }
 /////////////////////////////////Event 
 	//Event which is triggered to log all transfers to this contract's event log
@@ -252,7 +248,7 @@ contract FundTemplate {
     event PersonalLocked(
         address indexed _spender,
         uint256 _value,
-        uint256 _locktime
+        uint256 _lockTime
     );
     event BuyFund(
         address indexed _spender,
