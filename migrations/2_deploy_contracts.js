@@ -1,9 +1,11 @@
 var Core = artifacts.require("./OlympusLabsCore.sol");
 var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
+var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
 var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol");
 var PriceProvider = artifacts.require("./price/PriceProvider.sol");
 var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol");
 var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
+var TokenizationProvider = artifacts.require("./Tokenization/TokenizationProvider.sol");
 var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider.sol");
 
 const KyberConfig = require('../scripts/libs/kyber_config');
@@ -114,6 +116,8 @@ module.exports = function (deployer, network) {
     return deployer.deploy(ExtendedStorage, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(OlympusStorage, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(TokenizationProvider, PermissionProvider.address);
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })
