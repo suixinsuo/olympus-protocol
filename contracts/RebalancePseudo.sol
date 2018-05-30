@@ -7,6 +7,7 @@ contract RebalancePseudo {
         INACTIVE,
         INITIATED,
         READYTOTRADE,
+        SELLINGINPROGRESS,
         SELLINGCOMPLETE,
         BUYINGINPROGRESS,
         BUYINGCOMPLETE
@@ -16,6 +17,7 @@ contract RebalancePseudo {
     uint private TOKEN_STEP = 10;
     uint private rebalancingTokenProgress;
     uint private PERCENTAGE_DENOMINATOR = 10000;
+    // Needs to have at least 0.3% difference in order to be eligible for rebalance
     uint private rebalanceDeltaPercentage = 30; // 0.3%
     uint private lastRebalance = 1000000000;
     uint private rebalanceInterval = 1000;
@@ -57,6 +59,7 @@ contract RebalancePseudo {
 
         if(rebalanceStatus == RebalanceStatus.INITIATED){
             for(i = 0; i < tokenAddresses.length; i++) {
+                // Get the amount of tokens expected for 1 ETH
                 uint ETHTokenPrice = mockCoreGetPrice(tokenAddresses[i]);
                 uint currentTokenBalance = ERC20(tokenAddresses[i]).balanceOf(address(this));
                 uint shouldHaveAmountOfTokensInETH = (totalIndexValue / 100) * tokenWeights[i];
@@ -68,10 +71,12 @@ contract RebalancePseudo {
                         tokenWeight: tokenWeights[i],
                         amount: currentTokenBalance - shouldHaveAmountOfTokens
                     }));
+                // minus delta
                 } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
                     rebalanceTokensToBuy.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
                         tokenWeight: tokenWeights[i],
+                        // Convert token balance to ETH price (because we need to send ETH), taking into account the decimals of the token
                         amount: shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**ERC20(tokenAddresses[i]).decimals()) / ETHTokenPrice)
                     }));
                 }
@@ -80,10 +85,13 @@ contract RebalancePseudo {
             rebalanceStatus = RebalanceStatus.READYTOTRADE;
         }
 
-        if(rebalanceStatus == RebalanceStatus.READYTOTRADE){
+        if(rebalanceStatus == RebalanceStatus.READYTOTRADE || rebalanceStatus == RebalanceStatus.SELLINGINPROGRESS){
+            rebalanceStatus = RebalanceStatus.SELLINGINPROGRESS;
             // First sell tokens
             for(i = currentProgress; i < rebalanceTokensToSell.length; i++){
                 if(i > currentProgress + TOKEN_STEP){
+                    // Safety measure for gas
+                    // If the loop looped more than the TOKEN_STEP amount of times, we return false, and this function should be called again
                     return false;
                 }
                 // TODO approve token transfers (depending on exchange implementation)
@@ -113,7 +121,8 @@ contract RebalancePseudo {
             for(i = 0; i < rebalanceTokensToBuy.length; i++){
                 assumedAmountOfEthToBuy += rebalanceTokensToBuy[i].amount;
             }
-            // Based on the actual amount of received ETH for sold tokens, calculate the difference percentage, so this can be used
+            // Based on the actual amount of received ETH for sold tokens, calculate the difference percentage
+            // So this can be used to modify the ETH used, so we don't have an ETH shortage or leftovers at the last token buy
             if(assumedAmountOfEthToBuy > rebalanceSoldTokensETHReceived){
                 differencePercentage = ((assumedAmountOfEthToBuy - rebalanceSoldTokensETHReceived) * PERCENTAGE_DENOMINATOR) / assumedAmountOfEthToBuy;
             } else if (assumedAmountOfEthToBuy < rebalanceSoldTokensETHReceived){
@@ -124,11 +133,16 @@ contract RebalancePseudo {
             }
 
             for(i = rebalancingTokenProgress; i < rebalanceTokensToBuy.length; i++){
+
                 if(i + sellTxs > currentProgress + TOKEN_STEP){
+                    // Safety measure for gas
+                    // If the loop looped more than the TOKEN_STEP amount of times, we return false, and this function should be called again
+                    // Also take into account the number of sellTxs that have happened in the current function call
                     return false;
                 }
                 uint slippage;
                 if(differencePercentage > 0){
+                    // Calculate the actual amount we should buy, based on the actual ETH received from selling tokens
                     slippage = (rebalanceTokensToBuy[i].amount * differencePercentage) / PERCENTAGE_DENOMINATOR;
                 }
                 if(surplus == true){
@@ -145,6 +159,7 @@ contract RebalancePseudo {
         }
 
         if(rebalanceStatus == RebalanceStatus.BUYINGCOMPLETE){
+            // Yay, done! Reset everything, ready for the next time
             // solium-disable-next-line security/no-block-members
             lastRebalance = now;
             rebalanceStatus = RebalanceStatus.INACTIVE;
@@ -154,12 +169,18 @@ contract RebalancePseudo {
         return false;
     }
 
+    // Reset function, in case there is any issue.
+    // Can not be executed once the actual trading has started for safety.
     function resetRebalance() public returns(bool) {
+        require(
+            rebalanceStatus == RebalanceStatus.INACTIVE || rebalanceStatus == RebalanceStatus.INITIATED || rebalanceStatus == RebalanceStatus.READYTOTRADE);
         rebalanceStatus = RebalanceStatus.INACTIVE;
         rebalancingTokenProgress = 0;
         return true;
     }
 
+    // We should have this function, so that if there is an issue with a token (e.g. costing a lot of gas)
+    // we can reduce the limit to narrow down the problematic token, or just temporary limit
     function updateTokensPerRebalance(uint tokenAmount) public returns(bool){
         require(tokenAmount > 0);
         TOKEN_STEP = tokenAmount;
