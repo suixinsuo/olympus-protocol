@@ -1,6 +1,7 @@
 pragma solidity ^0.4.23;
 import "../libs/SafeMath.sol";
 import "../libs/FundTemplate.sol";
+import "../permission/PermissionProviderInterface.sol";
 
 
 contract TokenizationProvider {
