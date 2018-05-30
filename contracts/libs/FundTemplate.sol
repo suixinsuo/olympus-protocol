@@ -84,8 +84,8 @@ contract FundTemplate {
             _FUNDExtend.limit = false;
         }else{
             _FUNDExtend.limit = true;
-            balances[msg.sender] = totalSupply;
             totalSupply = _totalSupply * (10 ** decimals);
+            balances[msg.sender] = totalSupply;
         }
     }
 	//Fix for short address attack against ERC20
