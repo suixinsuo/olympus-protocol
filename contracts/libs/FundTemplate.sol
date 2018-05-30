@@ -202,7 +202,7 @@ contract FundTemplate {
         require(msg.value >=  10**17 );
         (_realBalance,_fee) = calculatefee(msg.value);
         managementFee += _fee;
-        if(_FUNDExtend.limit){
+        if(!_FUNDExtend.limit){
             totalSupply += _realBalance/10**15;
             balances[tx.origin] += _realBalance/10**15;
         }else{
