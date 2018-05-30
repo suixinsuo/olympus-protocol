@@ -54,7 +54,8 @@ contract TokenizationProvider {
         uint _withdrawCycle,
         uint _lockTime
     ) public 
-    onlyWhitelist
+    ///////WARNING 
+    //onlyWhitelist
     returns (address FundAddress) 
     {
         require(_checkLength(_tokenAddresses, _weights));
