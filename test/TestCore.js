@@ -254,6 +254,54 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result.receipt.status, '0x01');
   })
 
+  it("Should be able to buy token for fund option.", async () => {
+    let srcAmountETH = 1;
+    let needDeposit = srcAmountETH * mockData.tokensum;
+    let instance = await Core.deployed();
+    let amounts = [];
+    let rates = [mockData.tokenOnePrice[0], mockData.tokenTwoPrice[0]];
+    for (let i = 0; i < mockData.tokensum; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
+      amounts.push(web3.toWei(srcAmountETH));
+    }
+    let result = await instance.buyToken("", mockData.tokenAddresses, amounts, rates, accounts[0],   { from: accounts[0], value: web3.toWei(needDeposit) });
+
+    for (let i = 0; i < mockData.tokensum; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
+    }
+    //TODO test the balance
+  })
+  it("Should be able to sell token for fund option.", async () => {
+    let srcAmountETH = 1;
+    let needDeposit = srcAmountETH * mockData.tokensum;
+    let instance = await Core.deployed();
+    let amounts = [];
+    let rates = [mockData.tokenOnePrice[1], mockData.tokenTwoPrice[1]];
+    for (let i = 0; i < mockData.tokensum; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
+      await erc20Token.approve(instance.address, tokenBalance);
+
+      // console.log(await erc20Token.balanceOf(instance.address));
+      amounts.push(web3.toWei(srcAmountETH));
+    }
+    let balance = await web3.eth.getBalance(accounts[0]);
+    console.log(balance);
+    // console.log(web3.eth.balanceOf(accounts[0]));
+    let result = await instance.sellToken("", mockData.tokenAddresses, amounts, rates, accounts[0]);
+
+    for (let i = 0; i < mockData.tokensum; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
+    }
+    balance = await web3.eth.getBalance(accounts[0]);
+    console.log(balance);
+    // console.log(web3.eth.balanceOf(accounts[0]));
+    //TODO test the balance
+  })
+
   it("Should be able to get ethfee.", async () => {
     let instance = await Core.deployed();
 
