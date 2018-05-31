@@ -40,9 +40,13 @@ contract MockKyberNetwork {
     function _getExpectedRate(ERC20 /*src*/, ERC20 dest, uint) private view
     returns (uint expectedRate, uint slippageRate)
     {
-        for (uint i = 0; i < supportedTokens.length; i++){
-            if(address(supportedTokens[i].token) == address(dest)){
-                return (supportedTokens[i].slippageRate,supportedTokens[i].slippageRate);
+        if (address(dest) == 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) {
+            return (10 ** 15, 10 ** 15);
+        } else {
+            for (uint i = 0; i < supportedTokens.length; i++){
+                if(address(supportedTokens[i].token) == address(dest)){
+                    return (supportedTokens[i].slippageRate,supportedTokens[i].slippageRate);
+                }
             }
         }
         return (0, 0);    
@@ -58,20 +62,30 @@ contract MockKyberNetwork {
         address )
         external payable returns(uint)
     {
-
-        require(msg.value == srcAmount);
         uint slippageRate;
         uint expectedRate;
         (expectedRate, slippageRate) = _getExpectedRate(source,dest,srcAmount);
-
         require(slippageRate>=minConversionRate);
-        uint destAmount = getExpectAmount(srcAmount, dest.decimals(), minConversionRate);
 
-        dest.transfer(destAddress,destAmount);
-        return destAmount;
+        if (address(source) == 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) {
+            require(msg.value == srcAmount);
+
+            uint destAmount = getExpectAmount(srcAmount, dest.decimals(), minConversionRate);
+
+            dest.transfer(destAddress,destAmount);
+            return destAmount;
+        } else {
+            require(msg.value == 0);
+            source.transferFrom(destAddress, this, srcAmount);
+            uint ethAmount = getExpectEthAmount(srcAmount, 18, minConversionRate);
+            destAddress.send(ethAmount);
+        }
     }
 
     function getExpectAmount(uint amount, uint destDecimals, uint rate) private pure returns(uint){
+        return Utils.calcDstQty(amount, 18, destDecimals, rate);
+    }
+    function getExpectEthAmount(uint amount, uint destDecimals, uint rate) private pure returns(uint){
         return Utils.calcDstQty(amount, 18, destDecimals, rate);
     }
 }

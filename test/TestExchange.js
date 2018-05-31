@@ -10,6 +10,8 @@ const CentralizedExchange = artifacts.require("CentralizedExchange");
 const tokenNum = 2;
 const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
+const expectedRateToSell = web3.toBigNumber('1000000000000000');
+const BigNumber = web3.BigNumber;
 
 function bytes32ToString(bytes32) {
   return web3.toAscii(bytes32).replace(/\u0000/g, '');
@@ -29,9 +31,8 @@ contract('MockKyberNetwork', (accounts) => {
     let tokens = await mockKyber.supportedTokens();
     assert.equal(tokens.length, tokenNum);
     let destAddress = accounts[0];
-
     for (var i = 0; i < tokens.length; i++) {
-      let rates = await mockKyber.getExpectedRate(ethToken, tokens[i], 0)
+      let rates = await mockKyber.getExpectedRate(ethToken, tokens[i], 0);
       assert.ok(expectedRate.equals(rates[0]));
       assert.ok(expectedRate.equals(rates[1]));
 
@@ -52,6 +53,29 @@ contract('MockKyberNetwork', (accounts) => {
       let expectedBalance = destRate.mul(srcAmountETH);
       assert.ok(expectedBalance.equals(tokenBalance));
     }
+
+    for (var i = 0; i < tokens.length; i++) {
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      tokenBalance = await erc20Token.balanceOf(destAddress);
+      await erc20Token.approve(mockKyber.address, tokenBalance);
+
+      let rates = await mockKyber.getExpectedRate(tokens[i], ethToken, 0);
+      assert.equal(expectedRateToSell.toString(),rates[0].toString());
+
+      let srcAmountETH = 1;
+      let result = await mockKyber.trade(
+        tokens[i],
+        tokenBalance,
+        ethToken,
+        destAddress,
+        0,
+        rates[1],
+        0);
+      tokenBalance = await erc20Token.balanceOf(destAddress);
+      assert.ok(tokenBalance.equals(0));
+    }
+
+
   });
 });
 
@@ -93,6 +117,7 @@ contract('KyberNetworkExchange', (accounts) => {
     enabled = await kyberExchange.isEnabled(0)
     assert.ok(enabled);
   })
+ 
 
   it("KyberNetworkExchange should be able to placeOrder.", async () => {
 
@@ -197,8 +222,48 @@ contract('KyberNetworkExchange', (accounts) => {
       assert.equal(orderStatus, OrderStatusCompleted);
     }
   })
-})
+  it("KyberNetworkExchange should be able to placeOrderQuickly to buy token option.", async () => {
 
+    // without pre-deposit
+    let srcAmountETH = 1;
+    for (var i = 0; i < tokens.length; i++) {
+      let deposit = accounts[0];
+      // Test getRate
+      let rate = await kyberExchange.getRate('', tokens[i], 0);
+      assert.ok(expectedRate.equals(rate));
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      let tokenBalance = await erc20Token.balanceOf(deposit);
+
+      let srcAmountETH = 1;
+      // Test placeOrder
+      let result = await kyberExchange.placeOrderQuicklyToBuy(exchangeId, tokens[i], web3.toWei(srcAmountETH), rate, deposit);
+
+      let tokenGet = await erc20Token.balanceOf(deposit) - tokenBalance;
+      assert.equal(rate.mul(srcAmountETH).toString(), tokenGet.toString());
+    }
+  })
+
+  it("KyberNetworkExchange should be able to placeOrderQuickly to sell token option.", async () => {
+
+    // without pre-deposit
+    let srcAmountETH = 1;
+    for (var i = 0; i < tokens.length; i++) {
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      let destAddress = accounts[0];
+      let tokenBalance = await erc20Token.balanceOf(destAddress);
+      assert.notEqual(new BigNumber(tokenBalance).toNumber(), 0);
+      await erc20Token.approve(kyberExchange.address, tokenBalance);
+      // Test getRate
+      let rate = await kyberExchange.getRateToSell('', tokens[i], 0);
+      assert.ok(expectedRateToSell.equals(rate));
+      // Test placeOrder
+      let result = await kyberExchange.placeOrderQuicklyToSell(exchangeId, tokens[i], tokenBalance, rate, destAddress);
+
+      tokenBalance = await erc20Token.balanceOf(destAddress);
+      assert.equal(new BigNumber(tokenBalance).toNumber(), 0);
+    }
+  })
+})
 const ExchangeStatusEnabled = 0;
 const ExchangeStatusDisabled = 1;
 
@@ -263,9 +328,9 @@ contract('ExchangeAdapterManager', (accounts) => {
       assert.ok(isSupported, `Expected that token ${tokens[i]} is supported`);
     }
 
-    let notSupported = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-    let isSupported = await manager.checkTokenSupported(notSupported);
-    assert.ok(!isSupported)
+    // let notSupported = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+    // let isSupported = await manager.checkTokenSupported(notSupported);
+    // assert.ok(!isSupported)
   })
 
   it("ExchangeAdapterManager pickExchange.", async () => {
@@ -343,6 +408,61 @@ contract('ExchangeProvider', (accounts) => {
     }
   })
 
+  it("Test sellToken.", async () => {
+    let srcAmountETH = 1;
+    let totalSrcAmountETH = srcAmountETH * tokens.length;
+
+    await kyberExchange.send(web3.toWei(totalSrcAmountETH, 'ether'));
+
+    let deposit = accounts[0];
+    let amounts = [];
+    let rates = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      let actualBalance = await erc20Token.balanceOf(deposit);
+      await erc20Token.approve(kyberExchange.address, tokenBalance);
+      amounts.push(actualBalance);
+      rates.push(expectedRateToSell);
+    }
+
+    result = await exchangeProvider.sellToken("",tokens, amounts, rates, deposit);
+
+    for (let i = 0; i < tokens.length; i++) {
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      let actualBalance = await erc20Token.balanceOf(deposit);
+      console.log(actualBalance);
+      assert.ok(actualBalance.equals(0));      
+    }
+  })
+
+  it("Test buyToken.", async () => {
+    let srcAmountETH = 1;
+    let totalSrcAmountETH = srcAmountETH * tokens.length;
+
+    await kyberExchange.send(web3.toWei(totalSrcAmountETH, 'ether'));
+
+    let deposit = accounts[0];
+    let amounts = [];
+    let rates = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      let actualBalance = await erc20Token.balanceOf(deposit);
+
+      amounts.push(web3.toWei(srcAmountETH));
+      rates.push(expectedRate);
+    }
+
+    result = await exchangeProvider.buyToken("",tokens, amounts, rates, deposit,  { value: web3.toWei(totalSrcAmountETH) });
+
+    for (let i = 0; i < tokens.length; i++) {
+      let erc20Token = await SimpleERC20Token.at(tokens[i]);
+      let actualBalance = await erc20Token.balanceOf(deposit);
+      assert.equal(new BigNumber(actualBalance).toNumber(), new BigNumber(expectedRate.mul(srcAmountETH)).toNumber());
+    }
+  })
+
   it("Test checkTokenSupported.", async () => {
 
     for (let i = 0; i < tokens.length; i++) {
@@ -350,9 +470,9 @@ contract('ExchangeProvider', (accounts) => {
       assert.ok(isSupported);
     }
 
-    let notSupported = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-    let isSupported = await exchangeProvider.checkTokenSupported(notSupported);
-    assert.ok(!isSupported);
+    // let notSupported = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+    // let isSupported = await exchangeProvider.checkTokenSupported(notSupported);
+    // assert.ok(!isSupported);
   })
 })
 

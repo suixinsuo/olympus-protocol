@@ -114,6 +114,45 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         orders[orderId].exchanges.push(exchangeId);
         return true;
     }
+    
+    function buyToken(bytes32 /*id*/, ERC20[] tokens, uint256[] amounts, uint256[] rates, address deposit) external onlyCore payable returns(bool) {
+        IExchangeAdapter adapter;
+        for (uint i = 0; i < tokens.length; i++ ) {
+            bytes32 exchangeId = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
+            if(exchangeId == 0){
+                return false;
+            }
+            adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
+            require(
+                adapter.placeOrderQuicklyToBuy(
+                    exchangeId,
+                    tokens[i],
+                    amounts[i],
+                    rates[i],
+                    deposit)
+            );
+        }
+        return true;
+    }
+    function sellToken(bytes32 /*id*/, ERC20[] tokens, uint256[] amounts, uint256[] rates, address deposit) external onlyCore  returns(bool) {
+        IExchangeAdapter adapter;
+        for (uint i = 0; i < tokens.length; i++ ) {
+            bytes32 exchangeId = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
+            if(exchangeId == 0){
+                return false;
+            }
+            adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
+            require(
+                adapter.placeOrderQuicklyToSell(
+                    exchangeId,
+                    tokens[i],
+                    amounts[i],
+                    rates[i],
+                    deposit)
+            );
+        }
+        return true;
+    }
 
     function endPlaceOrder(uint orderId)
     external onlyCore payable returns(bool)
