@@ -14,7 +14,7 @@ contract RebalancePseudo {
     }
     RebalanceStatus private rebalanceStatus = RebalanceStatus.INACTIVE;
     address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeee;
-    uint private TOKEN_STEP = 10;
+    uint private tokenStep = 10;
     uint private rebalancingTokenProgress;
     uint private PERCENTAGE_DENOMINATOR = 10000;
     // Needs to have at least 0.3% difference in order to be eligible for rebalance
@@ -89,9 +89,9 @@ contract RebalancePseudo {
             rebalanceStatus = RebalanceStatus.SELLING_IN_PROGRESS;
             // First sell tokens
             for(i = currentProgress; i < rebalanceTokensToSell.length; i++){
-                if(i > currentProgress + TOKEN_STEP){
+                if(i > currentProgress + tokenStep){
                     // Safety measure for gas
-                    // If the loop looped more than the TOKEN_STEP amount of times, we return false, and this function should be called again
+                    // If the loop looped more than the tokenStep amount of times, we return false, and this function should be called again
                     return false;
                 }
                 // TODO approve token transfers (depending on exchange implementation)
@@ -134,9 +134,9 @@ contract RebalancePseudo {
 
             for(i = rebalancingTokenProgress; i < rebalanceTokensToBuy.length; i++){
 
-                if(i + sellTxs > currentProgress + TOKEN_STEP){
+                if(i + sellTxs > currentProgress + tokenStep){
                     // Safety measure for gas
-                    // If the loop looped more than the TOKEN_STEP amount of times, we return false, and this function should be called again
+                    // If the loop looped more than the tokenStep amount of times, we return false, and this function should be called again
                     // Also take into account the number of sellTxs that have happened in the current function call
                     return false;
                 }
@@ -183,7 +183,7 @@ contract RebalancePseudo {
     // we can reduce the limit to narrow down the problematic token, or just temporary limit
     function updateTokensPerRebalance(uint tokenAmount) public returns(bool){
         require(tokenAmount > 0);
-        TOKEN_STEP = tokenAmount;
+        tokenStep = tokenAmount;
         return true;
     }
 
