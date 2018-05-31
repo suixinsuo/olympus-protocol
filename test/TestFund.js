@@ -1,5 +1,6 @@
 'use strict'
 const TokenizationProvider = artifacts.require("../contracts/Tokenization/TokenizationProvider.sol");
+const FundTemplate = artifacts.require("../contracts/libs/FundTemplate.sol");
 const Core = artifacts.require("../contracts/OlympusLabsCore.sol");
 const Web3 = require('web3');
 const web3 = new Web3();
@@ -18,6 +19,7 @@ const mockData = {
   follower: 0,
   withdrawCycle : 1,
   amount: 0,
+  fundaddress:"0x0",
   exchangeId: "0x0000000000000000000000000000000000000000000000000000000000000000"
 }
 contract('TokenizationProvider', (accounts) => {
@@ -42,12 +44,35 @@ contract('TokenizationProvider', (accounts) => {
     let result = await instance.createFund(mockData.name,mockData.symbol, mockData.limittotalsupply, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.withdrawCycle,0, { from: accounts[0] });
     assert.equal(result.receipt.status, '0x01');
   })
-  it("Should be able to get a fund address.", async () => {
+  it("Should be able to get totalsupply.", async () => {
     let instance = await TokenizationProvider.deployed();
-    let fundaddress1 = await instance.getFundAddress(0);
-    let fundaddress2 = await instance.getFundAddress(1);
-    console.log(fundaddress1,fundaddress2);
-    assert.equal(fundaddress1.receipt.status, '0x01');
-    assert.equal(fundaddress2.receipt.status, '0x01');
+    let fund = await FundTemplate.deployed();
+    console.log(fund.address);
+    fund.address = await instance.getFundAddress(1);
+    console.log(fund.address);
+    //console.log(fundaddress1);
+    //fund.address = fundaddress1;
+    let _total = await fund.totalSupply.call();
+    assert.equal(_total.c[0], mockData.limittotalsupply*10**3);
   })
+
+  // it("Should be able to buy a fund.", async () => {
+  //   let instance = await TokenizationProvider.deployed();
+  //   let fund = await FundTemplate.deployed();
+  //   console.log(fund.address);
+  //   fund.address = await instance.getFundAddress(0);
+  //   // console.log(fund.address);
+  //   // //console.log(fundaddress1);
+  //   // //fund.address = fundaddress1;
+  //   // let _total = await fund.totalSupply.call();
+  //   // assert.equal(_total.c[0], mockData.limittotalsupply*10**3);
+
+  //   let result = await fund.send(10**17);
+
+  //   let token  = await fund.balanceOf.call(accounts[1]);
+  //   console.log(accounts[0]);
+  //   console.log(token);
+  // })
+  //await kyberExchange.send(web3.toWei(needDeposit, 'ether'));
+
 });
