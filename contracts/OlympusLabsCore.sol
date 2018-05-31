@@ -366,10 +366,10 @@ contract OlympusLabsCore is Manageable {
         return true;
     }
     //TODO fix Error: VM Exception while processing transaction: out of gas
-    // function buyToken(bytes32[] exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success) {
-    //     return  exchangeProvider.buyToken.value(msg.value)("", tokens, amounts, rates, deposit);
-    // }
-    // function sellToken(bytes32[] exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success) {
-    //     return exchangeProvider.sellToken("", tokens, amounts, rates, deposit);
-    // }
+    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success) {
+        // return  exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, deposit);
+    }
+    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success) {
+        return exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit);
+    }
 }
