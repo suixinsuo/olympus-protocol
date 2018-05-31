@@ -6,11 +6,11 @@ contract RebalancePseudo {
     enum RebalanceStatus {
         INACTIVE,
         INITIATED,
-        READYTOTRADE,
-        SELLINGINPROGRESS,
-        SELLINGCOMPLETE,
-        BUYINGINPROGRESS,
-        BUYINGCOMPLETE
+        READY_TO_TRADE,
+        SELLING_IN_PROGRESS,
+        SELLING_COMPLETE,
+        BUYING_IN_PROGRESS,
+        BUYING_COMPLETE
     }
     RebalanceStatus private rebalanceStatus = RebalanceStatus.INACTIVE;
     address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeee;
@@ -82,11 +82,11 @@ contract RebalancePseudo {
                 }
             //TODO Does this run out of gas for 100 tokens?
             }
-            rebalanceStatus = RebalanceStatus.READYTOTRADE;
+            rebalanceStatus = RebalanceStatus.READY_TO_TRADE;
         }
 
-        if(rebalanceStatus == RebalanceStatus.READYTOTRADE || rebalanceStatus == RebalanceStatus.SELLINGINPROGRESS){
-            rebalanceStatus = RebalanceStatus.SELLINGINPROGRESS;
+        if(rebalanceStatus == RebalanceStatus.READY_TO_TRADE || rebalanceStatus == RebalanceStatus.SELLING_IN_PROGRESS){
+            rebalanceStatus = RebalanceStatus.SELLING_IN_PROGRESS;
             // First sell tokens
             for(i = currentProgress; i < rebalanceTokensToSell.length; i++){
                 if(i > currentProgress + TOKEN_STEP){
@@ -98,19 +98,19 @@ contract RebalancePseudo {
                 require(mockCoreExchange(rebalanceTokensToSell[i].tokenAddress,ETH_TOKEN,rebalanceTokensToSell[i].amount));
                 rebalancingTokenProgress++;
                 if(i == rebalanceTokensToSell.length - 1){
-                    rebalanceStatus = RebalanceStatus.SELLINGCOMPLETE;
+                    rebalanceStatus = RebalanceStatus.SELLING_COMPLETE;
                 }
             }
         }
 
 
-        if(rebalanceStatus == RebalanceStatus.SELLINGCOMPLETE){
+        if(rebalanceStatus == RebalanceStatus.SELLING_COMPLETE){
             rebalanceSoldTokensETHReceived = address(this).balance - ethValueRebalanceStart;
-            rebalanceStatus = RebalanceStatus.BUYINGINPROGRESS;
+            rebalanceStatus = RebalanceStatus.BUYING_IN_PROGRESS;
         }
 
         // Then buy tokens
-        if(rebalanceStatus == RebalanceStatus.BUYINGINPROGRESS){
+        if(rebalanceStatus == RebalanceStatus.BUYING_IN_PROGRESS){
             uint sellTxs = rebalancingTokenProgress - currentProgress;
             rebalancingTokenProgress = 0;
             uint assumedAmountOfEthToBuy;
@@ -152,13 +152,13 @@ contract RebalancePseudo {
                 }
                 rebalancingTokenProgress++;
                 if(i == rebalanceTokensToBuy.length - 1){
-                    rebalanceStatus = RebalanceStatus.BUYINGCOMPLETE;
+                    rebalanceStatus = RebalanceStatus.BUYING_COMPLETE;
                 }
             }
 
         }
 
-        if(rebalanceStatus == RebalanceStatus.BUYINGCOMPLETE){
+        if(rebalanceStatus == RebalanceStatus.BUYING_COMPLETE){
             // Yay, done! Reset everything, ready for the next time
             // solium-disable-next-line security/no-block-members
             lastRebalance = now;
@@ -173,7 +173,7 @@ contract RebalancePseudo {
     // Can not be executed once the actual trading has started for safety.
     function resetRebalance() public returns(bool) {
         require(
-            rebalanceStatus == RebalanceStatus.INACTIVE || rebalanceStatus == RebalanceStatus.INITIATED || rebalanceStatus == RebalanceStatus.READYTOTRADE);
+            rebalanceStatus == RebalanceStatus.INACTIVE || rebalanceStatus == RebalanceStatus.INITIATED || rebalanceStatus == RebalanceStatus.READY_TO_TRADE);
         rebalanceStatus = RebalanceStatus.INACTIVE;
         rebalancingTokenProgress = 0;
         return true;
