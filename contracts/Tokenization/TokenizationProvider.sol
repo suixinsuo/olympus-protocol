@@ -99,7 +99,7 @@ contract TokenizationProvider {
     }
 
 
-    function getfundOwner(uint _fundId) public view returns(address _fundOwner) {
+    function getFundOwner(uint _fundId) public view returns(address _fundOwner) {
         return fundOwner[_fundId];
     }
 

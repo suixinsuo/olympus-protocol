@@ -10,7 +10,7 @@ contract FundTemplate {
     PermissionProviderInterface internal permissionProvider;
 
     //enum
-    enum FUNDstatus { Pause, Close , Active }
+    enum FundStatus { Pause, Close , Active }
 
     //Modifier
 
@@ -37,13 +37,13 @@ contract FundTemplate {
         string category;
         address[] tokenAddresses;
         uint[] weights;
-        uint managementfee;
+        uint managementFee;
         uint withdrawCycle; //*hours;
-        uint deposit;       //押金
-        FUNDstatus status;
-        //uint follower; 放到另一个 struct 里面
-        //uint amount;   放到另一个 struct 里面
-        //bytes32 exchangeId;  不指定交易所
+        uint deposit;       //deposit
+        FundStatus status;
+        //uint follower; 
+        //uint amount;   
+        //bytes32 exchangeId;
     }
     struct FUNDExtend {
         address owner;
@@ -76,9 +76,7 @@ contract FundTemplate {
         name = _name;
         owner = msg.sender;
         _FUNDExtend.owner = tx.origin;
-        _FUND.status = FUNDstatus.Pause;
-        //totalSupply = _totalSupply * (10 ** decimals);
-        //balances[msg.sender] = totalSupply;
+        _FUND.status = FundStatus.Pause;
         if(_totalSupply == 0 ){
             totalSupply = 0;
             _FUNDExtend.limit = false;
@@ -101,8 +99,8 @@ contract FundTemplate {
     function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) public {
         require(balances[msg.sender] >= _value && _value > 0);
         require(_FUNDExtend.lockTime < now );
-        require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
-        if (_recipient == owner) {
+        require(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active));
+        if (_recipient == address(this)) {
             balances[msg.sender] -= _value;
             require(totalSupply - _value > 0);
             totalSupply -= _value;
@@ -117,7 +115,7 @@ contract FundTemplate {
 
     function transferFrom(address _from, address _to, uint256 _value) public {
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);
-        require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
+        require(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active));
         require(_FUNDExtend.lockTime < now );
         balances[_to] += _value;
         balances[_from] -= _value;
@@ -151,8 +149,8 @@ contract FundTemplate {
         _FUND.category = _category;
         _FUND.tokenAddresses = _tokenAddresses;
         _FUND.weights = _weights;
-        _FUND.managementfee = 1;
-        _FUND.status = FUNDstatus.Active;
+        _FUND.managementFee = 1;
+        _FUND.status = FundStatus.Active;
         _FUND.withdrawCycle = _withdrawCycle * 3600 + now;
         withdrawTime = _withdrawCycle;
         _FUNDExtend.riskControl = true;
@@ -181,7 +179,7 @@ contract FundTemplate {
     }    
 
     function getFundKYCDetail() public view returns(bool success) {
-        if(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active)){
+        if(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active)){
             return true;
         }
     }
@@ -198,9 +196,9 @@ contract FundTemplate {
         uint _fee;
         uint _realBalance;
         require(getFundKYCDetail());
-        require(_FUNDExtend.riskControl&&(_FUND.status == FUNDstatus.Active));
+        require(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active));
         require(msg.value >=  10**17 );
-        (_realBalance,_fee) = calculatefee(msg.value);
+        (_realBalance,_fee) = calculateFee(msg.value);
         managementFee += _fee;
         if(!_FUNDExtend.limit){
             totalSupply += _realBalance/10**15;
@@ -214,9 +212,9 @@ contract FundTemplate {
         emit BuyFund(tx.origin, _realBalance/10**15);
     }
 
-    function calculatefee(uint invest) internal view returns(uint _realBalance,uint _managementfee){
-        _managementfee = invest / 100 * _FUND.managementfee;
-        _realBalance = invest - _managementfee;
+    function calculateFee(uint invest) internal view returns(uint _realBalance,uint _managementFee){
+        _managementFee = invest / 100 * _FUND.managementFee;
+        _realBalance = invest - _managementFee;
     }
 /////////////////////////////////druft 
     function withdrawfee() public onlyFundOwner {
