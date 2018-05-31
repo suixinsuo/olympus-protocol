@@ -25,9 +25,10 @@ contract RebalancePseudo {
 
     // We want to see the difference between the balance in ETH before and after tokens are sold
     uint private rebalanceSoldTokensETHReceived;
-    uint totalIndexValue = 100;
+    uint totalIndexValue = 1000*10**18;
+    mapping (address => uint) mockTokenBalances;
     address[] private tokenAddresses = [
-        0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0
+        0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15
     ];
     uint[] private tokenWeights = [
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 10, 10, 10, 10, 10
@@ -43,6 +44,22 @@ contract RebalancePseudo {
     RebalanceToken[] private rebalanceTokensToBuy;
 
     constructor() public {
+        mockTokenBalances[0x01] = 5*10**18;
+        mockTokenBalances[0x02] = 5*10**18;
+        mockTokenBalances[0x03] = 5*10**18;
+        mockTokenBalances[0x04] = 5*10**18;
+        mockTokenBalances[0x05] = 5*10**18;
+        mockTokenBalances[0x06] = 5*10**18;
+        mockTokenBalances[0x07] = 5*10**18;
+        mockTokenBalances[0x08] = 5*10**18;
+        mockTokenBalances[0x09] = 5*10**18;
+        mockTokenBalances[0x10] = 5*10**18;
+        mockTokenBalances[0x11] = 10*10**18;
+        mockTokenBalances[0x12] = 10*10**18;
+        mockTokenBalances[0x13] = 10*10**18;
+        mockTokenBalances[0x14] = 10*10**18;
+        mockTokenBalances[0x15] = 10*10**18;
+
     }
 
     function rebalance() public returns (bool success){
@@ -61,7 +78,7 @@ contract RebalancePseudo {
             for(i = 0; i < tokenAddresses.length; i++) {
                 // Get the amount of tokens expected for 1 ETH
                 uint ETHTokenPrice = mockCoreGetPrice(tokenAddresses[i]);
-                uint currentTokenBalance = ERC20(tokenAddresses[i]).balanceOf(address(this)); //
+                uint currentTokenBalance = mockTokenBalances[tokenAddresses[i]]; //
                 uint shouldHaveAmountOfTokensInETH = (totalIndexValue * tokenWeights[i]) / 100;
                 uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH * ETHTokenPrice) / 10**18;
                 // minus delta
@@ -77,7 +94,9 @@ contract RebalancePseudo {
                         tokenAddress: tokenAddresses[i],
                         tokenWeight: tokenWeights[i],
                         // Convert token balance to ETH price (because we need to send ETH), taking into account the decimals of the token
-                        amount: shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**ERC20(tokenAddresses[i]).decimals()) / ETHTokenPrice)
+
+                        amount: shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**18) / ETHTokenPrice)
+                        // amount: shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**ERC20(tokenAddresses[i]).decimals()) / ETHTokenPrice)
                     }));
                 }
             //TODO Does this run out of gas for 100 tokens?
@@ -181,24 +200,36 @@ contract RebalancePseudo {
 
     // We should have this function, so that if there is an issue with a token (e.g. costing a lot of gas)
     // we can reduce the limit to narrow down the problematic token, or just temporary limit
-    function updateTokensPerRebalance(uint tokenAmount) public returns(bool){
+    function updateTokenAmountPerRebalance(uint tokenAmount) public returns(bool){
         require(tokenAmount > 0);
         tokenStep = tokenAmount;
         return true;
     }
 
-    function mockCoreGetPrice(address _tokenAddress) public pure returns (uint) {
-        if(_tokenAddress != address(0x213)){
-            // return the expected result for a 1 ETH trade
-            return 1;
+    function mockCoreGetPrice(address src) public pure returns (uint) {
+      // return the expected result for a 1 ETH trade
+        if(uint(src) < uint(0x10)){
+            return 18*10**17;
+        } else {
+            return 5*10**17;
         }
     }
 
-    function mockCoreExchange(address _src, address _dest, uint _amount) public pure returns (bool){
-        if(_src != address(0x213) && _dest != address(0x213) && _amount > 0){
-            return true;
+    function mockCoreExchange(address _src, address _dest, uint _amount) public returns (bool){
+        if(_src != ETH_TOKEN){
+            mockTokenBalances[_src] -= _amount;
         }
-        return false;
+        if(_dest != ETH_TOKEN){
+            mockTokenBalances[_dest] += _amount;
+        }
+        return true;
+    }
+
+    function getTokenBalances() public view returns (uint[] balances){
+        for(uint i = 0; i < tokenAddresses.length; i++){
+            balances[i] = mockTokenBalances[tokenAddresses[i]];
+        }
+        return balances;
     }
 
 }
