@@ -80,7 +80,7 @@ contract RebalanceMock {
 
                 // minus delta
                 if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                    emit LogUint("toSellAmount", currentTokenBalance - shouldHaveAmountOfTokens);
+                    // emit LogUint("toSellAmount", currentTokenBalance - shouldHaveAmountOfTokens);
                     rebalanceTokensToSell.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
                         tokenWeight: tokenWeights[i],
@@ -88,13 +88,21 @@ contract RebalanceMock {
                     }));
                 // minus delta
                 } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                    emit LogUint("toBuyAmount", shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**18) / ETHTokenPrice));
+                    emit LogUint("should have, ETH value    ", shouldHaveAmountOfTokensInETH);
+                    emit LogUint("should have, Token amount ", shouldHaveAmountOfTokens);
+                    emit LogUint("current balance, ETH value", currentTokenBalance*10**18 / ETHTokenPrice);
+                    emit LogUint("current balance, token amo", currentTokenBalance);
+                    emit LogUint("Need to buy, ETH value    ", ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18) / ETHTokenPrice);
+                    emit LogUint("need to buy, Token amount ", shouldHaveAmountOfTokens - currentTokenBalance);
+                    emit LogUint("Expected End ETH value    ", (currentTokenBalance*10**18 / ETHTokenPrice) + ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18 / ETHTokenPrice));
+                    emit LogUint("Expected End Token amount ", currentTokenBalance + shouldHaveAmountOfTokens - currentTokenBalance);
+
                     rebalanceTokensToBuy.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
                         tokenWeight: tokenWeights[i],
                         // Convert token balance to ETH price (because we need to send ETH), taking into account the decimals of the token
 
-                        amount: shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**18) / ETHTokenPrice)
+                        amount: ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18) / ETHTokenPrice
                         // amount: shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**ERC20(tokenAddresses[i]).decimals()) / ETHTokenPrice)
                     }));
                 }
@@ -155,7 +163,6 @@ contract RebalanceMock {
             for(i = 0; i < rebalanceTokensToBuy.length; i++){
                 assumedAmountOfEthToBuy += rebalanceTokensToBuy[i].amount;
             }
-            emit LogUint("rebalanceSoldTokensETHReceived", rebalanceSoldTokensETHReceived);
 
             // Based on the actual amount of received ETH for sold tokens, calculate the difference percentage
             // So this can be used to modify the ETH used, so we don't have an ETH shortage or leftovers at the last token buy
@@ -177,6 +184,7 @@ contract RebalanceMock {
                     return false;
                 }
                 uint slippage;
+
                 if(differencePercentage > 0){
                     // Calculate the actual amount we should buy, based on the actual ETH received from selling tokens
                     slippage = (rebalanceTokensToBuy[i].amount * differencePercentage) / PERCENTAGE_DENOMINATOR;
@@ -245,8 +253,12 @@ contract RebalanceMock {
             balanceMock += _amount * mockCoreGetPrice(_src,ETH_TOKEN) / 10**18;
         }
         if(_dest != ETH_TOKEN){
-            mockTokenBalances[_dest] += _amount;
-            balanceMock -= _amount * mockCoreGetPrice(ETH_TOKEN, _src) / 10**18;
+            emit LogUint("start sale,current balance", mockTokenBalances[_dest]);
+            emit LogUint("ETH Amount to buy with    ", _amount);
+            emit LogUint("Amount of tokens returned ", _amount * mockCoreGetPrice(ETH_TOKEN,_dest) / 10**18);
+
+            mockTokenBalances[_dest] += _amount * mockCoreGetPrice(ETH_TOKEN,_dest) / 10**18;
+            balanceMock -= _amount;
         }
         return true;
     }
