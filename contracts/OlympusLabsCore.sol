@@ -373,8 +373,7 @@ contract OlympusLabsCore is Manageable {
     function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success) {
         // return exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit);
         for (uint i = 0; i < tokens.length; i++) {
-            tokens[i].transferFrom(msg.sender, this, amounts[i]);
-            tokens[i].approve(address(exchangeProvider), amounts[i]);
+            tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]);
         }        
         require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
         return true;

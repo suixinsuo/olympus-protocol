@@ -151,6 +151,8 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         // if (address(this).balance < amount) {
         //     return false;
         // }
+ 
+        dest.approve(address(kyber), amount);
 
         uint expectedRate;
         uint slippageRate;

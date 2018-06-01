@@ -271,7 +271,6 @@ contract('Olympus-Protocol', function (accounts) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(accounts[0]);
     }
-    //TODO test the balance
   })
   it("Should be able to sell token for fund option.", async () => {
     let srcAmountETH = 1;
@@ -284,22 +283,16 @@ contract('Olympus-Protocol', function (accounts) {
       let tokenBalance = await erc20Token.balanceOf(accounts[0]);
       await erc20Token.approve(instance.address, tokenBalance);
 
-      // console.log(await erc20Token.balanceOf(instance.address));
       amounts.push(web3.toWei(srcAmountETH));
     }
     let balance = await web3.eth.getBalance(accounts[0]);
-    console.log(balance);
-    // console.log(web3.eth.balanceOf(accounts[0]));
+
     let result = await instance.sellToken("", mockData.tokenAddresses, amounts, rates, accounts[0]);
 
     for (let i = 0; i < mockData.tokensum; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(accounts[0]);
     }
-    balance = await web3.eth.getBalance(accounts[0]);
-    console.log(balance);
-    // console.log(web3.eth.balanceOf(accounts[0]));
-    //TODO test the balance
   })
 
   it("Should be able to get ethfee.", async () => {
