@@ -1,5 +1,5 @@
 var Core = artifacts.require("./OlympusLabsCore.sol");
-var RebalanceMock = artifacts.require("./RebalancePseudo.sol");
+var RebalanceMock = artifacts.require("./RebalanceMock.sol");
 var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
 var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol");
 var PriceProvider = artifacts.require("./price/PriceProvider.sol");

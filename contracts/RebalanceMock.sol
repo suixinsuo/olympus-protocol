@@ -2,7 +2,8 @@ pragma solidity ^0.4.23;
 
 import "./libs/ERC20.sol";
 
-contract RebalancePseudo {
+contract RebalanceMock {
+    event LogUint(string desc, uint value);
     enum RebalanceStatus {
         INACTIVE,
         INITIATED,
@@ -14,6 +15,7 @@ contract RebalancePseudo {
     }
     RebalanceStatus private rebalanceStatus = RebalanceStatus.INACTIVE;
     address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeee;
+    uint public balanceMock;
     uint private tokenStep = 10;
     uint private rebalancingTokenProgress;
     uint private PERCENTAGE_DENOMINATOR = 10000;
@@ -25,7 +27,7 @@ contract RebalancePseudo {
 
     // We want to see the difference between the balance in ETH before and after tokens are sold
     uint private rebalanceSoldTokensETHReceived;
-    uint totalIndexValue = 1000*10**18;
+    // uint totalIndexValue = 100*10**18;
     mapping (address => uint) mockTokenBalances;
     address[] private tokenAddresses = [
         0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15
@@ -40,8 +42,8 @@ contract RebalancePseudo {
         uint amount;
     }
 
-    RebalanceToken[] private rebalanceTokensToSell;
-    RebalanceToken[] private rebalanceTokensToBuy;
+    RebalanceToken[] public rebalanceTokensToSell;
+    RebalanceToken[] public rebalanceTokensToBuy;
 
     constructor() public {
         mockTokenBalances[0x01] = 5*10**18;
@@ -62,27 +64,23 @@ contract RebalancePseudo {
 
     }
 
-    function rebalance() public returns (bool success){
-        // solium-disable-next-line security/no-block-members
-        require(lastRebalance + rebalanceInterval < now);
-        if(rebalanceStatus == RebalanceStatus.INACTIVE){
-            ethValueRebalanceStart = address(this).balance;
-            delete rebalanceTokensToSell;
-            delete rebalanceTokensToBuy;
-            rebalanceStatus = RebalanceStatus.INITIATED;
-        }
-        uint i;
-        uint currentProgress = rebalancingTokenProgress;
-
+    function rebalancePrepareSellAndBuy() private returns (bool success){
         if(rebalanceStatus == RebalanceStatus.INITIATED){
+            uint totalIndexValue = getTotalIndexValue();
+            uint i;
             for(i = 0; i < tokenAddresses.length; i++) {
                 // Get the amount of tokens expected for 1 ETH
-                uint ETHTokenPrice = mockCoreGetPrice(tokenAddresses[i]);
+                uint ETHTokenPrice = mockCoreGetPrice(ETH_TOKEN, tokenAddresses[i]);
                 uint currentTokenBalance = mockTokenBalances[tokenAddresses[i]]; //
                 uint shouldHaveAmountOfTokensInETH = (totalIndexValue * tokenWeights[i]) / 100;
+                // emit LogUint("shouldHaveETH", shouldHaveAmountOfTokensInETH);
                 uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH * ETHTokenPrice) / 10**18;
+                // emit LogUint("shouldHaveAmountOfTokens", shouldHaveAmountOfTokens);
+                // emit LogUint("currentTokenBalance", currentTokenBalance);
+
                 // minus delta
                 if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+                    emit LogUint("toSellAmount", currentTokenBalance - shouldHaveAmountOfTokens);
                     rebalanceTokensToSell.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
                         tokenWeight: tokenWeights[i],
@@ -90,6 +88,7 @@ contract RebalancePseudo {
                     }));
                 // minus delta
                 } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+                    emit LogUint("toBuyAmount", shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**18) / ETHTokenPrice));
                     rebalanceTokensToBuy.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
                         tokenWeight: tokenWeights[i],
@@ -103,6 +102,22 @@ contract RebalancePseudo {
             }
             rebalanceStatus = RebalanceStatus.READY_TO_TRADE;
         }
+        return true;
+    }
+
+    function rebalance() public returns (bool success){
+        // solium-disable-next-line security/no-block-members
+        require(lastRebalance + rebalanceInterval < now);
+        if(rebalanceStatus == RebalanceStatus.INACTIVE){
+            // ethValueRebalanceStart = address(this).balance;
+            ethValueRebalanceStart = balanceMock;
+            delete rebalanceTokensToSell;
+            delete rebalanceTokensToBuy;
+            rebalanceStatus = RebalanceStatus.INITIATED;
+        }
+        uint i;
+        uint currentProgress = rebalancingTokenProgress;
+        require(rebalancePrepareSellAndBuy());
 
         if(rebalanceStatus == RebalanceStatus.READY_TO_TRADE || rebalanceStatus == RebalanceStatus.SELLING_IN_PROGRESS){
             rebalanceStatus = RebalanceStatus.SELLING_IN_PROGRESS;
@@ -124,7 +139,7 @@ contract RebalancePseudo {
 
 
         if(rebalanceStatus == RebalanceStatus.SELLING_COMPLETE){
-            rebalanceSoldTokensETHReceived = address(this).balance - ethValueRebalanceStart;
+            rebalanceSoldTokensETHReceived = balanceMock - ethValueRebalanceStart;
             rebalanceStatus = RebalanceStatus.BUYING_IN_PROGRESS;
         }
 
@@ -140,6 +155,8 @@ contract RebalancePseudo {
             for(i = 0; i < rebalanceTokensToBuy.length; i++){
                 assumedAmountOfEthToBuy += rebalanceTokensToBuy[i].amount;
             }
+            emit LogUint("rebalanceSoldTokensETHReceived", rebalanceSoldTokensETHReceived);
+
             // Based on the actual amount of received ETH for sold tokens, calculate the difference percentage
             // So this can be used to modify the ETH used, so we don't have an ETH shortage or leftovers at the last token buy
             if(assumedAmountOfEthToBuy > rebalanceSoldTokensETHReceived){
@@ -176,7 +193,6 @@ contract RebalancePseudo {
             }
 
         }
-
         if(rebalanceStatus == RebalanceStatus.BUYING_COMPLETE){
             // Yay, done! Reset everything, ready for the next time
             // solium-disable-next-line security/no-block-members
@@ -206,30 +222,60 @@ contract RebalancePseudo {
         return true;
     }
 
-    function mockCoreGetPrice(address src) public pure returns (uint) {
-      // return the expected result for a 1 ETH trade
-        if(uint(src) < uint(0x10)){
-            return 18*10**17;
-        } else {
-            return 5*10**17;
+    function mockCoreGetPrice(address _src, address _dest) public pure returns (uint) {
+        // return the expected result for a 1 ETH trade
+        if(_src == address(0x01)){
+            return 1*10**16;
+        } else if (_dest == address(0x01)){
+            return 1*10**20;
+        } else if (_src == address(0x02)){
+            return 1*10**15;
+        } else if (_dest == address(0x02)){
+            return 1*10**21;
         }
+        if(_src == ETH_TOKEN){
+            return 1*10**19;
+        }
+        return 1*10**17;
     }
 
     function mockCoreExchange(address _src, address _dest, uint _amount) public returns (bool){
         if(_src != ETH_TOKEN){
             mockTokenBalances[_src] -= _amount;
+            balanceMock += _amount * mockCoreGetPrice(_src,ETH_TOKEN) / 10**18;
         }
         if(_dest != ETH_TOKEN){
             mockTokenBalances[_dest] += _amount;
+            balanceMock -= _amount * mockCoreGetPrice(ETH_TOKEN, _src) / 10**18;
         }
         return true;
     }
 
-    function getTokenBalances() public view returns (uint[] balances){
+    function getTotalIndexValue() public returns (uint totalValue){
+        for(uint i = 0; i < tokenAddresses.length; i++){
+            totalValue += mockTokenBalances[tokenAddresses[i]] * mockCoreGetPrice(tokenAddresses[i], ETH_TOKEN) / 10**18;
+        }
+        emit LogUint("totalValue", totalValue);
+    }
+
+    function getTokenBalances() public view returns (uint[]){
+        uint[] memory balances = new uint[](tokenAddresses.length);
         for(uint i = 0; i < tokenAddresses.length; i++){
             balances[i] = mockTokenBalances[tokenAddresses[i]];
         }
         return balances;
+    }
+
+    function getTokenValues() public view returns (uint[]){
+        uint[] memory values = new uint[](tokenAddresses.length);
+        for(uint i = 0; i < tokenAddresses.length; i++){
+            values[i] = mockTokenBalances[tokenAddresses[i]] * mockCoreGetPrice(tokenAddresses[i], ETH_TOKEN) / 10**18;
+        }
+        return values;
+    }
+
+    function getTokenLengths() public view returns (uint[2]){
+        return [rebalanceTokensToSell.length, rebalanceTokensToBuy.length];
     }
 
 }
