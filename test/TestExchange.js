@@ -252,11 +252,12 @@ contract('KyberNetworkExchange', (accounts) => {
       let destAddress = accounts[0];
       let tokenBalance = await erc20Token.balanceOf(destAddress);
       assert.notEqual(new BigNumber(tokenBalance).toNumber(), 0);
-      await erc20Token.approve(kyberExchange.address, tokenBalance);
       // Test getRate
       let rate = await kyberExchange.getRateToSell('', tokens[i], 0);
       assert.ok(expectedRateToSell.equals(rate));
       // Test placeOrder
+      await erc20Token.transfer(kyberExchange.address, tokenBalance);
+
       let result = await kyberExchange.placeOrderQuicklyToSell(exchangeId, tokens[i], tokenBalance, rate, destAddress);
 
       tokenBalance = await erc20Token.balanceOf(destAddress);
@@ -417,23 +418,27 @@ contract('ExchangeProvider', (accounts) => {
     let deposit = accounts[0];
     let amounts = [];
     let rates = [];
+    let beforeBalance = 0;
 
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
       let actualBalance = await erc20Token.balanceOf(deposit);
-      await erc20Token.approve(kyberExchange.address, tokenBalance);
+      console.log(actualBalance);
       amounts.push(actualBalance);
-      rates.push(expectedRateToSell);
-    }
 
+      rates.push(expectedRateToSell);
+      await erc20Token.transfer(exchangeProvider.address, actualBalance);
+    }
+    beforeBalance = await web3.eth.getBalance(deposit);
+    console.log(beforeBalance);
     result = await exchangeProvider.sellToken("",tokens, amounts, rates, deposit);
 
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
       let actualBalance = await erc20Token.balanceOf(deposit);
-
-      assert.ok(actualBalance.equals(0));      
+      console.log(actualBalance);
     }
+    assert.ok(new BigNumber(await web3.eth.getBalance(deposit)).minus(beforeBalance).toNumber() > 0);
   })
 
   it("Test buyToken.", async () => {
@@ -445,11 +450,11 @@ contract('ExchangeProvider', (accounts) => {
     let deposit = accounts[0];
     let amounts = [];
     let rates = [];
+    let actualBalance = [];
 
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
-      let actualBalance = await erc20Token.balanceOf(deposit);
-
+      actualBalance.push(await erc20Token.balanceOf(deposit)); 
       amounts.push(web3.toWei(srcAmountETH));
       rates.push(expectedRate);
     }
@@ -458,8 +463,8 @@ contract('ExchangeProvider', (accounts) => {
 
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
-      let actualBalance = await erc20Token.balanceOf(deposit);
-      assert.equal(new BigNumber(actualBalance).toNumber(), new BigNumber(expectedRate.mul(srcAmountETH)).toNumber());
+      let tokenBalance = await erc20Token.balanceOf(deposit);
+      assert.equal(new BigNumber(actualBalance[i]).plus(expectedRate.mul(srcAmountETH)).toNumber(), tokenBalance.toNumber())
     }
   })
 

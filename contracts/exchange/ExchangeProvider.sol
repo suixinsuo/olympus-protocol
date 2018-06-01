@@ -114,7 +114,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         orders[orderId].exchanges.push(exchangeId);
         return true;
     }
-    
+
     function buyToken(bytes32 /*id*/, ERC20[] tokens, uint256[] amounts, uint256[] rates, address deposit) external onlyCore payable returns(bool) {
         IExchangeAdapter adapter;
         for (uint i = 0; i < tokens.length; i++ ) {
@@ -142,6 +142,10 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
                 return false;
             }
             adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
+            //TODO need to add refund if transaction failed
+
+            tokens[i].transfer(address(adapter), amounts[i]);
+            // tokens[i].approve(exchangeManager.getExchangeAdapter(exchangeId), amounts[i]);
             require(
                 adapter.placeOrderQuicklyToSell(
                     exchangeId,
