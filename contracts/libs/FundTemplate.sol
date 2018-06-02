@@ -203,21 +203,13 @@ contract FundTemplate {
         uint _sharePrice;
         require(getFundKYCDetail());
         require(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active));
-        require(msg.value >=  10**17 );
+        require(msg.value >=  10**15 );
         (_realBalance,_fee) = calculateFee(msg.value);
+        _sharePrice = getPriceInternal(msg.value);
         managementFee += _fee;
-        _sharePrice = getPrice();
         _realShare = _realBalance / _sharePrice;
         balances[tx.origin] += _realShare * 10 ** decimals;
         totalSupply += _realShare * 10 ** decimals;
-        // if(!_FUNDExtend.limit){
-        //     totalSupply += _realBalance/10**15;
-        //     balances[tx.origin] += _realBalance/10**15;
-        // }else{
-        //     require((balances[owner] - _realBalance/10**15) > 0);
-        //     balances[owner] -= _realBalance/10**15;
-        //     balances[tx.origin] += _realBalance/10**15;
-        // }
         emit Transfer(owner, tx.origin, _realShare * 10 ** decimals);
         emit BuyFund(tx.origin, _realShare * 10 ** decimals);
     }
@@ -239,7 +231,7 @@ contract FundTemplate {
         _FUNDExtend.riskControl = _risk;
     }
 
-    function getPrice() public view returns(uint _price){
+    function getPriceInternal(uint _vaule) internal view returns(uint _price){
         uint _totalVaule = 0;
         uint _expectedRate;
         if(totalSupply == 0){
@@ -255,14 +247,18 @@ contract FundTemplate {
                 if(_expectedRate == 0){continue;}
                 _totalVaule += ((_balance* 10**18) / _expectedRate) ;
             }
-        if (_totalVaule == 0){
-            _price = 10**18;
-            return _price;
-        }else{
-            _price = ((_totalVaule + this.balance - managementFee)* 10 ** decimals)/totalSupply;
-        }
+            if (_totalVaule == 0){
+                _price = 10**18;
+                return _price;
+            }else{
+                _price = ((_totalVaule + this.balance - managementFee - _vaule)* 10 ** decimals)/totalSupply;
+            }
         }
     }
+    function getPrice() public view returns(uint _price){
+        _price = getPriceInternal(0);
+    }
+
 
     function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner  {
         permissionProvider = PermissionProviderInterface(_permissionAddress);
