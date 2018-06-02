@@ -120,8 +120,6 @@ module.exports = function (deployer, network) {
   }).then(() => {
     return deployer.deploy(TokenizationProvider, PermissionProvider.address);
   }).then(() => {
-    return deployer.deploy(FundTemplate, 1000,"Orange","Orange");
-  }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })
 }

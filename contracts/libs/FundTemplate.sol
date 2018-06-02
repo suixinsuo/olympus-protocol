@@ -1,6 +1,8 @@
 pragma solidity ^0.4.23;
 import "../libs/SafeMath.sol";
 import "../permission/PermissionProviderInterface.sol";
+import "../price/PriceProviderInterface.sol";
+import "../libs/ERC20.sol";
 
 contract FundTemplate {
 
@@ -8,6 +10,10 @@ contract FundTemplate {
 
     //Permission Control
     PermissionProviderInterface internal permissionProvider;
+    //Price
+    PriceProviderInterface internal PriceProvider;
+    //ERC20
+    ERC20 internal erc20Token;
 
     //enum
     enum FundStatus { Pause, Close , Active }
@@ -49,12 +55,14 @@ contract FundTemplate {
         address owner;
         bool riskControl;   //default true;
         bool limit;
+        uint createTime;
         uint lockTime;
     }
 
     
     //Costant
     uint    public managementFee;
+    uint public withdrawedFee;
     uint256 public totalSupply;
     string public name;
     uint256 public decimals;
@@ -70,21 +78,17 @@ contract FundTemplate {
     mapping (address => mapping (address => uint256)) allowed;
 
 /////////////////////////////////ERC20 Standard
-    function FundTemplate(uint256 _totalSupply, string _symbol, string _name) public {
-        decimals = 3;
+    function FundTemplate(string _symbol, string _name,uint _decimals) public {
+        require(_decimals >= 0 && _decimals <= 18);
+        decimals = _decimals;
         symbol = _symbol;
         name = _name;
         owner = msg.sender;
         _FUNDExtend.owner = tx.origin;
         _FUND.status = FundStatus.Pause;
-        if(_totalSupply == 0 ){
-            totalSupply = 0;
-            _FUNDExtend.limit = false;
-        }else{
-            _FUNDExtend.limit = true;
-            totalSupply = _totalSupply * (10 ** decimals);
-            balances[msg.sender] = totalSupply;
-        }
+        totalSupply = 0;
+        _FUNDExtend.limit = false;
+        _FUNDExtend.createTime = now;
     }
 	//Fix for short address attack against ERC20
     modifier onlyPayloadSize(uint size) {
@@ -195,21 +199,27 @@ contract FundTemplate {
     function () public payable {
         uint _fee;
         uint _realBalance;
+        uint _realShare;
+        uint _sharePrice;
         require(getFundKYCDetail());
         require(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active));
         require(msg.value >=  10**17 );
         (_realBalance,_fee) = calculateFee(msg.value);
         managementFee += _fee;
-        if(!_FUNDExtend.limit){
-            totalSupply += _realBalance/10**15;
-            balances[tx.origin] += _realBalance/10**15;
-        }else{
-            require((balances[owner] - _realBalance/10**15) > 0);
-            balances[owner] -= _realBalance/10**15;
-            balances[tx.origin] += _realBalance/10**15;
-        }
-        emit Transfer(owner, tx.origin, _realBalance/10**15);
-        emit BuyFund(tx.origin, _realBalance/10**15);
+        _sharePrice = getPrice();
+        _realShare = _realBalance / _sharePrice;
+        balances[tx.origin] += _realShare * 10 ** decimals;
+        totalSupply += _realShare * 10 ** decimals;
+        // if(!_FUNDExtend.limit){
+        //     totalSupply += _realBalance/10**15;
+        //     balances[tx.origin] += _realBalance/10**15;
+        // }else{
+        //     require((balances[owner] - _realBalance/10**15) > 0);
+        //     balances[owner] -= _realBalance/10**15;
+        //     balances[tx.origin] += _realBalance/10**15;
+        // }
+        emit Transfer(owner, tx.origin, _realShare * 10 ** decimals);
+        emit BuyFund(tx.origin, _realShare * 10 ** decimals);
     }
 
     function calculateFee(uint invest) internal view returns(uint _realBalance,uint _managementFee){
@@ -222,9 +232,43 @@ contract FundTemplate {
         require(_FUND.withdrawCycle < now);
         _FUND.withdrawCycle = withdrawTime * 3600 + now;
         _FUNDExtend.owner.transfer(managementFee);
+        withdrawedFee += managementFee;
+        managementFee = 0;
     }
     function hasRisk(bool _risk) public onlyTokenizedOwner returns(bool success){
         _FUNDExtend.riskControl = _risk;
+    }
+
+    function getPrice() public view returns(uint _price){
+        uint _totalVaule = 0;
+        uint _expectedRate;
+        if(totalSupply == 0){
+            _price = 10**18;
+            return _price; //1eth
+        }else{
+            for (var i = 0; i < _FUND.tokenAddresses.length; i++) {
+                erc20Token = ERC20(_FUND.tokenAddresses[i]);
+                uint _balance = erc20Token.balanceOf(address(this));
+                uint _decimal = erc20Token.decimals();
+                if(_balance == 0){continue;}
+                (_expectedRate, ) = PriceProvider.getRates(_FUND.tokenAddresses[i], 10**_decimal);
+                if(_expectedRate == 0){continue;}
+                _totalVaule += ((_balance* 10**18) / _expectedRate) ;
+            }
+        if (_totalVaule == 0){
+            _price = 10**18;
+            return _price;
+        }else{
+            _price = ((_totalVaule + this.balance - managementFee)* 10 ** decimals)/totalSupply;
+        }
+        }
+    }
+
+    function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner  {
+        permissionProvider = PermissionProviderInterface(_permissionAddress);
+    }
+    function setPriceProvider(address _priceAddress) public onlyTokenizedOwner {
+        PriceProvider = PriceProviderInterface(_priceAddress);
     }
 /////////////////////////////////Event 
 	//Event which is triggered to log all transfers to this contract's event log
