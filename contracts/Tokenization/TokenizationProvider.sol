@@ -46,7 +46,7 @@ contract TokenizationProvider {
     function createFund(
         string _name,
         string _symbol,
-        uint _totalSupply,
+        uint _decimals,
         string _description,
         string _category,
         address[] memory _tokenAddresses,
@@ -59,7 +59,7 @@ contract TokenizationProvider {
     returns (address FundAddress) 
     {
         require(_checkLength(_tokenAddresses, _weights));
-        FundAddress = new FundTemplate(_totalSupply,_symbol,_name);
+        FundAddress = new FundTemplate(_symbol,_name,_decimals);
 
         //FundTemplate
         FundTemplate  _newFund;
