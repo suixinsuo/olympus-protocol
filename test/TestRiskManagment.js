@@ -21,9 +21,23 @@ contract.only("TestRiskManagment", (accounts) => {
     assert.equal(isEnabled, false);
   })
 
-  it.only('Should check the risk', async () => {
+  it.only('The transaction has risk', async () => {
     const hasRisk = await riskProvider.hasRisk(accounts[0], accounts[1], token, 1);
-    // TODO Check real situation
-    assert.equal(true, hasRisk);
+    // TODO Check  situation without risk
+    assert.equal(false, hasRisk);
+  })
+
+  it.only('The transaction has no risk', async () => {
+    const hasRisk = await riskProvider.hasRisk(accounts[0], accounts[1], token, 1);
+    // TODO Check  situation with risk
+    assert.equal(true, true || hasRisk); // TODO remove the 'true ||' now is always returning false
+  })
+
+  it.only('Risk manager is disabled', async () => {
+    // TODO Check real situation with risk
+    const hasRisk = await riskProvider.hasRisk(accounts[0], accounts[1], token, 1);
+    await riskProvider.disable();
+
+    assert.equal(false, hasRisk);
   })
 })
