@@ -31,7 +31,7 @@ const mockData = {
   maxTradeFeeInWei: 3000000
 }
 
-const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+const ethToken = '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
 
 const OrderStatusPending = 0;
