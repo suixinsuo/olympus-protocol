@@ -20,7 +20,7 @@ contract RebalancePseudo {
     // Needs to have at least 0.3% difference in order to be eligible for rebalance
     uint private rebalanceDeltaPercentage = 30; // 0.3%
     uint private lastRebalance = 1000000000;
-    uint private rebalanceInterval = 1000;
+    uint private rebalanceInterval = 4 weeks;
     uint private ethValueRebalanceStart;
 
     // We want to see the difference between the balance in ETH before and after tokens are sold
