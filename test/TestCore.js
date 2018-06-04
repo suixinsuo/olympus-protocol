@@ -13,7 +13,7 @@ const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/
 const _ = require('lodash');
 const Promise = require('bluebird');
 const mockData = {
-  tokensum: 2,
+  tokensLenght: 2,
   id: 0,
   name: "test",
   description: "test strategy",
@@ -60,7 +60,7 @@ contract('Olympus-Protocol', function (accounts) {
     let exchangeProvider = await ExchangeProvider.deployed();
     kyberExchange = await KyberNetworkExchange.deployed();
     // reserve
-    await kyberExchange.send(web3.toWei(mockData.tokensum, 'ether'));
+    await kyberExchange.send(web3.toWei(mockData.tokensLenght, 'ether'));
     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
     // register kyber
     await exchangeAdapterManager.addExchange("kyber", kyberExchange.address);
@@ -256,29 +256,29 @@ contract('Olympus-Protocol', function (accounts) {
 
   it("Should be able to buy token for fund option.", async () => {
     let srcAmountETH = 1;
-    let needDeposit = srcAmountETH * mockData.tokensum;
+    let needDeposit = srcAmountETH * mockData.tokensLenght;
     let instance = await Core.deployed();
     let amounts = [];
     let rates = [mockData.tokenOnePrice[0], mockData.tokenTwoPrice[0]];
-    for (let i = 0; i < mockData.tokensum; i++) {
+    for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(accounts[0]);
       amounts.push(web3.toWei(srcAmountETH));
     }
     let result = await instance.buyToken("", mockData.tokenAddresses, amounts, rates, accounts[0],   { from: accounts[0], value: web3.toWei(needDeposit) });
 
-    for (let i = 0; i < mockData.tokensum; i++) {
+    for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(accounts[0]);
     }
   })
   it("Should be able to sell token for fund option.", async () => {
     let srcAmountETH = 1;
-    let needDeposit = srcAmountETH * mockData.tokensum;
+    let needDeposit = srcAmountETH * mockData.tokensLenght;
     let instance = await Core.deployed();
     let amounts = [];
     let rates = [mockData.tokenOnePrice[1], mockData.tokenTwoPrice[1]];
-    for (let i = 0; i < mockData.tokensum; i++) {
+    for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(accounts[0]);
       await erc20Token.approve(instance.address, tokenBalance);
@@ -289,7 +289,7 @@ contract('Olympus-Protocol', function (accounts) {
 
     let result = await instance.sellToken("", mockData.tokenAddresses, amounts, rates, accounts[0]);
 
-    for (let i = 0; i < mockData.tokensum; i++) {
+    for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(accounts[0]);
     }
