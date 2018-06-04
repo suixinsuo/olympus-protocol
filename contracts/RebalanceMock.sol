@@ -10,6 +10,7 @@ contract RebalanceMock {
     using SafeMath for uint256;
 
     event LogUint(string desc, uint value);
+    event LogString(string desc, string value);
     enum RebalanceStatus {
         INACTIVE,
         INITIATED,
@@ -85,19 +86,15 @@ contract RebalanceMock {
             for(i = 0; i < tokenAddresses.length; i++) {
                 // Get the amount of tokens expected for 1 ETH
                 uint ETHTokenPrice = mockCoreGetPrice(ETH_TOKEN, tokenAddresses[i]);
-                require(
-                    ETHTokenPrice > 0,
-                    "Price provider doesn't support this tokenIndex: ".toSlice().concat(Converter.bytes32ToString(bytes32(i)).toSlice()));
+                if(ETHTokenPrice == 0){
+                    emit LogString("Error", "Price provider doesn't support this tokenIndex: ".toSlice().concat(Converter.bytes32ToString(bytes32(i)).toSlice()));
+                }
                 uint currentTokenBalance = mockTokenBalances[tokenAddresses[i]]; //
                 uint shouldHaveAmountOfTokensInETH = (totalIndexValue * tokenWeights[i]) / 100;
-                // emit LogUint("shouldHaveETH", shouldHaveAmountOfTokensInETH);
                 uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH * ETHTokenPrice) / 10**18;
-                // emit LogUint("shouldHaveAmountOfTokens", shouldHaveAmountOfTokens);
-                // emit LogUint("currentTokenBalance", currentTokenBalance);
 
                 // minus delta
                 if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                    // emit LogUint("toSellAmount", currentTokenBalance - shouldHaveAmountOfTokens);
                     rebalanceTokensToSell.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
                         tokenWeight: tokenWeights[i],
@@ -105,14 +102,14 @@ contract RebalanceMock {
                     }));
                 // minus delta
                 } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                    emit LogUint("should have, ETH value    ", shouldHaveAmountOfTokensInETH);
-                    emit LogUint("should have, Token amount ", shouldHaveAmountOfTokens);
-                    emit LogUint("current balance, ETH value", currentTokenBalance*10**18 / ETHTokenPrice);
-                    emit LogUint("current balance, token amo", currentTokenBalance);
-                    emit LogUint("Need to buy, ETH value    ", ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18) / ETHTokenPrice);
-                    emit LogUint("need to buy, Token amount ", shouldHaveAmountOfTokens - currentTokenBalance);
-                    emit LogUint("Expected End ETH value    ", (currentTokenBalance*10**18 / ETHTokenPrice) + ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18 / ETHTokenPrice));
-                    emit LogUint("Expected End Token amount ", currentTokenBalance + shouldHaveAmountOfTokens - currentTokenBalance);
+                    // emit LogUint("should have, ETH value    ", shouldHaveAmountOfTokensInETH);
+                    // emit LogUint("should have, Token amount ", shouldHaveAmountOfTokens);
+                    // emit LogUint("current balance, ETH value", currentTokenBalance*10**18 / ETHTokenPrice);
+                    // emit LogUint("current balance, token amo", currentTokenBalance);
+                    // emit LogUint("Need to buy, ETH value    ", ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18) / ETHTokenPrice);
+                    // emit LogUint("need to buy, Token amount ", shouldHaveAmountOfTokens - currentTokenBalance);
+                    // emit LogUint("Expected End ETH value    ", (currentTokenBalance*10**18 / ETHTokenPrice) + ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18 / ETHTokenPrice));
+                    // emit LogUint("Expected End Token amount ", currentTokenBalance + shouldHaveAmountOfTokens - currentTokenBalance);
 
                     rebalanceTokensToBuy.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
@@ -132,7 +129,7 @@ contract RebalanceMock {
 
     function rebalance() public returns (bool success){
         // solium-disable-next-line security/no-block-members
-        require(lastRebalance + rebalanceInterval < now);
+        require(lastRebalance + rebalanceInterval < now, "Time is not here yet");
         if(rebalanceStatus == RebalanceStatus.INACTIVE){
             // ethValueRebalanceStart = address(this).balance;
             ethValueRebalanceStart = balanceMock;
@@ -142,7 +139,7 @@ contract RebalanceMock {
         }
         uint i;
         uint currentProgress = rebalancingTokenProgress;
-        require(rebalancePrepareSellAndBuy());
+        require(rebalancePrepareSellAndBuy(), "Prepare sell and buy failed");
 
         if(rebalanceStatus == RebalanceStatus.READY_TO_TRADE || rebalanceStatus == RebalanceStatus.SELLING_IN_PROGRESS){
             rebalanceStatus = RebalanceStatus.SELLING_IN_PROGRESS;
@@ -154,7 +151,7 @@ contract RebalanceMock {
                     return false;
                 }
                 // TODO approve token transfers (depending on exchange implementation)
-                require(mockCoreExchange(rebalanceTokensToSell[i].tokenAddress,ETH_TOKEN,rebalanceTokensToSell[i].amount));
+                require(mockCoreExchange(rebalanceTokensToSell[i].tokenAddress,ETH_TOKEN,rebalanceTokensToSell[i].amount), "Exchange sale failed");
                 rebalancingTokenProgress++;
                 if(i == rebalanceTokensToSell.length - 1){
                     rebalanceStatus = RebalanceStatus.SELLING_COMPLETE;
@@ -207,9 +204,9 @@ contract RebalanceMock {
                     slippage = (rebalanceTokensToBuy[i].amount * differencePercentage) / PERCENTAGE_DENOMINATOR;
                 }
                 if(surplus == true){
-                    require(mockCoreExchange(ETH_TOKEN,rebalanceTokensToBuy[i].tokenAddress,rebalanceTokensToBuy[i].amount + slippage));
+                    require(mockCoreExchange(ETH_TOKEN,rebalanceTokensToBuy[i].tokenAddress,rebalanceTokensToBuy[i].amount + slippage), "Exchange buy failed");
                 } else {
-                    require(mockCoreExchange(ETH_TOKEN,rebalanceTokensToBuy[i].tokenAddress,rebalanceTokensToBuy[i].amount - slippage));
+                    require(mockCoreExchange(ETH_TOKEN,rebalanceTokensToBuy[i].tokenAddress,rebalanceTokensToBuy[i].amount - slippage), "Exchange buy failed");
                 }
                 rebalancingTokenProgress++;
                 if(i == rebalanceTokensToBuy.length - 1){
@@ -270,10 +267,6 @@ contract RebalanceMock {
             balanceMock += _amount * mockCoreGetPrice(_src,ETH_TOKEN) / 10**18;
         }
         if(_dest != ETH_TOKEN){
-            emit LogUint("start sale,current balance", mockTokenBalances[_dest]);
-            emit LogUint("ETH Amount to buy with    ", _amount);
-            emit LogUint("Amount of tokens returned ", _amount * mockCoreGetPrice(ETH_TOKEN,_dest) / 10**18);
-
             mockTokenBalances[_dest] += _amount * mockCoreGetPrice(ETH_TOKEN,_dest) / 10**18;
             balanceMock -= _amount;
         }
