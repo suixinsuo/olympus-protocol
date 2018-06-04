@@ -1,8 +1,14 @@
 pragma solidity ^0.4.23;
 
 import "./libs/ERC20.sol";
+import "./libs/strings.sol";
+import "./libs/SafeMath.sol";
+import "./libs/Converter.sol";
 
 contract RebalanceMock {
+    using strings for *;
+    using SafeMath for uint256;
+
     event LogUint(string desc, uint value);
     enum RebalanceStatus {
         INACTIVE,
@@ -22,12 +28,20 @@ contract RebalanceMock {
     // Needs to have at least 0.3% difference in order to be eligible for rebalance
     uint private rebalanceDeltaPercentage = 30; // 0.3%
     uint private lastRebalance = 1000000000;
-    uint private rebalanceInterval = 1000;
+    uint private rebalanceInterval = 0; // Interval is 0 for testing purposes, set to 4 weeks for example for real one. Should be configurable
     uint private ethValueRebalanceStart;
 
     // We want to see the difference between the balance in ETH before and after tokens are sold
     uint private rebalanceSoldTokensETHReceived;
-    // uint totalIndexValue = 100*10**18;
+
+    uint mockPriceSell = 1*10**19;
+    uint mockPriceBuy = 1*10**17;
+    uint mockDeviantPriceSellOne = 1*10**20;
+    uint mockDeviantPriceBuyOne = 1*10**16;
+    uint mockDeviantPriceSellTwo = 1*10**21;
+    uint mockDeviantPriceBuyTwo = 1*10**15;
+
+
     mapping (address => uint) mockTokenBalances;
     address[] private tokenAddresses = [
         0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15
@@ -71,6 +85,9 @@ contract RebalanceMock {
             for(i = 0; i < tokenAddresses.length; i++) {
                 // Get the amount of tokens expected for 1 ETH
                 uint ETHTokenPrice = mockCoreGetPrice(ETH_TOKEN, tokenAddresses[i]);
+                require(
+                    ETHTokenPrice > 0,
+                    "Price provider doesn't support this tokenIndex: ".toSlice().concat(Converter.bytes32ToString(bytes32(i)).toSlice()));
                 uint currentTokenBalance = mockTokenBalances[tokenAddresses[i]]; //
                 uint shouldHaveAmountOfTokensInETH = (totalIndexValue * tokenWeights[i]) / 100;
                 // emit LogUint("shouldHaveETH", shouldHaveAmountOfTokensInETH);
@@ -230,21 +247,21 @@ contract RebalanceMock {
         return true;
     }
 
-    function mockCoreGetPrice(address _src, address _dest) public pure returns (uint) {
+    function mockCoreGetPrice(address _src, address _dest) public view returns (uint) {
         // return the expected result for a 1 ETH trade
         if(_src == address(0x01)){
-            return 1*10**16;
+            return mockDeviantPriceBuyOne;
         } else if (_dest == address(0x01)){
-            return 1*10**20;
+            return mockDeviantPriceSellOne;
         } else if (_src == address(0x02)){
-            return 1*10**15;
+            return mockDeviantPriceBuyTwo;
         } else if (_dest == address(0x02)){
-            return 1*10**21;
+            return mockDeviantPriceSellTwo;
         }
         if(_src == ETH_TOKEN){
-            return 1*10**19;
+            return mockPriceSell;
         }
-        return 1*10**17;
+        return mockPriceBuy;
     }
 
     function mockCoreExchange(address _src, address _dest, uint _amount) public returns (bool){
@@ -288,6 +305,36 @@ contract RebalanceMock {
 
     function getTokenLengths() public view returns (uint[2]){
         return [rebalanceTokensToSell.length, rebalanceTokensToBuy.length];
+    }
+
+    function changeNormalMockPrice(uint percentage, bool moreExpensive) public {
+        if(moreExpensive){
+            mockPriceBuy = mockPriceBuy - (mockPriceBuy*percentage/100);
+            mockPriceSell = mockPriceSell + (mockPriceSell*percentage/100);
+        } else {
+            mockPriceBuy = mockPriceBuy + (mockPriceBuy*percentage/100);
+            mockPriceSell = mockPriceSell - (mockPriceSell*percentage/100);
+        }
+    }
+
+    function changeDeviantMockPriceOne(uint percentage, bool moreExpensive) public {
+        if(moreExpensive){
+            mockDeviantPriceBuyOne = mockDeviantPriceBuyOne - (mockDeviantPriceBuyOne*percentage/100);
+            mockDeviantPriceSellOne = mockDeviantPriceSellOne + (mockDeviantPriceSellOne*percentage/100);
+        } else {
+            mockDeviantPriceBuyOne = mockDeviantPriceBuyOne + (mockDeviantPriceBuyOne*percentage/100);
+            mockDeviantPriceSellOne = mockDeviantPriceSellOne - (mockDeviantPriceSellOne*percentage/100);
+        }
+    }
+
+    function changeDeviantMockPriceTwo(uint percentage, bool moreExpensive) public {
+        if(moreExpensive){
+            mockDeviantPriceBuyTwo = mockDeviantPriceBuyTwo - (mockDeviantPriceBuyTwo*percentage/100);
+            mockDeviantPriceSellTwo = mockDeviantPriceSellTwo + (mockDeviantPriceSellTwo*percentage/100);
+        } else {
+            mockDeviantPriceBuyTwo = mockDeviantPriceBuyTwo + (mockDeviantPriceBuyTwo*percentage/100);
+            mockDeviantPriceSellTwo = mockDeviantPriceSellTwo - (mockDeviantPriceSellTwo*percentage/100);
+        }
     }
 
 }
