@@ -162,7 +162,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             return false;
         }
 
-        // uint beforeTokenBalance = dest.balanceOf(deposit);
+        uint beforeTokenBalance = dest.balanceOf(this);
         /*uint actualAmount = kyber.trade.value(amount)(*/
         kyber.trade(
             dest,
@@ -172,14 +172,14 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             2**256 - 1,
             slippageRate,
             walletId);
-            
+
         // uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
-        // uint afterTokenBalance = dest.balanceOf(deposit);
-        // assert(afterTokenBalance < beforeTokenBalance);
+        uint afterTokenBalance = dest.balanceOf(this);
+        assert(afterTokenBalance < beforeTokenBalance);
 
-        // uint actualAmount = afterTokenBalance - beforeTokenBalance;
-        // require(actualAmount >= expectAmount);
+        uint actualAmount = beforeTokenBalance - afterTokenBalance;
+        require(actualAmount == amount);
 
         /**
         // Kyber Bug in Kovan that actualAmount returns always zero
@@ -217,6 +217,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             2**256 - 1,
             slippageRate,
             walletId);
+            
         uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
         uint afterTokenBalance = dest.balanceOf(this);
