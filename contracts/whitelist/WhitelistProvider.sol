@@ -8,7 +8,7 @@ contract WhitelistProvider {
     mapping (address=>bool) whitelistAddresses;
     bool public enabled;
 
-    function WhitelistProvider(address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
@@ -17,11 +17,11 @@ contract WhitelistProvider {
         _;
     }
 
-    function enable() public onlyWhitelistOwner returns(bool){
+    function enable() public onlyWhitelistOwner {
         enabled = true;
     }
 
-    function disable() public onlyWhitelistOwner returns(bool){
+    function disable() public onlyWhitelistOwner {
         enabled = false;
     }
 
