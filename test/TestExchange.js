@@ -7,7 +7,7 @@ const PermissionProvider = artifacts.require("../contracts/permission/Permission
 const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 const CentralizedExchange = artifacts.require("CentralizedExchange");
 
-const tokenNum = 2;
+const tokensLenght = 2;
 const ethToken = '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
 const expectedRateToSell = web3.toBigNumber('1000000000000000');
@@ -29,7 +29,7 @@ contract('MockKyberNetwork', (accounts) => {
 
     let mockKyber = await MockKyberNetwork.new(tokensTotal, tokenDecimals);
     let tokens = await mockKyber.supportedTokens();
-    assert.equal(tokens.length, tokenNum);
+    assert.equal(tokens.length, tokensLenght);
     let destAddress = accounts[0];
     for (var i = 0; i < tokens.length; i++) {
       let rates = await mockKyber.getExpectedRate(ethToken, tokens[i], 0);
@@ -530,7 +530,7 @@ contract('ExchangeProviderWrap', (accounts) => {
     let centralizedExchange = await CentralizedExchange.deployed();
     let tokens = [];
     let owner = accounts[0];
-    for (let i = 0; i < tokenNum; i++) {
+    for (let i = 0; i < tokensLenght; i++) {
       let t = await SimpleERC20Token.new(18, { from: owner });
       tokens.push(t.address);
     }
@@ -581,6 +581,6 @@ contract('ExchangeProviderWrap', (accounts) => {
     }
 
     let afterPayeeBalance = await web3.eth.getBalance(payee);
-    assert.ok(afterPayeeBalance.sub(payeeBalance).equals(web3.toWei(tokenNum * srcAmountETH)));
+    assert.ok(afterPayeeBalance.sub(payeeBalance).equals(web3.toWei(tokensLenght * srcAmountETH)));
   })
 })
