@@ -181,13 +181,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         uint actualAmount = beforeTokenBalance - afterTokenBalance;
         require(actualAmount == amount);
 
-        /**
-        // Kyber Bug in Kovan that actualAmount returns always zero
-        */
 
-        // if(!dest.approve(msg.sender, actualAmount)){
-        //     return false;
-        // }
         return true;
     }
     function placeOrder(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
