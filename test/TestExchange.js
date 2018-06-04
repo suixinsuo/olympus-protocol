@@ -8,7 +8,7 @@ const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 const CentralizedExchange = artifacts.require("CentralizedExchange");
 
 const tokenNum = 2;
-const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+const ethToken = '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
 const expectedRateToSell = web3.toBigNumber('1000000000000000');
 const BigNumber = web3.BigNumber;
@@ -234,7 +234,6 @@ contract('KyberNetworkExchange', (accounts) => {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
       let tokenBalance = await erc20Token.balanceOf(deposit);
 
-      let srcAmountETH = 1;
       // Test placeOrder
       let result = await kyberExchange.placeOrderQuicklyToBuy(exchangeId, tokens[i], web3.toWei(srcAmountETH), rate, deposit);
 
@@ -411,9 +410,7 @@ contract('ExchangeProvider', (accounts) => {
 
   it("Test sellToken.", async () => {
     let srcAmountETH = 1;
-    let totalSrcAmountETH = srcAmountETH * tokens.length;
-
-    await kyberExchange.send(web3.toWei(totalSrcAmountETH, 'ether'));
+    // let totalSrcAmountETH = srcAmountETH * tokens.length;
 
     let deposit = accounts[0];
     let amounts = [];

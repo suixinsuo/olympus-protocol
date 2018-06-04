@@ -40,7 +40,7 @@ contract MockKyberNetwork {
     function _getExpectedRate(ERC20 /*src*/, ERC20 dest, uint) private view
     returns (uint expectedRate, uint slippageRate)
     {
-        if (address(dest) == 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) {
+        if (address(dest) == 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) {
             return (10 ** 15, 10 ** 15);
         } else {
             for (uint i = 0; i < supportedTokens.length; i++){
@@ -67,7 +67,7 @@ contract MockKyberNetwork {
         (expectedRate, slippageRate) = _getExpectedRate(source,dest,srcAmount);
         require(slippageRate>=minConversionRate);
 
-        if (address(source) == 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) {
+        if (address(source) == 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) {
             require(msg.value == srcAmount);
 
             uint destAmount = getExpectAmount(srcAmount, dest.decimals(), minConversionRate);
@@ -77,15 +77,12 @@ contract MockKyberNetwork {
         } else {
             require(msg.value == 0);
             source.transferFrom(msg.sender, this, srcAmount);
-            uint ethAmount = getExpectEthAmount(srcAmount, 18, minConversionRate);
+            uint ethAmount = getExpectAmount(srcAmount, 18, minConversionRate);
             destAddress.send(ethAmount);
         }
     }
 
     function getExpectAmount(uint amount, uint destDecimals, uint rate) private pure returns(uint){
-        return Utils.calcDstQty(amount, 18, destDecimals, rate);
-    }
-    function getExpectEthAmount(uint amount, uint destDecimals, uint rate) private pure returns(uint){
         return Utils.calcDstQty(amount, 18, destDecimals, rate);
     }
 }
