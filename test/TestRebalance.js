@@ -19,40 +19,58 @@ contract('RebalanceMock', (accounts) => {
     try {
       let instance = await RebalanceMock.deployed();
       let tokenBalances = await instance.getTokenBalances.call();
-      console.log('initial tokenBalances', tokenBalances.map((bigNo) => bigNo.toNumber()));
       let initialTokenValues = await instance.getTokenValues.call();
-      console.log('initial tokenValues', initialTokenValues.map((bigNo) => bigNo.toNumber()));
-
-
-      console.log('total value', (await instance.getTotalIndexValue.call()).toNumber());
 
       let firstResult = await instance.rebalance.call();
       let firstTransactionResult = await instance.rebalance();
       assert.equal(firstResult, false);
       assert.equal(firstTransactionResult.receipt.status, TX_OK);
-      console.log('toSell', (await instance.getTokenLengths.call()).map((bigNo) => bigNo.toNumber()));
 
       let secondResult = await instance.rebalance.call();
       let secondTransactionResult = await instance.rebalance();
       assert.equal(secondResult, true);
       assert.equal(secondTransactionResult.receipt.status, TX_OK);
-      let finalTokenBalances = await instance.getTokenBalances.call();
-      let finalTokenValues = await instance.getTokenValues.call();
+      const finalTotalValue = (await instance.getTotalIndexValue.call()).toNumber();
+      let finalTokenBalances = (await instance.getTokenBalances.call()).map((bigNo) => bigNo.toNumber());
+      let finalTokenValues = (await instance.getTokenValues.call()).map((bigNo) => bigNo.toNumber());
 
-      console.log('total value', (await instance.getTotalIndexValue.call()).toNumber());
-      console.log('final tokenValues', finalTokenValues.map((bigNo) => bigNo.toNumber()));
-      console.log('final tokenBalances', finalTokenBalances.map((bigNo) => bigNo.toNumber()));
-      throw new Error();
+      // For the first 10 tokens, check if the percentage of the totalValue is still 5 percent
+      // For the last 5 tokens, it should still be 10 percent
+      finalTokenValues.forEach((finalValue, index) => {
+        assert.equal(finalValue, index < 10 ? finalTotalValue * 0.05 : finalTotalValue * 0.1);
+      });
+
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  });
+
+  it("Should be able to do a rebalance after changing the price for more tokens.", async () => {
+    try {
+      let instance = await RebalanceMock.deployed();
+      let result = await instance.changeNormalMockPrice(50, true)
+      let firstResult = await instance.rebalance.call();
+      let firstTransactionResult = await instance.rebalance();
+      assert.equal(firstResult, false);
+      assert.equal(firstTransactionResult.receipt.status, TX_OK);
+
+      let secondResult = await instance.rebalance.call();
+      let secondTransactionResult = await instance.rebalance();
+      assert.equal(secondResult, true);
+      assert.equal(secondTransactionResult.receipt.status, TX_OK);
+      const finalTotalValue = (await instance.getTotalIndexValue.call()).toNumber();
+      let finalTokenValues = (await instance.getTokenValues.call()).map((bigNo) => bigNo.toNumber());
+
+      // For the first 10 tokens, check if the percentage of the totalValue is still 5 percent
+      // For the last 5 tokens, it should still be 10 percent
+      finalTokenValues.forEach((finalValue, index) => {
+        assert.equal(finalValue, index < 10 ? finalTotalValue * 0.05 : finalTotalValue * 0.1);
+      });
+
     } catch (e) {
       console.error(e);
       throw e;
     }
   });
 });
-452750000000000000
-5000000000000000
-402750000000000000
-45275000000000000000
-45275000000000000000
-45275000000000000000
-452750000000000000000
