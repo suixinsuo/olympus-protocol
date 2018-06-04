@@ -1,7 +1,8 @@
 pragma solidity ^0.4.17;
 import "../permission/PermissionProviderInterface.sol";
+import "./WhitelistProviderInterface.sol";
 
-contract WhitelistProvider {
+contract WhitelistProvider is WhitelistProviderInterface{
 
     PermissionProviderInterface internal permissionProvider;
 

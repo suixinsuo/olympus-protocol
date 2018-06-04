@@ -1,8 +1,8 @@
 pragma solidity ^0.4.23;
 import "../permission/PermissionProviderInterface.sol";
+import "./RiskManagmentProviderInterface.sol";
 
-
-contract RiskManagmentProvider {
+contract RiskManagmentProvider is RiskManagmentProviderInterface {
 
     PermissionProviderInterface internal permissionProvider;
     bool public enabled;
@@ -25,8 +25,12 @@ contract RiskManagmentProvider {
         enabled = false;
     }
 
-    function hasRisk(address sender,address reciver, address token, uint32 amount) external view returns(bool) {
-        return true;
+    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint256 _amount) external view returns(bool) {
+        if(!this.enabled()) {
+          return false;
+        }
+
+        return false;
     }
 
 }
