@@ -80,6 +80,7 @@ contract MockKyberNetwork {
             source.transferFrom(msg.sender, this, srcAmount);
             uint ethAmount = getExpectAmount(srcAmount, 18, minConversionRate);
             destAddress.send(ethAmount);
+            return ethAmount;
         }
     }
 
