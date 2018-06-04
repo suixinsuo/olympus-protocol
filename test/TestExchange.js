@@ -237,8 +237,8 @@ contract('KyberNetworkExchange', (accounts) => {
       // Test placeOrder
       let result = await kyberExchange.placeOrderQuicklyToBuy(exchangeId, tokens[i], web3.toWei(srcAmountETH), rate, deposit);
 
-      let tokenGet = await erc20Token.balanceOf(deposit) - tokenBalance;
-      assert.equal(rate.mul(srcAmountETH).toString(), tokenGet.toString());
+      let balanceDifference = await erc20Token.balanceOf(deposit) - tokenBalance;
+      assert.equal(rate.mul(srcAmountETH).toString(), balanceDifference.toString());
     }
   })
 

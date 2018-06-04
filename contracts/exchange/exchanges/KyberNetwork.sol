@@ -172,6 +172,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             2**256 - 1,
             slippageRate,
             walletId);
+            
         // uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
         // uint afterTokenBalance = dest.balanceOf(deposit);
