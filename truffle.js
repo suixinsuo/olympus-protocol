@@ -31,6 +31,7 @@ module.exports = {
       network_id: 1
     }
   },
+  solc: { optimizer: { enabled: true, runs: 200 } },
   // mocha: {
   //   reporter: 'eth-gas-reporter',
   //   reporterOptions: {
