@@ -95,6 +95,13 @@ contract RebalanceMock {
 
                 // minus delta
                 if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+                    emit LogUint("Sshould have, ETH value    ", shouldHaveAmountOfTokensInETH);
+                    emit LogUint("Sshould have, Token amount ", shouldHaveAmountOfTokens);
+                    emit LogUint("Scurrent balance, ETH value", currentTokenBalance*10**18 / ETHTokenPrice);
+                    emit LogUint("Scurrent balance, token amo", currentTokenBalance);
+                    emit LogUint("Sneed to sell, Token amount", currentTokenBalance - shouldHaveAmountOfTokens);
+                    emit LogUint("SExpected End Token amount ", currentTokenBalance + currentTokenBalance - shouldHaveAmountOfTokens);
+
                     rebalanceTokensToSell.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
                         tokenWeight: tokenWeights[i],
@@ -102,14 +109,14 @@ contract RebalanceMock {
                     }));
                 // minus delta
                 } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                    // emit LogUint("should have, ETH value    ", shouldHaveAmountOfTokensInETH);
-                    // emit LogUint("should have, Token amount ", shouldHaveAmountOfTokens);
-                    // emit LogUint("current balance, ETH value", currentTokenBalance*10**18 / ETHTokenPrice);
-                    // emit LogUint("current balance, token amo", currentTokenBalance);
-                    // emit LogUint("Need to buy, ETH value    ", ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18) / ETHTokenPrice);
-                    // emit LogUint("need to buy, Token amount ", shouldHaveAmountOfTokens - currentTokenBalance);
-                    // emit LogUint("Expected End ETH value    ", (currentTokenBalance*10**18 / ETHTokenPrice) + ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18 / ETHTokenPrice));
-                    // emit LogUint("Expected End Token amount ", currentTokenBalance + shouldHaveAmountOfTokens - currentTokenBalance);
+                    emit LogUint("Bshould have, ETH value    ", shouldHaveAmountOfTokensInETH);
+                    emit LogUint("Bshould have, Token amount ", shouldHaveAmountOfTokens);
+                    emit LogUint("Bcurrent balance, ETH value", currentTokenBalance*10**18 / ETHTokenPrice);
+                    emit LogUint("Bcurrent balance, token amo", currentTokenBalance);
+                    emit LogUint("BNeed to buy, ETH value    ", ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18) / ETHTokenPrice);
+                    emit LogUint("Bneed to buy, Token amount ", shouldHaveAmountOfTokens - currentTokenBalance);
+                    emit LogUint("BExpected End ETH value    ", (currentTokenBalance*10**18 / ETHTokenPrice) + ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18 / ETHTokenPrice));
+                    emit LogUint("BExpected End Token amount ", currentTokenBalance + shouldHaveAmountOfTokens - currentTokenBalance);
 
                     rebalanceTokensToBuy.push(RebalanceToken({
                         tokenAddress: tokenAddresses[i],
@@ -129,7 +136,7 @@ contract RebalanceMock {
 
     function rebalance() public returns (bool success){
         // solium-disable-next-line security/no-block-members
-        require(lastRebalance + rebalanceInterval < now, "Time is not here yet");
+        require(lastRebalance + rebalanceInterval <= now, "Time is not here yet");
         if(rebalanceStatus == RebalanceStatus.INACTIVE){
             // ethValueRebalanceStart = address(this).balance;
             ethValueRebalanceStart = balanceMock;
@@ -302,8 +309,12 @@ contract RebalanceMock {
 
     function changeNormalMockPrice(uint percentage, bool moreExpensive) public {
         if(moreExpensive){
+            emit LogUint("buyBefore ", mockPriceBuy);
+            emit LogUint("sellBefore", mockPriceSell);
             mockPriceBuy = mockPriceBuy - (mockPriceBuy*percentage/100);
             mockPriceSell = mockPriceSell + (mockPriceSell*percentage/100);
+            emit LogUint("buy       ", mockPriceBuy);
+            emit LogUint("sell      ", mockPriceSell);
         } else {
             mockPriceBuy = mockPriceBuy + (mockPriceBuy*percentage/100);
             mockPriceSell = mockPriceSell - (mockPriceSell*percentage/100);
