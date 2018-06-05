@@ -3,7 +3,10 @@ import "../libs/SafeMath.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "../price/PriceProviderInterface.sol";
 import "../libs/ERC20.sol";
-
+interface Core {
+    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
+    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
+}
 contract FundTemplate {
 
     using SafeMath for uint256;
@@ -19,6 +22,10 @@ contract FundTemplate {
     enum FundStatus { Pause, Close , Active }
 
     //Modifier
+    modifier onlyCore() {
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
+        _;
+    }
 
     modifier  onlyFundOwner() {
         require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
@@ -271,6 +278,28 @@ contract FundTemplate {
         require(_tokens.length == _weights.length);
         _FUND.tokenAddresses = _tokens;
         _FUND.weights = _weights;
+        return true;
+    }
+
+    function buyToken(bytes32 _exchangeId, ERC20[] _tokens, uint[] _amounts, uint[] _rates) public onlyCore returns(bool success) {
+        //the operater must be the fund owner
+        require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
+        require(_tokens.length == _amounts.length && _amounts.length == _rates.length);
+
+        require(Core(msg.sender).buyToken(_exchangeId, _tokens, _amounts, _rates, this));
+        return true;
+    }
+
+    function sellToken(address _sender, bytes32 _exchangeId, ERC20[] _tokens, uint[] _amounts, uint[] _rates) public onlyCore returns(bool success) {
+        //the operater must be the fund owner
+        require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
+        require(_tokens.length == _amounts.length && _amounts.length == _rates.length);
+
+        for(int i = 0; i < _tokens.length; i++) {
+            require(_tokens.approve(msg.sender, _amounts[i]));
+        }
+
+        require(Core(msg.sender).sellToken(_exchangeId, _tokens, _amounts, _rates, this));
         return true;
     }
 
