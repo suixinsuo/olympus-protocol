@@ -10,4 +10,6 @@ contract ExchangeProviderInterface {
     function getSubOrderStatus(uint orderId, ERC20 token) external view returns (ExchangeAdapterBase.OrderStatus);
     function cancelOrder(uint orderId) external returns (bool success);
     function checkTokenSupported(ERC20 token) external view returns (bool);
+    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint256[] amounts, uint256[] rates, address deposit) external payable returns(bool);
+    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint256[] amounts, uint256[] rates, address deposit) external returns(bool);
 }
