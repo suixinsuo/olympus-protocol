@@ -1,8 +1,8 @@
 pragma solidity ^0.4.23;
 import "../permission/PermissionProviderInterface.sol";
-import "./RiskManagmentProviderInterface.sol";
+import "./RiskManagementProviderInterface.sol";
 
-contract RiskManagmentProvider is RiskManagmentProviderInterface {
+contract RiskManagementProvider is RiskManagementProviderInterface {
 
     PermissionProviderInterface internal permissionProvider;
     bool public enabled;
@@ -12,16 +12,16 @@ contract RiskManagmentProvider is RiskManagmentProviderInterface {
     }
 
 
-    modifier onlyRiskManagmentOwner() {
+    modifier onlyRiskManagementOwner() {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_RISK_OWNER()));
         _;
     }
 
-    function enable() public onlyRiskManagmentOwner  {
+    function enable() public onlyRiskManagementOwner  {
         enabled = true;
     }
 
-    function disable() public onlyRiskManagmentOwner  {
+    function disable() public onlyRiskManagementOwner  {
         enabled = false;
     }
 
