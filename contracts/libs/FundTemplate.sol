@@ -25,6 +25,11 @@ contract FundTemplate {
         _;
     }
 
+    modifier onlyCore() {
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
+        _;
+    }
+
     modifier  onlyTokenizedOwner() {
         require(msg.sender == owner );
         _;
@@ -267,10 +272,16 @@ contract FundTemplate {
         PriceProvider = PriceProviderInterface(_priceAddress);
     }
 
-    function changeTokens(address[] _tokens, uint[] _weights) public onlyFundOwner returns(bool success){
+    function changeTokens(address[] _tokens, uint[] _weights) public onlyCore returns(bool success){
         require(_tokens.length == _weights.length);
         _FUND.tokenAddresses = _tokens;
         _FUND.weights = _weights;
+        return true;
+    }
+
+    function transferETH(address _to, uint _amount) public onlyCore returns(bool success){
+        require(_to != 0x0);
+        _to.transfer(_amount);
         return true;
     }
 
