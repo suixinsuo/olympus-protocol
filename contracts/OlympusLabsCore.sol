@@ -377,17 +377,24 @@ contract OlympusLabsCore is Manageable {
     function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success) {
         for (uint i = 0; i < tokens.length; i++) {
             tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]);
-
-            ERC20[] memory token = new ERC20[](1);
-            token[0] = tokens[i];
-
-            uint[] memory amount = new uint[](1);
-            amount[0] = amounts[i];
-            uint[] memory rate = new uint[](1);
-            rate[0] = rates[i];
-
-            require(exchangeProvider.sellToken(exchangeId, token, amount, rate, deposit));
         }        
+        require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
         return true;
     }
+    // function createFund(
+    //     string _name,
+    //     string _symbol,
+    //     uint _decimals,
+    //     string _description,
+    //     string _category,
+    //     address[] memory _tokenAddresses,
+    //     uint[] memory _weights,
+    //     uint _withdrawCycle,
+    //     uint _lockTime
+    // ) public 
+    // ///////WARNING 
+    // //onlyWhitelist
+    // returns (address FundAddress) {
+    //     return _tokenization.createfund(_name, _symbol, _decimals, _description, _category, _tokenaddresses, _weights, _withdrawcycle, _locktime);
+    // }
 }
