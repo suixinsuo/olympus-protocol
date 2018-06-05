@@ -60,14 +60,11 @@ contract IndexTemplate {
         _;
     }
 
-    modifier withNoRisk() {
+    modifier withNoRisk(address _from, address _to, uint256 _value) {
         assert(
             !riskProvider.hasRisk(
-              tx.origin,
-              address(this),
-              0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee,
-              msg.value,
-        1));
+               _from, _to, address(this), _value, 0 // Price not required
+            ));
         _;
     }
 
@@ -75,7 +72,11 @@ contract IndexTemplate {
         return balances[_owner];
     }
 
-    function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) public returns(bool success) {
+    function transfer(address _recipient, uint256 _value)
+      onlyPayloadSize(2*32)
+      withNoRisk(msg.sender,_recipient, _value)
+      public returns(bool success) {
+
         require(balances[msg.sender] >= _value, "Your balance is not enough");
         require(_value > 0, "Value needs to be greater than 0");
         balances[msg.sender] -= _value;
@@ -84,7 +85,9 @@ contract IndexTemplate {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool success){
+    function transferFrom(address _from, address _to, uint256 _value)
+      withNoRisk(_from,_to, _value)
+      public returns(bool success){
         require(balances[_from] >= _value, "Your balance is not enough");
         require(allowed[_from][msg.sender] >= _value, "Not enough balance is allowed");
         require(_value > 0, "Value needs to be greater than 0");
