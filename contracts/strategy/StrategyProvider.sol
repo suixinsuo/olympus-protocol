@@ -177,7 +177,7 @@ contract StrategyProvider is StrategyProviderInterface {
         for (uint i = 0; i < _weights.length; ++i) {
             total += _weights[i];
         }
-        return total == 100;
+        return total <= 100;
     }
 
 
