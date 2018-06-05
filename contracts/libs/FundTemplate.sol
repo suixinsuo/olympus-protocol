@@ -290,11 +290,6 @@ contract FundTemplate {
         return true;
     }
 
-    function transferETH(address _to, uint _amount) public onlyCore returns(bool success){
-        require(_to != 0x0);
-        _to.transfer(_amount);
-        return true;
-    }
 
 /////////////////////////////////Event 
 	//Event which is triggered to log all transfers to this contract's event log
