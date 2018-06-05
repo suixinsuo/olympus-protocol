@@ -41,7 +41,6 @@ contract FundTemplate {
     }
     struct FUNDExtend {
         address owner;
-        bool riskControl;   //default true;
         bool limit;
         uint createTime;
         uint lockTime;
@@ -81,12 +80,12 @@ contract FundTemplate {
         _;
     }
 
-    modifier withNoRisk() {
+    modifier withNoRisk(address _tokenAddress) {
         require(
             !riskProvider.hasRisk(
               tx.origin,
               address(this),
-              0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee,
+              _tokenAddress,
               msg.value,
         1));
         _;
@@ -117,10 +116,10 @@ contract FundTemplate {
         return balances[_owner];
     }
 
-    function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) public {
+    function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) withNoRisk(address(this))  public {
         require(balances[msg.sender] >= _value && _value > 0);
         require(_FUNDExtend.lockTime < now );
-        require(_FUNDExtend.riskControl && (_FUND.status == FundStatus.Active));
+        require(_FUND.status == FundStatus.Active);
         if (_recipient == address(this)) {
             balances[msg.sender] -= _value;
             require(totalSupply - _value > 0);
@@ -134,9 +133,9 @@ contract FundTemplate {
         }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public {
+    function transferFrom(address _from, address _to, uint256 _value)   withNoRisk(address(this))  public {
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);
-        require(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active));
+        require(_FUND.status == FundStatus.Active);
         require(_FUNDExtend.lockTime < now );
         balances[_to] += _value;
         balances[_from] -= _value;
@@ -174,8 +173,7 @@ contract FundTemplate {
         _FUND.status = FundStatus.Active;
         _FUND.withdrawCycle = _withdrawCycle * 3600 + now;
         withdrawTime = _withdrawCycle;
-        _FUNDExtend.riskControl = true;
-        return true;
+         return true;
     }
 
     function getFundDetails() public view returns(
@@ -200,7 +198,7 @@ contract FundTemplate {
     }
 
     function getFundKYCDetail() public view returns(bool success) {
-        if(_FUNDExtend.riskControl && (_FUND.status == FundStatus.Active)){
+        if(riskProvider.enabled() && (_FUND.status == FundStatus.Active)){
             return true;
         }
     }
@@ -211,14 +209,14 @@ contract FundTemplate {
         return true;
     }
     //Minimal 0.1 ETH
-    function () public withNoRisk payable {
+    function () public withNoRisk(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) payable {
         uint _fee;
         uint _realBalance;
         uint _realShare;
         uint _sharePrice;
 
         require(getFundKYCDetail());
-        require(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active));
+        require(_FUND.status == FundStatus.Active);
         require(msg.value >= 10**15 );
 
         (_realBalance,_fee) = calculateFee(msg.value);
