@@ -297,6 +297,41 @@ contract IndexTemplate {
         return false;
     }
 
+    // Reset function, in case there is any issue.
+    // Can not be executed once the actual trading has started for safety.
+    function resetRebalance() public onlyOwner returns(bool) {
+        require(
+            rebalanceStatus == RebalanceStatus.INACTIVE || rebalanceStatus == RebalanceStatus.INITIATED || rebalanceStatus == RebalanceStatus.READY_TO_TRADE);
+        rebalanceStatus = RebalanceStatus.INACTIVE;
+        rebalancingTokenProgress = 0;
+        return true;
+    }
+
+    // We should have this function, so that if there is an issue with a token (e.g. costing a lot of gas)
+    // we can reduce the limit to narrow down the problematic token, or just temporary limit
+    function updateTokensPerRebalance(uint tokenAmount) public onlyOwner returns(bool){
+        require(tokenAmount > 0);
+        tokenStep = tokenAmount;
+        return true;
+    }
+
+    // TODO call real core functions
+    function mockCoreGetPrice(address _tokenAddress) public pure returns (uint) {
+        if(_tokenAddress != address(0x213)){
+            // return the expected result for a 1 ETH trade
+            return 1;
+        }
+    }
+
+    // TODO call real core functions
+    function mockCoreExchange(address _src, address _dest, uint _amount) public pure returns (bool){
+        if(_src != address(0x213) && _dest != address(0x213) && _amount > 0){
+            return true;
+        }
+        return false;
+    }
+
+
     /**
     End Rebalance Functions
     */
