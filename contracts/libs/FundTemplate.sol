@@ -266,6 +266,14 @@ contract FundTemplate {
     function setPriceProvider(address _priceAddress) public onlyTokenizedOwner {
         PriceProvider = PriceProviderInterface(_priceAddress);
     }
+
+    function changeTokens(address[] _tokens, uint[] _weights) public onlyFundOwner returns(bool success){
+        require(_tokens.length == _weights.length);
+        _FUND.tokenAddresses = _tokens;
+        _FUND.weights = _weights;
+        return true;
+    }
+
 /////////////////////////////////Event 
 	//Event which is triggered to log all transfers to this contract's event log
     event Transfer(
