@@ -51,6 +51,7 @@ contract IndexTemplate {
     }
 
     //Fix for short address attack against ERC20
+    // https://vessenes.com/the-erc20-short-address-attack-explained/
     modifier onlyPayloadSize(uint size) {
         assert(msg.data.length == size + 4);
         _;
