@@ -3,6 +3,7 @@ import "../libs/SafeMath.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "../price/PriceProviderInterface.sol";
 import "../libs/ERC20.sol";
+import "../riskManagement/RiskManagementProviderInterface.sol";
 
 contract IndexTemplate {
     using SafeMath for uint256;
@@ -11,6 +12,8 @@ contract IndexTemplate {
     PermissionProviderInterface internal permissionProvider;
     //Price
     PriceProviderInterface internal PriceProvider;
+    // Risk Provider
+    RiskManagementProviderInterface internal riskProvider;
     //ERC20
     ERC20 internal erc20Token;
 
@@ -50,10 +53,18 @@ contract IndexTemplate {
         _;
     }
 
-    //Fix for short address attack against ERC20
+    // Fix for short address attack against ERC20
     // https://vessenes.com/the-erc20-short-address-attack-explained/
     modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length == size + 4);
+        require(msg.data.length == size + 4);
+        _;
+    }
+
+    modifier withNoRisk(address _from, address _to, uint256 _value) {
+        assert(
+            !riskProvider.hasRisk(
+               _from, _to, address(this), _value, 0 // Price not required
+            ));
         _;
     }
 
@@ -61,7 +72,11 @@ contract IndexTemplate {
         return balances[_owner];
     }
 
-    function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) public returns(bool success) {
+    function transfer(address _recipient, uint256 _value)
+      onlyPayloadSize(2*32)
+      withNoRisk(msg.sender,_recipient, _value)
+      public returns(bool success) {
+
         require(balances[msg.sender] >= _value, "Your balance is not enough");
         require(_value > 0, "Value needs to be greater than 0");
         balances[msg.sender] -= _value;
@@ -70,7 +85,9 @@ contract IndexTemplate {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool success){
+    function transferFrom(address _from, address _to, uint256 _value)
+      withNoRisk(_from,_to, _value)
+      public returns(bool success){
         require(balances[_from] >= _value, "Your balance is not enough");
         require(allowed[_from][msg.sender] >= _value, "Not enough balance is allowed");
         require(_value > 0, "Value needs to be greater than 0");
@@ -91,23 +108,30 @@ contract IndexTemplate {
         return allowed[_owner][_spender];
     }
 
+    // -------------------------- PROVIDER --------------------------
     function setPermissionProvider(address _permissionAddress) public onlyOwner {
         permissionProvider = PermissionProviderInterface(_permissionAddress);
     }
+
     function setPriceProvider(address _priceAddress) public onlyOwner {
         PriceProvider = PriceProviderInterface(_priceAddress);
     }
 
-	//Event which is triggered to log all transfers to this contract's event log
+    function setRiskProvider(address _riskProvider) public onlyOwner {
+        riskProvider = RiskManagementProviderInterface(_riskProvider);
+    }
+
+	  // Event which is triggered to log all transfers to this contract's event log
     event Transfer(
-		address indexed _from,
-		address indexed _to,
-		uint256 _value
+      address indexed _from,
+      address indexed _to,
+      uint256 _value
     );
-	//Event which is triggered whenever an owner approves a new allowance for a spender.
+
+  	// Event which is triggered whenever an owner approves a new allowance for a spender.
     event Approval(
-		address indexed _owner,
-		address indexed _spender,
-		uint256 _value
+      address indexed _owner,
+      address indexed _spender,
+      uint256 _value
     );
 }
