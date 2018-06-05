@@ -81,9 +81,10 @@ contract IndexTemplate {
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public {
+    function approve(address _spender, uint256 _value) public returns(bool success) {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
+        return true;
     }
 
     function allowance(address _owner, address _spender) view public returns (uint256) {
