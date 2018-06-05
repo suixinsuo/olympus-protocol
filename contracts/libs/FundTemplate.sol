@@ -22,24 +22,6 @@ contract FundTemplate {
     enum FundStatus { Pause, Close , Active }
 
 
-    modifier  onlyFundOwner() {
-        require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
-        _;
-    }
-
-    modifier onlyCore() {
-        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
-        _;
-    }
-
-    modifier  onlyTokenizedOwner() {
-        require(msg.sender == owner );
-        _;
-    }
-    modifier  onlyTokenizedAndFundOwner() {
-        require(msg.sender == owner && tx.origin == _FUNDExtend.owner);
-        _;
-    }
 
     //struct 
 
@@ -107,6 +89,11 @@ contract FundTemplate {
               _tokenAddress,
               msg.value,
         1));
+        _;
+    }
+    
+    modifier onlyCore() {
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
 
