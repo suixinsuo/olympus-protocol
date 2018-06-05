@@ -12,7 +12,8 @@ library TypeDefinitions {
         Storage,
         ExtendedStorage,
         Whitelist,
-        RiskManagement
+        RiskManagement,
+        TokenizationProvider
     }
 
     struct ProviderStatistic {

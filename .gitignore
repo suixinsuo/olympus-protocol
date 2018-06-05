@@ -1,6 +1,7 @@
 
 node_modules
 build
+.DS_Store
 .idea./build/
 .idea
 coverage
@@ -10,3 +11,4 @@ coverageEnv
 scTopics
 aws.config.dev.json
 npm-debug.log
+package-lock.json
