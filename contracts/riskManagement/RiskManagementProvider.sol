@@ -11,7 +11,6 @@ contract RiskManagementProvider is RiskManagementProviderInterface {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
-
     modifier onlyRiskManagementOwner() {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_RISK_OWNER()));
         _;
@@ -29,7 +28,7 @@ contract RiskManagementProvider is RiskManagementProviderInterface {
      external view returns(bool) {
 
         if(!this.enabled()) {
-          return false;
+            return false;
         }
 
         return false;
