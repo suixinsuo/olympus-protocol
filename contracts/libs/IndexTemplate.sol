@@ -19,6 +19,7 @@ contract IndexTemplate {
 
     uint256 public totalSupply;
     string public name;
+    string public description;
     string public category;
     uint256 public decimals;
     string public symbol;
@@ -30,17 +31,23 @@ contract IndexTemplate {
     mapping (address => mapping (address => uint256)) allowed;
 
     constructor (
-        string _symbol, string _name, string _category,
+        string _symbol, string _name, string _category, string _description,
         uint _decimals, address[] _indexTokenAddresses, uint8[] _indexTokenWeights) public {
         require(_decimals <= 18, "Too many decimals, should be equal to or less than 18");
         decimals = _decimals;
         symbol = _symbol;
         name = _name;
         category = _category;
+        description = _description;
         owner = msg.sender;
         indexTokenAddresses = _indexTokenAddresses;
         indexTokenWeights = _indexTokenWeights;
         totalSupply = 0;
+    }
+
+    modifier onlyOwner(){
+        require(msg.sender == owner);
+        _;
     }
 
     //Fix for short address attack against ERC20
@@ -82,10 +89,10 @@ contract IndexTemplate {
         return allowed[_owner][_spender];
     }
 
-    function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner  {
+    function setPermissionProvider(address _permissionAddress) public onlyOwner {
         permissionProvider = PermissionProviderInterface(_permissionAddress);
     }
-    function setPriceProvider(address _priceAddress) public onlyTokenizedOwner {
+    function setPriceProvider(address _priceAddress) public onlyOwner {
         PriceProvider = PriceProviderInterface(_priceAddress);
     }
 
