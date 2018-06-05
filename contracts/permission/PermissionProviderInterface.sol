@@ -15,6 +15,7 @@ contract PermissionProviderInterface is Provider, RBAC {
     string public constant ROLE_STORAGE_OWNER = "StorageOwner";
     string public constant ROLE_WHITELIST_OWNER = "WhitelistOwner";
     string public constant ROLE_RISK_OWNER = "RiskManagementOwner";
+    string public constant ROLE_FUND = "FundWhitelist";
 
     modifier onlyAdmin()
     {
