@@ -10,6 +10,7 @@ import "./permission/PermissionProviderInterface.sol";
 import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
 import { TypeDefinitions as TD } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
+import "./Tokenization/TokenizationProvider.sol";
 
 
 contract OlympusLabsCore is Manageable {
@@ -28,6 +29,7 @@ contract OlympusLabsCore is Manageable {
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x0));
     WhitelistProviderInterface internal whitelistProvider;
+    TokenizationProvider internal _Tokenization;
     ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
@@ -139,6 +141,9 @@ contract OlympusLabsCore is Manageable {
         } else if(_type == TD.ProviderType.Whitelist) {
             emit Log("WhitelistProvider");
             whitelistProvider = WhitelistProviderInterface(_providerAddress);
+        } else if(_type == TD.ProviderType.TokenizationProvider) {
+            emit Log("TokenizationProvider");
+            _Tokenization = TokenizationProvider(_providerAddress);
         } else {
             emit Log("Unknown provider type supplied.");
             revert();
@@ -363,6 +368,17 @@ contract OlympusLabsCore is Manageable {
     {
         require(receiveAddress != 0x0);
         receiveAddress.transfer(this.balance);
+        return true;
+    }
+
+    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success) {
+        return  exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, deposit);
+    }
+    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success) {
+        for (uint i = 0; i < tokens.length; i++) {
+            tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]);
+        }        
+        require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
         return true;
     }
 }

@@ -30,7 +30,8 @@ interface IExchangeAdapter{
 
     // returns the order id from the adapter, if success. Nothing to do with the real order Id.
     function placeOrder(bytes32 exchangeId, ERC20 dest, uint amount, uint rate, address deposit) external payable returns(uint adapterOrderId);
-
+    function placeOrderQuicklyToBuy(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit) external payable returns(bool);
+    function placeOrderQuicklyToSell(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit) external payable returns(bool);
     // pay when the order is succeeded.
     function payOrder(uint adapterOrderId) external payable returns(bool);
 
@@ -44,6 +45,8 @@ interface IExchangeAdapter{
     /// =0 : not support
     /// <0 : support but doesn't know rate
     function getRate(bytes32 exchangeId, ERC20 token, uint amount) external view returns (int);
+    function getRateToSell(bytes32 exchangeId, ERC20 token, uint amount) external view returns (int);
+    
     function isEnabled(bytes32 _id) external view returns (bool);
 
     function getExchange(bytes32 _id) external view returns(bytes32 name, ExchangeAdapterBase.Status status);
