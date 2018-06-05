@@ -281,7 +281,7 @@ contract FundTemplate {
         return true;
     }
 
-    function buyToken(bytes32 _exchangeId, ERC20[] _tokens, uint[] _amounts, uint[] _rates) public onlyCore returns(bool success) {
+    function buyToken(bytes32 _exchangeId, ERC20[] _tokens, uint256[] _amounts, uint256[] _rates) public onlyCore returns(bool success) {
         //the operater must be the fund owner
         require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
         require(_tokens.length == _amounts.length && _amounts.length == _rates.length);
@@ -290,13 +290,13 @@ contract FundTemplate {
         return true;
     }
 
-    function sellToken(address _sender, bytes32 _exchangeId, ERC20[] _tokens, uint[] _amounts, uint[] _rates) public onlyCore returns(bool success) {
+    function sellToken(address _sender, bytes32 _exchangeId, ERC20[] _tokens, uint256[] _amounts, uint256[] _rates) public onlyCore returns(bool success) {
         //the operater must be the fund owner
         require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
         require(_tokens.length == _amounts.length && _amounts.length == _rates.length);
 
-        for(int i = 0; i < _tokens.length; i++) {
-            require(_tokens.approve(msg.sender, _amounts[i]));
+        for(uint i = 0; i < _tokens.length; i++) {
+            require(_tokens[i].approve(msg.sender, _amounts[i]));
         }
 
         require(Core(msg.sender).sellToken(_exchangeId, _tokens, _amounts, _rates, this));
