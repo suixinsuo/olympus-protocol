@@ -1,14 +1,14 @@
 
 const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
-const RiskManagmentProvider = artifacts.require("RiskManagmentProvider");
+const RiskManagementProvider = artifacts.require("RiskManagementProvider");
 const token = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
-contract.only("TestRiskManagment", (accounts) => {
+contract.only("TestRiskManagement", (accounts) => {
   let riskProvider;
 
-  before('Deploy RiskManagment with PermissionProvider', async () => {
+  before('Deploy RiskManagement with PermissionProvider', async () => {
     let permission = await PermissionProvider.deployed();
-    riskProvider = await RiskManagmentProvider.new(permission.address);
+    riskProvider = await RiskManagementProvider.new(permission.address);
   })
 
   it('Should be able to disable and enable the risk.', async () => {
