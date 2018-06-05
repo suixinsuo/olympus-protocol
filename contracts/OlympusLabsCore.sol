@@ -10,7 +10,7 @@ import "./permission/PermissionProviderInterface.sol";
 import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
 import { TypeDefinitions as TD } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
-import "./riskManagment/RiskManagementProvider.sol";
+import "./riskManagement/RiskManagementProvider.sol";
 
 
 contract OlympusLabsCore is Manageable {
