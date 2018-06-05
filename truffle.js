@@ -18,8 +18,8 @@ module.exports = {
         return new HDWalletProvider(mnemonics.kovan, "https://kovan.infura.io/qajYHKaGssZt5WrdfzGP");
       },
       gasPrice: 1000000000,
-      before_timeout:200000,
-      test_timeout:300000,
+      before_timeout: 200000,
+      test_timeout: 300000,
       network_id: 42
     },
     mainnet: {
@@ -31,6 +31,7 @@ module.exports = {
       network_id: 1
     }
   },
+  solc: { optimizer: { enabled: true, runs: 200 } },
   mocha: {
     reporter: 'eth-gas-reporter',
     reporterOptions: {

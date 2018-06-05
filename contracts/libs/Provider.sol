@@ -12,6 +12,7 @@ library TypeDefinitions {
         Storage,
         ExtendedStorage,
         Whitelist,
+        RiskManagement,
         TokenizationProvider
     }
 

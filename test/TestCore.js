@@ -13,7 +13,7 @@ const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/
 const _ = require('lodash');
 const Promise = require('bluebird');
 const mockData = {
-  tokensum: 2,
+  tokensLenght: 2,
   id: 0,
   name: "test",
   description: "test strategy",
@@ -31,7 +31,7 @@ const mockData = {
   maxTradeFeeInWei: 3000000
 }
 
-const ethToken = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+const ethToken = '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const expectedRate = web3.toBigNumber('1000' + '000000000000000000');
 
 const OrderStatusPending = 0;
@@ -60,7 +60,7 @@ contract('Olympus-Protocol', function (accounts) {
     let exchangeProvider = await ExchangeProvider.deployed();
     kyberExchange = await KyberNetworkExchange.deployed();
     // reserve
-    await kyberExchange.send(web3.toWei(mockData.tokensum, 'ether'));
+    await kyberExchange.send(web3.toWei(mockData.tokensLenght, 'ether'));
     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
     // register kyber
     await exchangeAdapterManager.addExchange("kyber", kyberExchange.address);
@@ -252,6 +252,47 @@ contract('Olympus-Protocol', function (accounts) {
 
     let result = await instance.buyIndex(0, accounts[1], false, { from: accounts[0], value: 3000000 });
     assert.equal(result.receipt.status, '0x01');
+  })
+
+  it("Should be able to buy token for fund option.", async () => {
+    let srcAmountETH = 1;
+    let needDeposit = srcAmountETH * mockData.tokensLenght;
+    let instance = await Core.deployed();
+    let amounts = [];
+    let rates = [mockData.tokenOnePrice[0], mockData.tokenTwoPrice[0]];
+    for (let i = 0; i < mockData.tokensLenght; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
+      amounts.push(web3.toWei(srcAmountETH));
+    }
+    let result = await instance.buyToken("", mockData.tokenAddresses, amounts, rates, accounts[0],   { from: accounts[0], value: web3.toWei(needDeposit) });
+
+    for (let i = 0; i < mockData.tokensLenght; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
+    }
+  })
+  it("Should be able to sell token for fund option.", async () => {
+    let srcAmountETH = 1;
+    let needDeposit = srcAmountETH * mockData.tokensLenght;
+    let instance = await Core.deployed();
+    let amounts = [];
+    let rates = [mockData.tokenOnePrice[1], mockData.tokenTwoPrice[1]];
+    for (let i = 0; i < mockData.tokensLenght; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
+      await erc20Token.approve(instance.address, tokenBalance);
+
+      amounts.push(web3.toWei(srcAmountETH));
+    }
+    let balance = await web3.eth.getBalance(accounts[0]);
+
+    let result = await instance.sellToken("", mockData.tokenAddresses, amounts, rates, accounts[0]);
+
+    for (let i = 0; i < mockData.tokensLenght; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
+    }
   })
 
   it("Should be able to get ethfee.", async () => {
