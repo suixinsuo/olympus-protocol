@@ -8,6 +8,7 @@ var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol");
 var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
 var TokenizationProvider = artifacts.require("./Tokenization/TokenizationProvider.sol");
 var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider.sol");
+var RiskManagement = artifacts.require("RiskManagementProvider.sol");
 var FundTemplate = artifacts.require("./libs/FundTemplate.sol");
 
 const KyberConfig = require('../scripts/libs/kyber_config');
@@ -18,6 +19,7 @@ var ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 var MockKyberNetwork = artifacts.require("MockKyberNetwork");
 var SimpleERC20Token = artifacts.require("SimpleERC20Token");
 var CentralizedExchange = artifacts.require("CentralizedExchange.sol");
+
 const args = require('../scripts/libs/args')
 
 function deployOnDev(deployer, num) {
@@ -147,6 +149,8 @@ function deployOnKovan(deployer, num) {
   }).then(() => {
     return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
   }).then(() => {
+    return deployer.deploy(RiskManagement, PermissionProvider.address);
+  }).then(() => {
     kyberNetworkAddress = '0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50';
     return deployer.deploy(KyberNetworkExchange, kyberNetworkAddress, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
   }).then(async () => {
@@ -162,6 +166,7 @@ function deployOnKovan(deployer, num) {
     let kyberExchangeInstance = await KyberNetworkExchange.deployed();
     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
     let exchangeProvider = await ExchangeProvider.deployed();
+    let riskManagement = await RiskManagement.deployed();
 
     console.info(`Adding kyberExchange ${kyberExchangeInstance.address}`);
     await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
