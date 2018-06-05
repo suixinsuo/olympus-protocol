@@ -197,12 +197,6 @@ contract FundTemplate {
         _weights = _FUND.weights;
     }
 
-    function getFundKYCDetail() public view returns(bool success) {
-        if(riskProvider.enabled() && (_FUND.status == FundStatus.Active)){
-            return true;
-        }
-    }
-
     // -------------------------- MAPPING --------------------------
     function lockFund (uint _hours) public onlyTokenizedAndFundOwner  returns(bool success){
         _FUNDExtend.lockTime += now + _hours * 3600;
@@ -215,7 +209,6 @@ contract FundTemplate {
         uint _realShare;
         uint _sharePrice;
 
-        require(getFundKYCDetail());
         require(_FUND.status == FundStatus.Active);
         require(msg.value >= 10**15 );
 
@@ -242,9 +235,6 @@ contract FundTemplate {
         _FUNDExtend.owner.transfer(managementFee);
         withdrawedFee += managementFee;
         managementFee = 0;
-    }
-    function hasRisk(bool _risk) public onlyTokenizedOwner returns(bool success){
-        _FUNDExtend.riskControl = _risk;
     }
 
     function getPriceInternal(uint _vaule) internal view returns(uint _price){
