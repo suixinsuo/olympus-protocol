@@ -19,6 +19,7 @@ contract IndexTemplate {
 
     uint256 public totalSupply;
     string public name;
+    string public category;
     uint256 public decimals;
     string public symbol;
     address public owner;
@@ -28,11 +29,14 @@ contract IndexTemplate {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 
-    constructor (string _symbol, string _name, uint _decimals, address[] _indexTokenAddresses, uint8[] _indexTokenWeights) public {
+    constructor (
+        string _symbol, string _name, string _category,
+        uint _decimals, address[] _indexTokenAddresses, uint8[] _indexTokenWeights) public {
         require(_decimals >= 0 && _decimals <= 18);
         decimals = _decimals;
         symbol = _symbol;
         name = _name;
+        category = _category;
         owner = msg.sender;
         indexTokenAddresses = _indexTokenAddresses;
         indexTokenWeights = _indexTokenWeights;
