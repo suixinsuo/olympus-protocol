@@ -32,7 +32,7 @@ contract IndexTemplate {
     constructor (
         string _symbol, string _name, string _category,
         uint _decimals, address[] _indexTokenAddresses, uint8[] _indexTokenWeights) public {
-        require(_decimals >= 0 && _decimals <= 18);
+        require(_decimals <= 18, "Too many decimals, should be equal to or less than 18");
         decimals = _decimals;
         symbol = _symbol;
         name = _name;
