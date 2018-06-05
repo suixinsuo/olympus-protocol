@@ -82,7 +82,7 @@ contract FundTemplate {
     }
 
     modifier withNoRisk() {
-        assert(
+        require(
             !riskProvider.hasRisk(
               tx.origin,
               address(this),
@@ -206,8 +206,6 @@ contract FundTemplate {
     }
 
     // -------------------------- MAPPING --------------------------
-
-
     function lockFund (uint _hours) public onlyTokenizedAndFundOwner  returns(bool success){
         _FUNDExtend.lockTime += now + _hours * 3600;
         return true;
@@ -228,10 +226,9 @@ contract FundTemplate {
         managementFee += _fee;
         _realShare = _realBalance / _sharePrice;
         balances[tx.origin] += _realShare * 10 ** decimals;
-        totalSupply += balances[tx.origin];
-
-        emit Transfer(owner, tx.origin, balances[tx.origin]);
-        emit BuyFund(tx.origin,  balances[tx.origin]);
+        totalSupply += _realShare * 10 ** decimals;
+        emit Transfer(owner, tx.origin, _realShare * 10 ** decimals);
+        emit BuyFund(tx.origin, _realShare * 10 ** decimals);
     }
 
     function calculateFee(uint invest) internal view returns(uint _realBalance,uint _managementFee){
