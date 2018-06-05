@@ -10,6 +10,7 @@ import "./permission/PermissionProviderInterface.sol";
 import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
 import { TypeDefinitions as TD } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
+import "./riskManagment/RiskManagementProvider.sol";
 
 
 contract OlympusLabsCore is Manageable {
@@ -28,6 +29,8 @@ contract OlympusLabsCore is Manageable {
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x0));
     WhitelistProviderInterface internal whitelistProvider;
+    RiskManagementProvider internal riskProvider;
+
     ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
@@ -139,6 +142,9 @@ contract OlympusLabsCore is Manageable {
         } else if(_type == TD.ProviderType.Whitelist) {
             emit Log("WhitelistProvider");
             whitelistProvider = WhitelistProviderInterface(_providerAddress);
+        } else if(_type == TD.ProviderType.RiskManagement) {
+            emit Log("RiskManagementProvider");
+            riskProvider = WhitelistProviderInterface(_providerAddress);
         } else {
             emit Log("Unknown provider type supplied.");
             revert();
@@ -206,8 +212,14 @@ contract OlympusLabsCore is Manageable {
                 revert();
             }
 
-            subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
-            subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
+            subOrderTemp[0][i] = amounts[2] * weights[i] / 100; // Amount
+            subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]); // Price
+
+            // Check the transaction has any kind of risk
+            if (riskProvider.hasRisk(depositAddress, msg.sender, tokens[i],subOrderTemp[0][i], subOrderTemp[1][i])){
+                emit Log("One of the tokens transaction has risk");
+                revert();
+            }
 
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
@@ -216,8 +228,7 @@ contract OlympusLabsCore is Manageable {
         }
 
         olympusStorage.addTokenDetails(
-            indexOrderId,
-            tokens, weights, subOrderTemp[0], subOrderTemp[1]
+            indexOrderId, tokens, weights, subOrderTemp[0], subOrderTemp[1]
         );
 
 
@@ -359,6 +370,7 @@ contract OlympusLabsCore is Manageable {
         require(ERC20(_tokenAddress).transfer(receiveAddress,_balance));
         return true;
     }
+
     function withdrawETH(address receiveAddress) public onlyOwner returns(bool success)
     {
         require(receiveAddress != 0x0);
@@ -371,8 +383,15 @@ contract OlympusLabsCore is Manageable {
     }
     function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success) {
         for (uint i = 0; i < tokens.length; i++) {
+
+            // Check the transaction has any kind of risk
+            if (riskProvider.hasRisk(msg.sender, depositAddress, tokens[i],amounts[i], rates[i])){
+                emit Log("One of the tokens transaction has risk");
+                revert();
+            }
+
             tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]);
-        }        
+        }
         require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
         return true;
     }

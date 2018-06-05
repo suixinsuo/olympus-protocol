@@ -25,7 +25,9 @@ contract RiskManagementProvider is RiskManagementProviderInterface {
         enabled = false;
     }
 
-    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint256 _amount) external view returns(bool) {
+    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint256 _amount, uint256 price)
+     external view returns(bool) {
+
         if(!this.enabled()) {
           return false;
         }
