@@ -14,7 +14,7 @@ contract FundTemplate {
     //Price
     PriceProviderInterface internal priceProvider;
     // Risk Provider
-    RiskManagementProvider internal riskProvider;
+    RiskManagementProviderInterface internal riskProvider;
     //ERC20
     ERC20 internal erc20Token;
 

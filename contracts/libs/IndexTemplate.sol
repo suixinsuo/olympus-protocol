@@ -3,6 +3,7 @@ import "../libs/SafeMath.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "../price/PriceProviderInterface.sol";
 import "../libs/ERC20.sol";
+import "../riskManagement/RiskManagementProviderInterface.sol";
 
 contract IndexTemplate {
     using SafeMath for uint256;
@@ -12,7 +13,7 @@ contract IndexTemplate {
     //Price
     PriceProviderInterface internal PriceProvider;
     // Risk Provider
-    RiskManagementProvider internal riskProvider;
+    RiskManagementProviderInterface internal riskProvider;
     //ERC20
     ERC20 internal erc20Token;
 
@@ -113,7 +114,7 @@ contract IndexTemplate {
         PriceProvider = PriceProviderInterface(_priceAddress);
     }
 
-    function setRiskProvider(address _riskProvider) public onlyTokenizedOwner {
+    function setRiskProvider(address _riskProvider) public onlyOwner {
         riskProvider = RiskManagementProviderInterface(_riskProvider);
     }
 

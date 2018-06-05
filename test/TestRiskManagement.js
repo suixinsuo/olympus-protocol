@@ -3,7 +3,7 @@ const PermissionProvider = artifacts.require("../contracts/permission/Permission
 const RiskManagementProvider = artifacts.require("RiskManagementProvider");
 const token = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
-contract.only("TestRiskManagement", (accounts) => {
+contract("TestRiskManagement", (accounts) => {
   let riskProvider;
 
   before('Deploy RiskManagement with PermissionProvider', async () => {
