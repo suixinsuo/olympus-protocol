@@ -11,6 +11,8 @@ contract IndexTemplate {
     PermissionProviderInterface internal permissionProvider;
     //Price
     PriceProviderInterface internal PriceProvider;
+    // Risk Provider
+    RiskManagementProvider internal riskProvider;
     //ERC20
     ERC20 internal erc20Token;
 
@@ -50,10 +52,21 @@ contract IndexTemplate {
         _;
     }
 
-    //Fix for short address attack against ERC20
+    // Fix for short address attack against ERC20
     // https://vessenes.com/the-erc20-short-address-attack-explained/
     modifier onlyPayloadSize(uint size) {
         assert(msg.data.length == size + 4);
+        _;
+    }
+
+    modifier withNoRisk() {
+        assert(
+            !riskProvider.hasRisk(
+              tx.origin,
+              address(this),
+              0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee,
+              msg.value,
+        1));
         _;
     }
 
@@ -91,23 +104,30 @@ contract IndexTemplate {
         return allowed[_owner][_spender];
     }
 
+    // -------------------------- PROVIDER --------------------------
     function setPermissionProvider(address _permissionAddress) public onlyOwner {
         permissionProvider = PermissionProviderInterface(_permissionAddress);
     }
+
     function setPriceProvider(address _priceAddress) public onlyOwner {
         PriceProvider = PriceProviderInterface(_priceAddress);
     }
 
-	//Event which is triggered to log all transfers to this contract's event log
+    function setRiskProvider(address _riskProvider) public onlyTokenizedOwner {
+        riskProvider = RiskManagementProviderInterface(_riskProvider);
+    }
+
+	  // Event which is triggered to log all transfers to this contract's event log
     event Transfer(
-		address indexed _from,
-		address indexed _to,
-		uint256 _value
+      address indexed _from,
+      address indexed _to,
+      uint256 _value
     );
-	//Event which is triggered whenever an owner approves a new allowance for a spender.
+
+  	// Event which is triggered whenever an owner approves a new allowance for a spender.
     event Approval(
-		address indexed _owner,
-		address indexed _spender,
-		uint256 _value
+      address indexed _owner,
+      address indexed _spender,
+      uint256 _value
     );
 }

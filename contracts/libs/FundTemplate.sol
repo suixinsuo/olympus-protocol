@@ -21,21 +21,6 @@ contract FundTemplate {
     //enum
     enum FundStatus { Pause, Close , Active }
 
-    //Modifier
-
-    modifier  onlyFundOwner() {
-        require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
-        _;
-    }
-
-    modifier  onlyTokenizedOwner() {
-        require(msg.sender == owner );
-        _;
-    }
-    modifier  onlyTokenizedAndFundOwner() {
-        require(msg.sender == owner && tx.origin == _FUNDExtend.owner);
-        _;
-    }
 
     //struct
 
@@ -80,18 +65,20 @@ contract FundTemplate {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 
-/////////////////////////////////ERC20 Standard
-    function FundTemplate(string _symbol, string _name,uint _decimals) public {
-        require(_decimals >= 0 && _decimals <= 18);
-        decimals = _decimals;
-        symbol = _symbol;
-        name = _name;
-        owner = msg.sender;
-        _FUNDExtend.owner = tx.origin;
-        _FUND.status = FundStatus.Pause;
-        totalSupply = 0;
-        _FUNDExtend.limit = false;
-        _FUNDExtend.createTime = now;
+    //Modifier
+
+    modifier  onlyFundOwner() {
+        require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
+        _;
+    }
+
+    modifier  onlyTokenizedOwner() {
+        require(msg.sender == owner );
+        _;
+    }
+    modifier  onlyTokenizedAndFundOwner() {
+        require(msg.sender == owner && tx.origin == _FUNDExtend.owner);
+        _;
     }
 
     modifier withNoRisk() {
@@ -110,6 +97,20 @@ contract FundTemplate {
     modifier onlyPayloadSize(uint size) {
         assert(msg.data.length == size + 4);
         _;
+    }
+
+/////////////////////////////////ERC20 Standard
+    function FundTemplate(string _symbol, string _name,uint _decimals) public {
+        require(_decimals >= 0 && _decimals <= 18);
+        decimals = _decimals;
+        symbol = _symbol;
+        name = _name;
+        owner = msg.sender;
+        _FUNDExtend.owner = tx.origin;
+        _FUND.status = FundStatus.Pause;
+        totalSupply = 0;
+        _FUNDExtend.limit = false;
+        _FUNDExtend.createTime = now;
     }
 
     function balanceOf(address _owner) view public returns (uint256) {
@@ -152,7 +153,7 @@ contract FundTemplate {
         return allowed[_owner][_spender];
     }
 
-/////////////////////////////////Tokenlized
+    // -------------------------- TOKENIZED --------------------------
     function createFundDetails(
         uint _id,
         string _name,
@@ -161,7 +162,7 @@ contract FundTemplate {
         address[] memory _tokenAddresses,
         uint[] memory _weights,
         uint _withdrawCycle
-    )public onlyTokenizedAndFundOwner returns(bool success)
+    ) public onlyTokenizedAndFundOwner returns(bool success)
     {
         _FUND.id = _id;
         _FUND.name = _name;
@@ -204,7 +205,7 @@ contract FundTemplate {
         }
     }
 
-/////////////////////////////////mapping
+    // -------------------------- MAPPING --------------------------
 
 
     function lockFund (uint _hours) public onlyTokenizedAndFundOwner  returns(bool success){
@@ -220,7 +221,7 @@ contract FundTemplate {
 
         require(getFundKYCDetail());
         require(_FUNDExtend.riskControl&&(_FUND.status == FundStatus.Active));
-        require(msg.value >=  10**15);
+        require(msg.value >= 10**15 );
 
         (_realBalance,_fee) = calculateFee(msg.value);
         _sharePrice = getPriceInternal(msg.value);
@@ -237,7 +238,8 @@ contract FundTemplate {
         _managementFee = invest / 100 * _FUND.managementFee;
         _realBalance = invest - _managementFee;
     }
-/////////////////////////////////druft
+
+    // -------------------------- DRUFT --------------------------
     function withdrawfee() public onlyFundOwner {
         require(managementFee > 0 );
         require(_FUND.withdrawCycle < now);
@@ -264,7 +266,7 @@ contract FundTemplate {
                 if(_balance == 0){continue;}
                 (_expectedRate, ) = priceProvider.getRates(_FUND.tokenAddresses[i], 10**_decimal);
                 if(_expectedRate == 0){continue;}
-                _totalVaule += ((_balance* 10**18) / _expectedRate) ;
+                _totalVaule += ((_balance * 10**18) / _expectedRate) ;
             }
             if (_totalVaule == 0){
                 _price = 10**18;
@@ -277,7 +279,6 @@ contract FundTemplate {
     function getPrice() public view returns(uint _price){
         _price = getPriceInternal(0);
     }
-
 
     function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner  {
         permissionProvider = PermissionProviderInterface(_permissionAddress);
@@ -298,28 +299,31 @@ contract FundTemplate {
         return true;
     }
 
-/////////////////////////////////Event
-	//Event which is triggered to log all transfers to this contract's event log
+    // -------------------------- EVENTS --------------------------
+ 	  // Event which is triggered to log all transfers to this contract's event log
     event Transfer(
-		address indexed _from,
-		address indexed _to,
-		uint256 _value
+        address indexed _from,
+        address indexed _to,
+        uint256 _value
     );
-	//Event which is triggered whenever an owner approves a new allowance for a spender.
+	  //Event which is triggered whenever an owner approves a new allowance for a spender.
     event Approval(
-		address indexed _owner,
-		address indexed _spender,
-		uint256 _value
+        address indexed _owner,
+        address indexed _spender,
+        uint256 _value
     );
+
     event Destroy(
         address indexed _spender,
         uint256 _value
     );
+
     event PersonalLocked(
         address indexed _spender,
         uint256 _value,
         uint256 _lockTime
     );
+
     event BuyFund(
         address indexed _spender,
         uint256 _value
