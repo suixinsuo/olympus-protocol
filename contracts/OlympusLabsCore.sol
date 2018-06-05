@@ -144,7 +144,7 @@ contract OlympusLabsCore is Manageable {
             whitelistProvider = WhitelistProviderInterface(_providerAddress);
         } else if(_type == TD.ProviderType.RiskManagement) {
             emit Log("RiskManagementProvider");
-            riskProvider = WhitelistProviderInterface(_providerAddress);
+            riskProvider = RiskManagementProvider(_providerAddress);
         } else {
             emit Log("Unknown provider type supplied.");
             revert();
@@ -385,7 +385,7 @@ contract OlympusLabsCore is Manageable {
         for (uint i = 0; i < tokens.length; i++) {
 
             // Check the transaction has any kind of risk
-            if (riskProvider.hasRisk(msg.sender, depositAddress, tokens[i],amounts[i], rates[i])){
+            if (riskProvider.hasRisk(msg.sender, deposit, tokens[i],amounts[i], rates[i])){
                 emit Log("One of the tokens transaction has risk");
                 revert();
             }
