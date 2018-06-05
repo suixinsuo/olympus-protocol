@@ -31,11 +31,12 @@ module.exports = {
       network_id: 1
     }
   },
-  // mocha: {
-  //   reporter: 'eth-gas-reporter',
-  //   reporterOptions: {
-  //     currency: 'CNY',
-  //     gasPrice: 2
-  //   }
-  // }
+  solc: { optimizer: { enabled: true, runs: 200 } },
+  mocha: {
+    reporter: 'eth-gas-reporter',
+    reporterOptions: {
+      currency: 'CNY',
+      gasPrice: 2
+    }
+  }
 }
