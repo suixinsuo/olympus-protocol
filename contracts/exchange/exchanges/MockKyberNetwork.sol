@@ -11,6 +11,7 @@ contract MockKyberNetwork {
         SimpleERC20Token   token;
         uint    slippageRate;
     }
+    address ETH_ADDRESS = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
     Token[] public supportedTokens;
     function MockKyberNetwork(uint total,uint _decimals) public {
@@ -40,9 +41,13 @@ contract MockKyberNetwork {
     function _getExpectedRate(ERC20 /*src*/, ERC20 dest, uint) private view
     returns (uint expectedRate, uint slippageRate)
     {
-        for (uint i = 0; i < supportedTokens.length; i++){
-            if(address(supportedTokens[i].token) == address(dest)){
-                return (supportedTokens[i].slippageRate,supportedTokens[i].slippageRate);
+        if (address(dest) == ETH_ADDRESS) {
+            return (10 ** 15, 10 ** 15);
+        } else {
+            for (uint i = 0; i < supportedTokens.length; i++){
+                if(address(supportedTokens[i].token) == address(dest)){
+                    return (supportedTokens[i].slippageRate,supportedTokens[i].slippageRate);
+                }
             }
         }
         return (0, 0);    
@@ -58,17 +63,25 @@ contract MockKyberNetwork {
         address )
         external payable returns(uint)
     {
-
-        require(msg.value == srcAmount);
         uint slippageRate;
         uint expectedRate;
         (expectedRate, slippageRate) = _getExpectedRate(source,dest,srcAmount);
-
         require(slippageRate>=minConversionRate);
-        uint destAmount = getExpectAmount(srcAmount, dest.decimals(), minConversionRate);
 
-        dest.transfer(destAddress,destAmount);
-        return destAmount;
+        if (address(source) == ETH_ADDRESS) {
+            require(msg.value == srcAmount);
+
+            uint destAmount = getExpectAmount(srcAmount, dest.decimals(), minConversionRate);
+
+            dest.transfer(destAddress,destAmount);
+            return destAmount;
+        } else {
+            require(msg.value == 0);
+            source.transferFrom(msg.sender, this, srcAmount);
+            uint ethAmount = getExpectAmount(srcAmount, 18, minConversionRate);
+            destAddress.send(ethAmount);
+            return ethAmount;
+        }
     }
 
     function getExpectAmount(uint amount, uint destDecimals, uint rate) private pure returns(uint){
