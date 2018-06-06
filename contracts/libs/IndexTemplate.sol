@@ -337,7 +337,7 @@ contract IndexTemplate {
             // TODO: price provider get both ways
             (_expectedRate, ) = priceProvider.getRates(_dest, _amount);
         } else {
-            (_expectedRate, ) = priceProvider.getRates(_src, _amount);
+            (_expectedRate, ) = priceProvider.getSellRates(_src, _amount);
         }
     }
 
