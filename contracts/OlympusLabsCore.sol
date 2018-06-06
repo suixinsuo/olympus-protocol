@@ -367,7 +367,7 @@ contract OlympusLabsCore is Manageable {
     function withdrawETH(address receiveAddress) public onlyOwner returns(bool success)
     {
         require(receiveAddress != 0x0);
-        receiveAddress.transfer(this.balance);
+        receiveAddress.transfer(address(this).balance);
         return true;
     }
 

@@ -47,7 +47,7 @@ contract PriceProvider {
 
     PermissionProviderInterface internal permissionProvider;
 
-    function PriceProvider (address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
