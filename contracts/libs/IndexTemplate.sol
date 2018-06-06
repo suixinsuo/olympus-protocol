@@ -7,15 +7,26 @@ import "../libs/strings.sol";
 import "../libs/Converter.sol";
 import "../riskManagement/RiskManagementProviderInterface.sol";
 
+interface CoreInterface {
+    function buyToken(
+        bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
+    function sellToken(
+        bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
+}
+
 contract IndexTemplate {
     using strings for *;
     using SafeMath for uint256;
+
+    event LogString(string desc, string value);
+
     //Permission Control
     PermissionProviderInterface internal permissionProvider;
     //Price
     PriceProviderInterface internal PriceProvider;
-    // Risk Provider
+    //Risk Provider
     RiskManagementProviderInterface internal riskProvider;
+    CoreInterface internal core;
     //ERC20
     ERC20 internal erc20Token;
 
@@ -63,6 +74,8 @@ contract IndexTemplate {
     }
     RebalanceToken[] public rebalanceTokensToSell;
     RebalanceToken[] public rebalanceTokensToBuy;
+    address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+
     /**
     End Rebalance parameters
      */
@@ -81,6 +94,7 @@ contract IndexTemplate {
         indexTokenAddresses = _indexTokenAddresses;
         indexTokenWeights = _indexTokenWeights;
         totalSupply = 0;
+        // solium-disable-next-line security/no-block-members
         lastRebalance = now;
         rebalanceInterval = _rebalanceInterval;
     }
@@ -158,6 +172,10 @@ contract IndexTemplate {
         riskProvider = RiskManagementProviderInterface(_riskProvider);
     }
 
+    function setCore(address _coreAddress) public onlyOwner {
+        core = CoreInterface(_coreAddress);
+    }
+
     /**
     Start Rebalance Functions
     */
@@ -165,31 +183,30 @@ contract IndexTemplate {
         if(rebalanceStatus == RebalanceStatus.INITIATED){
             uint totalIndexValue = getTotalIndexValue();
             uint i;
-            for(i = 0; i < tokenAddresses.length; i++) {
+            for(i = 0; i < indexTokenAddresses.length; i++) {
                 // Get the amount of tokens expected for 1 ETH
-                uint ETHTokenPrice = mockCoreGetPrice(ETH_TOKEN, tokenAddresses[i]);
+                uint ETHTokenPrice = getPrice(ETH_TOKEN, indexTokenAddresses[i], 10**18);
                 if(ETHTokenPrice == 0){
                     emit LogString("Error", "Price provider doesn't support this tokenIndex: ".toSlice().concat(Converter.bytes32ToString(bytes32(i)).toSlice()));
                 }
-                uint currentTokenBalance = ERC20(tokenAddresses[i]).balanceOf(address(this)); //
-                uint shouldHaveAmountOfTokensInETH = (totalIndexValue * tokenWeights[i]) / 100;
+                uint currentTokenBalance = ERC20(indexTokenAddresses[i]).balanceOf(address(this)); //
+                uint shouldHaveAmountOfTokensInETH = (totalIndexValue * indexTokenWeights[i]) / 100;
                 uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH * ETHTokenPrice) / 10**18;
 
                 // minus delta
                 if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
                     rebalanceTokensToSell.push(RebalanceToken({
-                        tokenAddress: tokenAddresses[i],
-                        tokenWeight: tokenWeights[i],
+                        tokenAddress: indexTokenAddresses[i],
+                        tokenWeight: indexTokenWeights[i],
                         amount: currentTokenBalance - shouldHaveAmountOfTokens
                     }));
                 // minus delta
                 } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
                     rebalanceTokensToBuy.push(RebalanceToken({
-                        tokenAddress: tokenAddresses[i],
-                        tokenWeight: tokenWeights[i],
+                        tokenAddress: indexTokenAddresses[i],
+                        tokenWeight: indexTokenWeights[i],
                         // Convert token balance to ETH price (because we need to send ETH), taking into account the decimals of the token
-                        amount: ((shouldHaveAmountOfTokens - currentTokenBalance) * 10**18) / ETHTokenPrice
-                        // amount: shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**ERC20(tokenAddresses[i]).decimals()) / ETHTokenPrice)
+                        amount: ((shouldHaveAmountOfTokensInETH - currentTokenBalance) * (10**ERC20(indexTokenAddresses[i]).decimals())) / ETHTokenPrice
                     }));
                 }
             //TODO Does this run out of gas for 100 tokens?
@@ -222,7 +239,7 @@ contract IndexTemplate {
                     return false;
                 }
                 // TODO approve token transfers (depending on exchange implementation)
-                require(mockCoreExchange(rebalanceTokensToSell[i].tokenAddress,ETH_TOKEN,rebalanceTokensToSell[i].amount), "Exchange sale failed");
+                require(exchange(rebalanceTokensToSell[i].tokenAddress,ETH_TOKEN,rebalanceTokensToSell[i].amount), "Exchange sale failed");
                 rebalancingTokenProgress++;
                 if(i == rebalanceTokensToSell.length - 1){
                     rebalanceStatus = RebalanceStatus.SELLING_COMPLETE;
@@ -275,9 +292,9 @@ contract IndexTemplate {
                     slippage = (rebalanceTokensToBuy[i].amount * differencePercentage) / PERCENTAGE_DENOMINATOR;
                 }
                 if(surplus == true){
-                    require(mockCoreExchange(ETH_TOKEN,rebalanceTokensToBuy[i].tokenAddress,rebalanceTokensToBuy[i].amount + slippage), "Exchange buy failed");
+                    require(exchange(ETH_TOKEN,rebalanceTokensToBuy[i].tokenAddress,rebalanceTokensToBuy[i].amount + slippage), "Exchange buy failed");
                 } else {
-                    require(mockCoreExchange(ETH_TOKEN,rebalanceTokensToBuy[i].tokenAddress,rebalanceTokensToBuy[i].amount - slippage), "Exchange buy failed");
+                    require(exchange(ETH_TOKEN,rebalanceTokensToBuy[i].tokenAddress,rebalanceTokensToBuy[i].amount - slippage), "Exchange buy failed");
                 }
                 rebalancingTokenProgress++;
                 if(i == rebalanceTokensToBuy.length - 1){
@@ -315,22 +332,30 @@ contract IndexTemplate {
         return true;
     }
 
-    // TODO call real core functions
-    function mockCoreGetPrice(address _tokenAddress) public pure returns (uint) {
-        if(_tokenAddress != address(0x213)){
-            // return the expected result for a 1 ETH trade
-            return 1;
+    function getPrice(address _src, address _dest, uint _amount) private pure returns (uint _expectedRate) {
+        if(_src == ETH_TOKEN){
+            // TODO: price provider get both ways
+            (_expectedRate, ) = priceProvider.getRates(_dest, _amount);
+        } else {
+            (_expectedRate, ) = priceProvider.getRates(_src, _amount);
         }
     }
 
-    // TODO call real core functions
-    function mockCoreExchange(address _src, address _dest, uint _amount) public pure returns (bool){
-        if(_src != address(0x213) && _dest != address(0x213) && _amount > 0){
-            return true;
+    function exchange(address _src, address _dest, uint _amount) private pure returns (bool){
+        if(_src == ETH_TOKEN){
+            return core.buyToken.value(_amount)("",[_dest],[_amount], address(this));
+        } else {
+            ERC20(_src).approve(address(core),2**256);
+            return core.sellToken("",[_src],[_amount], address(this));
         }
-        return false;
     }
 
+    function getTotalIndexValue() public view returns (uint totalValue){
+        for(uint i = 0; i < indexTokenAddresses.length; i++){
+            totalValue += ERC20(indexTokenAddresses[i]).balanceOf(address(this))*
+            getPrice(indexTokenAddresses[i], ETH_TOKEN, 10**ERC20(indexTokenAddresses[i]).decimals()) / 10**18;
+        }
+    }
 
     /**
     End Rebalance Functions

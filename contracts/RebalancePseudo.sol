@@ -13,7 +13,7 @@ contract RebalancePseudo {
         BUYING_COMPLETE
     }
     RebalanceStatus private rebalanceStatus = RebalanceStatus.INACTIVE;
-    address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeee;
+    address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     uint private tokenStep = 10;
     uint private rebalancingTokenProgress;
     uint private PERCENTAGE_DENOMINATOR = 10000;
