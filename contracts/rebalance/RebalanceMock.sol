@@ -1,9 +1,9 @@
 pragma solidity ^0.4.23;
 
-import "./libs/ERC20.sol";
-import "./libs/strings.sol";
-import "./libs/SafeMath.sol";
-import "./libs/Converter.sol";
+import "../libs/ERC20.sol";
+import "../libs/strings.sol";
+import "../libs/SafeMath.sol";
+import "../libs/Converter.sol";
 
 contract RebalanceMock {
     using strings for *;
