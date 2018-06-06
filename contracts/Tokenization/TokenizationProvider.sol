@@ -17,7 +17,7 @@ contract TokenizationProvider {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
-
+    
     modifier onlyWhitelist() {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
         //require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
@@ -29,11 +29,17 @@ contract TokenizationProvider {
     //status
     uint fundLength;
 
+    struct _fundDetail{
+        uint fundId;
+        string fundName;
+        uint createTime;
+    }
 
     //mapping
 
     mapping (uint => address) public fundIndex;
     mapping (uint => address) public fundOwner;
+    mapping (address => _fundDetail) public fundDetail;
 
     //function 
 
@@ -68,8 +74,12 @@ contract TokenizationProvider {
         require(_newFund.lockFund(_lockTime));
         fundOwner[fundLength] = tx.origin;
         fundIndex[fundLength] = FundAddress;
+        //
+        fundDetail[tx.origin].fundId = fundLength;
+        fundDetail[tx.origin].fundName = _name;
+        fundDetail[tx.origin].createTime = now;
+        //
         fundLength += 1;
-
         return FundAddress;
     }
 

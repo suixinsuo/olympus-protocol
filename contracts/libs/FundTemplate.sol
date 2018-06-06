@@ -22,7 +22,8 @@ contract FundTemplate {
     enum FundStatus { Pause, Close , Active }
 
 
-    //struct
+
+    //struct 
 
     struct FUND {
         uint id;
@@ -88,6 +89,11 @@ contract FundTemplate {
               _tokenAddress,
               msg.value,
         1));
+        _;
+    }
+    
+    modifier onlyCore() {
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
 
@@ -277,15 +283,16 @@ contract FundTemplate {
         riskProvider = RiskManagementProviderInterface(_riskProvider);
     }
 
-    function changeTokens(address[] _tokens, uint[] _weights) public onlyFundOwner returns(bool success){
+    function changeTokens(address[] _tokens, uint[] _weights) public onlyCore returns(bool success){
         require(_tokens.length == _weights.length);
         _FUND.tokenAddresses = _tokens;
         _FUND.weights = _weights;
         return true;
     }
 
-    // -------------------------- EVENTS --------------------------
- 	  // Event which is triggered to log all transfers to this contract's event log
+
+/////////////////////////////////Event 
+	//Event which is triggered to log all transfers to this contract's event log
     event Transfer(
         address indexed _from,
         address indexed _to,
