@@ -289,7 +289,7 @@ contract FundTemplate {
 
     function withdrawFee() public onlyFundOwner {
         require(pendingOwnerFee > 0);
-        require(_FUND.withdrawCycle < now, "Withdraw is loacked, wait some minutes");
+        require(_FUND.withdrawCycle <= now, "Withdraw is loacked, wait some minutes");
         _FUND.withdrawCycle = withdrawTime * 3600 + now;
 
         uint olympusAmount = pendingOwnerFee * olympusFee / DENOMINATOR;
