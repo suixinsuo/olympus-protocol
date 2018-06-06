@@ -129,7 +129,7 @@ contract IndexTemplate {
         uint _sharePrice;
 
         require(indexStatus == IndexStatus.Active, "Index status is not active");
-        require(msg.value >= 10**15, "Exceeds the maximum value to invest");
+        require(msg.value >= 10**15, "The minium to invest required is 0.01 ETH");
 
         (_realBalance,_fee) = calculateFee(msg.value);
         _sharePrice = getPriceInternal(msg.value);
