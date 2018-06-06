@@ -16,6 +16,15 @@ contract TokenizationProviderInterface {
     //onlyWhitelist
     returns(address FundAddress);
 
+    struct _fundDetail{
+        uint fundId;
+        string fundName;
+        uint createTime;
+    }
+    mapping (uint => address) public fundIndex;
+    mapping (uint => address) public fundOwner;
+    mapping (address => _fundDetail) public fundDetail;
+
     function getFundDetails(uint _fundId) public view returns(
         address _owner,
         string _name,

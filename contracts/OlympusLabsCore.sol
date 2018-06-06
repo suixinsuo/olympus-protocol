@@ -211,8 +211,8 @@ contract OlympusLabsCore is Manageable {
                 revert();
             }
 
-            subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
-            subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
+            subOrderTemp[0][i] = amounts[2] * weights[i] / 100; // Amount
+            subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]); // Price
 
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
@@ -221,8 +221,7 @@ contract OlympusLabsCore is Manageable {
         }
 
         olympusStorage.addTokenDetails(
-            indexOrderId,
-            tokens, weights, subOrderTemp[0], subOrderTemp[1]
+            indexOrderId, tokens, weights, subOrderTemp[0], subOrderTemp[1]
         );
 
 
@@ -364,6 +363,7 @@ contract OlympusLabsCore is Manageable {
         require(ERC20(_tokenAddress).transfer(receiveAddress,_balance));
         return true;
     }
+
     function withdrawETH(address receiveAddress) public onlyOwner returns(bool success)
     {
         require(receiveAddress != 0x0);
@@ -376,8 +376,9 @@ contract OlympusLabsCore is Manageable {
     }
     function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success) {
         for (uint i = 0; i < tokens.length; i++) {
+
             tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]);
-        }        
+        }
         require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
         return true;
     }
