@@ -112,12 +112,14 @@ contract('Olympus-Protocol', function (accounts) {
     let result = await tokenizationInstance.createFund('test_fund', 'test', 18, 'test description', 'test_category', mockData.tokenAddresses, mockData.weights, 0,0);
     assert.equal(result.receipt.status, '0x01');
   })
-  // it("Should be able to get fund buy fund id.", async () => {
-  //   let instance = await Core.deployed();
+  it("Should be able to get fund buy fund id 0.", async () => {
+    // let instance = await Core.deployed();
+    let tokenizationInstance = await TokenizationProvider.deployed();
 
-  //   let result = await instance.createFund('test_fund', 'test', 18, 'test description', 'test_category', mockData.tokenAddresses, mockData.weights, 0,0);
-  //   assert.equal(result.receipt.status, '0x01');
-  // })
+    let result = await tokenizationInstance.getFundDetails.call(0);
+    console.log(result);
+    // assert.equal(result.receipt.status, '0x01');
+  })
   //exchange init
 
   it("Should be able to set a exchange provider.", async () => {

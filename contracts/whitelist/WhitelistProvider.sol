@@ -1,14 +1,15 @@
 pragma solidity ^0.4.17;
 import "../permission/PermissionProviderInterface.sol";
+import "./WhitelistProviderInterface.sol";
 
-contract WhitelistProvider {
+contract WhitelistProvider is WhitelistProviderInterface{
 
     PermissionProviderInterface internal permissionProvider;
 
     mapping (address=>bool) whitelistAddresses;
     bool public enabled;
 
-    function WhitelistProvider(address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
@@ -17,11 +18,11 @@ contract WhitelistProvider {
         _;
     }
 
-    function enable() public onlyWhitelistOwner returns(bool){
+    function enable() public onlyWhitelistOwner {
         enabled = true;
     }
 
-    function disable() public onlyWhitelistOwner returns(bool){
+    function disable() public onlyWhitelistOwner {
         enabled = false;
     }
 
