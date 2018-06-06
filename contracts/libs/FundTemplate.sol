@@ -237,7 +237,7 @@ contract FundTemplate {
         uint _sharePrice;
 
         require(_FUND.status == FundStatus.Active, "The Fund is not active");
-        require(msg.value >= 10**15, "Exceeds the maximum value to invest" );
+        require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH" );
 
         (_realBalance,_fee) = calculateFee(msg.value);
         _sharePrice = getPriceInternal(msg.value);
@@ -283,15 +283,19 @@ contract FundTemplate {
         return pendingOwnerFee;
     }
 
+    function getWithdrawedFee() onlyFundOwner public view returns(uint) {
+        return withdrawedFee;
+    }
+
     function withdrawFee() public onlyFundOwner {
         require(pendingOwnerFee > 0);
-        require(_FUND.withdrawCycle < now);
+        require(_FUND.withdrawCycle < now, "Withdraw is loacked, wait some minutes");
         _FUND.withdrawCycle = withdrawTime * 3600 + now;
 
         uint olympusAmount = pendingOwnerFee * olympusFee / DENOMINATOR;
         _FUNDExtend.owner.transfer(pendingOwnerFee-olympusAmount);
         OLYMPUS_WALLET.transfer(olympusAmount);
-        withdrawedFee += pendingOwnerFee;
+        withdrawedFee += (pendingOwnerFee - olympusAmount);
         pendingOwnerFee = 0;
     }
 

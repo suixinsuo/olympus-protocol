@@ -6,7 +6,7 @@ const PriceProvider = artifacts.require("../contracts/price/PriceProvider.sol");
 
 
 const FundTemplate = artifacts.require("FundTemplate");
-
+const DENOMINATOR = 10000;
 const fundData = {
   id: 1,
   name: 'Test',
@@ -16,7 +16,8 @@ const fundData = {
   category: 'testing',
   // EOS,  Mana
   address: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
-  weights: [50, 50]
+  weights: [50, 50],
+  magementeFee: 1, // 1%, fixed in the contract
 }
 
 contract.only("Fund Managment", (accounts) => {
@@ -55,8 +56,8 @@ contract.only("Fund Managment", (accounts) => {
   })
 
   it.only("Should be able to invest.", async () => {
-
-    await fund.setOlympusFee(30, { from: coreAddress });
+    const olympusFee = 300; // Denominator is 10.000, so 3%
+    await fund.setOlympusFee(olympusFee, { from: coreAddress });
 
     // Create the fund
     await fund.createFundDetails(fundData.id,
@@ -68,14 +69,19 @@ contract.only("Fund Managment", (accounts) => {
       0, // withdraw Cicle
     );
     // Some one invest 1 eht
-    await fund.send(web3.toWei(1, 'ether'), { from: adminAddress });
+    await fund.send(web3.toWei(1, 'ether'), { from: otherAddress });
+    // Fund manager get some benefits from investment
+    const pendingFee = (await fund.getPendingManagmentFee()).toNumber();
+    assert.equal(web3.toWei(1, 'ether') * (fundData.magementeFee / 100), pendingFee);
 
-    const investedBalance = await fund.balanceOf(adminAddress);
-    const pendingFee = await fund.getPendingManagmentFee();
-    // await fund.withdrawFee();
-    console.log(otherAddress);
-    console.log(investedBalance.toNumber());
-    console.log(pendingFee.toNumber());
+    // Withdraw the benefits,
+    await fund.withdrawFee();
+    const pendingFeeAfterWithdraw = (await fund.getPendingManagmentFee()).toNumber();
+    const withdrawedFee = (await fund.getWithdrawedFee()).toNumber();
+    // Check the withdraw fee has been reduced by the olympus fee
+    assert.equal(0, pendingFeeAfterWithdraw)
+    assert.equal(pendingFee * (1 - (olympusFee / DENOMINATOR)), withdrawedFee)
+
   })
 
 })
