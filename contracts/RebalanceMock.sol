@@ -21,7 +21,7 @@ contract RebalanceMock {
         BUYING_COMPLETE
     }
     RebalanceStatus private rebalanceStatus = RebalanceStatus.INACTIVE;
-    address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeee;
+    address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     uint public balanceMock;
     uint private tokenStep = 10;
     uint private rebalancingTokenProgress;
@@ -307,18 +307,9 @@ contract RebalanceMock {
         return [rebalanceTokensToSell.length, rebalanceTokensToBuy.length];
     }
 
-    function changeNormalMockPrice(uint percentage, bool moreExpensive) public {
-        if(moreExpensive){
-            emit LogUint("buyBefore ", mockPriceBuy);
-            emit LogUint("sellBefore", mockPriceSell);
-            mockPriceBuy = mockPriceBuy - (mockPriceBuy*percentage/100);
-            mockPriceSell = mockPriceSell + (mockPriceSell*percentage/100);
-            emit LogUint("buy       ", mockPriceBuy);
-            emit LogUint("sell      ", mockPriceSell);
-        } else {
-            mockPriceBuy = mockPriceBuy + (mockPriceBuy*percentage/100);
-            mockPriceSell = mockPriceSell - (mockPriceSell*percentage/100);
-        }
+    function changeNormalMockPrice(uint percentage) public {
+        mockPriceBuy = 10**18 * percentage / 100;
+        mockPriceSell = 10**18 * (percentage + 100) / 100;
     }
 
     function changeDeviantMockPriceOne(uint percentage, bool moreExpensive) public {
