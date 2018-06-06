@@ -23,7 +23,7 @@ contract IndexTemplate {
     //Permission Control
     PermissionProviderInterface internal permissionProvider;
     //Price
-    PriceProviderInterface internal PriceProvider;
+    PriceProviderInterface internal priceProvider;
     //Risk Provider
     RiskManagementProviderInterface internal riskProvider;
     CoreInterface internal core;
@@ -165,7 +165,7 @@ contract IndexTemplate {
     }
 
     function setPriceProvider(address _priceAddress) public onlyOwner {
-        PriceProvider = PriceProviderInterface(_priceAddress);
+        priceProvider = PriceProviderInterface(_priceAddress);
     }
 
     function setRiskProvider(address _riskProvider) public onlyOwner {
@@ -332,7 +332,7 @@ contract IndexTemplate {
         return true;
     }
 
-    function getPrice(address _src, address _dest, uint _amount) private pure returns (uint _expectedRate) {
+    function getPrice(address _src, address _dest, uint _amount) private returns (uint _expectedRate) {
         if(_src == ETH_TOKEN){
             // TODO: price provider get both ways
             (_expectedRate, ) = priceProvider.getRates(_dest, _amount);
@@ -341,12 +341,24 @@ contract IndexTemplate {
         }
     }
 
-    function exchange(address _src, address _dest, uint _amount) private pure returns (bool){
+    function exchange(address _src, address _dest, uint _amount) private returns (bool){
+        uint slippage;
+        ERC20[] memory tokensToTrade;
+        uint[] memory tokenAmountsToTrade;
+        uint[] memory slippageArray;
         if(_src == ETH_TOKEN){
-            return core.buyToken.value(_amount)("",[_dest],[_amount], address(this));
+            (,slippage) = priceProvider.getRates(_dest, _amount);
+            tokensToTrade[0] = ERC20(_dest);
+            tokenAmountsToTrade[0] = _amount;
+            slippageArray[0] = slippage;
+            return core.buyToken.value(_amount)("",tokensToTrade,tokenAmountsToTrade,slippageArray,address(this));
         } else {
-            ERC20(_src).approve(address(core),2**256);
-            return core.sellToken("",[_src],[_amount], address(this));
+            (,slippage) = priceProvider.getRates(_src, _amount);
+            tokensToTrade[0] = ERC20(_src);
+            tokenAmountsToTrade[0] = _amount;
+            slippageArray[0] = slippage;
+            ERC20(_src).approve(address(core),2**255);
+            return core.sellToken("",tokensToTrade,tokenAmountsToTrade,slippageArray,address(this));
         }
     }
 
