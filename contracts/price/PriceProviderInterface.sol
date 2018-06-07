@@ -13,4 +13,5 @@ contract PriceProviderInterface {
     function checkProviderSupported(address providerAddress,address tokenAddress)  public view returns(bool success);
 
     function getRates(address dest, uint srcQty)  public view returns (uint expectedRate, uint slippageRate);
+    function getSellRates(address _src, uint _srcQty) public view returns (uint expectedRate, uint slippageRate);
 }
