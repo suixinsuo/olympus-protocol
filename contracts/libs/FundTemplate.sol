@@ -240,9 +240,13 @@ contract FundTemplate {
         require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH" );
 
         (_realBalance,_fee) = calculateFee(msg.value);
+
         _sharePrice = getPriceInternal(msg.value);
+
         pendingOwnerFee += _fee;
+
         _realShare = _realBalance / _sharePrice;
+
         balances[msg.sender] += _realShare * 10 ** decimals;
         totalSupply += _realShare * 10 ** decimals;
         emit Transfer(owner, msg.sender, _realShare * 10 ** decimals);
@@ -254,24 +258,25 @@ contract FundTemplate {
         _realBalance = invest - _managementFee;
     }
 
-    function getPriceInternal(uint _vaule) internal view returns(uint _price){
-        uint _totalVaule = 0;
+    function getPriceInternal(uint _value) internal view returns(uint _price){
+        uint _totalValue = 0;
         uint _expectedRate;
-        if(totalSupply == 0){return 10**18;} // 1 Eth
+        if(totalSupply == 0){return 10**17;} // 0.1 Eth
 
         for (var i = 0; i < _FUND.tokenAddresses.length; i++) {
             erc20Token = ERC20(_FUND.tokenAddresses[i]);
+
             uint _balance = erc20Token.balanceOf(address(this));
             uint _decimal = erc20Token.decimals();
             if(_balance == 0){continue;}
             (_expectedRate, ) = priceProvider.getRates(_FUND.tokenAddresses[i], 10**_decimal);
             if(_expectedRate == 0){continue;}
-            _totalVaule += (_balance * 10**18) / _expectedRate;
+            _totalValue += (_balance * 10**18) / _expectedRate;
         }
 
-        if (_totalVaule == 0){return 10**18;} // 1 Eth
+        if (_totalValue == 0){return 10**18;} // 1 Eth
 
-        return ((_totalVaule + address(this).balance - pendingOwnerFee - _vaule) * 10 ** decimals ) / totalSupply;
+        return ((_totalValue + address(this).balance - pendingOwnerFee - _value) * 10 ** decimals ) / totalSupply;
     }
 
     function getPrice() public view returns(uint _price){
@@ -349,4 +354,7 @@ contract FundTemplate {
         address indexed _spender,
         uint256 _value
     );
+
+    event LogS( string text);
+    event LogN( uint value, string text);
 }
