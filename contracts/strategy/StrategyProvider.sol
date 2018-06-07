@@ -32,11 +32,11 @@ contract StrategyProvider is StrategyProviderInterface {
     }
 
     function changeWhitelist(address[] whitelistAddresses) public onlyOwner {
-        
-        for (var i = 0; i < whitelistuser.length; i++) {
+
+        for (uint8 i = 0; i < whitelistuser.length; i++) {
             StrategyWhiteList[whitelistuser[i]] = false;
         }
-        for (uint index = 0; index < whitelistAddresses.length; index++) {
+        for (uint8 index = 0; index < whitelistAddresses.length; index++) {
             StrategyWhiteList[whitelistAddresses[index]] = true;
         }
         whitelistuser = whitelistAddresses;

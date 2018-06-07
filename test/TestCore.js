@@ -265,7 +265,7 @@ contract('Olympus-Protocol', function (accounts) {
       let tokenBalance = await erc20Token.balanceOf(accounts[0]);
       amounts.push(web3.toWei(srcAmountETH));
     }
-    let result = await instance.buyToken("", mockData.tokenAddresses, amounts, rates, accounts[0],   { from: accounts[0], value: web3.toWei(needDeposit) });
+    let result = await instance.buyToken("", mockData.tokenAddresses, amounts, rates, accounts[0], { from: accounts[0], value: web3.toWei(needDeposit) });
 
     for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
