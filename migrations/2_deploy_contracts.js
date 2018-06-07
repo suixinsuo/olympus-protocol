@@ -18,6 +18,7 @@ var ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 var MockKyberNetwork = artifacts.require("MockKyberNetwork");
 var SimpleERC20Token = artifacts.require("SimpleERC20Token");
 var CentralizedExchange = artifacts.require("CentralizedExchange.sol");
+var FundTemplate = artifacts.require("../contracts/libs/FundTemplate.sol");
 
 const args = require('../scripts/libs/args')
 
