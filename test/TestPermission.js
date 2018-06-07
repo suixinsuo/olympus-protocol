@@ -22,7 +22,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     return Promise.all([
       PermissionProvider.deployed(),
     ]).spread((/*permission*/ core) => {
-      assert.ok(core, 'Psermission contract is not deployed.');
+      assert.ok(core, 'Permission contract is not deployed.');
     });
   });
 

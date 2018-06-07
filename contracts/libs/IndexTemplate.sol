@@ -42,6 +42,11 @@ contract IndexTemplate {
     address public owner;
     address[] public indexTokenAddresses;
     uint8[] public indexTokenWeights;
+    IndexStatus public indexStatus;
+    // Fee
+    uint256 pendingOwnerFee;
+    uint256 indexManagmentFee;
+    uint withdrawedFee;
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
@@ -97,6 +102,7 @@ contract IndexTemplate {
         // solium-disable-next-line security/no-block-members
         lastRebalance = now;
         rebalanceInterval = _rebalanceInterval;
+        indexStatus = IndexStatus.Active;
     }
 
     modifier onlyOwner(){
@@ -111,11 +117,12 @@ contract IndexTemplate {
         _;
     }
 
-    modifier withNoRisk(address _from, address _to, uint256 _value) {
-        assert(
+    modifier withNoRisk(address _from, address _to, address _tokenAddress, uint256 _value) {
+        require(
             !riskProvider.hasRisk(
-               _from, _to, address(this), _value, 0 // Price not required
-            ));
+                _from, _to, _tokenAddress, _value, 0 // Price not required
+            ),
+            "The transaction is risky");
         _;
     }
 
@@ -125,11 +132,13 @@ contract IndexTemplate {
 
     function transfer(address _recipient, uint256 _value)
       onlyPayloadSize(2*32)
-      withNoRisk(msg.sender,_recipient, _value)
+      withNoRisk(msg.sender, _recipient, address(this), _value)
       public returns(bool success) {
 
         require(balances[msg.sender] >= _value, "Your balance is not enough");
         require(_value > 0, "Value needs to be greater than 0");
+        require(indexStatus == IndexStatus.Active, "Index status is not active");
+
         balances[msg.sender] -= _value;
         balances[_recipient] += _value;
         emit Transfer(msg.sender, _recipient, _value);
@@ -137,11 +146,13 @@ contract IndexTemplate {
     }
 
     function transferFrom(address _from, address _to, uint256 _value)
-      withNoRisk(_from,_to, _value)
+      withNoRisk(_from, _to, address(this), _value)
       public returns(bool success){
         require(balances[_from] >= _value, "Your balance is not enough");
         require(allowed[_from][msg.sender] >= _value, "Not enough balance is allowed");
         require(_value > 0, "Value needs to be greater than 0");
+        require(indexStatus == IndexStatus.Active, "Index status is not active");
+
         balances[_to] += _value;
         balances[_from] -= _value;
         allowed[_from][msg.sender] -= _value;
@@ -157,6 +168,67 @@ contract IndexTemplate {
 
     function allowance(address _owner, address _spender) view public returns (uint256) {
         return allowed[_owner][_spender];
+    }
+    // -------------------------- INVEST --------------------------
+
+ // Minimal 0.1 ETH
+    function () public
+      withNoRisk(msg.sender, address(this), 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee, msg.value)
+      payable {
+        uint _fee;
+        uint _realBalance;
+        uint _realShare;
+        uint _sharePrice;
+
+        require(indexStatus == IndexStatus.Active, "Index status is not active");
+        require(msg.value >= 10**15, "The minium to invest required is 0.01 ETH");
+
+        (_realBalance,_fee) = calculateFee(msg.value);
+        _sharePrice = getPriceInternal(msg.value);
+        pendingOwnerFee += _fee;
+        _realShare = _realBalance / _sharePrice;
+        balances[msg.sender] += _realShare * 10 ** decimals;
+        totalSupply += _realShare * 10 ** decimals;
+        emit Transfer(owner, msg.sender, _realShare * 10 ** decimals);
+        emit BuyIndex(msg.sender, _realShare * 10 ** decimals);
+    }
+
+    function calculateFee(uint invest) internal view returns(uint _realBalance,uint _managementFee){
+        _managementFee = invest / 100 * indexManagmentFee;
+        _realBalance = invest - _managementFee;
+    }
+
+    function withdrawFee() public onlyOwner {
+       // TODO: Does index need withdrawCycle?
+        require(pendingOwnerFee > 0);
+        owner.transfer(pendingOwnerFee);
+        withdrawedFee += pendingOwnerFee;
+        pendingOwnerFee = 0;
+    }
+
+    function getPriceInternal(uint _vaule) internal view returns(uint _price) {
+
+        uint _totalVaule = 0;
+        uint _expectedRate;
+        if(totalSupply == 0){return 10**18;} // 1 Eth
+
+        for (uint i = 0; i < indexTokenAddresses.length; i++) {
+            erc20Token = ERC20(indexTokenAddresses[i]);
+            uint _balance = erc20Token.balanceOf(address(this));
+            uint _decimal = erc20Token.decimals();
+            if(_balance == 0){continue;}
+            (_expectedRate, ) = priceProvider.getRates(indexTokenAddresses[i], 10**_decimal);
+            if(_expectedRate == 0){continue;}
+            _totalVaule += (_balance * 10**18) / _expectedRate;
+        }
+
+        if (_totalVaule == 0){return 10**18;} // 1 Eth
+
+        return ((_totalVaule + address(this).balance - pendingOwnerFee - _vaule) * 10 ** decimals) / totalSupply;
+    }
+
+    function getPrice() public view returns(uint _price){
+        _price = getPriceInternal(0);
     }
 
     // -------------------------- PROVIDER --------------------------
@@ -385,5 +457,11 @@ contract IndexTemplate {
       address indexed _owner,
       address indexed _spender,
       uint256 _value
+    );
+
+
+    event BuyIndex(
+        address indexed _spender,
+        uint256 _value
     );
 }

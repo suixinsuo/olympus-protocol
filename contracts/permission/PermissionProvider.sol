@@ -13,7 +13,7 @@ contract PermissionProvider is PermissionProviderInterface {
     /**
     * @dev constructor. Sets msg.sender as admin by default
     */
-    function PermissionProvider() public {
+    constructor() public {
         addRole(msg.sender, ROLE_ADMIN);
     }
 
@@ -34,4 +34,6 @@ contract PermissionProvider is PermissionProviderInterface {
     function has(address _addr, string _roleName) public view returns(bool success) {
         return hasRole(_addr, _roleName) || hasRole(_addr, ROLE_ADMIN);
     }
+
+
 }
