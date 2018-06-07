@@ -35,6 +35,8 @@ function deployOnDev(deployer, num) {
     return deployer.deploy(CentralizedExchange, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(FundTemplate, 'test_symbol', 'test_name', 18);
   })
 }
 
