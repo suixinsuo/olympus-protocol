@@ -11,10 +11,10 @@ contract SimpleERC20Token {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
     uint public decimals;
- 
+
     // Balances for each account
     mapping(address => uint256) balances;
- 
+
     // Owner of account approves the transfer of an amount to another account
     mapping(address => mapping (address => uint256)) allowed;
 
@@ -28,12 +28,12 @@ contract SimpleERC20Token {
         }
         balances[msg.sender] = 2**256 - 1;
     }
- 
+
     // Get the token balance for account `tokenOwner`
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
     }
- 
+
     // Transfer the balance from owner's account to another account
     function transfer(address to, uint tokens) public returns (bool success) {
         balances[msg.sender] = balances[msg.sender] - tokens;
@@ -41,7 +41,7 @@ contract SimpleERC20Token {
         emit Transfer(msg.sender, to, tokens);
         return true;
     }
- 
+
     // Send `tokens` amount of tokens from address `from` to address `to`
     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
@@ -55,7 +55,7 @@ contract SimpleERC20Token {
         emit Transfer(from, to, tokens);
         return true;
     }
- 
+
     // Allow `spender` to withdraw from your account, multiple times, up to the `tokens` amount.
     // If this function is called again it overwrites the current allowance with _value.
     function approve(address spender, uint tokens) public returns (bool success) {

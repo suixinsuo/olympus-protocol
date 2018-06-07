@@ -14,7 +14,7 @@ contract MockKyberNetwork {
     address ETH_ADDRESS = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
     Token[] public supportedTokens;
-    function MockKyberNetwork(uint total,uint _decimals) public {
+    constructor(uint total,uint _decimals) public {
         require(total <= 50 && total > 0);
         for (uint i = 0; i < total; i++) {
             supportedTokens.push(Token({
@@ -32,7 +32,7 @@ contract MockKyberNetwork {
         return tokens;
     }
 
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) external view 
+    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) external view
     returns (uint expectedRate, uint slippageRate)
     {
         return _getExpectedRate(src,dest,srcQty);
@@ -50,7 +50,7 @@ contract MockKyberNetwork {
                 }
             }
         }
-        return (0, 0);    
+        return (0, 0);
     }
 
     function trade(

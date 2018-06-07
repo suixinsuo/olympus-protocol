@@ -5,9 +5,9 @@ import "../permission/PermissionProviderInterface.sol";
 
 
 contract TokenizationProvider {
-    
+
     using SafeMath for uint256;
-    
+
     //Permission Control
     PermissionProviderInterface internal permissionProvider;
 
@@ -17,7 +17,7 @@ contract TokenizationProvider {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
-    
+
     modifier onlyWhitelist() {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
         //require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
@@ -41,7 +41,7 @@ contract TokenizationProvider {
     mapping (uint => address) public fundOwner;
     mapping (address => _fundDetail) public fundDetail;
 
-    //function 
+    //function
 
     function TokenizationIndex(address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
@@ -57,12 +57,14 @@ contract TokenizationProvider {
         string _category,
         address[] memory _tokenAddresses,
         uint[] memory _weights,
-        uint _withdrawCycle,
-        uint _lockTime
-    ) public 
-    ///////WARNING 
+        uint _withdrawFeeCycle,
+        uint _lockTime,
+        uint _withdrawFundCycle
+
+    ) public
+    ///////WARNING
     //onlyWhitelist
-    returns (address FundAddress) 
+    returns (address FundAddress)
     {
         require(_checkLength(_tokenAddresses, _weights));
         FundAddress = new FundTemplate(_symbol,_name,_decimals);
@@ -70,7 +72,17 @@ contract TokenizationProvider {
         //FundTemplate
         FundTemplate  _newFund;
         _newFund = FundTemplate(FundAddress);
-        require(_newFund.createFundDetails(fundLength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawCycle));
+        require(_newFund.createFundDetails(
+          fundLength,
+          _name,
+          _description,
+          _category,
+          _tokenAddresses,
+          _weights,
+          _withdrawFeeCycle,
+          _withdrawFundCycle)
+        );
+
         require(_newFund.lockFund(_lockTime));
         fundOwner[fundLength] = tx.origin;
         fundIndex[fundLength] = FundAddress;
