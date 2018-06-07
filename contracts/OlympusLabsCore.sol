@@ -12,10 +12,11 @@ import { TypeDefinitions as TD } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
 import "./Tokenization/TokenizationProvider.sol";
 import "./libs/FundTemplate.sol";
-// interface Fund {
-//         function balanceOf(address _owner) view public returns (uint256);
-//     function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
-// }
+interface Fund {
+        function balanceOf(address _owner) view public returns (uint256);
+        function tokenApprove(ERC20 _token, address _spender, uint _amount) public  returns(bool success);
+        function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public returns (bool success); 
+}
 contract OlympusLabsCore is Manageable {
     using SafeMath for uint256;
 
@@ -387,20 +388,14 @@ contract OlympusLabsCore is Manageable {
         require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
         return true;
     }
-    // function createFund(
-    //     string _name,
-    //     string _symbol,
-    //     uint _decimals,
-    //     string _description,
-    //     string _category,
-    //     address[] memory _tokenAddresses,
-    //     uint[] memory _weights,
-    //     uint _withdrawCycle,
-    //     uint _lockTime
-    // ) public 
-    // ///////WARNING 
-    // //onlyWhitelist
-    // returns (address FundAddress) {
-    //     return _tokenization.createfund(_name, _symbol, _decimals, _description, _category, _tokenaddresses, _weights, _withdrawcycle, _locktime);
-    // }
+
+    function fundSellToken(bytes32 exchangeId, address fundAddress, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public returns (bool success) {
+        require(FundTemplate(fundAddress).sellToken(exchangeId, tokens, amounts, rates, deposit));
+        return true;
+    }
+    function fundBuyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address fundAddress) public payable returns (bool success) {
+        require(exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, fundAddress));
+        require(FundTemplate(fundAddress).updateTokens(tokens));
+        return true;
+    }
 }
