@@ -20,9 +20,9 @@ const fundData = {
   magementeFee: 1, // 1%, fixed in the contract
 }
 
-contract("Fund Managment", (accounts) => {
+contract.only("Fund Managment", (accounts) => {
   let fund;
-  const adminAddress = accounts[1]; // Admin address have core permissions
+  const adminAddress = accounts[0]; // Admin address have core permissions
   const coreAddress = accounts[1];
   const otherAddress = accounts[2];
 
@@ -82,6 +82,29 @@ contract("Fund Managment", (accounts) => {
     assert.equal(0, pendingFeeAfterWithdraw)
     assert.equal(pendingFee * (1 - (olympusFee / DENOMINATOR)), withdrawedFee)
 
+  })
+
+
+  it.only("Should be able to invest and get balance of the found", async () => {
+    const olympusFee = 300; // Denominator is 10.000, so 3%
+    await fund.setOlympusFee(olympusFee, { from: coreAddress });
+
+    // Create the fund
+    await fund.createFundDetails(fundData.id,
+      fundData.name,
+      fundData.description,
+      fundData.category,
+      fundData.address,
+      fundData.weights,
+      0, // withdraw Cicle
+    );
+    // Some one invest 1 eht
+    const tx = await fund.sendTransaction({ value: web3.toWei(1, 'ether'), from: otherAddress });
+    const balance = (await fund.balanceOf(otherAddress)).toNumber();
+    // When a fund is empty, his default value is 0.1 eth. We invest 1 ETH (0.9) after fee.
+    // That measn that we shall have 90% of the fund
+    console.log(JSON.stringify(tx.logs, null, 2), balance);
+    assert.equal(balance, 9 * (10 ** 18));
   })
 
 })
