@@ -147,6 +147,11 @@ contract PriceProvider {
         return(expectedRate,slippageRate);
     }
 
+    function getSellRates(address _src, uint _srcQty) public view returns (uint expectedRate, uint slippageRate){
+        (expectedRate,slippageRate ) = _kyber.getExpectedRate(_src, eth_token, _srcQty);
+        return(expectedRate,slippageRate);
+    }
+
     function changeDefaultProviders(address _newProvider,address _tokenAddress) public onlyOwner returns(bool success) {
         emit DefaultProviderUpdate(_tokenAddress,_Provider[_tokenAddress][0],_newProvider);
         _Provider[_tokenAddress][0] = _newProvider;

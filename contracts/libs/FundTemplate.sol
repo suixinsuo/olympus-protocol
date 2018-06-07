@@ -24,6 +24,7 @@ contract FundTemplate {
     uint public constant DENOMINATOR = 10000;
 
 
+    //struct
     struct FUND {
         uint id;
         string name;
@@ -98,6 +99,11 @@ contract FundTemplate {
              0 // Price for now not important
         ), "The transaction is risky");
 
+        _;
+    }
+
+    modifier onlyCore() {
+        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
 
@@ -279,6 +285,13 @@ contract FundTemplate {
         return ((_totalValue + address(this).balance - pendingOwnerFee - _value) * 10 ** decimals ) / totalSupply;
     }
 
+    function changeTokens(address[] _tokens, uint[] _weights) public onlyCore returns(bool success){
+        require(_tokens.length == _weights.length);
+        _FUND.tokenAddresses = _tokens;
+        _FUND.weights = _weights;
+        return true;
+    }
+
     function getPrice() public view returns(uint _price){
         _price = getPriceInternal(0);
     }
@@ -324,6 +337,7 @@ contract FundTemplate {
     function setRiskProvider(address _riskProvider) public onlyTokenizedOwner {
         riskProvider = RiskManagementProviderInterface(_riskProvider);
     }
+
 
     // -------------------------- EVENTS --------------------------
  	  // Event which is triggered to log all transfers to this contract's event log
