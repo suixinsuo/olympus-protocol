@@ -5,8 +5,8 @@ import "../riskManagement/RiskManagementProviderInterface.sol";
 import "../price/PriceProviderInterface.sol";
 import "../libs/ERC20.sol";
 interface Core {
-    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
-    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
+    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public payable returns (bool success);
+    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public payable returns (bool success);
 }
 contract FundTemplate {
 
@@ -29,8 +29,6 @@ contract FundTemplate {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
-
-
     //struct 
 
     struct FUND {
@@ -295,28 +293,6 @@ contract FundTemplate {
         require(_tokens.length == _weights.length);
         _FUND.tokenAddresses = _tokens;
         _FUND.weights = _weights;
-        return true;
-    }
-
-    function buyToken(bytes32 _exchangeId, ERC20[] _tokens, uint256[] _amounts, uint256[] _rates) public onlyCore returns(bool success) {
-        //the operater must be the fund owner
-        require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
-        require(_tokens.length == _amounts.length && _amounts.length == _rates.length);
-
-        require(Core(msg.sender).buyToken(_exchangeId, _tokens, _amounts, _rates, this));
-        return true;
-    }
-
-    function sellToken(address _sender, bytes32 _exchangeId, ERC20[] _tokens, uint256[] _amounts, uint256[] _rates) public onlyCore returns(bool success) {
-        //the operater must be the fund owner
-        require(tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0);
-        require(_tokens.length == _amounts.length && _amounts.length == _rates.length);
-
-        for(uint i = 0; i < _tokens.length; i++) {
-            require(_tokens[i].approve(msg.sender, _amounts[i]));
-        }
-
-        require(Core(msg.sender).sellToken(_exchangeId, _tokens, _amounts, _rates, this));
         return true;
     }
 
