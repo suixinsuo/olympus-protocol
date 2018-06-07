@@ -101,12 +101,6 @@ contract FundTemplate {
 
         _;
     }
-
-    modifier onlyCore() {
-        require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
-        _;
-    }
-
     //Fix for short address attack against ERC20
     //  https://vessenes.com/the-erc20-short-address-attack-explained/
     modifier onlyPayloadSize(uint size) {
@@ -283,13 +277,6 @@ contract FundTemplate {
         if (_totalValue == 0){return 10**18;} // 1 Eth
 
         return ((_totalValue + address(this).balance - pendingOwnerFee - _value) * 10 ** decimals ) / totalSupply;
-    }
-
-    function changeTokens(address[] _tokens, uint[] _weights) public onlyCore returns(bool success){
-        require(_tokens.length == _weights.length);
-        _FUND.tokenAddresses = _tokens;
-        _FUND.weights = _weights;
-        return true;
     }
 
     function getPrice() public view returns(uint _price){
