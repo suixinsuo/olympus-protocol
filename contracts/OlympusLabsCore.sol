@@ -388,10 +388,12 @@ contract OlympusLabsCore is Manageable {
         require(FundTemplate(fundAddress).sellToken(exchangeId, tokens, amounts, rates, deposit));
         return true;
     }
-    function fundBuyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address fundAddress) public payable returns (bool success) {
-        require(FundTemplate(fundAddress).isFundOwner());
-        require(exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, fundAddress));
-        require(FundTemplate(fundAddress).updateTokens(tokens));
+    function fundBuyToken(bytes32 exchangeId, uint ethAmount, ERC20[] tokens, uint[] amounts, uint[] rates, address fundAddress) public returns (bool success) {
+        // require(FundTemplate(fundAddress).isFundOwner());
+        // require(exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, fundAddress));
+        // require(FundTemplate(fundAddress).updateTokens(tokens));
+        // return true;
+        require(FundTemplate(fundAddress).buyToken(exchangeId, ethAmount, tokens, amounts, rates, deposit));
         return true;
     }
 }
