@@ -62,6 +62,7 @@ contract OlympusStorageInterface {
         bytes32 key
         ) external view returns (bytes32 result);
     
-    function addTokenization(address token, uint8 tokenType) external;
+    function addTokenization(address token, uint8 tokenType) public;
+    function getTokenizationList() public view returns(address[] tokenization); 
 
 }
