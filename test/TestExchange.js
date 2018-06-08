@@ -60,7 +60,7 @@ contract('MockKyberNetwork', (accounts) => {
       await erc20Token.approve(mockKyber.address, tokenBalance);
 
       let rates = await mockKyber.getExpectedRate(tokens[i], ethToken, 0);
-      assert.equal(expectedRateToSell.toString(),rates[0].toString());
+      assert.equal(expectedRateToSell.toString(), rates[0].toString());
 
       let srcAmountETH = 1;
       let result = await mockKyber.trade(
@@ -117,7 +117,7 @@ contract('KyberNetworkExchange', (accounts) => {
     enabled = await kyberExchange.isEnabled(0)
     assert.ok(enabled);
   })
- 
+
 
   it("KyberNetworkExchange should be able to placeOrder.", async () => {
 
@@ -447,12 +447,12 @@ contract('ExchangeProvider', (accounts) => {
 
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
-      actualBalance.push(await erc20Token.balanceOf(deposit)); 
+      actualBalance.push(await erc20Token.balanceOf(deposit));
       amounts.push(web3.toWei(srcAmountETH));
       rates.push(expectedRate);
     }
 
-    result = await exchangeProvider.buyToken("",tokens, amounts, rates, deposit,  { value: web3.toWei(totalSrcAmountETH) });
+    result = await exchangeProvider.buyToken("", tokens, amounts, rates, deposit, { value: web3.toWei(totalSrcAmountETH) });
 
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
