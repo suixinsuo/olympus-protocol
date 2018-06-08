@@ -12,11 +12,6 @@ import { TypeDefinitions as TD } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
 import "./Tokenization/TokenizationProvider.sol";
 import "./libs/FundTemplate.sol";
-interface Fund {
-        function balanceOf(address _owner) view public returns (uint256);
-        function tokenApprove(ERC20 _token, address _spender, uint _amount) public  returns(bool success);
-        function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public returns (bool success); 
-}
 contract OlympusLabsCore is Manageable {
     using SafeMath for uint256;
 

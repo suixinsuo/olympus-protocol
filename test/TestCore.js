@@ -372,24 +372,20 @@ contract('Olympus-Protocol', function (accounts) {
     for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
-      console.log(tokenBalance.toNumber());
       amounts.push(web3.toWei(srcAmountETH));
     }
-    // let result = await instance.buyToken("", mockData.tokenAddresses, amounts, rates, fundInstance.address,   { from: accounts[0], value: web3.toWei(needDeposit) });
     let result = await instance.fundBuyToken("", mockData.tokenAddresses, amounts, rates, fundInstance.address,   { from: accounts[0], value: web3.toWei(needDeposit) });
     
     for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
 
-      console.log(tokenBalance.toNumber());
       let tokenIndex = (await fundInstance.tokenIndex(mockData.tokenAddresses[i])).toNumber();
 
       let fundDetail = await fundInstance.getFundDetails();
       assert.equal(mockData.tokenAddresses[i], fundDetail[6][tokenIndex - 1]);
       assert.equal(tokenBalance.toString(), fundDetail[7][tokenIndex - 1].toString());
     }
-      console.log(await fundInstance.getFundDetails());
 
   })
 
@@ -436,11 +432,9 @@ contract('Olympus-Protocol', function (accounts) {
       let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
 
       assert.notEqual(tokenBalance.toNumber(), 0);
-      console.log(tokenBalance);
       amounts.push(tokenBalance);
     }
-    let balance = await web3.eth.getBalance(fundInstance.address);
-    console.log(balance);
+    // let balance = await web3.eth.getBalance(fundInstance.address);
     let result = await instance.fundSellToken("", fundInstance.address, mockData.tokenAddresses, amounts, rates, fundInstance.address);
 
     for (let i = 0; i < mockData.tokensLenght; i++) {
@@ -448,8 +442,7 @@ contract('Olympus-Protocol', function (accounts) {
       let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
       assert.equal(tokenBalance.toNumber(), 0);
     }
-    balance = await web3.eth.getBalance(fundInstance.address);
-    console.log(balance);
+    // balance = await web3.eth.getBalance(fundInstance.address);
   })
 
   after("clean", async () => {

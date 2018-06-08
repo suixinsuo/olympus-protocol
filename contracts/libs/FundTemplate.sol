@@ -1,13 +1,10 @@
 pragma solidity ^0.4.23;
-import "../libs/SafeMath.sol";
+import "./SafeMath.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "../riskManagement/RiskManagementProviderInterface.sol";
 import "../price/PriceProviderInterface.sol";
-import "../libs/ERC20.sol";
-interface Core {
-    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public payable returns (bool success);
-    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public payable returns (bool success);
-}
+import "./ERC20.sol";
+import "./CoreInterface.sol";
 contract FundTemplate {
 
     using SafeMath for uint256;
@@ -310,7 +307,7 @@ contract FundTemplate {
         for(uint i = 0; i < tokens.length; i++) {
             tokens[i].approve(msg.sender, amounts[i]);
         }
-        Core(msg.sender).sellToken(exchangeId, tokens, amounts, rates, deposit);
+        CoreInterface(msg.sender).sellToken(exchangeId, tokens, amounts, rates, deposit);
         return true;
     }
 
