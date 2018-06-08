@@ -82,7 +82,7 @@ contract FundTemplate {
     //Maping
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
-    mapping(address => bool) tokenStatus; // True is exchangable, false is not
+    mapping(address => bool) tokenIsBroken; // True, is broken, empty, is fine
 
     //Modifier
 
@@ -212,10 +212,7 @@ contract FundTemplate {
         _Withdraw.lockHours = _widrawFoundCycle;
         _Withdraw.withdrawTimer = _Withdraw.lockHours * 3600 + now;
 
-        // All tokens are enable on creation
-        for (uint8 i = 0; i < _FUND.tokenAddresses.length; i++) {
-            tokenStatus[_tokenAddresses[i]] = true;
-        }
+
         return true;
     }
 
@@ -266,13 +263,20 @@ contract FundTemplate {
         // require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH" );
         (_realBalance,_fee) = calculateFee(msg.value);
 
-        _sharePrice = getPriceInternal(msg.value);
+        // Current value is already added in the balance, reduce it
+        if(totalSupply > 0) {
+            _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply);
+        } else {
+            _sharePrice = 10**18;
+        }
+
         pendingOwnerFee += _fee;
-        _realShare = _realBalance / _sharePrice;
-        balances[msg.sender] += _realShare * 10 ** decimals;
-        totalSupply += _realShare * 10 ** decimals;
-        emit Transfer(owner, msg.sender, _realShare * 10 ** decimals);
-        emit BuyFund(msg.sender, _realShare * 10 ** decimals);
+        _realShare = ((_realBalance * DENOMINATOR) / _sharePrice) * ((10 ** decimals) / DENOMINATOR);
+
+        balances[tx.origin] += _realShare;
+        totalSupply += _realShare;
+        emit Transfer(owner, tx.origin, _realShare);
+        emit BuyFund(tx.origin, _realShare);
     }
 
     function calculateFee(uint invest) internal view returns(uint _realBalance,uint _managementFee){
@@ -280,13 +284,11 @@ contract FundTemplate {
         _realBalance = invest - _managementFee;
     }
 
-    function getPriceInternal(uint _value) internal view returns(uint _price){
+    function getPrice() internal view returns(uint _price){
         uint _totalTokensValue = 0;
         uint _expectedRate;
-        emit LogN(totalSupply,"Total supply");
-        emit LogN( address(this).balance ,"Current Balance");
 
-        if(totalSupply == 0){return 10**17;} // 0.1 Eth
+        if(totalSupply == 0){return 10**18;} // 1 Eth
 
         for (uint8 i = 0; i < _FUND.tokenAddresses.length; i++) {
             erc20Token = ERC20(_FUND.tokenAddresses[i]);
@@ -299,12 +301,10 @@ contract FundTemplate {
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
         }
         // Total Value in ETH among its tokens + ETH - Fee - new added value
-        return ((_totalTokensValue + address(this).balance - pendingOwnerFee - _value) * 10 ** decimals ) / totalSupply;
+        return ((_totalTokensValue + address(this).balance - pendingOwnerFee) * 10 ** decimals ) / totalSupply;
     }
 
-    function getPrice() public view returns(uint _price){
-        _price = getPriceInternal(0);
-    }
+
     // -------------------------- WITHDRAW --------------------------
 
     function getFundWithDrawDetails() onlyTokenizedAndFundOwner public view returns(
@@ -343,66 +343,82 @@ contract FundTemplate {
 
         _Withdraw.withdrawTimer = _Withdraw.lockHours * 3600 + now;
         uint _fundPrice = getPrice();
-        uint _investorIndex = 0;
         // User request 1000 fund to be return from 5000 supply (20%) total value 2 ETH
-        for (uint8 _transfersCounter = 0;
-          _investorIndex < _Withdraw.userRequests.length && _transfersCounter < MAX_TRANSFERS;
-          _investorIndex++) {
-            address _investor = _Withdraw.userRequests[_investorIndex];
+        // The loop will handle MAX_TRANSFERS , accessing 1st element and removing it when finishing
+        uint _investorIndex = 0;
+        for (uint8 _transfersCounter = 0; _transfersCounter < MAX_TRANSFERS && _investorIndex < _Withdraw.userRequests.length;
+          _transfersCounter++) {
+            emit LogN(_Withdraw.userRequests.length, "Fund Withdraw");
+
             // How much eth we require to return
+            address _investor = _Withdraw.userRequests[_investorIndex];
             uint _fundWithdrawAmount = _Withdraw.amountPerUser[_investor];
-            if(_fundWithdrawAmount == 0) {continue;}
-            uint _ethToReturn = (((_fundWithdrawAmount * DENOMINATOR) / totalSupply) * _fundPrice)/DENOMINATOR;
+            if(_fundWithdrawAmount == 0) {
+                delete _Withdraw.userRequests[_investorIndex]; // Reset the data
+                continue;
+            }
+            uint _ethToReturn = (_fundWithdrawAmount * _fundPrice) / 10 ** decimals;
             // _fundWithdrawAmount = 1000;  _ethToReturn = 0.4 ETH (20%)
+            emit LogN(_fundWithdrawAmount, "Fund Withdraw");
+
+
+            emit LogN(_ethToReturn, "Eth To Return");
 
             // How much of the total request belongs to this user.
             // In this case is the only request, so 100% belongs to him
-            uint _requestPercentage = _fundWithdrawAmount * DENOMINATOR / _Withdraw.totalWithdrawAmount;
-            uint _directEthReturn = (address(this).balance * _requestPercentage) / DENOMINATOR;
+            uint _directEthReturn = (
+                ( _fundWithdrawAmount * DENOMINATOR / _Withdraw.totalWithdrawAmount) * address(this).balance)/ DENOMINATOR;
             // Do we have in the reserve enough to pay him?
             if(_directEthReturn >= _ethToReturn  ) {
                 // If in the deposit we have more than 0.4 ETH, return to him
                 _investor.transfer(_ethToReturn);
-                continue;
+                emit Withdrawed(_investor, _ethToReturn, 0);
+            } else {
+                // In de deposit we have 0.2, we deliver to him this quantity.
+                _investor.transfer(_directEthReturn);
+                // Other 0.2, return from tokens. That is, 10% of the price
+                uint _tokenToReturn = (( _ethToReturn - _directEthReturn) * DENOMINATOR)/_fundPrice;
+                sendETHFromTokens(_investor, _tokenToReturn);
+                emit Withdrawed(_investor, _directEthReturn, _tokenToReturn);
             }
-
-            // In de deposit we have 0.2, we deliver to him this quantity.
-            _investor.transfer(_directEthReturn);
-            // Other 0.2, return from tokens. That is, 10% of the price
-            uint _tokenToReturn = (( _ethToReturn - _directEthReturn) * DENOMINATOR)/_fundPrice;
-            address[] memory _tokensToBuy;
-            uint[] memory _amounts;
-            uint[] memory _rates;
-
-            // We got two tokens weights(A: 70%,B: 30%),  units (A: 1000, B: 1000)
-            for (uint8 _tokenIndex = 0; _tokenIndex < _FUND.tokenAddresses.length; _tokenIndex++) {
-                erc20Token = ERC20(_FUND.tokenAddresses[_tokenIndex]);
-                // From token A, 10% * 70% * 1000 = 70 units (7%)
-                uint _balanceToReturn = (erc20Token.balanceOf(address(this)) * _tokenToReturn * _FUND.weights[_tokenIndex])/DENOMINATOR;
-                uint _decimal = erc20Token.decimals();
-                uint _expectedRate;
-
-                if(_balanceToReturn == 0){continue;}
-                (_expectedRate, ) = priceProvider.getRates(_FUND.tokenAddresses[_tokenIndex], 10**_decimal);
-                  // This token cant be exchanged, send direct units
-                if(!tokenStatus[_FUND.tokenAddresses[_tokenIndex]] || _expectedRate == 0) {
-                    erc20Token.transfer(_investor, _balanceToReturn);
-                    continue;
-                }
-                //Allow core to send this
-                erc20Token.approve(core,_balanceToReturn);
-
-                _tokensToBuy[_tokenIndex] = erc20Token;
-                _amounts[_tokenIndex] = _balanceToReturn;
-                _rates[_tokenIndex] = _expectedRate;
-            }
-            require(core.sellToken("", _tokensToBuy, _amounts, _rates, _investor));
-            _transfersCounter++;
+            // Reset the data
             _Withdraw.amountPerUser[_investor] = 0;
+            _Withdraw.totalWithdrawAmount -= _ethToReturn;
+            delete _Withdraw.userRequests[_investorIndex];
+            _investorIndex++;
         }
-        return _investorIndex ==  _Withdraw.userRequests.length-1; // If 0 are done, is because all had been already delivered
+
+        return  _Withdraw.userRequests.length == 0; // If 0 are done, is because all had been already delivered
     }
 
+    function sendETHFromTokens(address _investor, uint _tokenPercentage  ) internal {
+        ERC20[] memory _tokensToBuy;
+        uint[] memory _amounts;
+        uint[] memory _rates;
+
+        // We got two tokens weights(A: 70%,B: 30%),  units (A: 1000, B: 1000)
+        for (uint8 _tokenIndex = 0; _tokenIndex < _FUND.tokenAddresses.length; _tokenIndex++) {
+            erc20Token = ERC20(_FUND.tokenAddresses[_tokenIndex]);
+            // From token A, 10% * 70% * 1000 = 70 units (7%)
+            uint _balanceToReturn = (erc20Token.balanceOf(address(this)) * _tokenPercentage * _FUND.weights[_tokenIndex])/DENOMINATOR;
+            uint _expectedRate;
+
+            if(_balanceToReturn == 0){continue;}
+            (_expectedRate, ) = priceProvider.getRates(_FUND.tokenAddresses[_tokenIndex], 10 ** erc20Token.decimals());
+              // This token cant be exchanged, send direct units
+            if(tokenIsBroken[_FUND.tokenAddresses[_tokenIndex]] || _expectedRate == 0) {
+                erc20Token.transfer(_investor, _balanceToReturn);
+                continue;
+            }
+            //Allow core to send this
+            erc20Token.approve(core,_balanceToReturn);
+
+            _tokensToBuy[_tokenIndex] = erc20Token;
+            _amounts[_tokenIndex] = _balanceToReturn;
+            _rates[_tokenIndex] = _expectedRate;
+        }
+        require(core.sellToken("", _tokensToBuy, _amounts, _rates, _investor));
+    }
 
     // -------------------------- FEES --------------------------
     function getPendingManagmentFee() onlyFundOwner public view returns(uint) {
@@ -479,6 +495,8 @@ contract FundTemplate {
         address indexed _spender,
         uint256 _value
     );
+
+    event Withdrawed(address _investor, uint256 _amountETH, uint256 _amountInTokens);
 
     event LogS( string text);
     event LogA( address Address, string text);

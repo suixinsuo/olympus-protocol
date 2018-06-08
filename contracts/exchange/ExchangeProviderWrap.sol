@@ -4,15 +4,15 @@ import "./ExchangeProvider.sol";
 import { StorageTypeDefinitions as STD } from "../storage/OlympusStorage.sol";
 
 contract ExchangeProviderWrap {
-  
+
     ExchangeProvider provider;
-    
-    function ExchangeProviderWrap(ExchangeProvider _p) public {
-        provider = _p;    
+
+    constructor(ExchangeProvider _p) public {
+        provider = _p;
     }
-    
+
     function buy(uint orderId, ERC20[] tokenAddresses, uint[] amounts, uint[] rates, address deposit) public payable returns(bool){
-        
+
         require(provider.startPlaceOrder(orderId,deposit));
         for(uint i = 0; i < tokenAddresses.length; i++){
             require(provider.addPlaceOrderItem(orderId,tokenAddresses[i],amounts[i],rates[i]));
