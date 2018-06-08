@@ -34,6 +34,7 @@ const toFundToken = (amount) => {
 }
 
 contract("Fund For Manager", (accounts) => {
+
   let fund;
 
   const coreAddress = accounts[1];
@@ -257,7 +258,6 @@ contract("Fund Investment", (accounts) => {
     assert.equal(withdrawBalanceA, 0, 'Investor A withdraw everything');
     assert.equal(withdrawBalanceB, 0, 'Investor B withdraw everything');
   }))
-
 
 
 })

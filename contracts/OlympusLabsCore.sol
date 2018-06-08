@@ -11,8 +11,7 @@ import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storag
 import { TypeDefinitions as TD } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
 import "./Tokenization/TokenizationProvider.sol";
-
-
+import "./libs/FundTemplate.sol";
 contract OlympusLabsCore is Manageable {
     using SafeMath for uint256;
 
@@ -371,15 +370,28 @@ contract OlympusLabsCore is Manageable {
         return true;
     }
 
-    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success) {
-        return  exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, deposit);
+    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public payable returns (bool success) {
+        require(exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, deposit));
+        return true;
     }
-    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success) {
+
+    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public returns (bool success) {
         for (uint i = 0; i < tokens.length; i++) {
 
             tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]);
         }
         require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
+        return true;
+    }
+
+    function fundSellToken(bytes32 exchangeId, address fundAddress, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public returns (bool success) {
+        require(FundTemplate(fundAddress).sellToken(exchangeId, tokens, amounts, rates, deposit));
+        return true;
+    }
+    function fundBuyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address fundAddress) public payable returns (bool success) {
+        require(FundTemplate(fundAddress).isFundOwner());
+        require(exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, fundAddress));
+        require(FundTemplate(fundAddress).updateTokens(tokens));
         return true;
     }
 }

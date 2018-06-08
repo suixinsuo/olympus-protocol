@@ -1,14 +1,11 @@
 pragma solidity ^0.4.23;
-import "../libs/SafeMath.sol";
+import "./SafeMath.sol";
 import "../permission/PermissionProviderInterface.sol";
 import "../riskManagement/RiskManagementProviderInterface.sol";
 import "../price/PriceProviderInterface.sol";
 import "../libs/ERC20.sol";
+import "./CoreInterface.sol";
 
-interface Core {
-    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external returns (bool success);
-    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
-}
 
 contract FundTemplate {
 
@@ -31,14 +28,13 @@ contract FundTemplate {
     uint public constant DENOMINATOR = 10000;
     uint public constant MAX_TRANSFERS = 5;
 
-    //struct
     struct FUND {
         uint id;
         string name;
         string description;
         string category;
         address[] tokenAddresses;
-        uint[] weights;
+        uint[] amounts;
         uint managementFee;
         uint withdrawFeeCycle; //*hours;
         uint deposit;       //deposit
@@ -83,6 +79,7 @@ contract FundTemplate {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     mapping(address => bool) tokenIsBroken; // True, is broken, empty, is fine
+    mapping (address => uint256) public tokenIndex;
 
     //Modifier
 
@@ -122,6 +119,10 @@ contract FundTemplate {
     modifier onlyPayloadSize(uint size) {
         assert(msg.data.length == size + 4);
         _;
+    }
+
+   function isFundOwner() public view returns (bool success) {
+        return tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0;
     }
 
     // -------------------------- ERC20 STANDARD --------------------------
@@ -193,7 +194,7 @@ contract FundTemplate {
         string _description,
         string _category,
         address[] memory _tokenAddresses,
-        uint[] memory _weights,
+        uint[] memory _amounts,
         uint _withdrawFeeCycle,
         uint _widrawFoundCycle
 
@@ -204,7 +205,7 @@ contract FundTemplate {
         _FUND.description = _description;
         _FUND.category = _category;
         _FUND.tokenAddresses = _tokenAddresses;
-        _FUND.weights = _weights;
+        _FUND.amounts = _amounts;
         _FUND.managementFee = 1;
         _FUND.status = FundStatus.Active;
         _FUND.withdrawFeeCycle = _withdrawFeeCycle * 3600 + now;
@@ -224,9 +225,10 @@ contract FundTemplate {
         string _description,
         string _category,
         address[]  _tokenAddresses,
-        uint[]  _weights
+        uint[]  _amounts
     )
     {
+
         _name = _FUND.name;
         _symbol = symbol;
         _owner = _FUNDExtend.owner;
@@ -234,13 +236,43 @@ contract FundTemplate {
         _description = _FUND.description;
         _category = _FUND.category;
         _tokenAddresses = _FUND.tokenAddresses;
-        _weights = _FUND.weights;
+        _amounts = _FUND.amounts;
+    }
+    // -------------------------- MAPPING --------------------------
+
+    function updateTokens(ERC20[] _tokens) public onlyCore returns(bool success) {
+
+      for (uint i = 0; i < _tokens.length; i++) {
+            uint tokenBalance = _tokens[i].balanceOf(this);
+            if (tokenBalance > 0) {
+                if (tokenIndex[_tokens[i]] == 0) {
+                    tokenIndex[_tokens[i]] = _FUND.tokenAddresses.push(_tokens[i]);
+                    _FUND.amounts.push(tokenBalance);
+                } else {
+                    _FUND.amounts[tokenIndex[_tokens[i]]] = tokenBalance;
+                }
+            } else {
+                if (tokenIndex[_tokens[i]] != 0) {
+                    tokenIndex[_tokens[i]] = 0;
+                    delete _FUND.tokenAddresses[tokenIndex[_tokens[i]] - 1];
+                    delete _FUND.amounts[tokenIndex[_tokens[i]]];
+                }
+            }
+        }
+        return true;
     }
 
-    function changeTokens(address[] _tokens, uint[] _weights) public onlyFundOwner returns(bool success){
-        require(_tokens.length == _weights.length);
-        _FUND.tokenAddresses = _tokens;
-        _FUND.weights = _weights;
+    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public onlyCore onlyFundOwner returns (bool success) {
+        for(uint i = 0; i < tokens.length; i++) {
+            tokens[i].approve(msg.sender, amounts[i]);
+        }
+        CoreInterface(msg.sender).sellToken(exchangeId, tokens, amounts, rates, deposit);
+        return true;
+    }
+
+    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public onlyCore onlyFundOwner returns (bool success) {
+
+        CoreInterface(msg.sender).buyToken(exchangeId, tokens, amounts, rates, deposit);
         return true;
     }
 

@@ -30,6 +30,18 @@ KyberNetworkExchange   0xe24fe01e5e415556a6a09b61cf9a6fd4a8672650<br/>
 
 
 ## Kovan
+### JUNE 7 version
+Core: 0xc7bfb4c0f35d8d42c724a0af1e0f1c6a2a4f60d5<br/>
+PermissionProvider: 0x6b7e53420cb313a2a25f7d8835a09c1634285c9a<br/>
+ExchangeProvider: 0xa3078A7332bc17f6621fE7B83eE5EB5A788d536a<br/>
+PriceProvider: 0x2891330314bbeb473f0d9c1bb81b611ceb15b1d1<br/>
+StrategyProvider: 0xf268c97eb57db405091caccaafc1a90f45f2493a<br/>
+WhitelistProvider: 0x96ed6cba27c59476921221204e74100903796942<br/>
+Storage: 0xa932dbda40579ad4f588b6bbe25811450179fd19<br/>
+ExtendedStorage: 0x0c28b67b0a7e48e480a0499dac503dc9335a8c54<br/>
+ExchangeManager: 0x85fce64140d4fedf4ce81e2fdfac9c03d7bc0234<br/>
+KyberNetworkExchange: 0x69ab4694b7f06f0783a5e651bc75d407323e86ba<br/>
+
 ### v1.0.0-review-pending
 Core: 0xeEF996Ca4Fe62f826601aE5c1d6fe77d8193513c<br/>
 PermissionProvider: 0xdef673F4ecc19fC9439Dd7Ee1f934eE6a35d404C<br/>
