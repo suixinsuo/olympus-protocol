@@ -1,4 +1,5 @@
 var Core = artifacts.require("./OlympusLabsCore.sol");
+var RebalanceMock = artifacts.require("./rebalance/RebalanceMock.sol");
 var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
 var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
 var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol");
@@ -112,6 +113,8 @@ module.exports = function (deployer, network) {
 
   return deployer.then(() => {
     return deployer.deploy(PermissionProvider);
+  }).then(() => {
+    return deployer.deploy(RebalanceMock);
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {
