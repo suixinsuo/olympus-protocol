@@ -21,17 +21,10 @@ contract FundTemplate {
     //enum
     enum FundStatus { Pause, Close , Active }
 
-<<<<<<< HEAD
     //struct 
 
     uint public constant DENOMINATOR = 10000;
 
-=======
-    uint public constant DENOMINATOR = 10000;
-
-
-    //struct
->>>>>>> 234fd842e7210de20683d1a49ec227065b7cf6f6
     struct FUND {
         uint id;
         string name;
