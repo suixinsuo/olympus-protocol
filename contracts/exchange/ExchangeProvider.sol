@@ -29,7 +29,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
     mapping (uint => uint) private balances;
 
-    function ExchangeProvider(address _exchangeManager, address _permission) public
+    constructor(address _exchangeManager, address _permission) public
     ExchangePermissions(_permission)
     {
         if (_exchangeManager != 0x0) {
