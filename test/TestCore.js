@@ -4,15 +4,29 @@ const PriceProvider = artifacts.require("../contracts/price/PriceProvider.sol");
 const ExchangeAdapterManager = artifacts.require("../contracts/exchange/ExchangeAdapterManager.sol");
 const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
 const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
+const TokenizationProvider = artifacts.require("../contracts/tokenization/TokenizationProvider.sol");
 
 const OlympusStorage = artifacts.require("../contracts/storage/OlympusStorage.sol");
 const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token.sol");
 const MockKyberNetwork = artifacts.require("../contracts/exchange/exchanges/MockKyberNetwork.sol");
 const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/KyberNetworkExchange.sol");
+const FundTemplate = artifacts.require("../contracts/libs/FundTemplate.sol");
+
 
 const _ = require('lodash');
 const Promise = require('bluebird');
-const mockData = {
+
+let mockFund = {
+  name: 'test_fund',
+  symbol: 'test',
+  decimals: 18,
+  description: 'test description',
+  category: 'test_category',
+  withdrawCycle: 0,
+  lockTime: 0
+}
+
+let mockData = {
   tokensLenght: 2,
   id: 0,
   name: "test",
@@ -20,7 +34,7 @@ const mockData = {
   category: "multiple",
   tokenAddresses: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
   exchangesAddressHash: ["0x6269626f78", "0x1269626f78"],
-  tokenOnePrice: [1000000, 20000],
+  tokenOnePrice: [1000000, 200000],
   addresses: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
   tokenTwoPrice: [3000000, 40000],
   weights: [80, 20],
@@ -67,6 +81,11 @@ contract('Olympus-Protocol', function (accounts) {
     let instance = await Core.deployed();
     // register exchange callback
     await exchangeProvider.setCore(instance.address);
+    
+    let fund = await FundTemplate.deployed();
+    fund.setPermissionProvider(Permission.address);
+
+
   })
 
   it("They should be able to deploy.", async () => {
@@ -76,6 +95,7 @@ contract('Olympus-Protocol', function (accounts) {
       StrategyProvider.deployed(),
       PermissionProvider.deployed(),
       Core.deployed(),
+      FundTemplate.deployed()
     ])
       .spread((/*price, strategy, exchange,*/ core) => {
         assert.ok(core, 'Core contract is not deployed.');
@@ -91,6 +111,42 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(name.receipt.status, '0x01');
   })
 
+  //tokenization provider
+  it("Should be able to set a tokenization provider.", async () => {
+    let instance = await Core.deployed();
+    let permissionInstance = await PermissionProvider.deployed();
+
+    let tokenizationInstance = await TokenizationProvider.deployed();
+
+    let result = await tokenizationInstance.TokenizationIndex(permissionInstance.address);
+    assert.equal(result.receipt.status, '0x01');
+
+    result = await instance.setProvider(7, tokenizationInstance.address);
+    assert.equal(result.receipt.status, '0x01');
+  })
+
+  it("Should be able to create a fund.", async () => {
+    // let instance = await Core.deployed();
+    let tokenizationInstance = await TokenizationProvider.deployed();
+    let result = await tokenizationInstance.createFund(mockFund.name, mockFund.symbol, mockFund.decimals, mockFund.description, mockFund.category, mockData.tokenAddresses, mockData.weights, mockFund.withdrawCycle, mockFund.lockTime);
+    assert.equal(result.receipt.status, '0x01');
+  })
+  it("Should be able to get fund buy fund id 0.", async () => {
+    // let instance = await Core.deployed();
+    let tokenizationInstance = await TokenizationProvider.deployed();
+
+    let result = await tokenizationInstance.getFundDetails.call(0);
+    assert.equal(mockFund.name, result[1]);
+    assert.equal(mockFund.symbol, result[2]);
+    // assert.equal(mockFund.decimals, result[3].toNumber());
+    assert.equal(mockFund.description, result[4]);
+    assert.equal(mockFund.category, result[5]);
+    assert.equal(mockData.tokenAddresses[0], result[6][0]);
+    assert.equal(mockData.tokenAddresses[1], result[6][1]);
+    assert.equal(mockData.weights[0], result[7][0]);
+    assert.equal(mockData.weights[1], result[7][1]);
+    // assert.equal(result.receipt.status, '0x01');
+  })
   //exchange init
 
   it("Should be able to set a exchange provider.", async () => {
@@ -254,46 +310,6 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result.receipt.status, '0x01');
   })
 
-  it("Should be able to buy token for fund option.", async () => {
-    let srcAmountETH = 1;
-    let needDeposit = srcAmountETH * mockData.tokensLenght;
-    let instance = await Core.deployed();
-    let amounts = [];
-    let rates = [mockData.tokenOnePrice[0], mockData.tokenTwoPrice[0]];
-    for (let i = 0; i < mockData.tokensLenght; i++) {
-      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
-      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
-      amounts.push(web3.toWei(srcAmountETH));
-    }
-    let result = await instance.buyToken("", mockData.tokenAddresses, amounts, rates, accounts[0], { from: accounts[0], value: web3.toWei(needDeposit) });
-
-    for (let i = 0; i < mockData.tokensLenght; i++) {
-      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
-      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
-    }
-  })
-  it("Should be able to sell token for fund option.", async () => {
-    let srcAmountETH = 1;
-    let needDeposit = srcAmountETH * mockData.tokensLenght;
-    let instance = await Core.deployed();
-    let amounts = [];
-    let rates = [mockData.tokenOnePrice[1], mockData.tokenTwoPrice[1]];
-    for (let i = 0; i < mockData.tokensLenght; i++) {
-      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
-      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
-      await erc20Token.approve(instance.address, tokenBalance);
-
-      amounts.push(web3.toWei(srcAmountETH));
-    }
-    let balance = await web3.eth.getBalance(accounts[0]);
-
-    let result = await instance.sellToken("", mockData.tokenAddresses, amounts, rates, accounts[0]);
-
-    for (let i = 0; i < mockData.tokensLenght; i++) {
-      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
-      let tokenBalance = await erc20Token.balanceOf(accounts[0]);
-    }
-  })
 
   it("Should be able to get ethfee.", async () => {
     let instance = await Core.deployed();
@@ -316,6 +332,117 @@ contract('Olympus-Protocol', function (accounts) {
     let result = await instance.getSubOrderStatus.call(1000000, mockData.tokenAddresses[0]);
 
     assert.equal(result.toNumber(), 3);
+  })
+
+  // it("Should be able to buy token for fund.", async () => {
+  //   let srcAmountETH = 1;
+  //   let needDeposit = srcAmountETH * mockData.tokensLenght;
+  //   let instance = await Core.deployed();
+  //   let amounts = [];
+  //   let rates = [mockData.tokenOnePrice[0], mockData.tokenTwoPrice[0]];
+
+  //   let tokenizationInstance = await TokenizationProvider.deployed();
+  //   let fund = await tokenizationInstance.getFundDetails.call(0);
+  //   let fundInstance = await FundTemplate.deployed();
+  //   for (let i = 0; i < mockData.tokensLenght; i++) {
+  //     let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+  //     let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+  //     console.log(tokenBalance.toNumber());
+  //     amounts.push(web3.toWei(srcAmountETH));
+  //   }
+  //   let result = await instance.buyToken("", mockData.tokenAddresses, amounts, rates, fundInstance.address,   { from: accounts[0], value: web3.toWei(needDeposit) });
+
+  //   for (let i = 0; i < mockData.tokensLenght; i++) {
+  //     let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+  //     let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+  //     console.log(tokenBalance.toNumber());
+  //   }
+  // })
+
+  it("Should be able to buy token for fund.", async () => {
+    let srcAmountETH = 1;
+    let needDeposit = srcAmountETH * mockData.tokensLenght;
+    let instance = await Core.deployed();
+    let amounts = [];
+    let rates = [mockData.tokenOnePrice[0], mockData.tokenTwoPrice[0]];
+
+    let tokenizationInstance = await TokenizationProvider.deployed();
+    let fund = await tokenizationInstance.getFundDetails.call(0);
+    let fundInstance = await FundTemplate.deployed();
+    for (let i = 0; i < mockData.tokensLenght; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+      amounts.push(web3.toWei(srcAmountETH));
+    }
+    let result = await instance.fundBuyToken("", mockData.tokenAddresses, amounts, rates, fundInstance.address,   { from: accounts[0], value: web3.toWei(needDeposit) });
+    
+    for (let i = 0; i < mockData.tokensLenght; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+
+      let tokenIndex = (await fundInstance.tokenIndex(mockData.tokenAddresses[i])).toNumber();
+
+      let fundDetail = await fundInstance.getFundDetails();
+      assert.equal(mockData.tokenAddresses[i], fundDetail[6][tokenIndex - 1]);
+      assert.equal(tokenBalance.toString(), fundDetail[7][tokenIndex - 1].toString());
+    }
+
+  })
+
+  // it("Should be able to sell token quickly.", async () => {
+  //   let instance = await Core.deployed();
+  //   let amounts = [];
+  //   let rates = [mockData.tokenOnePrice[1], mockData.tokenTwoPrice[1]];
+
+  //   let tokenizationInstance = await TokenizationProvider.deployed();
+  //   let fund = await tokenizationInstance.getFundDetails.call(0);
+
+  //   let fundInstance = await FundTemplate.deployed();
+  //   for (let i = 0; i < mockData.tokensLenght; i++) {
+  //     let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+  //     let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+
+  //     // let tokenBalance2 = await erc20Token.balanceOf(mockKyber.address);
+  //     console.log(tokenBalance);
+
+  //     await instance.tokenApprove(fundInstance.address, mockData.tokenAddresses[i], instance.address, 0);
+  //     // await erc20Token.approve(instance.address, tokenBalance);
+  //     amounts.push(tokenBalance);
+  //   }
+  //   let balance = await web3.eth.getBalance(accounts[0]);
+
+  //   // let result = await instance.sellToken("", mockData.tokenAddresses, amounts, rates, fundInstance.address);
+
+  //   for (let i = 0; i < mockData.tokensLenght; i++) {
+  //     let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+  //     let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+  //     console.log(tokenBalance);
+  //   }
+  // })
+  it("Should be able to sell token for fund.", async () => {
+    let instance = await Core.deployed();
+    let amounts = [];
+    let rates = [mockData.tokenOnePrice[1], mockData.tokenTwoPrice[1]];
+    let tokenizationInstance = await TokenizationProvider.deployed();
+    let fund = await tokenizationInstance.getFundDetails.call(0);
+
+    let fundInstance = await FundTemplate.deployed();
+    for (let i = 0; i < mockData.tokensLenght; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+
+      assert.notEqual(tokenBalance.toNumber(), 0);
+      amounts.push(tokenBalance);
+    }
+    // let balance = await web3.eth.getBalance(fundInstance.address);
+    let result = await instance.fundSellToken("", fundInstance.address, mockData.tokenAddresses, amounts, rates, fundInstance.address);
+
+    for (let i = 0; i < mockData.tokensLenght; i++) {
+      let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
+      let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+      assert.equal(tokenBalance.toNumber(), 0);
+    }
+    // balance = await web3.eth.getBalance(fundInstance.address);
   })
 
   after("clean", async () => {
