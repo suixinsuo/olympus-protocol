@@ -79,7 +79,7 @@ contract IndexTemplate {
     }
     RebalanceToken[] public rebalanceTokensToSell;
     RebalanceToken[] public rebalanceTokensToBuy;
-    address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+    address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
     /**
     End Rebalance parameters
