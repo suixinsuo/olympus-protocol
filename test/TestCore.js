@@ -110,47 +110,12 @@ contract('Olympus-Protocol', function (accounts) {
     let name = await result.adminAdd(instance.address, ROLE_CORE);
 
     assert.equal(name.receipt.status, '0x01');
+
     await result.setCore(instance.address);
-    let coreAddress = await PermissionProvider.queryCore();
-    console.log(coreAddress);
+    let coreAddress = await result.queryCore();
+    assert.equal(coreAddress, instance.address);
   })
 
-  //tokenization provider
-  it("Should be able to set a tokenization provider.", async () => {
-    let instance = await Core.deployed();
-    let permissionInstance = await PermissionProvider.deployed();
-
-    let tokenizationInstance = await TokenizationProvider.deployed();
-
-    let result = await tokenizationInstance.TokenizationIndex(permissionInstance.address);
-    assert.equal(result.receipt.status, '0x01');
-
-    result = await instance.setProvider(7, tokenizationInstance.address);
-    assert.equal(result.receipt.status, '0x01');
-  })
-
-  it("Should be able to create a fund.", async () => {
-    // let instance = await Core.deployed();
-    let tokenizationInstance = await TokenizationProvider.deployed();
-    let result = await tokenizationInstance.createFund(mockFund.name, mockFund.symbol, mockFund.decimals, mockFund.description, mockFund.category, mockData.tokenAddresses, mockData.weights, mockFund.withdrawCycle, mockFund.lockTime);
-    assert.equal(result.receipt.status, '0x01');
-  })
-  it("Should be able to get fund buy fund id 0.", async () => {
-    // let instance = await Core.deployed();
-    let tokenizationInstance = await TokenizationProvider.deployed();
-
-    let result = await tokenizationInstance.getFundDetails.call(0);
-    assert.equal(mockFund.name, result[1]);
-    assert.equal(mockFund.symbol, result[2]);
-    // assert.equal(mockFund.decimals, result[3].toNumber());
-    assert.equal(mockFund.description, result[4]);
-    assert.equal(mockFund.category, result[5]);
-    assert.equal(mockData.tokenAddresses[0], result[6][0]);
-    assert.equal(mockData.tokenAddresses[1], result[6][1]);
-    assert.equal(mockData.weights[0], result[7][0]);
-    assert.equal(mockData.weights[1], result[7][1]);
-    // assert.equal(result.receipt.status, '0x01');
-  })
   //exchange init
 
   it("Should be able to set a exchange provider.", async () => {
@@ -338,6 +303,48 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(result.toNumber(), 3);
   })
 
+  //tokenization provider
+  it("Should be able to set a tokenization provider.", async () => {
+    let instance = await Core.deployed();
+    let permissionInstance = await PermissionProvider.deployed();
+
+    let tokenizationInstance = await TokenizationProvider.deployed();
+
+    let result = await tokenizationInstance.TokenizationIndex(permissionInstance.address);
+    assert.equal(result.receipt.status, '0x01');
+
+    result = await instance.setProvider(7, tokenizationInstance.address);
+    assert.equal(result.receipt.status, '0x01');
+  })
+
+  it("Should be able to create a fund and regist it in core", async () => {
+    // let instance = await Core.deployed();
+    let tokenizationInstance = await TokenizationProvider.deployed();
+    let result = await tokenizationInstance.createFund(mockFund.name, mockFund.symbol, mockFund.decimals, mockFund.description, mockFund.category, mockData.tokenAddresses, mockData.weights, mockFund.withdrawCycle, mockFund.lockTime);
+    assert.equal(result.receipt.status, '0x01');
+
+    let storageInstance = await OlympusStorage.deployed();
+    // result = await tokenizationInstance.getFundDetails.call(1);
+    // console.log(result);
+    // assert.equal(result[0], (await storageInstance.getTokenizationList())[0]);
+    console.log(await storageInstance.getTokenizationList());
+  })
+  it("Should be able to get fund buy fund id 0.", async () => {
+    // let instance = await Core.deployed();
+    let tokenizationInstance = await TokenizationProvider.deployed();
+
+    let result = await tokenizationInstance.getFundDetails.call(0);
+    assert.equal(mockFund.name, result[1]);
+    assert.equal(mockFund.symbol, result[2]);
+    // assert.equal(mockFund.decimals, result[3].toNumber());
+    assert.equal(mockFund.description, result[4]);
+    assert.equal(mockFund.category, result[5]);
+    assert.equal(mockData.tokenAddresses[0], result[6][0]);
+    assert.equal(mockData.tokenAddresses[1], result[6][1]);
+    assert.equal(mockData.weights[0], result[7][0]);
+    assert.equal(mockData.weights[1], result[7][1]);
+    // assert.equal(result.receipt.status, '0x01');
+  })
   // it("Should be able to buy token for fund.", async () => {
   //   let srcAmountETH = 1;
   //   let needDeposit = srcAmountETH * mockData.tokensLenght;
