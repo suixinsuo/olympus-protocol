@@ -7,7 +7,7 @@ var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol");
 var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
 var TokenizationProvider = artifacts.require("./Tokenization/TokenizationProvider.sol");
 var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider.sol");
-var RiskManagement = artifacts.require("RiskManagementProvider.sol");
+var RiskManagement = artifacts.require("./riskManagement/RiskManagementProvider.sol");
 var FundTemplate = artifacts.require("./libs/FundTemplate.sol");
 
 const KyberConfig = require('../scripts/libs/kyber_config');
@@ -124,6 +124,8 @@ module.exports = function (deployer, network) {
     return deployer.deploy(OlympusStorage, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(TokenizationProvider, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(RiskManagement, PermissionProvider.address);
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })

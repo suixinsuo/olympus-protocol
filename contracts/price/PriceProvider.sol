@@ -47,7 +47,7 @@ contract PriceProvider {
 
     PermissionProviderInterface internal permissionProvider;
 
-    function PriceProvider (address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
@@ -144,6 +144,11 @@ contract PriceProvider {
 
     function getRates(address dest, uint srcQty) public view returns (uint expectedRate,uint slippageRate){
         (expectedRate,slippageRate ) = _kyber.getExpectedRate(eth_token, dest, srcQty);
+        return(expectedRate,slippageRate);
+    }
+
+    function getSellRates(address _src, uint _srcQty) public view returns (uint expectedRate, uint slippageRate){
+        (expectedRate,slippageRate ) = _kyber.getExpectedRate(_src, eth_token, _srcQty);
         return(expectedRate,slippageRate);
     }
 
