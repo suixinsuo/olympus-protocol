@@ -106,9 +106,13 @@ contract('Olympus-Protocol', function (accounts) {
 
     let instance = await Core.deployed();
     let result = await PermissionProvider.deployed();
+
     let name = await result.adminAdd(instance.address, ROLE_CORE);
 
     assert.equal(name.receipt.status, '0x01');
+    await result.setCore(instance.address);
+    let coreAddress = await PermissionProvider.queryCore();
+    console.log(coreAddress);
   })
 
   //tokenization provider

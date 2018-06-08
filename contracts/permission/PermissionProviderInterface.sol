@@ -28,4 +28,7 @@ contract PermissionProviderInterface is Provider, RBAC {
     function adminRemove(address _addr, string _roleName) onlyAdmin public;
 
     function has(address _addr, string _roleName) public view returns(bool success);
+    function queryCore() public view returns(address core);
+    function setCore(address _addr) public; 
+
 }
