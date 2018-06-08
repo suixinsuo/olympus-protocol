@@ -18,6 +18,7 @@ var ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 var MockKyberNetwork = artifacts.require("MockKyberNetwork");
 var SimpleERC20Token = artifacts.require("SimpleERC20Token");
 var CentralizedExchange = artifacts.require("CentralizedExchange.sol");
+var FundTemplate = artifacts.require("../contracts/libs/FundTemplate.sol");
 
 const args = require('../scripts/libs/args')
 
@@ -34,6 +35,8 @@ function deployOnDev(deployer, num) {
     return deployer.deploy(CentralizedExchange, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(FundTemplate, 'test_symbol', 'test_name', 18);
   })
 }
 
