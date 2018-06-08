@@ -6,13 +6,7 @@ import "../libs/ERC20.sol";
 import "../libs/strings.sol";
 import "../libs/Converter.sol";
 import "../riskManagement/RiskManagementProviderInterface.sol";
-
-interface CoreInterface {
-    function buyToken(
-        bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
-    function sellToken(
-        bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
-}
+import "./CoreInterface.sol";
 
 contract IndexTemplate {
     using strings for *;
