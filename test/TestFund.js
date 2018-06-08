@@ -66,7 +66,7 @@ contract("Fund Managment", (accounts) => {
       fundData.category,
       fundData.address,
       fundData.weights,
-      0, // withdraw Cicle
+      0 // withdraw Cicle
     );
     // Some one invest 1 eht
     await fund.send(web3.toWei(1, 'ether'), { from: otherAddress });
