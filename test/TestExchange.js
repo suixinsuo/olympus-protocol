@@ -419,7 +419,6 @@ contract('ExchangeProvider', (accounts) => {
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
       let actualBalance = await erc20Token.balanceOf(deposit);
-      console.log(actualBalance);
       amounts.push(actualBalance);
 
       rates.push(expectedRateToSell);

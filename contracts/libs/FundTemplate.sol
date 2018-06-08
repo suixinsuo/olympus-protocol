@@ -310,6 +310,9 @@ contract FundTemplate {
         CoreInterface(msg.sender).sellToken(exchangeId, tokens, amounts, rates, deposit);
         return true;
     }
+    function isFundOwner() public view returns (bool success) {
+        return tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0;
+    }
 
 /////////////////////////////////Event 
 	//Event which is triggered to log all transfers to this contract's event log
