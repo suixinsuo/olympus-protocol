@@ -57,7 +57,7 @@ contract OlympusLabsCore is Manageable {
 
     PermissionProviderInterface internal permissionProvider;
 
-    function OlympusLabsCore(address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
