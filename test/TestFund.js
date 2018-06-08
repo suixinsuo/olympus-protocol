@@ -20,7 +20,7 @@ const fundData = {
   magementeFee: 1, // 1%, fixed in the contract
 }
 
-contract.only("Fund Managment", (accounts) => {
+contract("Fund Managment", (accounts) => {
   let fund;
   const adminAddress = accounts[0]; // Admin address have core permissions
   const coreAddress = accounts[1];
@@ -85,7 +85,7 @@ contract.only("Fund Managment", (accounts) => {
   })
 
 
-  it.only("Should be able to invest and get balance of the found", async () => {
+  it("Should be able to invest and get balance of the found", async () => {
     const olympusFee = 300; // Denominator is 10.000, so 3%
     await fund.setOlympusFee(olympusFee, { from: coreAddress });
 
