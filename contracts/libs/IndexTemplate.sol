@@ -296,7 +296,8 @@ contract IndexTemplate {
         require(rebalancePrepareSellAndBuy(), "Prepare sell and buy failed");
 
         if(rebalanceStatus == RebalanceStatus.READY_TO_TRADE || rebalanceStatus == RebalanceStatus.SELLING_IN_PROGRESS){
-            rebalanceStatus = RebalanceStatus.SELLING_IN_PROGRESS;
+            rebalanceStatus = rebalanceTokensToSell.length > 0 ? RebalanceStatus.SELLING_IN_PROGRESS : RebalanceStatus.SELLING_COMPLETE;
+
             // First sell tokens
             for(i = currentProgress; i < rebalanceTokensToSell.length; i++){
                 if(i > currentProgress + tokenStep){
@@ -316,7 +317,7 @@ contract IndexTemplate {
 
         if(rebalanceStatus == RebalanceStatus.SELLING_COMPLETE){
             rebalanceSoldTokensETHReceived = address(this).balance - ethValueRebalanceStart;
-            rebalanceStatus = RebalanceStatus.BUYING_IN_PROGRESS;
+            rebalanceStatus = rebalanceTokensToBuy.length > 0 && rebalanceSoldTokensETHReceived > 0 ? RebalanceStatus.BUYING_IN_PROGRESS : RebalanceStatus.BUYING_COMPLETE;
         }
 
         // Then buy tokens
