@@ -1,4 +1,5 @@
 var Core = artifacts.require("./OlympusLabsCore.sol");
+var RebalanceMock = artifacts.require("./rebalance/RebalanceMock.sol");
 var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
 var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
 var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol");
@@ -18,6 +19,7 @@ var ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 var MockKyberNetwork = artifacts.require("MockKyberNetwork");
 var SimpleERC20Token = artifacts.require("SimpleERC20Token");
 var CentralizedExchange = artifacts.require("CentralizedExchange.sol");
+var FundTemplate = artifacts.require("../contracts/libs/FundTemplate.sol");
 
 const args = require('../scripts/libs/args')
 
@@ -34,6 +36,8 @@ function deployOnDev(deployer, num) {
     return deployer.deploy(CentralizedExchange, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(FundTemplate, 'test_symbol', 'test_name', 18);
   })
 }
 
@@ -109,6 +113,8 @@ module.exports = function (deployer, network) {
 
   return deployer.then(() => {
     return deployer.deploy(PermissionProvider);
+  }).then(() => {
+    return deployer.deploy(RebalanceMock);
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {

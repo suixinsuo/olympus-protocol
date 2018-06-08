@@ -410,7 +410,6 @@ contract('ExchangeProvider', (accounts) => {
 
   it("Test sellToken.", async () => {
     let srcAmountETH = 1;
-    // let totalSrcAmountETH = srcAmountETH * tokens.length;
 
     let deposit = accounts[0];
     let amounts = [];
@@ -420,20 +419,17 @@ contract('ExchangeProvider', (accounts) => {
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
       let actualBalance = await erc20Token.balanceOf(deposit);
-      console.log(actualBalance);
       amounts.push(actualBalance);
 
       rates.push(expectedRateToSell);
       await erc20Token.transfer(exchangeProvider.address, actualBalance);
     }
     beforeBalance = await web3.eth.getBalance(deposit);
-    console.log(beforeBalance);
-    result = await exchangeProvider.sellToken("", tokens, amounts, rates, deposit);
+    result = await exchangeProvider.sellToken("",tokens, amounts, rates, deposit);
 
     for (let i = 0; i < tokens.length; i++) {
       let erc20Token = await SimpleERC20Token.at(tokens[i]);
       let actualBalance = await erc20Token.balanceOf(deposit);
-      console.log(actualBalance);
     }
     assert.ok(new BigNumber(await web3.eth.getBalance(deposit)).minus(beforeBalance).toNumber() > 0);
   })
