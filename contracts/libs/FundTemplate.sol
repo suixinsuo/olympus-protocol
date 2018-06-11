@@ -45,6 +45,13 @@ contract FundTemplate {
         bool limit;
         uint createTime;
         uint lockTime;
+        uint dailyFeeRate;
+    }
+
+    struct investLog{
+        uint lastInvestTime;  
+        uint lastIvestAmount;
+        uint balanceAmount;
     }
 
 
@@ -67,7 +74,9 @@ contract FundTemplate {
     //Maping
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => investLog) investLogs;
     mapping (address => uint256) public tokenIndex;
+
     //Modifier
 
     modifier  onlyFundOwner() {
@@ -243,13 +252,31 @@ contract FundTemplate {
 
         balances[msg.sender] += _realShare * 10 ** decimals;
         totalSupply += _realShare * 10 ** decimals;
+
+        //ManagementFee
+
+        investLogs[tx.origin].lastInvestTime = now;
+        investLogs[tx.origin].lastIvestAmount += _realShare;
+
         emit Transfer(owner, msg.sender, _realShare * 10 ** decimals);
         emit BuyFund(msg.sender, _realShare * 10 ** decimals);
     }
 
     function calculateFee(uint invest) internal view returns(uint _realBalance,uint _managementFee){
-        _managementFee = invest / 100 * _FUND.managementFee;
-        _realBalance = invest - _managementFee;
+        if (investLogs[tx.origin].lastInvestTime == 0){
+            _realBalance = invest;
+            _managementFee = 0;
+        }else{
+            uint _cycle = caculateDate(investLogs[tx.origin].lastInvestTime);
+            _managementFee = investLogs[tx.origin].lastIvestAmount * _cycle * _FUNDExtend.dailyFeeRate / DENOMINATOR;
+            _realBalance = invest - _managementFee;
+        }
+    }
+
+    function caculateDate(uint _date) internal view returns(uint _days){
+        uint _day = now - _date/(60 * 60 * 24);
+        if(_day == 0) { return 1; } 
+        return _day;
     }
 
     function getPriceInternal(uint _value) internal view returns(uint _price){
@@ -304,7 +331,11 @@ contract FundTemplate {
         olympusFee = _olympusFee;
     }
 
-
+    function setManageFee(uint _manageFee ) onlyCore public {
+        require(_manageFee > 0);
+        require(_manageFee < DENOMINATOR);
+        _FUNDExtend.dailyFeeRate = _manageFee;
+    }
     // -------------------------- PROVIDERS --------------------------
 
     function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner  {
