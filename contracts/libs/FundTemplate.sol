@@ -274,7 +274,9 @@ contract FundTemplate {
     }
 
     function caculateDate(uint _date) internal view returns(uint _days){
-        _days = now - _date/(60 * 60 * 24);
+        uint _day = now - _date/(60 * 60 * 24);
+        if(_day == 0) { return 1; } 
+        return _day;
     }
 
     function getPriceInternal(uint _value) internal view returns(uint _price){
