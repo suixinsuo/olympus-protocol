@@ -341,7 +341,7 @@ contract FundTemplate {
     }
 
     function buyToken(bytes32 exchangeId, uint ethAmount, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public onlyCore onlyFundOwner returns (bool success) {
-        CoreInterface(msg.sender).buyToken.value(ethAmount)(exchangeId, tokens, amounts, rates, deposit);
+        // CoreInterface(msg.sender).buyToken.value(ethAmount)(exchangeId, tokens, amounts, rates, deposit);
         return true;
     }
     function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public onlyCore onlyFundOwner returns (bool success) {
