@@ -33,10 +33,10 @@ module.exports = {
   },
   solc: { optimizer: { enabled: true, runs: 200 } },
   mocha: {
-    // reporter: 'eth-gas-reporter',
-    // reporterOptions: {
-    //   currency: 'CNY',
-    //   gasPrice: 2
-    // }
+    reporter: 'eth-gas-reporter',
+    reporterOptions: {
+      currency: 'CNY',
+      gasPrice: 2
+    }
   }
 }
