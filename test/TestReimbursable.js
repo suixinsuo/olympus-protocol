@@ -41,5 +41,10 @@ contract("TestReimbursable", (accounts) => {
     console.log('Difference in Gwei', web3.fromWei(finalBalance - initialBalance), 'Gwei');
     // assert.equal(initialBalance.toNumber(), finalBalance.toNumber());
     assert.ok(initialBalance.comparedTo(finalBalance) === 0);
+
+    balance = await web3.eth.getBalance(reimbursable.address);
+
+    // the balance of the contract.
+    assert.ok(balance.comparedTo(10**18 - actualGasCosted) === 0);
   })
 });
