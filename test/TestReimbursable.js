@@ -1,5 +1,5 @@
 'use strict'
-const Reimbursable = artifacts.require("../contracts/lib/Reimbursable.sol");
+const Reimbursable = artifacts.require("./TestReimbursable.sol");
 
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));

@@ -16,10 +16,6 @@ contract Reimbursable {
         _;
     }
 
-    // @notice Will receive any eth sent to the contract
-    function () external payable {
-    }    
-
     // this should be called at the beginning of a function.
     // such as rebalance and withdraw.
     function startGasCalculation() internal {
@@ -35,13 +31,5 @@ contract Reimbursable {
         // 21000 is for the transfer below.
         gasToReimburse = (startGas - gasleft() + 21000) * tx.gasprice;
         tx.origin.transfer(gasToReimburse);
-    }
-
-    function test() public returns(uint) {
-        startGasCalculation();
-        for(uint i = 0; i < 10; i ++ ){
-            emit LogUint("Looping: ", i);
-        }
-        return reimburse();
     }
 }
