@@ -6,8 +6,8 @@
     "test": "test"
   },
   "scripts": {
-    "build": "truffle compile",
-    "test": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test' ",
+    "build": "truffle compile  --network development",
+    "test": "./node_modules/.bin/run-with-testrpc --port 8545  --network development 'truffle test'",
     "testCoverage": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test --network coverage' ",
     "deploy": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network development' ",
     "deploytestnet": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network kovan' ",
