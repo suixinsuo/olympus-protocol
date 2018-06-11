@@ -117,7 +117,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         }
 
         uint beforeTokenBalance = dest.balanceOf(deposit);
-
+        slippageRate = rate;
         /*uint actualAmount = kyber.trade.value(amount)(*/
         kyber.trade.value(amount)(
             ETH_TOKEN_ADDRESS,
@@ -161,7 +161,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         if(slippageRate < rate){
             return false;
         }
-
+        slippageRate = rate;
         uint beforeTokenBalance = dest.balanceOf(this);
         /*uint actualAmount = kyber.trade.value(amount)(*/
         kyber.trade(
