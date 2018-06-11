@@ -43,6 +43,10 @@ contract OlympusLabsCore is Manageable {
         require(msg.sender == subContracts[uint8(_type)]);
         _;
     }
+    modifier allowTokenizationOnly() {
+        require(msg.sender == address(_Tokenization));
+        _;
+    }
 
     modifier onlyOwner() {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE_OWNER()));
@@ -392,6 +396,11 @@ contract OlympusLabsCore is Manageable {
 
         require(FundTemplate(fundAddress).buyToken(exchangeId, ethAmount, tokens, amounts, rates, fundAddress));
         require(FundTemplate(fundAddress).updateTokens(tokens));
+        return true;
+    }
+
+    function addTokenization(address token, uint8 tokenType) public allowTokenizationOnly returns (bool success) {
+        olympusStorage.addTokenization(token, tokenType);
         return true;
     }
 }
