@@ -9,7 +9,7 @@ contract PermissionProvider is PermissionProviderInterface {
         checkRole(msg.sender, _roleName);
         _;
     }
-
+    address public coreAddress;
     /**
     * @dev constructor. Sets msg.sender as admin by default
     */
@@ -35,5 +35,10 @@ contract PermissionProvider is PermissionProviderInterface {
         return hasRole(_addr, _roleName) || hasRole(_addr, ROLE_ADMIN);
     }
 
-
+    function queryCore() public view returns(address core) {
+        return coreAddress;
+    }
+    function setCore(address _addr) public onlyAdmin {
+        coreAddress = _addr;
+    }
 }
