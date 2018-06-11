@@ -119,7 +119,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         uint beforeTokenBalance = dest.balanceOf(deposit);
 
         /*uint actualAmount = kyber.trade.value(amount)(*/
-        kyber.trade.value(amount)(
+        kyber.trade.value(msg.value)(
             ETH_TOKEN_ADDRESS,
             amount,
             dest,
