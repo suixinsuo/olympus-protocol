@@ -121,17 +121,18 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(coreAddress, instance.address);
   })
 
-    let result = await tokenizationInstance.getFundDetails.call(0);
-    assert.equal(mockFund.name, result[1]);
-    assert.equal(mockFund.symbol, result[2]);
-    // assert.equal(mockFund.decimals, result[3].toNumber());
-    assert.equal(mockFund.description, result[4]);
-    assert.equal(mockFund.category, result[5]);
-    assert.equal(mockData.tokenAddresses[0], result[6][0]);
-    assert.equal(mockData.tokenAddresses[1], result[6][1]);
-    assert.equal(mockData.weights[0], result[7][0]);
-    assert.equal(mockData.weights[1], result[7][1]);
-    // assert.equal(result.receipt.status, '0x01');
+  //tokenization provider
+  it("Should be able to set a tokenization provider.", async () => {
+    let instance = await Core.deployed();
+    let permissionInstance = await PermissionProvider.deployed();
+
+    let tokenizationInstance = await TokenizationProvider.deployed();
+
+    let result = await tokenizationInstance.TokenizationIndex(permissionInstance.address);
+    assert.equal(result.receipt.status, '0x01');
+
+    result = await instance.setProvider(7, tokenizationInstance.address);
+    assert.equal(result.receipt.status, '0x01');
   })
 
 
