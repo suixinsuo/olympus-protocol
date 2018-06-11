@@ -48,7 +48,8 @@ contract("TestReimbursable", (accounts) => {
     contractBalance = await web3.eth.getBalance(reimbursable.address);
     console.log('Contract balance', web3.fromWei(contractBalance.toString()), 'ether');
 
-    // the balance of the contract.
+    // the balance of the contract
+    // tested on kovan, but on local, it fails.
     // assert.ok(contractBalance.comparedTo(web3.toWei(1) - actualGasCosted) === 0);
   })
 });
