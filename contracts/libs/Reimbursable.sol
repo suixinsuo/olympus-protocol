@@ -1,7 +1,6 @@
 pragma solidity ^0.4.23;
 
 import "./SafeMath.sol";
-import "./ERC20.sol";
 
 contract Reimbursable {
     using SafeMath for uint256;
@@ -13,8 +12,8 @@ contract Reimbursable {
 
     modifier checkIfReimbursable() {
         emit LogUint("EndGas", gasleft());        
-        // require(startGas > 0);
-        // require(gasleft() >= GAS_FEE_RANGE);
+        require(startGas > 0);
+        require(gasleft() >= GAS_FEE_RANGE);
         _;
     }
 
@@ -35,6 +34,7 @@ contract Reimbursable {
         checkIfReimbursable() 
     returns (uint gasToReimburse)
     {
+        // 21000 is for the transfer below.
         gasToReimburse = (startGas - gasleft() + 21000) * tx.gasprice;
         tx.origin.transfer(gasToReimburse);
     }

@@ -5,7 +5,6 @@ const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const _ = require('lodash');
 const Promise = require('bluebird');
-const TX_OK = '0x01';
 
 contract("TestReimbursable", (accounts) => {
   it('Should be able to deploy', async () => {
