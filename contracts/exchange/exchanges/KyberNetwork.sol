@@ -107,7 +107,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         if (address(this).balance < amount) {
             return false;
         }
-
+        require(msg.value == amount);
         uint expectedRate;
         uint slippageRate;
 
