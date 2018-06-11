@@ -121,18 +121,18 @@ contract('Olympus-Protocol', function (accounts) {
     assert.equal(coreAddress, instance.address);
   })
 
-    let result = await tokenizationInstance.getFundDetails.call(0);
-    assert.equal(mockFund.name, result[1]);
-    assert.equal(mockFund.symbol, result[2]);
-    // assert.equal(mockFund.decimals, result[3].toNumber());
-    assert.equal(mockFund.description, result[4]);
-    assert.equal(mockFund.category, result[5]);
-    assert.equal(mockData.tokenAddresses[0], result[6][0]);
-    assert.equal(mockData.tokenAddresses[1], result[6][1]);
-    assert.equal(mockData.weights[0], result[7][0]);
-    assert.equal(mockData.weights[1], result[7][1]);
-    // assert.equal(result.receipt.status, '0x01');
-  })
+  //   let result = await tokenizationInstance.getFundDetails.call(0);
+  //   assert.equal(mockFund.name, result[1]);
+  //   assert.equal(mockFund.symbol, result[2]);
+  //   // assert.equal(mockFund.decimals, result[3].toNumber());
+  //   assert.equal(mockFund.description, result[4]);
+  //   assert.equal(mockFund.category, result[5]);
+  //   assert.equal(mockData.tokenAddresses[0], result[6][0]);
+  //   assert.equal(mockData.tokenAddresses[1], result[6][1]);
+  //   assert.equal(mockData.weights[0], result[7][0]);
+  //   assert.equal(mockData.weights[1], result[7][1]);
+  //   // assert.equal(result.receipt.status, '0x01');
+  // })
 
 
 
@@ -428,6 +428,7 @@ contract('Olympus-Protocol', function (accounts) {
     for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+      console.log(tokenBalance);
       amounts.push(web3.toWei(needDeposit / mockData.tokensLenght));
     }
     
@@ -436,6 +437,7 @@ contract('Olympus-Protocol', function (accounts) {
     for (let i = 0; i < mockData.tokensLenght; i++) {
       let erc20Token = await SimpleERC20Token.at(mockData.tokenAddresses[i]);
       let tokenBalance = await erc20Token.balanceOf(fundInstance.address);
+      console.log(tokenBalance);
       let tokenIndex = (await fundInstance.tokenIndex(mockData.tokenAddresses[i])).toNumber();
       let fundDetail = await fundInstance.getFundDetails();
       assert.equal(mockData.tokenAddresses[i], fundDetail[6][tokenIndex - 1]);
