@@ -32,6 +32,15 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
         StorageTypeDefinitions.OrderStatus status;
         bytes32 exchangeId;
     }
+
+    // struct Tokenization {
+    //     address[] tokens;
+    //     //0-->fund/ 1-->index
+    //     uint[] tokenTypes;
+    // }
+    address[] tokenizationList;
+    // Tokenization[] public tokenizationList; 
+    
     mapping(uint => IndexOrder) public orders;
     mapping(uint => mapping(address => uint)) public orderTokenAmounts;
     uint public orderId = 1000000;
@@ -50,7 +59,14 @@ contract OlympusStorage is Manageable, OlympusStorageInterface {
     constructor(address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
-
+    function addTokenization(address token, uint8 /*id*/) public onlyCore {
+        // uint8 tokenizationType = uint8(TD.TokenizationType(tokenType));
+        // tokenizationList.push(Tokenization(token, tokenizationType)); 
+        tokenizationList.push(token); 
+    }
+    function getTokenizationList() public view returns(address[] tokenization) {
+        return tokenizationList;
+    }
     function addTokenDetails(
         uint indexOrderId,
         address[] tokens,
