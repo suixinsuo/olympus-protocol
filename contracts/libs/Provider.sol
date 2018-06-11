@@ -15,7 +15,10 @@ library TypeDefinitions {
         RiskManagement,
         TokenizationProvider
     }
-
+    enum TokenizationType {
+        Fund,
+        Index
+    }
     struct ProviderStatistic {
         uint counter;
         uint amountInEther;
