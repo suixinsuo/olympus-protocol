@@ -11,7 +11,6 @@ contract Reimbursable {
     event LogUint(string desc, uint value);    
 
     modifier checkIfReimbursable() {
-        emit LogUint("EndGas", gasleft());        
         require(startGas > 0);
         require(gasleft() >= GAS_FEE_RANGE);
         _;
@@ -25,7 +24,6 @@ contract Reimbursable {
     // such as rebalance and withdraw.
     function startGasCalculation() internal {
         startGas = gasleft();
-        emit LogUint("StartGas", startGas);
     }
 
     // this should be called at the last moment of the function.
