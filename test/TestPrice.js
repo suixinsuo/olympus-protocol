@@ -73,13 +73,13 @@ contract('PriceProvider', (accounts) => {
   it("Should be able to set kyber.", async () => {
     let instance = await PriceProvider.deployed();
     let result = await instance.setKyber(accounts[0], { from: accounts[0] });
-    assert.equal(result.receipt.status, '0x01');
+    assert.equal(result.receipt.status, '0x1');
   })
 
   it("Should be able to update supported price.", async () => {
     let instance = await PriceProvider.deployed();
     let result = await instance.changeTokens(mockData.tokenAddresses, { from: accounts[0] });
-    assert.equal(result.receipt.status, '0x01');
+    assert.equal(result.receipt.status, '0x1');
   })
   it("Should be able to check supported price.", async () => {
     let instance = await PriceProvider.deployed();
@@ -95,7 +95,7 @@ contract('PriceProvider', (accounts) => {
   it("Should be able to update supported exchanges.", async () => {
     let instance = await PriceProvider.deployed();
     let result = await instance.changeExchanges(mockData.exchangesAddressHash, { from: accounts[0] });
-    assert.equal(result.receipt.status, '0x01');
+    assert.equal(result.receipt.status, '0x1');
   })
 
   it("Should be able to check supported exchanges.", async () => {
@@ -112,8 +112,8 @@ contract('PriceProvider', (accounts) => {
     let instance = await PriceProvider.deployed();
     let result1 = await instance.changeProviders([accounts[1], accounts[2]], mockData.tokenAddresses[0], { from: accounts[0] });
     let result2 = await instance.changeProviders([accounts[2], accounts[1]], mockData.tokenAddresses[1], { from: accounts[0] });
-    assert.equal(result1.receipt.status, '0x01');
-    assert.equal(result2.receipt.status, '0x01');
+    assert.equal(result1.receipt.status, '0x1');
+    assert.equal(result2.receipt.status, '0x1');
   })
 
   it("Should be able to check supported provider.", async () => {
@@ -142,10 +142,10 @@ contract('PriceProvider', (accounts) => {
     let result3 = await instance.updatePrice(mockData.tokenAddresses[0], mockData.exchangesAddressHash, mockData.tokenTwoPrice, nonce1, { from: accounts[1] });
 
     let result4 = await instance.updatePrice(mockData.tokenAddresses[0], mockData.exchangesAddressHash, mockData.tokenOnePrice, nonce2, { from: accounts[2] });
-    assert.equal(result1.receipt.status, '0x01');
-    assert.equal(result2.receipt.status, '0x01');
-    assert.equal(result3.receipt.status, '0x01');
-    assert.equal(result4.receipt.status, '0x01');
+    assert.equal(result1.receipt.status, '0x1');
+    assert.equal(result2.receipt.status, '0x1');
+    assert.equal(result3.receipt.status, '0x1');
+    assert.equal(result4.receipt.status, '0x1');
   });
 
   it("Should be able to check price.", async () => {
@@ -195,7 +195,7 @@ contract('PriceProvider', (accounts) => {
     let instance = await PriceProvider.deployed();
 
     let result1 = await instance.changeDefaultProviders(accounts[4], mockData.tokenAddresses[0], { from: accounts[0] });
-    assert.equal(result1.receipt.status, '0x01');
+    assert.equal(result1.receipt.status, '0x1');
   });
 
 });
