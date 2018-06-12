@@ -340,16 +340,19 @@ contract FundTemplate {
     }
     // -------------------------- PROVIDERS --------------------------
 
-    function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner  {
+    function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner returns(bool success) {
         permissionProvider = PermissionProviderInterface(_permissionAddress);
+        return true;
     }
 
-    function setPriceProvider(address _priceAddress) public onlyTokenizedOwner {
+    function setPriceProvider(address _priceAddress) public onlyTokenizedOwner returns(bool success) {
         priceProvider = PriceProviderInterface(_priceAddress);
+        return true;
     }
 
-    function setRiskProvider(address _riskProvider) public onlyTokenizedOwner {
+    function setRiskProvider(address _riskProvider) public onlyTokenizedOwner returns(bool success) {
         riskProvider = RiskManagementProviderInterface(_riskProvider);
+        return true;
     }
     function updateTokens(ERC20[] _tokens) public onlyCore returns(bool success) {
 

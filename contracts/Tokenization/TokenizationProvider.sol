@@ -28,6 +28,9 @@ contract TokenizationProvider {
 
     //status
     uint fundLength;
+    address internal _permissionProvider;
+    address internal _priceProvider;
+    address internal _riskProvider;
 
     struct _fundDetail{
         uint fundId;
@@ -82,6 +85,10 @@ contract TokenizationProvider {
         fundLength += 1;
         address coreAddress = permissionProvider.queryCore();
         require(CoreInterface(coreAddress).addTokenization(FundAddress,0));
+        
+        require(_newFund.setPermissionProvider(_permissionProvider));
+        require(_newFund.setPriceProvider(_priceProvider));
+        require(_newFund.setRiskProvider(_riskProvider));
 
         return FundAddress;
     }
@@ -111,6 +118,21 @@ contract TokenizationProvider {
         _owner = fundOwner[_fundId];
     }
 
+
+    function setPermissionProvider(address _permissionAddress) public onlyCore() returns(bool success) {
+        _permissionProvider = _permissionAddress;
+        return true;
+    }
+
+    function setPriceProvider(address _priceAddress) public onlyCore() returns(bool success) {
+        _priceProvider = _priceAddress;
+        return true;
+    }
+
+    function setRiskProvider(address _riskAddress) public onlyCore() returns(bool success) {
+        _riskProvider = _riskAddress;
+        return true;
+    }
 
     function getFundOwner(uint _fundId) public view returns(address _fundOwner) {
         return fundOwner[_fundId];
