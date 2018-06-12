@@ -1,15 +1,15 @@
-var Core = artifacts.require("./OlympusLabsCore.sol");
-var RebalanceMock = artifacts.require("./rebalance/RebalanceMock.sol");
-var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
-var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
-var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol");
-var PriceProvider = artifacts.require("./price/PriceProvider.sol");
-var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol");
-var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
-var TokenizationProvider = artifacts.require("./Tokenization/TokenizationProvider.sol");
-var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider.sol");
-var RiskManagement = artifacts.require("./riskManagement/RiskManagementProvider.sol");
-var FundTemplate = artifacts.require("./libs/FundTemplate.sol");
+var Core = artifacts.require("./OlympusLabsCore");
+var RebalanceMock = artifacts.require("./rebalance/RebalanceMock");
+var StrategyProvider = artifacts.require("./strategy/StrategyProvider");
+var StrategyProvider = artifacts.require("./strategy/StrategyProvider");
+var PermissionProvider = artifacts.require("./permission/PermissionProvider");
+var PriceProvider = artifacts.require("./price/PriceProvider");
+var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended");
+var OlympusStorage = artifacts.require("./storage/OlympusStorage");
+var TokenizationProvider = artifacts.require("./Tokenization/TokenizationProvider");
+var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider");
+var RiskManagement = artifacts.require("./riskManagement/RiskManagementProvider");
+var FundTemplate = artifacts.require("./libs/FundTemplate");
 
 const KyberConfig = require('../scripts/libs/kyber_config');
 var KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
@@ -18,9 +18,9 @@ var ExchangeProvider = artifacts.require("ExchangeProvider");
 var ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 var MockKyberNetwork = artifacts.require("MockKyberNetwork");
 var SimpleERC20Token = artifacts.require("SimpleERC20Token");
-var CentralizedExchange = artifacts.require("CentralizedExchange.sol");
-var FundTemplate = artifacts.require("../contracts/libs/FundTemplate.sol");
-const TestReimbursable = artifacts.require("../test/TestReimbursable.sol");
+var CentralizedExchange = artifacts.require("CentralizedExchange");
+var FundTemplate = artifacts.require("../contracts/libs/FundTemplate");
+var TestReimbursable = artifacts.require("../test/ReimbursableTest");
 
 const args = require('../scripts/libs/args')
 

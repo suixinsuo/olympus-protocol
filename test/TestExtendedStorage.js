@@ -9,7 +9,7 @@ contract OlympusStorageExtendedInterface {
 }
 */
 
-const OlympusStorageExtended = artifacts.require("../contracts/storage/OlympusStorageExtended.sol");
+const OlympusStorageExtended = artifacts.require("../contracts/storage/OlympusStorageExtended");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');

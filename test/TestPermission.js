@@ -1,5 +1,5 @@
 'use strict'
-const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider");
 // const Web3 = require('web3');
 // const web3 = new Web3();
 const _ = require('lodash');
