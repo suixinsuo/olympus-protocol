@@ -75,6 +75,8 @@ contract IndexTemplate is Reimbursable {
     RebalanceToken[] public rebalanceTokensToSell;
     RebalanceToken[] public rebalanceTokensToBuy;
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+    string public constant TYPE = "INDEX";
+    string public constant version = "0.1";
 
     /**
     End Rebalance parameters
