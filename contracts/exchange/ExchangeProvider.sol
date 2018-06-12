@@ -117,14 +117,17 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
     function buyToken(bytes32 /*id*/, ERC20[] tokens, uint256[] amounts, uint256[] rates, address deposit) external onlyCore payable returns(bool) {
         IExchangeAdapter adapter;
+
         for (uint i = 0; i < tokens.length; i++ ) {
             bytes32 exchangeId = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
-            if(exchangeId == 0){
+
+            if(exchangeId == 0) {
                 return false;
             }
             adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
+
             require(
-                adapter.placeOrderQuicklyToBuy(
+                adapter.placeOrderQuicklyToBuy.value(msg.value/ tokens.length)(
                     exchangeId,
                     tokens[i],
                     amounts[i],
@@ -143,8 +146,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             }
             adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
             //TODO need to add refund if transaction failed
-
-            tokens[i].transfer(address(adapter), amounts[i]);
+             tokens[i].transfer(address(adapter), amounts[i]);
             // tokens[i].approve(exchangeManager.getExchangeAdapter(exchangeId), amounts[i]);
             require(
                 adapter.placeOrderQuicklyToSell(
@@ -375,10 +377,6 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         return true;
     }
 
-    event LogAddress(string desc, address addr);
-    event LogBytes32(string desc, bytes32 value);
-    event LogUint(string desc, uint value);
-
     function getSubOrderStatus(uint orderId, ERC20 token) external view returns (EAB.OrderStatus){
 
         MarketOrder memory order = orders[orderId];
@@ -401,4 +399,5 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
         require(address(token) != 0x0);
         return exchangeManager.checkTokenSupported(token);
     }
+
 }

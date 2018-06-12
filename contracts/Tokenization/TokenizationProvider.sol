@@ -55,8 +55,6 @@ contract TokenizationProvider {
         uint _decimals,
         string _description,
         string _category,
-        address[] memory _tokenAddresses,
-        uint[] memory _weights,
         uint _withdrawFeeCycle,
         uint _lockTime,
         uint _withdrawFundCycle
@@ -66,23 +64,22 @@ contract TokenizationProvider {
     //onlyWhitelist
     returns (address FundAddress)
     {
-        require(_checkLength(_tokenAddresses, _weights));
-        FundAddress = new FundTemplate(_symbol,_name,_decimals);
+       FundAddress = new FundTemplate(_symbol,_name,_decimals);
 
         //FundTemplate
         FundTemplate  _newFund;
         _newFund = FundTemplate(FundAddress);
+
+
         require(_newFund.createFundDetails(
           fundLength,
           _name,
           _description,
           _category,
-          _tokenAddresses,
-          _weights,
           _withdrawFeeCycle,
           _withdrawFundCycle)
         );
-
+        require(_newFund.setCore(msg.sender));
         require(_newFund.lockFund(_lockTime));
         fundOwner[fundLength] = tx.origin;
         fundIndex[fundLength] = FundAddress;
@@ -104,20 +101,21 @@ contract TokenizationProvider {
         string _description,
         string _category,
         address[]  _tokenAddresses,
-        uint[]  _weights
+        uint[]  _amounts
     ){
+
         FundTemplate  _newFund;
+        _owner = fundOwner[_fundId];
         _newFund = FundTemplate(fundIndex[_fundId]);
-        (       ,
+        ( ,
             _name,
             _symbol,
             _totalSupply,
             _description,
             _category,
             _tokenAddresses,
-            _weights
+            _amounts
         )  = _newFund.getFundDetails();
-        _owner = fundOwner[_fundId];
     }
 
 
