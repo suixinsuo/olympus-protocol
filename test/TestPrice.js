@@ -26,10 +26,10 @@
 
 // }
 
-const PriceProvider = artifacts.require("../contracts/price/PriceProvider.sol");
-const MockKyberNetwork = artifacts.require("../contracts/exchange/exchanges/MockKyberNetwork.sol");
-const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token.sol");
-const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/KyberNetworkExchange.sol");
+const PriceProvider = artifacts.require("../contracts/price/PriceProvider");
+const MockKyberNetwork = artifacts.require("../contracts/exchange/exchanges/MockKyberNetwork");
+const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token");
+const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/KyberNetworkExchange");
 
 // const Web3 = require('web3');
 // const web3 = new Web3();

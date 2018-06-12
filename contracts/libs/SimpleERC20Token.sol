@@ -26,7 +26,8 @@ contract SimpleERC20Token {
         }else{
             decimals = _decimals;
         }
-        balances[msg.sender] = 2**256 - 1;
+        // balances[msg.sender] = 2**256 - 1;
+        balances[msg.sender] = 10 ** 9 * 10 ** 18;
     }
 
     // Get the token balance for account `tokenOwner`

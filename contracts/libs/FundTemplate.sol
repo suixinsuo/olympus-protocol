@@ -48,6 +48,7 @@ contract FundTemplate {
         bool limit;
         uint createTime;
         uint lockTime; // For user transfers
+        uint dailyFeeRate;
     }
     struct Withdraw {
         address[] userRequests;
@@ -56,7 +57,11 @@ contract FundTemplate {
         uint lockHours; // Between fund withdraws
         uint withdrawTimer;
     }
-
+    struct InvestLog{
+        uint lastInvestTime;
+        uint lastIvestAmount;
+        uint balanceAmount;
+    }
     //Costant
     uint public pendingOwnerFee;
     uint public withdrawedFee;
@@ -79,6 +84,7 @@ contract FundTemplate {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     mapping(address => bool) tokenIsBroken; // True, is broken, empty, is fine
+    mapping (address => InvestLog) investLogs;
     mapping (address => uint256) public tokenIndex;
 
     //Modifier
@@ -321,11 +327,27 @@ contract FundTemplate {
         totalSupply += _realShare;
         emit Transfer(owner, tx.origin, _realShare);
         emit BuyFund(tx.origin, _realShare);
+
+        //ManagementFee
+        investLogs[tx.origin].lastInvestTime = now;
+        investLogs[tx.origin].lastIvestAmount += _realShare;
     }
 
     function calculateFee(uint invest) internal view returns(uint _realBalance,uint _managementFee){
-        _managementFee = invest / 100 * _FUND.managementFee;
-        _realBalance = invest - _managementFee;
+        if (investLogs[tx.origin].lastInvestTime == 0){
+            _realBalance = invest;
+            _managementFee = 0;
+        }else{
+            uint _cycle = caculateDate(investLogs[tx.origin].lastInvestTime);
+            _managementFee = investLogs[tx.origin].lastIvestAmount * _cycle * _FUNDExtend.dailyFeeRate / DENOMINATOR;
+            _realBalance = invest - _managementFee;
+        }
+    }
+
+    function caculateDate(uint _date) internal view returns(uint _days){
+        uint _day = now - _date/(60 * 60 * 24);
+        if(_day == 0) { return 1; }
+        return _day;
     }
     //
     function getPrice() public view returns(uint _price, uint _totalTokensValue){
@@ -537,7 +559,11 @@ contract FundTemplate {
         olympusFee = _olympusFee;
     }
 
-
+    function setManageFee(uint _manageFee ) onlyCore public {
+        require(_manageFee > 0);
+        require(_manageFee < DENOMINATOR);
+        _FUNDExtend.dailyFeeRate = _manageFee;
+    }
     // -------------------------- PROVIDERS --------------------------
 
     function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner  {

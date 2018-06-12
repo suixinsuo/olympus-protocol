@@ -43,6 +43,10 @@ contract OlympusLabsCore is Manageable {
         require(msg.sender == subContracts[uint8(_type)]);
         _;
     }
+    modifier allowTokenizationOnly() {
+        require(msg.sender == address(_Tokenization));
+        _;
+    }
 
     modifier onlyOwner() {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE_OWNER()));
@@ -371,13 +375,18 @@ contract OlympusLabsCore is Manageable {
     }
 
     function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public payable returns (bool success) {
+        uint sum = 0;
+        for (uint i = 0; i < amounts.length; i++) {
+            sum += amounts[i];
+        }
+        require(msg.value == sum);
         require(exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, deposit));
         return true;
     }
 
     function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public returns (bool success) {
         for (uint i = 0; i < tokens.length; i++) {
-            tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]);
+            require(tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]));
         }
         require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
         return true;
@@ -398,7 +407,12 @@ contract OlympusLabsCore is Manageable {
         return true;
     }
 
-     event LogS( string text);
+
+    function addTokenization(address token, uint8 tokenType) public allowTokenizationOnly returns (bool success) {
+        olympusStorage.addTokenization(token, tokenType);
+        return true;
+    }
+      event LogS( string text);
     event LogA( address Address, string text);
     event LogN( uint value, string text);
 }
