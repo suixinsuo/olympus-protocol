@@ -37,9 +37,9 @@ let mockData = {
   category: "multiple",
   tokenAddresses: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
   exchangesAddressHash: ["0x6269626f78", "0x1269626f78"],
-  tokenOnePrice: [1000000, 200000],
+  tokenOnePrice: [1000000000000000000, 200000],
   addresses: ["0xEa1887835D177Ba8052e5461a269f42F9d77A5Af", "0x569b92514E4Ea12413dF6e02e1639976940cDe70"],
-  tokenTwoPrice: [3000000, 40000],
+  tokenTwoPrice: [1000000000000000000, 40000],
   weights: [80, 20],
   follower: 0,
   amount: 0,
@@ -445,7 +445,6 @@ contract('Olympus-Protocol', function (accounts) {
     let instance = await Core.deployed();
     let amounts = [];
     let rates = [mockData.tokenOnePrice[0], mockData.tokenTwoPrice[0]];
-
     let tokenizationInstance = await TokenizationProvider.deployed();
     let fund = await tokenizationInstance.getFundDetails.call(0);
 
