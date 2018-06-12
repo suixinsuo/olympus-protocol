@@ -20,7 +20,6 @@ var MockKyberNetwork = artifacts.require("MockKyberNetwork");
 var SimpleERC20Token = artifacts.require("SimpleERC20Token");
 var CentralizedExchange = artifacts.require("CentralizedExchange");
 var FundTemplate = artifacts.require("../contracts/libs/FundTemplate");
-var TestReimbursable = artifacts.require("../test/ReimbursableTest");
 
 const args = require('../scripts/libs/args')
 
@@ -39,8 +38,6 @@ function deployOnDev(deployer, num) {
     return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
   }).then(() => {
     return deployer.deploy(FundTemplate, 'test_symbol', 'test_name', 18);
-  }).then(()=>{
-    return deployer.deploy(TestReimbursable);
   });
 }
 
