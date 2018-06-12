@@ -107,7 +107,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         if (address(this).balance < amount) {
             return false;
         }
-
+        require(msg.value == amount);
         uint expectedRate;
         uint slippageRate;
 
@@ -117,9 +117,9 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         }
 
         uint beforeTokenBalance = dest.balanceOf(deposit);
-
+        slippageRate = rate;
         /*uint actualAmount = kyber.trade.value(amount)(*/
-        kyber.trade.value(amount)(
+        kyber.trade.value(msg.value)(
             ETH_TOKEN_ADDRESS,
             amount,
             dest,
@@ -147,7 +147,6 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     function placeOrderQuicklyToSell(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
     external returns(bool)
     {
-
         // if (address(this).balance < amount) {
         //     return false;
         // }
@@ -161,7 +160,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         if(slippageRate < rate){
             return false;
         }
-
+        slippageRate = rate;
         uint beforeTokenBalance = dest.balanceOf(this);
         /*uint actualAmount = kyber.trade.value(amount)(*/
         kyber.trade(
@@ -177,7 +176,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
         uint afterTokenBalance = dest.balanceOf(this);
         assert(afterTokenBalance < beforeTokenBalance);
-
+        
         uint actualAmount = beforeTokenBalance - afterTokenBalance;
         require(actualAmount == amount);
 

@@ -124,7 +124,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             }
             adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
             require(
-                adapter.placeOrderQuicklyToBuy(
+                adapter.placeOrderQuicklyToBuy.value(amounts[i])(
                     exchangeId,
                     tokens[i],
                     amounts[i],
