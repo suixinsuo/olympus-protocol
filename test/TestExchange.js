@@ -330,7 +330,7 @@ contract('ExchangeAdapterManager', (accounts) => {
       assert.ok(isSupported, `Expected that token ${tokens[i]} is supported`);
     }
 
-    // let notSupported = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+    // let notSupported = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
     // let isSupported = await manager.checkTokenSupported(notSupported);
     // assert.ok(!isSupported)
   })
@@ -342,7 +342,7 @@ contract('ExchangeAdapterManager', (accounts) => {
       assert.ok(actualExchangeId, exchangeId, `Expect that token ${tokens[i]} is supported`);
     }
 
-    let notSupported = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+    let notSupported = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
     let actualExchangeId = await manager.pickExchange(notSupported, 0, expectedRate)
     assert.equal(actualExchangeId, '0x0000000000000000000000000000000000000000000000000000000000000000');
   })
@@ -470,7 +470,7 @@ contract('ExchangeProvider', (accounts) => {
       assert.ok(isSupported);
     }
 
-    // let notSupported = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+    // let notSupported = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
     // let isSupported = await exchangeProvider.checkTokenSupported(notSupported);
     // assert.ok(!isSupported);
   })

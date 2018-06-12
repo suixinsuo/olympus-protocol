@@ -15,8 +15,6 @@ contract FundTemplate {
     PriceProviderInterface internal priceProvider;
     // Risk Provider
     RiskManagementProviderInterface internal riskProvider;
-    //ERC20
-    ERC20 internal erc20Token;
 
     //enum
     enum FundStatus { Pause, Close , Active }
@@ -286,7 +284,9 @@ contract FundTemplate {
         uint _expectedRate;
         if(totalSupply == 0){return 10**17;} // 0.1 Eth
 
-        for (var i = 0; i < _FUND.tokenAddresses.length; i++) {
+         ERC20 erc20Token;
+
+        for (uint16 i = 0; i < _FUND.tokenAddresses.length; i++) {
             erc20Token = ERC20(_FUND.tokenAddresses[i]);
 
             uint _balance = erc20Token.balanceOf(address(this));
