@@ -45,7 +45,7 @@ contract RebalanceMock {
 
     mapping (address => uint) mockTokenBalances;
     address[] private tokenAddresses = [
-        0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15
+        0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0x10,0x11,0x12,0x13,0x14,0x15
     ];
     uint[] private tokenWeights = [
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 10, 10, 10, 10, 10
@@ -61,15 +61,15 @@ contract RebalanceMock {
     RebalanceToken[] public rebalanceTokensToBuy;
 
     constructor() public {
-        mockTokenBalances[0x01] = 5*10**18;
-        mockTokenBalances[0x02] = 5*10**18;
-        mockTokenBalances[0x03] = 5*10**18;
-        mockTokenBalances[0x04] = 5*10**18;
-        mockTokenBalances[0x05] = 5*10**18;
-        mockTokenBalances[0x06] = 5*10**18;
-        mockTokenBalances[0x07] = 5*10**18;
-        mockTokenBalances[0x08] = 5*10**18;
-        mockTokenBalances[0x09] = 5*10**18;
+        mockTokenBalances[0x1] = 5*10**18;
+        mockTokenBalances[0x2] = 5*10**18;
+        mockTokenBalances[0x3] = 5*10**18;
+        mockTokenBalances[0x4] = 5*10**18;
+        mockTokenBalances[0x5] = 5*10**18;
+        mockTokenBalances[0x6] = 5*10**18;
+        mockTokenBalances[0x7] = 5*10**18;
+        mockTokenBalances[0x8] = 5*10**18;
+        mockTokenBalances[0x9] = 5*10**18;
         mockTokenBalances[0x10] = 5*10**18;
         mockTokenBalances[0x11] = 10*10**18;
         mockTokenBalances[0x12] = 10*10**18;
@@ -253,13 +253,13 @@ contract RebalanceMock {
 
     function mockCoreGetPrice(address _src, address _dest) public view returns (uint) {
         // return the expected result for a 1 ETH trade
-        if(_src == address(0x01)){
+        if(_src == address(0x1)){
             return mockDeviantPriceBuyOne;
-        } else if (_dest == address(0x01)){
+        } else if (_dest == address(0x1)){
             return mockDeviantPriceSellOne;
-        } else if (_src == address(0x02)){
+        } else if (_src == address(0x2)){
             return mockDeviantPriceBuyTwo;
-        } else if (_dest == address(0x02)){
+        } else if (_dest == address(0x2)){
             return mockDeviantPriceSellTwo;
         }
         if(_src == ETH_TOKEN){
