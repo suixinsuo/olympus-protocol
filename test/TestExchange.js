@@ -31,6 +31,8 @@ contract('MockKyberNetwork', (accounts) => {
     let tokens = await mockKyber.supportedTokens();
     assert.equal(tokens.length, tokensLenght);
     let destAddress = accounts[0];
+
+
     for (var i = 0; i < tokens.length; i++) {
       let rates = await mockKyber.getExpectedRate(ethToken, tokens[i], 0);
       assert.ok(expectedRate.equals(rates[0]));
@@ -49,7 +51,7 @@ contract('MockKyberNetwork', (accounts) => {
         0,
         rates[1],
         0, { value: web3.toWei(srcAmountETH) });
-      tokenBalance = await erc20Token.balanceOf(destAddress);
+      tokenBalance = await erc20Token.balanceOf(destAddress);      
       let expectedBalance = destRate.mul(srcAmountETH);
       assert.ok(expectedBalance.equals(tokenBalance));
     }
