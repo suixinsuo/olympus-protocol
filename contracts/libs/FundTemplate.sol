@@ -24,6 +24,8 @@ contract FundTemplate {
     //struct 
 
     uint public constant DENOMINATOR = 10000;
+    string public constant TYPE = 'FUND';
+    string public constant version = '0.1';
 
     struct FUND {
         uint id;
