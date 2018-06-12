@@ -1,8 +1,8 @@
 pragma solidity ^0.4.23;
 
-import "../contracts/libs/Reimbursable.sol";
+import "../libs/Reimbursable.sol";
 
-contract ReimbursableTest is Reimbursable {
+contract TestReimbursable is Reimbursable {
     // @notice Will receive any eth sent to the contract
     function () external payable {
     }    
