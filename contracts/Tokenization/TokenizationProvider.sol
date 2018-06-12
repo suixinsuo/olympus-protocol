@@ -5,9 +5,9 @@ import "../permission/PermissionProviderInterface.sol";
 import "../libs/CoreInterface.sol";
 
 contract TokenizationProvider {
-    
+
     using SafeMath for uint256;
-    
+
     //Permission Control
     PermissionProviderInterface internal permissionProvider;
 
@@ -17,7 +17,7 @@ contract TokenizationProvider {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_CORE()));
         _;
     }
-    
+
     modifier onlyWhitelist() {
         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
         //require(permissionProvider.has(msg.sender, permissionProvider.ROLE_FUND()));
@@ -28,7 +28,7 @@ contract TokenizationProvider {
 
     //status
     uint fundLength;
-    address internal _permissionProvider;
+    address internal _permissionProviderAddress;
     address internal _priceProvider;
     address internal _riskProvider;
 
@@ -44,7 +44,7 @@ contract TokenizationProvider {
     mapping (uint => address) public fundOwner;
     mapping (address => _fundDetail) public fundDetail;
 
-    //function 
+    //function
 
     constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
@@ -62,10 +62,10 @@ contract TokenizationProvider {
         uint[] memory _weights,
         uint _withdrawCycle,
         uint _lockTime
-    ) public 
-    ///////WARNING 
+    ) public
+    ///////WARNING
     //onlyWhitelist
-    returns (address FundAddress) 
+    returns (address FundAddress)
     {
         require(_checkLength(_tokenAddresses, _weights));
         FundAddress = new FundTemplate(_symbol,_name,_decimals);
@@ -85,8 +85,8 @@ contract TokenizationProvider {
         fundLength += 1;
         address coreAddress = permissionProvider.queryCore();
         require(CoreInterface(coreAddress).addTokenization(FundAddress,0));
-        
-        require(_newFund.setPermissionProvider(_permissionProvider));
+
+        require(_newFund.setPermissionProvider(_permissionProviderAddress));
         require(_newFund.setPriceProvider(_priceProvider));
         require(_newFund.setRiskProvider(_riskProvider));
 
@@ -120,7 +120,7 @@ contract TokenizationProvider {
 
 
     function setPermissionProvider(address _permissionAddress) public onlyCore() returns(bool success) {
-        _permissionProvider = _permissionAddress;
+        _permissionProviderAddress = _permissionAddress;
         return true;
     }
 

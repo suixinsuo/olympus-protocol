@@ -469,7 +469,7 @@ contract('Olympus-Protocol', function (accounts) {
 
   })
 
-  it("Should be able to sell token for fund.", async () => {
+  it.skip("Should be able to sell token for fund.", async () => {
     let instance = await Core.deployed();
     let amounts = [];
     let rates = [mockData.tokenOnePrice[1], mockData.tokenTwoPrice[1]];
