@@ -3,7 +3,7 @@ const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
 const Promise = require('bluebird');
-const TX_OK = '0x01';
+const TX_OK = '0x1';
 
 contract('RebalanceMock', (accounts) => {
 
