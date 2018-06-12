@@ -22,8 +22,6 @@ contract IndexTemplate is Reimbursable {
     //Risk Provider
     RiskManagementProviderInterface internal riskProvider;
     CoreInterface internal core;
-    //ERC20
-    ERC20 internal erc20Token;
 
     //enum
     enum IndexStatus { Paused, Closed , Active }
@@ -208,6 +206,8 @@ contract IndexTemplate is Reimbursable {
         uint _totalVaule = 0;
         uint _expectedRate;
         if(totalSupply == 0){return 10**18;} // 1 Eth
+
+        ERC20 erc20Token;
 
         for (uint i = 0; i < indexTokenAddresses.length; i++) {
             erc20Token = ERC20(indexTokenAddresses[i]);
@@ -408,7 +408,7 @@ contract IndexTemplate is Reimbursable {
         return true;
     }
 
-    function getPrice(address _src, address _dest, uint _amount) private returns (uint _expectedRate) {
+    function getPrice(address _src, address _dest, uint _amount) private view returns (uint _expectedRate) {
         if(_src == ETH_TOKEN){
             // TODO: price provider get both ways
             (_expectedRate, ) = priceProvider.getRates(_dest, _amount);
