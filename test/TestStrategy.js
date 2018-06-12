@@ -1,6 +1,6 @@
 'use strict'
-const Strategy = artifacts.require("../contracts/strategy/StrategyProvider.sol");
-const Core = artifacts.require("../contracts/OlympusLabsCore.sol");
+const Strategy = artifacts.require("../contracts/strategy/StrategyProvider");
+const Core = artifacts.require("../contracts/OlympusLabsCore");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');

@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 import "../libs/SafeMath.sol";
 import "../libs/FundTemplate.sol";
 import "../permission/PermissionProviderInterface.sol";
-
+import "../libs/CoreInterface.sol";
 
 contract TokenizationProvider {
 
@@ -43,7 +43,7 @@ contract TokenizationProvider {
 
     //function
 
-    function TokenizationIndex(address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
@@ -89,6 +89,9 @@ contract TokenizationProvider {
         fundDetail[tx.origin].createTime = now;
         //
         fundLength += 1;
+        address coreAddress = permissionProvider.queryCore();
+        require(CoreInterface(coreAddress).addTokenization(FundAddress,0));
+
         return FundAddress;
     }
 
