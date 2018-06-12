@@ -5,10 +5,11 @@ import "../price/PriceProviderInterface.sol";
 import "../libs/ERC20.sol";
 import "../libs/strings.sol";
 import "../libs/Converter.sol";
+import "../libs/Reimbursable.sol";
 import "../riskManagement/RiskManagementProviderInterface.sol";
 import "./CoreInterface.sol";
 
-contract IndexTemplate {
+contract IndexTemplate is Reimbursable {
     using strings for *;
     using SafeMath for uint256;
 
@@ -282,7 +283,13 @@ contract IndexTemplate {
         return true;
     }
 
+    function reimburseWithResult(bool _result) public returns (bool result){
+        result = _result;
+        reimburse();
+    }
+
     function rebalance() public returns (bool success){
+        startGasCalculation();
         // solium-disable-next-line security/no-block-members
         require(lastRebalance + rebalanceInterval <= now, "Time is not here yet");
         if(rebalanceStatus == RebalanceStatus.INACTIVE){
@@ -303,7 +310,7 @@ contract IndexTemplate {
                 if(i > currentProgress + tokenStep){
                     // Safety measure for gas
                     // If the loop looped more than the tokenStep amount of times, we return false, and this function should be called again
-                    return false;
+                    return reimburseWithResult(false);
                 }
                 // TODO approve token transfers (depending on exchange implementation)
                 require(exchange(rebalanceTokensToSell[i].tokenAddress,ETH_TOKEN,rebalanceTokensToSell[i].amount), "Exchange sale failed");
@@ -350,7 +357,7 @@ contract IndexTemplate {
                     // Safety measure for gas
                     // If the loop looped more than the tokenStep amount of times, we return false, and this function should be called again
                     // Also take into account the number of sellTxs that have happened in the current function call
-                    return false;
+                    return reimburseWithResult(false);
                 }
                 uint slippage;
 
@@ -376,9 +383,9 @@ contract IndexTemplate {
             lastRebalance = now;
             rebalanceStatus = RebalanceStatus.INACTIVE;
             rebalancingTokenProgress = 0;
-            return true;
+            return reimburseWithResult(true);
         }
-        return false;
+        return reimburseWithResult(false);
     }
 
     // Reset function, in case there is any issue.

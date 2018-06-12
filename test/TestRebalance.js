@@ -1,4 +1,4 @@
-const RebalanceMock = artifacts.require("../contracts/rebalance/RebalanceMock.sol");
+const RebalanceMock = artifacts.require("../contracts/rebalance/RebalanceMock");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
