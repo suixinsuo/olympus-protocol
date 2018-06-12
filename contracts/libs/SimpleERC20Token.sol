@@ -18,7 +18,7 @@ contract SimpleERC20Token {
     // Owner of account approves the transfer of an amount to another account
     mapping(address => mapping (address => uint256)) allowed;
 
-    function SimpleERC20Token(uint _decimals) public {
+    constructor (uint _decimals) public {
 
         require(_decimals >= 0 && _decimals <= 18);
         if(_decimals == 0){

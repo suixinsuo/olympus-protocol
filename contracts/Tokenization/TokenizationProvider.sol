@@ -43,7 +43,7 @@ contract TokenizationProvider {
 
     //function 
 
-    function TokenizationIndex(address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
@@ -121,7 +121,7 @@ contract TokenizationProvider {
     }
 
 
-    function _checkLength(address[] _tokenAddresses,uint[] _weights) internal returns(bool success){
+    function _checkLength(address[] _tokenAddresses,uint[] _weights) internal pure returns(bool success){
         require(_tokenAddresses.length == _weights.length);
         uint total = 0;
         for (uint i = 0; i < _weights.length; ++i) {

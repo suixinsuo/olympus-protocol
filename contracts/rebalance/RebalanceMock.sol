@@ -21,7 +21,7 @@ contract RebalanceMock {
         BUYING_COMPLETE
     }
     RebalanceStatus private rebalanceStatus = RebalanceStatus.INACTIVE;
-    address constant private ETH_TOKEN = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+    address constant private ETH_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     uint public balanceMock;
     uint private tokenStep = 10;
     uint private rebalancingTokenProgress;

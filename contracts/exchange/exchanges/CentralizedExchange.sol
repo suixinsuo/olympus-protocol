@@ -1,6 +1,6 @@
 pragma solidity ^0.4.17;
 
-import "../Interfaces.sol"; 
+import "../Interfaces.sol";
 import "../ExchangeAdapterBase.sol";
 import "../ExchangePermissions.sol";
 
@@ -20,7 +20,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
     }
 
     struct Exchange {
-        bytes32  name;   
+        bytes32  name;
         Status   status;
     }
     mapping (bytes32=>Exchange) exchanges;
@@ -28,7 +28,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
     mapping (uint => Order) orders;
     uint orderId = 1000000;
 
-    function CentralizedExchange(address _manager, address _exchange, address _permission) public
+    constructor (address _manager, address _exchange, address _permission) public
     ExchangePermissions(_permission)
     ExchangeAdapterBase(_manager,_exchange)
     {
@@ -75,7 +75,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
 
     function _isEnabled(bytes32 _id) private view returns(bool success){
         require(!isEmpty(exchanges[_id].name));
-        return exchanges[_id].status == Status.ENABLED; 
+        return exchanges[_id].status == Status.ENABLED;
     }
 
     function isEnabled(bytes32 _id) external view returns (bool success) {
@@ -128,7 +128,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
     }
 
     // - If buy success, the owner should approved exchange provider to transfer and this method will callback exchange provider
-    // to transfer token from owner to user and then send ether to owner. 
+    // to transfer token from owner to user and then send ether to owner.
     function PlaceOrderCompletedCallback(bytes32 /*exchangeId*/, address tokenOwner, address payee, uint adapterOrderId, uint srcCompletedAmount, uint destCompletedAmount)
     public returns(bool)
     {
@@ -146,7 +146,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
         orders[adapterOrderId].completed += srcCompletedAmount;
         orders[adapterOrderId].status = OrderStatus.Approved;
         orders[adapterOrderId].destCompletedAmount += destCompletedAmount;
-        
+
         uint beforeBalance = payee.balance;
         require(adapterOrderCallback.adapterApproved(adapterOrderId, tokenOwner, payee, srcCompletedAmount, destCompletedAmount));
         require((payee.balance - beforeBalance) == srcCompletedAmount);
@@ -173,7 +173,7 @@ contract CentralizedExchange is ExchangeAdapterBase, ExchangePermissions {
         return orders[adapterOrderId].destCompletedAmount;
     }
 
-    function getOrderInfo(uint adapterOrderId) public view 
+    function getOrderInfo(uint adapterOrderId) public view
     returns(OrderStatus status, ERC20 dest, uint amount, uint rate, uint completed, address deposit, bytes32 exchangeId)
     {
         Order memory o = orders[adapterOrderId];

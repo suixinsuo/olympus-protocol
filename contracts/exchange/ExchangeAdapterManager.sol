@@ -11,8 +11,8 @@ contract ExchangeAdapterManager is ExchangePermissions{
     uint private genExchangeId = 1000;
     mapping(address=>uint) adapters;
 
-    function ExchangeAdapterManager(address _permission) public 
-    ExchangePermissions(_permission) 
+    constructor (address _permission) public
+    ExchangePermissions(_permission)
     {
     }
 
@@ -32,7 +32,7 @@ contract ExchangeAdapterManager is ExchangePermissions{
         return adapter.getExchange(id);
     }
 
-    function getExchangeAdapter(bytes32 id) 
+    function getExchangeAdapter(bytes32 id)
     public view returns(address)
     {
         return address(exchangeAdapters[id]);
@@ -42,7 +42,7 @@ contract ExchangeAdapterManager is ExchangePermissions{
     public onlyExchangeOwner returns(bool)
     {
         require(adapter != 0x0);
-        bytes32 id = keccak256(genExchangeId++);
+        bytes32 id = keccak256(abi.encodePacked(genExchangeId++));
         require(IExchangeAdapter(adapter).addExchange(id, name));
         exchanges.push(id);
         exchangeAdapters[id] = IExchangeAdapter(adapter);
@@ -55,7 +55,7 @@ contract ExchangeAdapterManager is ExchangePermissions{
     /// >0  : found exchangeId
     /// ==0 : not found
     function pickExchange(ERC20 token, uint amount, uint rate) external view returns (bytes32 exchangeId) {
-        
+
         int maxRate = -1;
         for(uint i = 0; i < exchanges.length; i++) {
 
@@ -80,7 +80,7 @@ contract ExchangeAdapterManager is ExchangePermissions{
                 return id;
             }
         }
-        return 0x0; 
+        return 0x0;
     }
 
     function checkTokenSupported(ERC20 token) external view returns (bool){
