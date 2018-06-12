@@ -128,9 +128,6 @@ contract('Olympus-Protocol', function (accounts) {
 
     let tokenizationInstance = await TokenizationProvider.deployed();
 
-    let result = await tokenizationInstance.TokenizationIndex(permissionInstance.address);
-    assert.equal(result.receipt.status, '0x01');
-
     result = await instance.setProvider(7, tokenizationInstance.address);
     assert.equal(result.receipt.status, '0x01');
   })
@@ -347,9 +344,6 @@ contract('Olympus-Protocol', function (accounts) {
     let permissionInstance = await PermissionProvider.deployed();
 
     let tokenizationInstance = await TokenizationProvider.deployed();
-
-    let result = await tokenizationInstance.TokenizationIndex(permissionInstance.address);
-    assert.equal(result.receipt.status, '0x01');
 
     result = await instance.setProvider(7, tokenizationInstance.address);
     assert.equal(result.receipt.status, '0x01');
