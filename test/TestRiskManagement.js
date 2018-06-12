@@ -1,5 +1,5 @@
 
-const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider");
 const RiskManagementProvider = artifacts.require("RiskManagementProvider");
 const token = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
