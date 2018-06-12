@@ -6,7 +6,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const _ = require('lodash');
 const Promise = require('bluebird');
 
-contract.only("TestReimbursable", (accounts) => {
+contract("TestReimbursable", (accounts) => {
   it('Should be able to deploy', async () => {
     return await Promise.all([
       Reimbursable.deployed(),
@@ -35,9 +35,12 @@ contract.only("TestReimbursable", (accounts) => {
 
     console.log("gas estimation = " + estimatedGas + " units");
     const gasPrice = 1000000000;
-    console.log("gas cost estimation = " + web3.fromWei(estimatedGas * gasPrice, 'Gwei') + "G wei");
+    console.log("gas cost estimation = " + web3.fromWei(estimatedGas * gasPrice, 'Gwei') +
+      "G wei");
 
-    let actualGasCosted = await reimbursable.someFunction.call({ from: accounts[0] });
+    let actualGasCosted = await reimbursable.someFunction.call({
+      from: accounts[0]
+    });
     console.log('actualGasCosted', web3.fromWei(actualGasCosted.toString(), 'Gwei'));
 
     let finalBalance = await web3.eth.getBalance(accounts[0]);
