@@ -147,7 +147,6 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     function placeOrderQuicklyToSell(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
     external returns(bool)
     {
-
         // if (address(this).balance < amount) {
         //     return false;
         // }
@@ -177,7 +176,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
         uint afterTokenBalance = dest.balanceOf(this);
         assert(afterTokenBalance < beforeTokenBalance);
-
+        
         uint actualAmount = beforeTokenBalance - afterTokenBalance;
         require(actualAmount == amount);
 
