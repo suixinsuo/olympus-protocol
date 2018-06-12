@@ -17,15 +17,9 @@ contract PermissionProviderInterface is Provider, RBAC {
     string public constant ROLE_RISK_OWNER = "RiskManagementOwner";
     string public constant ROLE_FUND = "FundWhitelist";
 
-    modifier onlyAdmin()
-    {
-        checkRole(msg.sender, ROLE_ADMIN);
-        _;
-    }
-
     function changeAdmin(address _newAdmin) onlyAdmin public returns (bool success);
-    function adminAdd(address _addr, string _roleName) onlyAdmin public;
-    function adminRemove(address _addr, string _roleName) onlyAdmin public;
+    function adminAdd(address _addr, string _roleName) public;
+    function adminRemove(address _addr, string _roleName) public;
 
     function has(address _addr, string _roleName) public view returns(bool success);
     function queryCore() public view returns(address core);
