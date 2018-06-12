@@ -378,6 +378,17 @@ contract FundTemplate {
         CoreInterface(msg.sender).sellToken(exchangeId, tokens, amounts, rates, deposit);
         return true;
     }
+    function buyToken(bytes32 exchangeId, uint ethAmount, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public payable onlyCore onlyFundOwner returns (bool success) {
+        uint sum = 0;
+        for (uint i = 0; i < amounts.length; i++) {
+            sum += amounts[i];
+        }
+        if (sum != ethAmount) {
+            return false;
+        } 
+        CoreInterface(msg.sender).buyToken.value(ethAmount)(exchangeId, tokens, amounts, rates, deposit);
+        return true;
+    }
     function isFundOwner() public view returns (bool success) {
         return tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0;
     }
