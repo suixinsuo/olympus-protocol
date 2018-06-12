@@ -35,6 +35,6 @@ contract OlympusStorageExtended is OlympusStorageExtendedInterface {
     }
 
     function getAccessor(bytes32 dataKind, uint id) private pure returns(string accessor) {
-        return Converter.bytes32ToString(bytes32(id));//Converter.bytes32ToString(dataKind);//.toSlice().concat(Converter.bytes32ToString(bytes32(id)).toSlice());
+        return Converter.bytes32ToString(dataKind).toSlice().concat(Converter.bytes32ToString(bytes32(id)).toSlice());
     }
 }
