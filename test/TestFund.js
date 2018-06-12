@@ -1,8 +1,8 @@
 
 'use strict';
-const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
-const RiskManagementProvider = artifacts.require("../contracts/riskManagement/RiskManagementProvider.sol");
-const PriceProvider = artifacts.require("../contracts/price/PriceProvider.sol");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider");
+const RiskManagementProvider = artifacts.require("../contracts/riskManagement/RiskManagementProvider");
+const PriceProvider = artifacts.require("../contracts/price/PriceProvider");
 
 
 const FundTemplate = artifacts.require("FundTemplate");

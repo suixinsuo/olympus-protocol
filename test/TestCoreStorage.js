@@ -41,9 +41,9 @@ contract OlympusStorageInterface {
 }
 */
 const KyberConfig = require('../scripts/libs/kyber_config');
-const OlympusStorageExtended = artifacts.require("../contracts/storage/OlympusStorageExtended.sol");
-const OlympusStorage = artifacts.require("../contracts/storage/OlympusStorage.sol");
-const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
+const OlympusStorageExtended = artifacts.require("../contracts/storage/OlympusStorageExtended");
+const OlympusStorage = artifacts.require("../contracts/storage/OlympusStorage");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider");
 const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');

@@ -1,9 +1,9 @@
-const MockKyberNetwork = artifacts.require("../contracts/exchange/exchanges/MockKyberNetwork.sol");
-const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/KyberNetworkExchange.sol");
-const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token.sol");
-const ExchangeAdapterManager = artifacts.require("../contracts/exchange/ExchangeAdapterManager.sol");
-const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider.sol");
-const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
+const MockKyberNetwork = artifacts.require("../contracts/exchange/exchanges/MockKyberNetwork");
+const KyberNetworkExchange = artifacts.require("../contracts/exchange/exchanges/KyberNetworkExchange");
+const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token");
+const ExchangeAdapterManager = artifacts.require("../contracts/exchange/ExchangeAdapterManager");
+const ExchangeProvider = artifacts.require("../contracts/exchange/ExchangeProvider");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider");
 const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 const CentralizedExchange = artifacts.require("CentralizedExchange");
 

@@ -1,12 +1,12 @@
-'use strict'
-const Reimbursable = artifacts.require("./TestReimbursable.sol");
+'use strict';
+const Reimbursable = artifacts.require("./ReimbursableTest");
 
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const _ = require('lodash');
 const Promise = require('bluebird');
 
-contract("TestReimbursable", (accounts) => {
+contract.only("TestReimbursable", (accounts) => {
   it('Should be able to deploy', async () => {
     return await Promise.all([
       Reimbursable.deployed(),
@@ -26,18 +26,18 @@ contract("TestReimbursable", (accounts) => {
 
     let initialBalance = await web3.eth.getBalance(accounts[0]);
     console.log("initialBalance: " + web3.fromWei(initialBalance, 'ether'));
-  
-    let estimatedGas = await reimbursable.test.estimateGas({
-      from: accounts[0], 
-      to: reimbursable.address, 
+
+    let estimatedGas = await reimbursable.someFunction.estimateGas({
+      from: accounts[0],
+      to: reimbursable.address,
       gas: 10 ** 6
     });
 
     console.log("gas estimation = " + estimatedGas + " units");
     const gasPrice = 1000000000;
-    console.log("gas cost estimation = " + web3.fromWei(estimatedGas * gasPrice, 'Gwei') + "G wei");    
+    console.log("gas cost estimation = " + web3.fromWei(estimatedGas * gasPrice, 'Gwei') + "G wei");
 
-    let actualGasCosted = await reimbursable.test.call({ from: accounts[0] });
+    let actualGasCosted = await reimbursable.someFunction.call({ from: accounts[0] });
     console.log('actualGasCosted', web3.fromWei(actualGasCosted.toString(), 'Gwei'));
 
     let finalBalance = await web3.eth.getBalance(accounts[0]);
