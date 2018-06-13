@@ -26,7 +26,7 @@ contract FundTemplate {
     enum FundStatus { Pause, Close , Active }
 
     uint public constant DENOMINATOR = 10000;
-    uint public constant MAX_TRANSFERS = 5;
+    uint public  maxWithdrawTransfers = 5;
 
     struct FUND {
         uint id;
@@ -59,7 +59,7 @@ contract FundTemplate {
     }
     struct InvestLog{
         uint lastInvestTime;
-        uint lastIvestAmount;
+        uint lastInvestAmount;
         uint balanceAmount;
     }
     //Costant
@@ -232,10 +232,9 @@ contract FundTemplate {
         string _description,
         string _category,
         address[]  _tokenAddresses,
-        uint[]  _amounts
-    )
-    {
-
+        uint[]  _amounts,
+        FundStatus _status
+    ){
         _name = _FUND.name;
         _symbol = symbol;
         _owner = _FUNDExtend.owner;
@@ -244,6 +243,8 @@ contract FundTemplate {
         _category = _FUND.category;
         _tokenAddresses = _FUND.tokenAddresses;
         _amounts = _FUND.amounts;
+        _status = _FUND.status;
+
     }
     // -------------------------- MAPPING --------------------------
 
@@ -257,7 +258,7 @@ contract FundTemplate {
                     tokenIndex[_tokens[i]] = _FUND.tokenAddresses.push(_tokens[i]);
                     _FUND.amounts.push(tokenBalance);
                 } else {
-                    _FUND.amounts[tokenIndex[_tokens[i]]] = tokenBalance;
+                  _FUND.amounts[tokenIndex[_tokens[i]] -1] = tokenBalance;
                 }
                 continue;
             }
@@ -309,7 +310,7 @@ contract FundTemplate {
         uint _sharePrice;
         uint _fundPrice;
         require(_FUND.status == FundStatus.Active, "The Fund is not active");
-        // require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH" );
+        require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH" );
         (_realBalance,_fee) = calculateFee(msg.value);
 
         // Current value is already added in the balance, reduce it
@@ -330,26 +331,26 @@ contract FundTemplate {
 
         //ManagementFee
         investLogs[tx.origin].lastInvestTime = now;
-        investLogs[tx.origin].lastIvestAmount += _realShare;
+        investLogs[tx.origin].lastInvestAmount += _realShare;
     }
 
     function calculateFee(uint invest) internal view returns(uint _realBalance,uint _managementFee){
         if (investLogs[tx.origin].lastInvestTime == 0){
             _realBalance = invest;
             _managementFee = 0;
-        }else{
+         } else {
             uint _cycle = caculateDate(investLogs[tx.origin].lastInvestTime);
-            _managementFee = investLogs[tx.origin].lastIvestAmount * _cycle * _FUNDExtend.dailyFeeRate / DENOMINATOR;
+            _managementFee = (investLogs[tx.origin].lastInvestAmount * _cycle * _FUNDExtend.dailyFeeRate)/ DENOMINATOR;
             _realBalance = invest - _managementFee;
         }
     }
 
     function caculateDate(uint _date) internal view returns(uint _days){
-        uint _day = now - _date/(60 * 60 * 24);
-        if(_day == 0) { return 1; }
+        uint _day = (now - _date) / (60 * 60 * 24);
+        if(_day == 0) {return 1;}
         return _day;
     }
-    //
+
     function getPrice() public view returns(uint _price, uint _totalTokensValue){
         uint _expectedRate;
         _totalTokensValue = 0;
@@ -373,7 +374,6 @@ contract FundTemplate {
         );
     }
 
-
     // -------------------------- WITHDRAW --------------------------
 
     function getFundWithDrawDetails() onlyTokenizedAndFundOwner public view returns(
@@ -394,7 +394,7 @@ contract FundTemplate {
     }
 
     function withdrawRequest(uint256 amount) public returns (uint) {
-        require(totalSupply > _Withdraw.totalWithdrawAmount + amount, "Not withdraw more than allowed quantity" );
+        require(totalSupply >= _Withdraw.totalWithdrawAmount + amount, "Not withdraw more than allowed quantity" );
         require(balances[msg.sender] >= amount + _Withdraw.amountPerUser[msg.sender]);
         // Add user to the list of requesters
         if ( _Withdraw.amountPerUser[msg.sender] == 0) {
@@ -420,9 +420,9 @@ contract FundTemplate {
         _initialTokensBalance = getTokensBalance();
 
         // User request 1000 fund to be return from 5000 supply (20%) total value 2 ETH
-        // The loop will handle MAX_TRANSFERS , after complete element of the investors array becomes 0x00
+        // The loop will handle maxWithdrawTransfers , after complete element of the investors array becomes 0x00
         uint _transfersCounter = 0;
-        for (uint8 _investorIndex = 0; _transfersCounter < MAX_TRANSFERS && _investorIndex < _Withdraw.userRequests.length;
+        for (uint8 _investorIndex = 0; _transfersCounter < maxWithdrawTransfers && _investorIndex < _Withdraw.userRequests.length;
           _investorIndex++) {
 
             // How much eth we require to return
@@ -511,8 +511,10 @@ contract FundTemplate {
             ( _sellRates[_tokenIndex], ) = priceProvider.getSellRates(activeTokens[_tokenIndex], 10 ** _tokensToBuy[_tokenIndex].decimals());
             _amounts[_tokenIndex] = (_tokenPercentage *  _initialBalance[_tokenIndex] )/DENOMINATOR;
             _tokensToBuy[_tokenIndex].approve(address(core),  _amounts[_tokenIndex]);
+
+
         }
-        require(core.sellToken("", _tokensToBuy, _amounts, _sellRates, _investor));
+       require(core.sellToken("", _tokensToBuy, _amounts, _sellRates, _investor));
     }
 
     function sendBrokenTokensToInvestor(address _investor, uint _tokenPercentage, uint _totalTokensValue , uint[] _initialBalance ) internal {
@@ -552,21 +554,22 @@ contract FundTemplate {
         withdrawedFee += (pendingOwnerFee - olympusAmount);
         pendingOwnerFee = 0;
     }
-
+    // We dont have decimals, managment fee must be already be multiplied for denominator
     function setOlympusFee(uint _olympusFee ) onlyCore public {
         require(_olympusFee > 0);
         require(_olympusFee < DENOMINATOR);
         olympusFee = _olympusFee;
     }
 
-    function setManageFee(uint _manageFee ) onlyCore public {
+    // We dont have decimals, managment fee must be already be multiplied for denominator
+    function setManageFee(uint _manageFee ) onlyFundOwner public {
         require(_manageFee > 0);
         require(_manageFee < DENOMINATOR);
         _FUNDExtend.dailyFeeRate = _manageFee;
     }
     // -------------------------- PROVIDERS --------------------------
 
-    function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner  {
+    function setPermissionProvider(address _permissionAddress) public   {
         permissionProvider = PermissionProviderInterface(_permissionAddress);
     }
 
@@ -583,6 +586,11 @@ contract FundTemplate {
         return true;
     }
 
+    function setMaxWithdrawTransfers(uint8 max) public onlyTokenizedOwner returns(bool) {
+        require(max > 0);
+        require(max < 100);
+        maxWithdrawTransfers = max;
+    }
     // -------------------------- EVENTS --------------------------
  	  // Event which is triggered to log all transfers to this contract's event log
     event Transfer(
@@ -613,7 +621,7 @@ contract FundTemplate {
         uint256 _value
     );
 
-    event Withdrawed(address _investor, uint256 fundWithdrawed, uint256 fundPrice, uint256 _amountETH, uint256 _amountInTokens);
+    event Withdrawed(address indexed _investor, uint256 fundWithdrawed, uint256 fundPrice, uint256 _amountETH, uint256 _amountInTokens);
 
     event LogS( string text);
     event LogA( address Address, string text);

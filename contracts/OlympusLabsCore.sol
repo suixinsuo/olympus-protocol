@@ -409,10 +409,10 @@ contract OlympusLabsCore is Manageable {
 
 
     function addTokenization(address token, uint8 tokenType) public allowTokenizationOnly returns (bool success) {
-        olympusStorage.addTokenization(token, tokenType);
+        require(olympusStorage.addTokenization(token, tokenType));
         return true;
     }
-      event LogS( string text);
+    event LogS( string text);
     event LogA( address Address, string text);
     event LogN( uint value, string text);
 }

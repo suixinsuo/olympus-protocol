@@ -29,6 +29,6 @@ contract PermissionProviderInterface is Provider, RBAC {
 
     function has(address _addr, string _roleName) public view returns(bool success);
     function queryCore() public view returns(address core);
-    function setCore(address _addr) public; 
+    function setCore(address _addr) public;
 
 }

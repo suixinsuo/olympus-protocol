@@ -64,7 +64,7 @@ contract TokenizationProvider {
     //onlyWhitelist
     returns (address FundAddress)
     {
-       FundAddress = new FundTemplate(_symbol,_name,_decimals);
+        FundAddress = new FundTemplate(_symbol,_name,_decimals);
 
         //FundTemplate
         FundTemplate  _newFund;
@@ -79,7 +79,6 @@ contract TokenizationProvider {
           _withdrawFeeCycle,
           _withdrawFundCycle)
         );
-        require(_newFund.setCore(msg.sender));
         require(_newFund.lockFund(_lockTime));
         fundOwner[fundLength] = tx.origin;
         fundIndex[fundLength] = FundAddress;
@@ -91,35 +90,14 @@ contract TokenizationProvider {
         fundLength += 1;
         address coreAddress = permissionProvider.queryCore();
         require(CoreInterface(coreAddress).addTokenization(FundAddress,0));
-
+        require(_newFund.setCore(coreAddress)); // TODO get core from Permission provider
         return FundAddress;
     }
-
+    event LogS( string text);
+    event LogA( address Address, string text);
+    event LogN( uint value, string text);
     //Get
-    function getFundDetails(uint _fundId) public view returns(
-        address _owner,
-        string _name,
-        string _symbol,
-        uint _totalSupply,
-        string _description,
-        string _category,
-        address[]  _tokenAddresses,
-        uint[]  _amounts
-    ){
 
-        FundTemplate  _newFund;
-        _owner = fundOwner[_fundId];
-        _newFund = FundTemplate(fundIndex[_fundId]);
-        ( ,
-            _name,
-            _symbol,
-            _totalSupply,
-            _description,
-            _category,
-            _tokenAddresses,
-            _amounts
-        )  = _newFund.getFundDetails();
-    }
 
 
     function getFundOwner(uint _fundId) public view returns(address _fundOwner) {
