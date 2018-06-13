@@ -29,7 +29,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
 
     mapping (uint => uint) private balances;
 
-    constructor(address _exchangeManager, address _permission) public
+    constructor (address _exchangeManager, address _permission) public
     ExchangePermissions(_permission)
     {
         if (_exchangeManager != 0x0) {
@@ -208,7 +208,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
                     return false;
                 }
             }
-            adapterOrders[keccak256(address(adapter),adapterOrderId)] = orderId;
+            adapterOrders[keccak256(abi.encodePacked(address(adapter), adapterOrderId))] = orderId;
         }
 
         updateOrderStatus(orderId);
@@ -265,7 +265,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
     external onlyAdapter returns (bool)
     {
 
-        uint orderId = adapterOrders[keccak256(msg.sender, adapterOrderId)];
+        uint orderId = adapterOrders[keccak256(abi.encodePacked(msg.sender, adapterOrderId))];
         if(orderId == 0){
             return false;
         }

@@ -23,7 +23,7 @@ contract ExchangeAdapterBase {
         Errored
     }
 
-    function ExchangeAdapterBase(address _manager,address _exchange) public {
+    constructor (address _manager,address _exchange) public {
         adapterManager = _manager;
         exchangeExchange = _exchange;
     }

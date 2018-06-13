@@ -11,7 +11,8 @@ contract ExchangeAdapterManager is ExchangePermissions{
     uint private genExchangeId = 1000;
     mapping(address=>uint) adapters;
 
-    constructor (address _permission) public ExchangePermissions(_permission)
+    constructor (address _permission) public
+    ExchangePermissions(_permission)
     {
     }
 
@@ -41,7 +42,7 @@ contract ExchangeAdapterManager is ExchangePermissions{
     public onlyExchangeOwner returns(bool)
     {
         require(adapter != 0x0);
-        bytes32 id = keccak256(genExchangeId++);
+        bytes32 id = keccak256(abi.encodePacked(genExchangeId++));
         require(IExchangeAdapter(adapter).addExchange(id, name));
         exchanges.push(id);
         exchangeAdapters[id] = IExchangeAdapter(adapter);

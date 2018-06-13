@@ -30,7 +30,7 @@ contract('Olympus-Protocol-strategy', (accounts) => {
   it("Should be able to create a strategy.", async () => {
     let instance = await Strategy.deployed();
     let result = await instance.createStrategy(mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[0] });
-    assert.equal(result.receipt.status, '0x01');
+    assert.equal(result.receipt.status, '0x1');
   })
 
   it("Should not be able to create a strategy.", async () => {
@@ -46,7 +46,7 @@ contract('Olympus-Protocol-strategy', (accounts) => {
   it("Should be able to update a strategy.", async () => {
     let instance = await Strategy.deployed();
     let result = await instance.updateStrategy(0, mockData.name, mockData.description, mockData.category, mockData.tokenAddresses, mockData.weights, mockData.exchangeId, { from: accounts[0] });
-    assert.equal(result.receipt.status, '0x01');
+    assert.equal(result.receipt.status, '0x1');
   })
 
   it("Should not be able to update a strategy.", async () => {
@@ -112,6 +112,6 @@ contract('Olympus-Protocol-strategy', (accounts) => {
     let instance = await Strategy.deployed();
     let result = await instance.updateStrategy(0, "update name", "update desc", "update category", ["0x86fa049857e0209aa7d9e616f7eb3b3b78ecfdb0", "0xd26114cd6ee289accf82350c8d8487fedb8a0c07"], [30, 70], web3.toAscii('testExchange'));
 
-    assert.equal(result.receipt.status, '0x01');        // assert.equal(result, true);
+    assert.equal(result.receipt.status, '0x1');        // assert.equal(result, true);
   })
 });

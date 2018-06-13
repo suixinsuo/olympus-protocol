@@ -29,7 +29,7 @@ contract OlympusLabsCore is Manageable {
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x0));
     WhitelistProviderInterface internal whitelistProvider;
     TokenizationProvider internal _Tokenization;
-    ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
+    ERC20 private constant MOT = ERC20(address(0x41Dee9F481a1d2AA74a3f1d0958C1dB6107c686A));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
     uint public feePercentage = 100;
@@ -112,10 +112,7 @@ contract OlympusLabsCore is Manageable {
     }
 
     function getStrategyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
-        uint totalLength;
-
-        uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
-        require(tokenIndex <= totalLength);
+        require(tokenIndex <= strategyProvider.getStrategyTokenCount(strategyId));
         address[] memory tokens;
         uint[] memory weights;
         (,,,,tokens,weights,,,) = strategyProvider.getStrategy(strategyId);
