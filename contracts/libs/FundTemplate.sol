@@ -52,6 +52,7 @@ contract FundTemplate {
         uint lockTime; // For user transfers
         uint dailyFeeRate;
     }
+
     struct Withdraw {
         address[] userRequests;
         mapping (address => uint)  amountPerUser;
@@ -59,6 +60,7 @@ contract FundTemplate {
         uint lockHours; // Between fund withdraws
         uint withdrawTimer;
     }
+
     struct InvestLog{
         uint lastInvestTime;
         uint lastInvestAmount;
@@ -328,6 +330,12 @@ contract FundTemplate {
 
         balances[tx.origin] += _realShare;
         totalSupply += _realShare;
+
+                //ManagementFee
+
+        investLogs[tx.origin].lastInvestTime = now;
+        investLogs[tx.origin].lastIvestAmount += _realShare;
+
         emit Transfer(owner, tx.origin, _realShare);
         emit BuyFund(tx.origin, _realShare);
 
