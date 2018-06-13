@@ -331,11 +331,7 @@ contract FundTemplate {
         balances[tx.origin] += _realShare;
         totalSupply += _realShare;
 
-                //ManagementFee
-
-        investLogs[tx.origin].lastInvestTime = now;
-        investLogs[tx.origin].lastIvestAmount += _realShare;
-
+        //ManagementFee
         emit Transfer(owner, tx.origin, _realShare);
         emit BuyFund(tx.origin, _realShare);
 
