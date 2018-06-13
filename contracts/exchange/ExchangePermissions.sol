@@ -7,7 +7,7 @@ contract ExchangePermissions is Ownable {
 
     PermissionProviderInterface internal permissionProvider;
 
-    function ExchangePermissions(address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 

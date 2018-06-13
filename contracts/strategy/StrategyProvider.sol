@@ -17,6 +17,11 @@ contract StrategyProvider is StrategyProviderInterface {
 
     PermissionProviderInterface internal permissionProvider;
 
+    modifier _checkIndex(uint _index) {
+        require(_index < comboHub.length);
+        _;
+    }
+
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
@@ -42,7 +47,7 @@ contract StrategyProvider is StrategyProviderInterface {
         whitelistuser = whitelistAddresses;
     }
 
-    function StrategyProvider(address _permissionProvider) public {
+    constructor(address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
         owner = msg.sender;
         StrategyWhiteList[owner] = true;

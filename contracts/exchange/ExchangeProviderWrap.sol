@@ -7,7 +7,7 @@ contract ExchangeProviderWrap {
 
     ExchangeProvider provider;
 
-    constructor(ExchangeProvider _p) public {
+    constructor (ExchangeProvider _p) public {
         provider = _p;
     }
 

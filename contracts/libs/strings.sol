@@ -107,7 +107,7 @@ library strings {
 
     /*
      * @dev Returns a slice containing the entire bytes32, interpreted as a
-     *      null-termintaed utf-8 string.
+     *      null-terminated utf-8 string.
      * @param self The bytes32 value to convert to a slice.
      * @return A new slice containing the value of the input argument up to the
      *         first null.
@@ -211,7 +211,10 @@ library strings {
             }
             if (a != b) {
                 // Mask out irrelevant bytes and check again
-                uint256 mask = ~(2 ** (8 * (32 - shortest + idx)) - 1);
+                uint256 mask = uint256(-1); // 0xffff...
+                if(shortest < 32) {
+                  mask = ~(2 ** (8 * (32 - shortest + idx)) - 1);
+                }
                 uint256 diff = (a & mask) - (b & mask);
                 if (diff != 0)
                     return int(diff);

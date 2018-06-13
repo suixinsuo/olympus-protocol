@@ -27,6 +27,8 @@ contract FundTemplate {
 
     uint public constant DENOMINATOR = 10000;
     uint public  maxWithdrawTransfers = 5;
+    string public constant TYPE = 'FUND';
+    string public constant version = '0.1';
 
     struct FUND {
         uint id;
@@ -357,7 +359,7 @@ contract FundTemplate {
 
         if(totalSupply == 0){return(10**18,0);} // 1 Eth
 
-        for (uint8 i = 0; i < _FUND.tokenAddresses.length; i++) {
+        for (uint16 i = 0; i < _FUND.tokenAddresses.length; i++) {
             erc20Token = ERC20(_FUND.tokenAddresses[i]);
 
             uint _balance = erc20Token.balanceOf(address(this));
@@ -569,16 +571,19 @@ contract FundTemplate {
     }
     // -------------------------- PROVIDERS --------------------------
 
-    function setPermissionProvider(address _permissionAddress) public   {
+    function setPermissionProvider(address _permissionAddress) public onlyTokenizedOwner returns(bool success) {
         permissionProvider = PermissionProviderInterface(_permissionAddress);
+        return true;
     }
 
-    function setPriceProvider(address _priceAddress) public onlyTokenizedOwner {
+    function setPriceProvider(address _priceAddress) public onlyTokenizedOwner returns(bool success) {
         priceProvider = PriceProviderInterface(_priceAddress);
+        return true;
     }
 
-    function setRiskProvider(address _riskProvider) public onlyTokenizedOwner {
+    function setRiskProvider(address _riskProvider) public onlyTokenizedOwner returns(bool success) {
         riskProvider = RiskManagementProviderInterface(_riskProvider);
+        return true;
     }
 
     function setCore(address _core) public onlyTokenizedOwner returns(bool) {

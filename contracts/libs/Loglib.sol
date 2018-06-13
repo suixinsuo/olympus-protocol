@@ -10,7 +10,7 @@ library LogLib{
     event LogBool(string _msg, bool value);
     event LogInt(string _msg, int value);
 
-    function DebugUint(log storage l, string _msg, uint value) public{
+    function DebugUint(log storage, string _msg, uint value) public{
         // if(!l.isLog){return;}
         emit LogUint(_msg, value);
     }

@@ -41,7 +41,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
     event PlacedOrder(uint orderId);
 
-    function KyberNetworkExchange(KyberNetwork _kyber, address _manager,address _exchange, address _permission) public
+    constructor (KyberNetwork _kyber, address _manager,address _exchange, address _permission) public
     ExchangePermissions(_permission)
     ExchangeAdapterBase(_manager, _exchange)
     {

@@ -48,7 +48,7 @@ const Web3 = require('web3');
 const web3 = new Web3();
 const _ = require('lodash');
 const Promise = require('bluebird');
-const TX_OK = '0x01';
+const TX_OK = '0x1';
 const mockData = {
   startOrderId: 1000000,
   buyer: '0x0000000000000000000000000000000000000000',
@@ -94,13 +94,15 @@ contract('OlympusStorage', (accounts) => {
       const result = await instance.addOrderBasicFields.call(
         mockData.strategyId, mockData.buyer,
         mockData.amountInWei, mockData.feeInWei,
-        mockData.exchangeId,
-        { from: accounts[0] });
+        mockData.exchangeId, {
+          from: accounts[0]
+        });
       const resultTransaction = await instance.addOrderBasicFields(
         mockData.strategyId, mockData.buyer,
         mockData.amountInWei, mockData.feeInWei,
-        mockData.exchangeId,
-        { from: accounts[0] });
+        mockData.exchangeId, {
+          from: accounts[0]
+        });
       assert.equal(result.toNumber(), mockData.startOrderId);
       assert.equal(resultTransaction.receipt.status, TX_OK);
     } catch (e) {
@@ -126,7 +128,8 @@ contract('OlympusStorage', (accounts) => {
   it("Should not be able to get amount for non-existing token.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
-      const result = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.fakeToken);
+      const result = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId,
+        mockData.fakeToken);
     } catch (e) {
       assert.equal(e.message, 'VM Exception while processing transaction: revert');
       if (e.message != 'VM Exception while processing transaction: revert') {
@@ -139,8 +142,10 @@ contract('OlympusStorage', (accounts) => {
   it("Should be able to get order token completed amount.", async () => {
     try {
       const instance = await OlympusStorage.deployed();
-      const firstResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[0]);
-      const secondResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[1]);
+      const firstResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId,
+        mockData.tokens[0]);
+      const secondResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId,
+        mockData.tokens[1]);
 
       assert.equal(firstResult[0].toNumber(), mockData.completedTokenAmounts[0]);
       assert.equal(secondResult[0].toNumber(), mockData.completedTokenAmounts[1]);
@@ -188,8 +193,10 @@ contract('OlympusStorage', (accounts) => {
 
       assert.equal(firstTransactionResult.receipt.status, TX_OK);
       assert.equal(secondTransactionResult.receipt.status, TX_OK);
-      const firstResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[0]);
-      const secondResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId, mockData.tokens[1]);
+      const firstResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId,
+        mockData.tokens[0]);
+      const secondResult = await instance.getOrderTokenCompletedAmount.call(mockData.startOrderId,
+        mockData.tokens[1]);
       assert.equal(firstResult[0].toNumber(), mockData.completedTokenAmounts[0] + 5);
       assert.equal(secondResult[0].toNumber(), mockData.completedTokenAmounts[1] + 2);
     } catch (e) {
@@ -267,7 +274,7 @@ contract('OlympusStorage', (accounts) => {
     }
   })
 
-  it("Should be able to set and get a custom value for order.", async () => {
+  it.skip("Should be able to set and get a custom value for order.", async () => {
     try {
       const extendedInstance = await OlympusStorageExtended.deployed();
       const instance = await OlympusStorage.deployed();
@@ -280,9 +287,11 @@ contract('OlympusStorage', (accounts) => {
       assert.equal(resultSetProviderTransaction.receipt.status, TX_OK);
 
       const resultTransactionExpectation = await instance.addCustomField.call(
-        mockData.startOrderId, web3.fromAscii(mockData.customFieldKey), web3.fromAscii(mockData.customFieldValue));
+        mockData.startOrderId, web3.fromAscii(mockData.customFieldKey), web3.fromAscii(
+          mockData.customFieldValue));
       const resultTransaction = await instance.addCustomField(
-        mockData.startOrderId, web3.fromAscii(mockData.customFieldKey), web3.fromAscii(mockData.customFieldValue));
+        mockData.startOrderId, web3.fromAscii(mockData.customFieldKey), web3.fromAscii(
+          mockData.customFieldValue));
       assert.equal(resultTransaction.receipt.status, TX_OK);
       assert.equal(resultTransactionExpectation, true);
 
