@@ -11,8 +11,8 @@ contract TokenizationProviderInterface {
         uint[] memory _weights,
         uint _withdrawCycle,
         uint _lockTime
-    ) public 
-    ///////WARNING 
+    ) public
+    ///////WARNING
     //onlyWhitelist
     returns(address FundAddress);
 
@@ -25,16 +25,6 @@ contract TokenizationProviderInterface {
     mapping (uint => address) public fundOwner;
     mapping (address => _fundDetail) public fundDetail;
 
-    function getFundDetails(uint _fundId) public view returns(
-        address _owner,
-        string _name,
-        string _symbol,
-        uint _totalSupply,
-        string _description,
-        string _category,
-        address[]  _tokenAddresses,
-        uint[]  _weights
-    );
     function getFundOwner(uint _fundId) public view returns(address _fundOwner);
     function getFundAddress(uint _fundId) public view returns(address _fundAddress);
 }

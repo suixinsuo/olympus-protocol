@@ -14,6 +14,7 @@ const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token.s
 
 
 const FundTemplate = artifacts.require("FundTemplate");
+
 const DENOMINATOR = 10000;
 const olympusFee = 300; // Denominator is 10.000, so 3%
 const ETH = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
@@ -30,7 +31,7 @@ const fundData = {
   category: 'testing',
   // EOS,  Mana
   address: [], // Initialized from  mockup provider
-  magementeFee: 1, // 1%, fixed in the contract,
+  magementeFee: 100, // 1% Denominator is 10.000, so 1%
   tokenPrices: [100, 200],
 
 }
@@ -62,7 +63,7 @@ contract("Fund For Manager", (accounts) => {
     // Enable fund
     // Update the mock data with the mock kyber
     fundData.addresses = await mockKyber.supportedTokens();
-
+    fund.setManageFee(fundData.magementeFee);
 
     // Create the fund
     await fund.createFundDetails(fundData.id,
@@ -97,11 +98,14 @@ contract("Fund For Manager", (accounts) => {
 
     await fund.setOlympusFee(olympusFee, { from: coreAddress });
 
-    // Some one invest 1 eht
+    // Some one invest 1 eht (free fee)
     await fund.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorA });
+    // Got fee 1%
+    await fund.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorA });
+
     // Fund manager get some benefits from investment
     const pendingFee = (await fund.getPendingManagmentFee()).toNumber();
-    assert.equal(web3.toWei(1, 'ether') * (fundData.magementeFee / 100), pendingFee);
+    assert.equal(web3.toWei(1, 'ether') * (fundData.magementeFee / DENOMINATOR), pendingFee);
 
     // Withdraw the benefits,
     await fund.withdrawFee();
@@ -123,53 +127,50 @@ contract("Fund Investment", (accounts) => {
   const investorB = accounts[3];
 
 
-  before('Deploy Fund Managment', async () => {
-    try {
-      let permissionProvider = await PermissionProvider.deployed();
-      let riskProvider = await RiskManagementProvider.deployed();
-      // Exchange mockup
-      mockKyber = await MockKyberNetwork.deployed();
-      const priceProvider = await PriceProvider.deployed();
-      await priceProvider.setKyber(mockKyber.address);
-      core = await Core.deployed();
+  before('Deploy Fund Managment', async () => log.catch(async () => {
 
-      // reserve
-      const kyberExchange = await KyberNetworkExchange.deployed();
-      const exchangeAdapterManager = await ExchangeAdapterManager.deployed();
-      const exchangeProvider = await ExchangeProvider.deployed();
-      await exchangeAdapterManager.addExchange("kyber", kyberExchange.address);
-      await exchangeProvider.setCore(core.address);
-      core.setProvider(2, exchangeProvider.address);
+    let permissionProvider = await PermissionProvider.deployed();
+    let riskProvider = await RiskManagementProvider.deployed();
+    // Exchange mockup
+    mockKyber = await MockKyberNetwork.deployed();
+    const priceProvider = await PriceProvider.deployed();
+    await priceProvider.setKyber(mockKyber.address);
+    core = await Core.deployed();
 
-      permissionProvider.adminAdd(coreAddress, await permissionProvider.ROLE_CORE());
-      permissionProvider.adminAdd(core.address, await permissionProvider.ROLE_CORE());
+    // reserve
+    const kyberExchange = await KyberNetworkExchange.deployed();
+    const exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+    const exchangeProvider = await ExchangeProvider.deployed();
+    await exchangeAdapterManager.addExchange("kyber", kyberExchange.address);
+    await exchangeProvider.setCore(core.address);
+    core.setProvider(2, exchangeProvider.address);
 
-      fund = await FundTemplate.new(fundData.symbol, fundData.name, fundData.decimals);
-      await fund.setPermissionProvider(permissionProvider.address);
-      await fund.setPriceProvider(priceProvider.address);
-      await fund.setRiskProvider(riskProvider.address);
-      await fund.setCore(core.address);
+    permissionProvider.adminAdd(coreAddress, await permissionProvider.ROLE_CORE());
+    permissionProvider.adminAdd(core.address, await permissionProvider.ROLE_CORE());
+
+    fund = await FundTemplate.new(fundData.symbol, fundData.name, fundData.decimals);
+    await fund.setPermissionProvider(permissionProvider.address);
+    await fund.setPriceProvider(priceProvider.address);
+    await fund.setRiskProvider(riskProvider.address);
+    await fund.setCore(core.address);
 
 
-      // Update the mock data with the mock kyber
-      fundData.addresses = await mockKyber.supportedTokens();
+    // Update the mock data with the mock kyber
+    fundData.addresses = await mockKyber.supportedTokens();
 
-      // Create the fund
-      await fund.createFundDetails(fundData.id,
-        fundData.name,
-        fundData.description,
-        fundData.category,
-        0, // withdraw fee Cicle
-        0, // Withdraw from fund
-      );
-      await fund.setOlympusFee(olympusFee, { from: coreAddress });
-    } catch (e) {
-      console.error('Error on Before Deployment Fund');
-      console.log(e);
-    }
-  })
+    // Create the fund
+    await fund.createFundDetails(fundData.id,
+      fundData.name,
+      fundData.description,
+      fundData.category,
+      0, // withdraw fee Cicle
+      0, // Withdraw from fund
+    );
+    await fund.setOlympusFee(olympusFee, { from: coreAddress });
 
-  it("Should be correctly configured", async () => {
+  }))
+
+  it("Should be correctly configured", async () => log.catch(async () => {
 
     // Some one invest 1 eht
     const data = await fund.getFundDetails();
@@ -189,7 +190,7 @@ contract("Fund Investment", (accounts) => {
     assert.notEqual(widthdrawData[2].toNumber(), 0); // Timer is now
     assert.equal(widthdrawData[3].length, 0, ' List of users that applied for withdraw must be empty');
 
-  })
+  }))
 
 
   it("Should be able to invest and get balance of the found", async () => {
@@ -197,9 +198,9 @@ contract("Fund Investment", (accounts) => {
     // Some one invest 1 eht
     await fund.sendTransaction({ value: web3.toWei(2, 'ether'), from: investorA });
     const balance = (await fund.balanceOf(investorA)).toNumber();
-    // When a fund is empty, his default value is 0.01 eth. We invest 1 ETH (0.99) after fee.
-    // That measn (1ETH -1 FUND) that we shall 0.9 funds have of the fund
-    assert.equal(balance, toFundToken(1.98));
+    // When a fund is empty, his default value is 1ETH. We invest 1 ETH
+    // That measn (1ETH  = 1 FUND)
+    assert.equal(balance, toFundToken(2));
 
   })
 
@@ -211,9 +212,8 @@ contract("Fund Investment", (accounts) => {
     const fundBalanceA = (await fund.balanceOf(investorA)).toNumber();
     const fundBalanceB = (await fund.balanceOf(investorB)).toNumber();
 
-    // 2  less 1% commision
-    assert.equal(fundBalanceA, toFundToken(1.98), ' Invested by A'); // From previus test
-    assert.equal(fundBalanceB, toFundToken(1.98), 'Invested by B');
+    assert.equal(fundBalanceA, toFundToken(2), ' Invested by A'); // From previus test
+    assert.equal(fundBalanceB, toFundToken(2), 'Invested by B');
 
     await fund.withdrawRequest(toFundToken(0.5), { from: investorA });
     await fund.withdrawRequest(toFundToken(1), { from: investorB });
@@ -344,6 +344,7 @@ contract("Fund Investment", (accounts) => {
 
 
   it("Token unlisted, user recives part in ETH part in token", async () => log.catch(async () => {
+
     // Investor starts with 100, invest 2 ETH, get back 1.5 ETH in fund index
     await fund.sendTransaction({ value: web3.toWei(2, 'ether'), from: investorA });
     // Real invest is 3.96 (0.02 was each fee)
@@ -364,11 +365,29 @@ contract("Fund Investment", (accounts) => {
       rates,
 
     );
+
     // One token gets unlisted
     fund.tokenStatus(fundData.addresses[0], false);
 
     await fund.withdraw();
 
+    fund.tokenStatus(fundData.addresses[0], true); // Reset
+
+    // Check the rebalance function is updating correctly
+    const dataAfter = await fund.getFundDetails();
+    assert.equal(dataAfter[6].length, 2, 'Number of tokens is 2');
+    assert(
+      dataAfter[7][0].toNumber() < 10 ** 21 + OFFSET_TOKEN &&
+      dataAfter[7][0].toNumber() > 10 ** 21 - OFFSET_TOKEN
+      , 'Tokens are directly transfer to investor');
+
+    assert(
+      dataAfter[7][1].toNumber() < 10 ** 21 + OFFSET_TOKEN &&
+      dataAfter[7][1].toNumber() > 10 ** 21 - OFFSET_TOKEN
+      , 'Tokens are directly transfer to investor');
+
+
+    // Check Balance of user
     const withdrawBalanceA = (await fund.withdrawBalanceOf(investorA)).toNumber();
     assert.equal(withdrawBalanceA, 0, 'Investor A withdraw everything');
     const currentBalanceA = (await web3.eth.getBalance(investorA)).toNumber();
@@ -388,6 +407,30 @@ contract("Fund Investment", (accounts) => {
       tokenBalance > expectedToken - OFFSET_TOKEN
       , 'Tokens are directly transfer to investor');
 
+
+  }))
+
+  it("Withdraw shall execute only max transfers", async () => log.catch(async () => {
+
+    await fund.setMaxWithdrawTransfers(1); // Withdraw one by one
+    await fund.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorA });
+    await fund.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorB });
+
+    await fund.withdrawRequest(toFundToken(1), { from: investorA });
+    await fund.withdrawRequest(toFundToken(1), { from: investorB });
+
+    // Only first users withdraw
+    await fund.withdraw();
+
+    assert.equal((await fund.getFundWithDrawDetails())[0].toNumber(),
+      web3.toWei(1, 'ether'), ' Amount pending 1st round');
+
+    // Second user withdraws
+    await fund.withdraw();
+
+    assert.equal((await fund.getFundWithDrawDetails())[0].toNumber(), 0, 'Second Amount pending');
+
+    await fund.setMaxWithdrawTransfers(5); // Reset
 
   }))
 
