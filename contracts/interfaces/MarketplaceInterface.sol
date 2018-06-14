@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 
-contract Marketplace {
+contract MarketplaceInterface {
 
     address[] public products;
 
