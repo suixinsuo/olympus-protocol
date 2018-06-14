@@ -268,7 +268,7 @@ contract("Fund Investment", (accounts) => {
       currentBalanceB - balanceB > withdrawBalanceB - OFFSET
       , 'Investor B Recover his ETH')
 
-    assert.equal((await fund.getPrice())[0].toNumber(), web3.toWei(1, 'ether'), 'Price keep constant');
+    assert.equal((await fund.getFundAssetsValues())[0].toNumber(), web3.toWei(1, 'ether'), 'Price keep constant');
   }))
 
 
