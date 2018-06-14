@@ -1,16 +1,13 @@
 pragma solidity 0.4.24;
 
 import "./interfaces/MarketplaceInterface.sol";
-import "./interfaces/DerivativeInterface.sol";
+
 
 contract Marketplace is MarketplaceInterface {
-
     address[] public products;
     mapping(address => address[]) public productMappings;
 
     function registerProduct() external returns(bool success) {
-        DerivativeInterface derivative = DerivativeInterface(msg.sender);
-
         products.push(msg.sender);
         //solhint-disable-next-line
         address creator = tx.origin;
