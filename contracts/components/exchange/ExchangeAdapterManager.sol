@@ -1,18 +1,15 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.24;
 
 import "./Interfaces.sol";
-import "../permission/PermissionProviderInterface.sol";
-import "./ExchangePermissions.sol";
 
-contract ExchangeAdapterManager is ExchangePermissions{
+contract ExchangeAdapterManager {
 
     mapping(bytes32 => IExchangeAdapter) public exchangeAdapters;
     bytes32[] public exchanges;
     uint private genExchangeId = 1000;
     mapping(address=>uint) adapters;
 
-    constructor (address _permission) public
-    ExchangePermissions(_permission)
+    constructor () public
     {
     }
 
@@ -24,7 +21,7 @@ contract ExchangeAdapterManager is ExchangePermissions{
     }
 
     function getExchangeInfo(bytes32 id)
-    public view returns(bytes32 name, ExchangeAdapterBase.Status status)
+    public view returns(bytes32 name, bool status)
     {
         IExchangeAdapter adapter = exchangeAdapters[id];
         require(address(adapter) != 0x0);
@@ -39,7 +36,7 @@ contract ExchangeAdapterManager is ExchangePermissions{
     }
 
     function addExchange(bytes32 name, address adapter)
-    public onlyExchangeOwner returns(bool)
+    public /* TODO modifier */ returns(bool)
     {
         require(adapter != 0x0);
         bytes32 id = keccak256(abi.encodePacked(genExchangeId++));
