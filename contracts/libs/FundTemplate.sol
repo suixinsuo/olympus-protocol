@@ -324,7 +324,7 @@ contract FundTemplate
 
         // Current value is already added in the balance, reduce it
         if(totalSupply > 0) {
-          (_fundPrice,)= getPrice();
+          (_fundPrice,)= getFundAssetsValues();
           _sharePrice = _fundPrice - ( (msg.value * 10 ** decimals ) / totalSupply);
         } else {
             _sharePrice = 10**18;
@@ -362,7 +362,7 @@ contract FundTemplate
         return _day;
     }
 
-    function getPrice() public view returns(uint _price, uint _totalTokensValue){
+    function getFundAssetsValues() public view returns(uint _price, uint _totalTokensValue){
         uint _expectedRate;
         _totalTokensValue = 0;
         ERC20 erc20Token;
@@ -433,7 +433,7 @@ contract FundTemplate
 
         _Withdraw.withdrawTimer = _Withdraw.lockHours * 3600 + now;
 
-        (_fundTokenPrice, _totalTokensValue) = getPrice();
+        (_fundTokenPrice, _totalTokensValue) = getFundAssetsValues();
          uint _totalETHToReturn = ( _Withdraw.totalWithdrawAmount  * _fundTokenPrice) / 10 ** decimals;
         // Sell enough to fulfill expectation
          if(_totalETHToReturn >  address(this).balance) {
