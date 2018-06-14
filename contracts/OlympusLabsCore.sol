@@ -389,19 +389,27 @@ contract OlympusLabsCore is Manageable {
         return true;
     }
 
-    function fundSellToken(bytes32 exchangeId, address fundAddress, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public returns (bool success) {
-        require(FundTemplate(fundAddress).sellToken(exchangeId, tokens, amounts, rates, deposit));
+    function fundSellToken(bytes32 exchangeId, address fundAddress, ERC20[] tokens, uint[] amounts, uint[] rates) public returns (bool success) {
+        require(FundTemplate(fundAddress).sellToken(exchangeId, tokens, amounts, rates));
         return true;
     }
-    function fundBuyToken(bytes32 exchangeId, uint ethAmount, ERC20[] tokens, uint[] amounts, uint[] rates, address fundAddress) public returns (bool success) {
 
-        require(FundTemplate(fundAddress).buyToken(exchangeId, ethAmount, tokens, amounts, rates, fundAddress));
+    function fundBuyToken(
+        bytes32 exchangeId, address fundAddress, uint ethAmount,
+        ERC20[] tokens, uint[] amounts, uint[] rates) public payable returns (bool success) {
+
+        require(FundTemplate(fundAddress).isFundOwner());
+        require(FundTemplate(fundAddress).buyToken(exchangeId, ethAmount, tokens, amounts, rates));
         require(FundTemplate(fundAddress).updateTokens(tokens));
         return true;
     }
 
+
     function addTokenization(address token, uint8 tokenType) public allowTokenizationOnly returns (bool success) {
-        olympusStorage.addTokenization(token, tokenType);
+        require(olympusStorage.addTokenization(token, tokenType));
         return true;
     }
+    event LogS( string text);
+    event LogA( address Address, string text);
+    event LogN( uint value, string text);
 }

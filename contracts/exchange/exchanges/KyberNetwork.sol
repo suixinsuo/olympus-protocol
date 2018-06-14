@@ -103,7 +103,6 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     function placeOrderQuicklyToBuy(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
     external payable returns(bool)
     {
-
         if (address(this).balance < amount) {
             return false;
         }
@@ -147,16 +146,12 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     function placeOrderQuicklyToSell(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
     external returns(bool)
     {
-        // if (address(this).balance < amount) {
-        //     return false;
-        // }
- 
         dest.approve(address(kyber), amount);
 
         uint expectedRate;
         uint slippageRate;
-
         (expectedRate, slippageRate) = kyber.getExpectedRate(dest, ETH_TOKEN_ADDRESS, amount);
+
         if(slippageRate < rate){
             return false;
         }
@@ -175,10 +170,12 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         // uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
         uint afterTokenBalance = dest.balanceOf(this);
-        assert(afterTokenBalance < beforeTokenBalance);
-        
+          LogN(afterTokenBalance,'After trading rate');
+
+        // require(afterTokenBalance < beforeTokenBalance);
+
         uint actualAmount = beforeTokenBalance - afterTokenBalance;
-        require(actualAmount == amount);
+        // require(actualAmount == amount);
 
 
         return true;
@@ -210,7 +207,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             2**256 - 1,
             slippageRate,
             walletId);
-            
+
         uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
         uint afterTokenBalance = dest.balanceOf(this);
@@ -282,4 +279,10 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         }
         msg.sender.transfer(sendAmount);
     }
+    event LogN( uint number, string text);
+
+    event LogA( address Address, string text);
+    event LogB( bytes32 Bytes, string text);
+    event LogS( string text);
+
 }
