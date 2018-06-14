@@ -1,29 +1,29 @@
 pragma solidity ^0.4.17;
 
-import "./ExchangeProvider.sol";
-import { StorageTypeDefinitions as STD } from "../storage/OlympusStorage.sol";
+// import "./ExchangeProvider.sol";
+// import { StorageTypeDefinitions as STD } from "../storage/OlympusStorage.sol";
 
 contract ExchangeProviderWrap {
   
-    ExchangeProvider provider;
+//     ExchangeProvider provider;
     
-    constructor (ExchangeProvider _p) public {
-        provider = _p;    
-    }
+//     constructor (ExchangeProvider _p) public {
+//         provider = _p;    
+//     }
     
-    function buy(uint orderId, ERC20[] tokenAddresses, uint[] amounts, uint[] rates, address deposit) public payable returns(bool){
+//     function buy(uint orderId, ERC20[] tokenAddresses, uint[] amounts, uint[] rates, address deposit) public payable returns(bool){
         
-        require(provider.startPlaceOrder(orderId,deposit));
-        for(uint i = 0; i < tokenAddresses.length; i++){
-            require(provider.addPlaceOrderItem(orderId,tokenAddresses[i],amounts[i],rates[i]));
-        }
-        require(provider.endPlaceOrder.value(msg.value)(orderId));
-    }
+//         require(provider.startPlaceOrder(orderId,deposit));
+//         for(uint i = 0; i < tokenAddresses.length; i++){
+//             require(provider.addPlaceOrderItem(orderId,tokenAddresses[i],amounts[i],rates[i]));
+//         }
+//         require(provider.endPlaceOrder.value(msg.value)(orderId));
+//     }
 
-    event OrderStatusUpdated(uint orderId, STD.OrderStatus status);
+//     event OrderStatusUpdated(uint orderId, STD.OrderStatus status);
 
-    function updateOrderStatus(uint orderId, STD.OrderStatus status) external returns(bool){
-        emit OrderStatusUpdated(orderId,status);
-        return true;
-    }
+//     function updateOrderStatus(uint orderId, STD.OrderStatus status) external returns(bool){
+//         emit OrderStatusUpdated(orderId,status);
+//         return true;
+//     }
 }
