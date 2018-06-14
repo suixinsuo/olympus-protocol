@@ -58,22 +58,30 @@ contract TokenizationProvider {
         uint _decimals,
         string _description,
         string _category,
-        address[] memory _tokenAddresses,
-        uint[] memory _weights,
-        uint _withdrawCycle,
-        uint _lockTime
+        uint _withdrawFeeCycle,
+        uint _lockTime,
+        uint _withdrawFundCycle
+
     ) public
     ///////WARNING
     //onlyWhitelist
     returns (address FundAddress)
     {
-        require(_checkLength(_tokenAddresses, _weights));
         FundAddress = new FundTemplate(_symbol,_name,_decimals);
 
         //FundTemplate
         FundTemplate  _newFund;
         _newFund = FundTemplate(FundAddress);
-        require(_newFund.createFundDetails(fundLength,_name,  _description, _category, _tokenAddresses, _weights, _withdrawCycle));
+
+
+        require(_newFund.createFundDetails(
+          fundLength,
+          _name,
+          _description,
+          _category,
+          _withdrawFeeCycle,
+          _withdrawFundCycle)
+        );
         require(_newFund.lockFund(_lockTime));
         fundOwner[fundLength] = tx.origin;
         fundIndex[fundLength] = FundAddress;
@@ -85,6 +93,7 @@ contract TokenizationProvider {
         fundLength += 1;
         address coreAddress = permissionProvider.queryCore();
         require(CoreInterface(coreAddress).addTokenization(FundAddress,0));
+        require(_newFund.setCore(coreAddress)); // TODO get core from Permission provider
 
         require(_newFund.setPermissionProvider(_permissionProviderAddress));
         require(_newFund.setPriceProvider(_priceProvider));
@@ -92,31 +101,11 @@ contract TokenizationProvider {
 
         return FundAddress;
     }
-
+    event LogS( string text);
+    event LogA( address Address, string text);
+    event LogN( uint value, string text);
     //Get
-    function getFundDetails(uint _fundId) public view returns(
-        address _owner,
-        string _name,
-        string _symbol,
-        uint _totalSupply,
-        string _description,
-        string _category,
-        address[]  _tokenAddresses,
-        uint[]  _weights
-    ){
-        FundTemplate  _newFund;
-        _newFund = FundTemplate(fundIndex[_fundId]);
-        (       ,
-            _name,
-            _symbol,
-            _totalSupply,
-            _description,
-            _category,
-            _tokenAddresses,
-            _weights
-        )  = _newFund.getFundDetails();
-        _owner = fundOwner[_fundId];
-    }
+
 
 
     function setPermissionProvider(address _permissionAddress) public onlyCore() returns(bool success) {

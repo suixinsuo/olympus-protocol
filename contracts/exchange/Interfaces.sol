@@ -46,7 +46,7 @@ interface IExchangeAdapter{
     /// <0 : support but doesn't know rate
     function getRate(bytes32 exchangeId, ERC20 token, uint amount) external view returns (int);
     function getRateToSell(bytes32 exchangeId, ERC20 token, uint amount) external view returns (int);
-    
+
     function isEnabled(bytes32 _id) external view returns (bool);
 
     function getExchange(bytes32 _id) external view returns(bytes32 name, ExchangeAdapterBase.Status status);
