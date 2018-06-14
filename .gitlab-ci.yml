@@ -20,7 +20,7 @@ stages:
 coverage:
   stage: coverage
   only:
-    - develop
+    - production
   tags: [aireach]
   script:
     - npm run coverage
