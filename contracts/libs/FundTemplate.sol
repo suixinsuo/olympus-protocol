@@ -6,8 +6,11 @@ import "../price/PriceProviderInterface.sol";
 import "../libs/ERC20.sol";
 import "./CoreInterface.sol";
 
+//  import "../libs/Reimbursable.sol"; TODO Uncomment when split the code
 
-contract FundTemplate {
+contract FundTemplate
+//  is  Reimbursable ; TODO Uncomment when split the code
+{
 
     using SafeMath for uint256;
 
@@ -17,13 +20,12 @@ contract FundTemplate {
     PriceProviderInterface internal priceProvider;
     // Risk Provider
     RiskManagementProviderInterface internal riskProvider;
-    //ERC20
-    ERC20 internal erc20Token;
     // CORE
     CoreInterface core;
 
     //enum
     enum FundStatus { Pause, Close , Active }
+    address constant ETH_ADDRESS = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
     uint public constant DENOMINATOR = 10000;
     uint public  maxWithdrawTransfers = 5;
@@ -59,6 +61,7 @@ contract FundTemplate {
         uint totalWithdrawAmount;
         uint lockHours; // Between fund withdraws
         uint withdrawTimer;
+        bool withdrawRequestLock;
     }
 
     struct InvestLog{
@@ -130,9 +133,10 @@ contract FundTemplate {
         assert(msg.data.length == size + 4);
         _;
     }
-  // Same as modifier but called from the code
-   function isFundOwner() public view returns (bool success) {
-        return tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0;
+
+    // Same as modifier but called from the code
+    function isFundOwner() public view returns (bool success) {
+          return tx.origin == _FUNDExtend.owner && _FUNDExtend.owner != 0x0;
     }
 
     // -------------------------- ERC20 STANDARD --------------------------
@@ -148,8 +152,7 @@ contract FundTemplate {
         _FUNDExtend.limit = false;
         _FUNDExtend.createTime = now;
         olympusFee = 0;
-        // Withdraw structs
-        _Withdraw.totalWithdrawAmount = 0;
+        tokenIsBroken[address(0)] = true;
     }
 
     function balanceOf(address _owner) view public returns (uint256) {
@@ -313,6 +316,8 @@ contract FundTemplate {
         uint _realShare;
         uint _sharePrice;
         uint _fundPrice;
+
+
         require(_FUND.status == FundStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH" );
         (_realBalance,_fee) = calculateFee(msg.value);
@@ -360,15 +365,18 @@ contract FundTemplate {
     function getPrice() public view returns(uint _price, uint _totalTokensValue){
         uint _expectedRate;
         _totalTokensValue = 0;
-
+        ERC20 erc20Token;
         if(totalSupply == 0){return(10**18,0);} // 1 Eth
 
         for (uint16 i = 0; i < _FUND.tokenAddresses.length; i++) {
+            if(tokenIsBroken[_FUND.tokenAddresses[i]]) { continue; }
+
             erc20Token = ERC20(_FUND.tokenAddresses[i]);
 
             uint _balance = erc20Token.balanceOf(address(this));
             uint _decimal = erc20Token.decimals();
             if(_balance == 0){continue;}
+
             (_expectedRate, ) = priceProvider.getRates(_FUND.tokenAddresses[i], 10**_decimal);
             if(_expectedRate == 0){continue;}
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
@@ -400,6 +408,7 @@ contract FundTemplate {
     }
 
     function withdrawRequest(uint256 amount) public returns (uint) {
+        require(_Withdraw.withdrawRequestLock == false); // Cant request while withdrawing
         require(totalSupply >= _Withdraw.totalWithdrawAmount + amount, "Not withdraw more than allowed quantity" );
         require(balances[msg.sender] >= amount + _Withdraw.amountPerUser[msg.sender]);
         // Add user to the list of requesters
@@ -412,21 +421,27 @@ contract FundTemplate {
     }
 
     function withdraw() public returns(bool) {
+        // startGasCalculation(); ; TODO Uncomment when split the code
+        _Withdraw.withdrawRequestLock = true;
+
         require(_Withdraw.withdrawTimer <= now);
         require(core != address(0));
         if(_Withdraw.userRequests.length == 0) {return true;}
         // Initial values must stay constant through all the widthdraw
         uint _fundTokenPrice;
         uint _totalTokensValue;
-        uint[] memory _initialTokensBalance;
-        _Withdraw.withdrawTimer = _Withdraw.lockHours * 3600 + now;
-        uint _initialEthBalance = address(this).balance;
-        uint _initialTotalToWithdraw =   _Withdraw.totalWithdrawAmount;
-        (_fundTokenPrice, _totalTokensValue) = getPrice();
-        _initialTokensBalance = getTokensBalance();
 
-        // User request 1000 fund to be return from 5000 supply (20%) total value 2 ETH
-        // The loop will handle maxWithdrawTransfers , after complete element of the investors array becomes 0x00
+        _Withdraw.withdrawTimer = _Withdraw.lockHours * 3600 + now;
+
+        (_fundTokenPrice, _totalTokensValue) = getPrice();
+         uint _totalETHToReturn = ( _Withdraw.totalWithdrawAmount  * _fundTokenPrice) / 10 ** decimals;
+        // Sell enough to fulfill expectation
+         if(_totalETHToReturn >  address(this).balance) {
+            uint _tokenPercentToSell = (( _totalETHToReturn - address(this).balance) * DENOMINATOR) / _totalTokensValue;
+            getETHFromTokens( _tokenPercentToSell);
+        }
+
+        //  // The loop will handle maxWithdrawTransfers , after complete element of the investors array becomes 0x00
         uint _transfersCounter = 0;
         for (uint8 _investorIndex = 0; _transfersCounter < maxWithdrawTransfers && _investorIndex < _Withdraw.userRequests.length;
           _investorIndex++) {
@@ -441,28 +456,10 @@ contract FundTemplate {
                 continue;
             }
             uint _ethToReturn = (_fundWithdrawAmount * _fundTokenPrice) / 10 ** decimals;
-            // _fundWithdrawAmount = 1000;  _ethToReturn = 0.4 ETH (20%)
+            // require(!riskProvider.hasRisk(address(this),_investor, ETH_ADDRESS, _ethToReturn,1));
+            _investor.transfer(_ethToReturn);
+            emit Withdrawed(_investor,_fundWithdrawAmount,_fundTokenPrice,  _ethToReturn);
 
-            // How much of the total request belongs to this user.
-            // In this case is the only request, so 100% belongs to him
-            uint _directEthReturn = (
-                ( _fundWithdrawAmount * DENOMINATOR / _initialTotalToWithdraw) *  _initialEthBalance)/ DENOMINATOR;
-
-            // Do we have in the reserve enough to pay him?
-            if(_directEthReturn >= _ethToReturn  ) {
-                // If in the deposit we have more than 0.4 ETH, return to him
-                _investor.transfer(_ethToReturn);
-                emit Withdrawed(_investor,_fundWithdrawAmount,_fundTokenPrice,  _ethToReturn, 0);
-            } else {
-                // In de deposit we have 0.2, we deliver to him this quantity.
-                _investor.transfer(_directEthReturn);
-                // Other 0.2, return from tokens. 0.2 represents 10% of the fund value in tokens (no the ETH balance)
-                uint _tokenPercentToReturn = (( _ethToReturn - _directEthReturn) * DENOMINATOR) / _totalTokensValue;
-                 // Send ETH from Tokens can exchange, or direct amount the ones which cant
-                sendETHFromTokens(_investor, _tokenPercentToReturn, _totalTokensValue,_initialTokensBalance);
-                sendBrokenTokensToInvestor(_investor, _tokenPercentToReturn, _totalTokensValue,_initialTokensBalance);
-                emit Withdrawed(_investor,_fundWithdrawAmount,_fundTokenPrice, _directEthReturn,  _ethToReturn - _directEthReturn);
-            }
              // Reset the data
             _Withdraw.amountPerUser[_investor] = 0;
             _Withdraw.totalWithdrawAmount -= _fundWithdrawAmount;
@@ -470,23 +467,26 @@ contract FundTemplate {
             delete _Withdraw.userRequests[_investorIndex];
             _transfersCounter++;
         }
-
+        // reimburse(); ; TODO Uncomment when split the code
+        if(_Withdraw.totalWithdrawAmount == 0) {
+            _Withdraw.withdrawRequestLock = false;
+        }
         return  _Withdraw.totalWithdrawAmount == 0; // If 0 are done, is because all had been already delivered
     }
 
-    function getTokensBalance() public view returns(uint[] memory) {
-        uint[] memory _balance = new uint[]( _FUND.tokenAddresses.length);
-        for (uint8 _tokenIndex = 0; _tokenIndex < _FUND.tokenAddresses.length; _tokenIndex++) {
-            _balance[_tokenIndex] = ERC20(_FUND.tokenAddresses[_tokenIndex]).balanceOf(address(this));
+    function getTokensBalance(address[] _tokens) public view returns(uint[] memory) {
+        uint[] memory _balance = new uint[]( _tokens.length);
+        for (uint8 _tokenIndex = 0; _tokenIndex < _tokens.length; _tokenIndex++) {
+            _balance[_tokenIndex] = ERC20(_tokens[_tokenIndex]).balanceOf(address(this));
         }
         return _balance;
     }
 
-    function tokensNotBroken() public returns( address[] memory) {
+    function tokensNotBroken() public view returns( address[] memory) {
       // First check the length
         uint8 length = 0;
         for (uint8 i = 0; i < _FUND.tokenAddresses.length; i++) {
-            if(!tokenIsBroken[_FUND.tokenAddresses[i]]) {
+             if(!tokenIsBroken[_FUND.tokenAddresses[i]]) {
                 length++;
             }
         }
@@ -503,42 +503,23 @@ contract FundTemplate {
         return tokens;
     }
 
-    function sendETHFromTokens(address _investor, uint _tokenPercentage, uint _totalTokensValue , uint[] _initialBalance ) internal {
+    function getETHFromTokens(uint _tokenPercentage ) internal {
         address[] memory activeTokens = tokensNotBroken();
-        ERC20[] memory _tokensToBuy = new ERC20[]( activeTokens.length);
+        ERC20[] memory _tokensToSell = new ERC20[]( activeTokens.length);
         uint[] memory _amounts = new uint[](  activeTokens.length);
         uint[] memory _sellRates = new uint[]( activeTokens.length);
 
         for (uint8 _tokenIndex = 0; _tokenIndex < activeTokens.length; _tokenIndex++) {
-            _tokensToBuy[_tokenIndex] = ERC20(activeTokens[_tokenIndex]);
+            _tokensToSell[_tokenIndex] = ERC20(activeTokens[_tokenIndex]);
 
-            if(_initialBalance[_tokenIndex] == 0) {continue;}
-
-            ( _sellRates[_tokenIndex], ) = priceProvider.getSellRates(activeTokens[_tokenIndex], 10 ** _tokensToBuy[_tokenIndex].decimals());
-            _amounts[_tokenIndex] = (_tokenPercentage *  _initialBalance[_tokenIndex] )/DENOMINATOR;
-            _tokensToBuy[_tokenIndex].approve(address(core),  _amounts[_tokenIndex]);
-
+            ( _sellRates[_tokenIndex], ) = priceProvider.getSellRates(activeTokens[_tokenIndex], 10 ** _tokensToSell[_tokenIndex].decimals());
+            _amounts[_tokenIndex] = (_tokenPercentage *  _tokensToSell[_tokenIndex].balanceOf(this) )/DENOMINATOR;
+            _tokensToSell[_tokenIndex].approve(address(core),  _amounts[_tokenIndex]);
 
         }
-       require(core.sellToken("", _tokensToBuy, _amounts, _sellRates, _investor));
+        require(core.sellToken("", _tokensToSell, _amounts, _sellRates, address(this)));
     }
 
-    function sendBrokenTokensToInvestor(address _investor, uint _tokenPercentage, uint _totalTokensValue , uint[] _initialBalance ) internal {
-        ERC20 _erc20;
-        uint _amount;
-
-        for (uint8 _tokenIndex = 0; _tokenIndex < _FUND.tokenAddresses.length; _tokenIndex++) {
-            if(!tokenIsBroken[_FUND.tokenAddresses[_tokenIndex]]) {continue;}
-
-            _erc20 = ERC20(_FUND.tokenAddresses[_tokenIndex]);
-
-            if(_initialBalance[_tokenIndex] == 0) {continue;}
-
-            _amount = (_tokenPercentage * _initialBalance[_tokenIndex])/DENOMINATOR;
-            _erc20.transfer(_investor,  _amount);
-        }
-
-    }
 
     // -------------------------- FEES --------------------------
     function getPendingManagmentFee() onlyFundOwner public view returns(uint) {
@@ -555,6 +536,9 @@ contract FundTemplate {
         _FUND.withdrawFeeCycle = withdrawTime * 3600 + now;
 
         uint olympusAmount = pendingOwnerFee * olympusFee / DENOMINATOR;
+        // require(!riskProvider.hasRisk(address(this), _FUNDExtend.owner, ETH_ADDRESS, pendingOwnerFee - olympusAmount, 1));
+        // require(!riskProvider.hasRisk(address(this), OLYMPUS_WALLET, ETH_ADDRESS, olympusAmount, 1));
+
         _FUNDExtend.owner.transfer(pendingOwnerFee-olympusAmount);
         OLYMPUS_WALLET.transfer(olympusAmount);
         withdrawedFee += (pendingOwnerFee - olympusAmount);
@@ -630,7 +614,8 @@ contract FundTemplate {
         uint256 _value
     );
 
-    event Withdrawed(address indexed _investor, uint256 fundWithdrawed, uint256 fundPrice, uint256 _amountETH, uint256 _amountInTokens);
+    event Withdrawed(address indexed _investor, uint256 fundWithdrawed, uint256 fundPrice, uint256 _amountETH);
+    event WithdrawedTokens(address indexed _investor, address token, uint256 units);
 
     event LogS( string text);
     event LogA( address Address, string text);
