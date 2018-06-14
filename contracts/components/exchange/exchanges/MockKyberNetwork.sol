@@ -1,9 +1,9 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.24;
 
-import "../../libs/utils.sol";
-import "../../libs/SimpleERC20Token.sol";
+import "../../../libs/utils.sol";
+import "../../../libs/SimpleERC20Token.sol";
 
-import "../../libs/ERC20.sol";
+import "../../../libs/ERC20.sol";
 
 contract MockKyberNetwork {
 

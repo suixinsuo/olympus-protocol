@@ -1,8 +1,7 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.24;
 
 import "../ExchangeAdapterBase.sol";
-import "../../libs/ERC20.sol";
-import "../ExchangePermissions.sol";
+import "../../../libs/ERC20.sol";
 
 contract KyberNetwork {
 
@@ -20,37 +19,44 @@ contract KyberNetwork {
         external payable returns(uint);
 }
 
-contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
+contract KyberNetworkExchange is ExchangeAdapterBase {
 
     KyberNetwork kyber;
-    bytes32 name;
     bytes32 exchangeId;
+    bytes32 name;
     ERC20 constant ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
-    uint orderId = 0;
     address walletId = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
 
     struct Order{
-        OrderStatus status;
         uint amount;
         uint destCompletedAmount;
     }
 
-    Status public status;
+    bool public adapterEnabled;
 
-    mapping (uint=>Order) orders;
-
-    event PlacedOrder(uint orderId);
-
-    constructor (KyberNetwork _kyber, address _manager,address _exchange, address _permission) public
-    ExchangePermissions(_permission)
-    ExchangeAdapterBase(_manager, _exchange)
-    {
+    constructor (KyberNetwork _kyber) public {
         require(address(_kyber) != 0x0);
         kyber = _kyber;
-        status = Status.ENABLED;
+        adapterEnabled = true;
     }
 
-    function configKyberNetwork(KyberNetwork _kyber,address _walletId ) public onlyExchangeOwner {
+    function setExchangeDetails(bytes32 _id, bytes32 _name)
+    public /* TODO modifier */returns(bool)
+    {
+        exchangeId = _id;
+        name = _name;
+        return true;
+    }
+
+
+    function getExchange(bytes32 /*_id*/)
+    public view returns(bytes32, bool)
+    {
+        return (name, adapterEnabled);
+    }
+
+
+    function configKyberNetwork(KyberNetwork _kyber,address _walletId) public /* TODO modifier */ {
         if(address(_kyber) != 0x0){
             kyber = _kyber;
         }
@@ -59,32 +65,18 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         }
     }
 
-    function addExchange(bytes32 _id, bytes32 _name)
-    public onlyAdaptersManager returns(bool)
-    {
-        exchangeId = _id;
-        name = _name;
+    function enable(bytes32 /*_id*/) public /* TODO modifier */ returns(bool){
+        adapterEnabled = true;
         return true;
     }
 
-    function getExchange(bytes32 /*_id*/)
-    public view returns(bytes32, Status)
-    {
-        return (name, status);
-    }
-
-    function enable(bytes32 /*_id*/) public onlyExchangeOwner returns(bool){
-        status = Status.ENABLED;
-        return true;
-    }
-
-    function disable(bytes32 /*_id*/) public onlyExchangeOwner returns(bool){
-        status = Status.DISABLED;
+    function disable(bytes32 /*_id*/) public /* TODO modifier */ returns(bool){
+        adapterEnabled = false;
         return true;
     }
 
     function isEnabled(bytes32 /*_id*/) external view returns (bool success) {
-        return status == Status.ENABLED;
+        return adapterEnabled;
     }
     //buy rate
     function getRate(bytes32 /*id*/, ERC20 token, uint amount) external view returns(int){
@@ -150,7 +142,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         // if (address(this).balance < amount) {
         //     return false;
         // }
- 
+
         dest.approve(address(kyber), amount);
 
         uint expectedRate;
@@ -176,103 +168,17 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
         uint afterTokenBalance = dest.balanceOf(this);
         assert(afterTokenBalance < beforeTokenBalance);
-        
+
         uint actualAmount = beforeTokenBalance - afterTokenBalance;
         require(actualAmount == amount);
 
 
         return true;
     }
-    function placeOrder(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
-    external payable returns(uint adapterOrderId)
-    {
 
-        if (address(this).balance < amount) {
-            return 0;
-        }
+    function() public /* TODO modifier */ payable { }
 
-        uint expectedRate;
-        uint slippageRate;
-
-        (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, dest, amount);
-        if(slippageRate < rate){
-            return 0;
-        }
-
-        uint beforeTokenBalance = dest.balanceOf(this);
-
-        /*uint actualAmount = kyber.trade.value(amount)(*/
-        kyber.trade.value(amount)(
-            ETH_TOKEN_ADDRESS,
-            amount,
-            dest,
-            this,
-            2**256 - 1,
-            slippageRate,
-            walletId);
-            
-        uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
-
-        uint afterTokenBalance = dest.balanceOf(this);
-        assert(afterTokenBalance > beforeTokenBalance);
-
-        uint actualAmount = afterTokenBalance - beforeTokenBalance;
-        require(actualAmount >= expectAmount);
-
-        /**
-        // Kyber Bug in Kovan that actualAmount returns always zero
-        */
-
-        if(!dest.approve(deposit, actualAmount)){
-            return 0;
-        }
-        orders[++orderId] = Order({
-            status:OrderStatus.Approved,
-            amount:amount,
-            destCompletedAmount:actualAmount
-        });
-
-        emit PlacedOrder(orderId);
-        return orderId;
-    }
-
-    function payOrder(uint adapterOrderId) external payable returns(bool){
-        Order memory o = orders[adapterOrderId];
-        if(o.status != OrderStatus.Approved){
-            revert();
-        }
-        if(o.amount != msg.value){
-            revert();
-        }
-        orders[adapterOrderId].status = OrderStatus.Completed;
-        return true;
-    }
-
-    function cancelOrder(uint adapterOrderId) external onlyExchangeOwner returns(bool){
-        Order memory o = orders[adapterOrderId];
-        require(o.amount > 0);
-
-        if(o.status != OrderStatus.Pending){
-            return false;
-        }
-
-        orders[adapterOrderId].status = OrderStatus.Cancelled;
-        return true;
-    }
-
-    function getOrderStatus(uint adapterOrderId) external view returns(OrderStatus){
-
-        return orders[adapterOrderId].status;
-    }
-
-    function getDestCompletedAmount(uint adapterOrderId) external view returns(uint){
-
-        return orders[adapterOrderId].destCompletedAmount;
-    }
-
-    function() public onlyExchangeOwner payable { }
-
-    function withdraw(uint amount) public onlyExchangeOwner {
+    function withdraw(uint amount) public /* TODO modifier */ {
 
         require(amount <= address(this).balance);
 
