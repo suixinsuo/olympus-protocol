@@ -165,7 +165,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase {
         assert(afterTokenBalance < beforeTokenBalance);
 
         uint actualAmount = beforeTokenBalance - afterTokenBalance;
-        // require(actualAmount == amount);
+        require(actualAmount == amount);
 
 
         return true;
