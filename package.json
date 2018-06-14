@@ -13,7 +13,8 @@
     "deploytestnet": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network kovan' ",
     "linting": "#solhint 'contracts/**/*.sol'",
     "coverage": "./node_modules/.bin/solidity-coverage",
-    "version": "truffle version"
+    "version": "truffle version",
+    "build-contracts": "sol-merger \"./contracts/*.sol\" ./build"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "sol-merger": "^0.1.2",
     "ganache-cli": "^6.1.2",
     "run-with-testrpc": "^0.3.0",
     "solhint": "^1.2.1",
