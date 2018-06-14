@@ -4,5 +4,5 @@ import "./interfaces/DerivativeInterface.sol";
 
 
 contract Derivative is DerivativeInterface {
-    
+    //
 }
