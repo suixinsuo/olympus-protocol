@@ -24,7 +24,7 @@ contract PriceProvider {
     address[] internal _TOKEN;
     mapping(address =>address[]) internal _Provider;
 
-    address constant eth_token = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+    address constant eth_token = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     DecentralizationExchanges _kyber ;
     mapping(address =>mapping(address=>uint)) internal Price;
 
@@ -34,7 +34,7 @@ contract PriceProvider {
     event TokenUpdate(address[] oldToken,address[] newToken);
     event ProviderUpdate(address Tokenaddress,address[] oldProviders,address[] newProviders);
     event DefaultProviderUpdate(address _tokenaddress,address OldDefaultProvider,address NewDefaultProvider);
-    event _GetPrice(address _provider,address token,uint price);
+    event GetPrice(address _provider,address token,uint price);
     event ChangeWeight(bytes32 exchnage,uint weight);
     event SetKyber(address _KYBER);
 
@@ -47,11 +47,11 @@ contract PriceProvider {
 
     PermissionProviderInterface internal permissionProvider;
 
-    function PriceProvider (address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
-    function setKyber(address kyber) public onlyOwner() returns(bool success){
+    function setKyber(address kyber) public onlyOwner() {
         require(kyber != address(0));
         _kyber = DecentralizationExchanges(kyber);
         emit SetKyber(kyber);
@@ -69,7 +69,7 @@ contract PriceProvider {
 
         for(uint i = 0; i < _exchanges.length; i++){
             require(ExchangeList[_exchanges[i]]);
-            bytes32 _data = keccak256(msg.sender,_tokenAddress,_exchanges[i]);
+            bytes32 _data = keccak256(abi.encodePacked(msg.sender,_tokenAddress,_exchanges[i]));
             priceData.insert(_data, _prices[i]);
             emit UpdatePrice(_tokenAddress,_exchanges[i],_prices[i]);
         }
@@ -84,13 +84,11 @@ contract PriceProvider {
 
     function getNewDefaultPrice(address _tokenAddress) public view returns(uint){
         uint _defaultprice = Price[_Provider[_tokenAddress][0]][_tokenAddress];
-        emit _GetPrice(_Provider[_tokenAddress][0],_tokenAddress, _defaultprice);
         return _defaultprice;
     }
 
-    function getNewCustomPrice(address _provider,address _tokenAddress) public view returns(uint){
+    function getNewCustomPrice(address _provider, address _tokenAddress) public view returns(uint){
         uint _customprice = Price[_provider][_tokenAddress];
-        emit _GetPrice(_provider,_tokenAddress, _customprice);
         return _customprice;
     }
 
@@ -147,17 +145,24 @@ contract PriceProvider {
         return(expectedRate,slippageRate);
     }
 
+    function getSellRates(address _src, uint _srcQty) public view returns (uint expectedRate, uint slippageRate){
+        (expectedRate,slippageRate ) = _kyber.getExpectedRate(_src, eth_token, _srcQty);
+        return(expectedRate,slippageRate);
+    }
+
     function changeDefaultProviders(address _newProvider,address _tokenAddress) public onlyOwner returns(bool success) {
         emit DefaultProviderUpdate(_tokenAddress,_Provider[_tokenAddress][0],_newProvider);
         _Provider[_tokenAddress][0] = _newProvider;
         return true;
     }
 
-    function PriceWeight(uint[] _prices) internal returns(uint _price){
+    function PriceWeight(uint[] _prices) internal pure returns(uint _price){
         return _prices[0];
     }
 
-    function NewPriceWeight(address _providerAddress, address _tokenAddress, bytes32[] _Exchange,uint[] _prices) internal returns(uint _price){
+    function NewPriceWeight(address/* _providerAddress*/, address /*_tokenAddress*/, bytes32[] /*_Exchange*/,uint[] _prices) 
+        internal pure 
+    returns(uint _price){
         return _prices[0];
     }
 

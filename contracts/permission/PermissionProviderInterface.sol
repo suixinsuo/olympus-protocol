@@ -14,6 +14,8 @@ contract PermissionProviderInterface is Provider, RBAC {
     string public constant ROLE_EXCHANGE_ADAPTER_OWNER = "ExchangeAdapterOwner";
     string public constant ROLE_STORAGE_OWNER = "StorageOwner";
     string public constant ROLE_WHITELIST_OWNER = "WhitelistOwner";
+    string public constant ROLE_RISK_OWNER = "RiskManagementOwner";
+    string public constant ROLE_FUND = "FundWhitelist";
 
     modifier onlyAdmin()
     {
@@ -21,9 +23,36 @@ contract PermissionProviderInterface is Provider, RBAC {
         _;
     }
 
-    function changeAdmin(address _newAdmin) onlyAdmin public returns (bool success);
-    function adminAdd(address _addr, string _roleName) onlyAdmin public;
-    function adminRemove(address _addr, string _roleName) onlyAdmin public;
+    /**
+    * @dev add a role to an address
+    * @param addr address
+    * @param roleName the name of the role
+    */
+    function adminAddRole(address addr, string roleName)
+        onlyAdmin
+        public
+    {
+        addRole(addr, roleName);
+    }
+
+    /**
+    * @dev remove a role from an address
+    * @param addr address
+    * @param roleName the name of the role
+    */
+    function adminRemoveRole(address addr, string roleName)
+        onlyAdmin
+        public
+    {
+        removeRole(addr, roleName);
+    }    
+
+    function changeAdmin(address _newAdmin) public returns (bool success);
+    function adminAdd(address _addr, string _roleName) public;
+    function adminRemove(address _addr, string _roleName) public;
 
     function has(address _addr, string _roleName) public view returns(bool success);
+    function queryCore() public view returns(address core);
+    function setCore(address _addr) public;
+
 }

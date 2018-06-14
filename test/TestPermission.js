@@ -1,5 +1,5 @@
 'use strict'
-const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider.sol");
+const PermissionProvider = artifacts.require("../contracts/permission/PermissionProvider");
 // const Web3 = require('web3');
 // const web3 = new Web3();
 const _ = require('lodash');
@@ -22,7 +22,7 @@ contract('Olympus-Protocol-permission', (accounts) => {
     return Promise.all([
       PermissionProvider.deployed(),
     ]).spread((/*permission*/ core) => {
-      assert.ok(core, 'Psermission contract is not deployed.');
+      assert.ok(core, 'Permission contract is not deployed.');
     });
   });
 

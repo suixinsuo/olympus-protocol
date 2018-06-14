@@ -1,10 +1,15 @@
-var Core = artifacts.require("./OlympusLabsCore.sol");
-var StrategyProvider = artifacts.require("./strategy/StrategyProvider.sol");
-var PermissionProvider = artifacts.require("./permission/PermissionProvider.sol");
-var PriceProvider = artifacts.require("./price/PriceProvider.sol");
-var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended.sol");
-var OlympusStorage = artifacts.require("./storage/OlympusStorage.sol");
-var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider.sol");
+var Core = artifacts.require("./OlympusLabsCore");
+var RebalanceMock = artifacts.require("./rebalance/RebalanceMock");
+var StrategyProvider = artifacts.require("./strategy/StrategyProvider");
+var StrategyProvider = artifacts.require("./strategy/StrategyProvider");
+var PermissionProvider = artifacts.require("./permission/PermissionProvider");
+var PriceProvider = artifacts.require("./price/PriceProvider");
+var ExtendedStorage = artifacts.require("./storage/OlympusStorageExtended");
+var OlympusStorage = artifacts.require("./storage/OlympusStorage");
+var TokenizationProvider = artifacts.require("./Tokenization/TokenizationProvider");
+var WhitelistProvider = artifacts.require("./whitelist/WhitelistProvider");
+var RiskManagement = artifacts.require("./riskManagement/RiskManagementProvider");
+var FundTemplate = artifacts.require("./libs/FundTemplate");
 
 const KyberConfig = require('../scripts/libs/kyber_config');
 var KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
@@ -13,7 +18,10 @@ var ExchangeProvider = artifacts.require("ExchangeProvider");
 var ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
 var MockKyberNetwork = artifacts.require("MockKyberNetwork");
 var SimpleERC20Token = artifacts.require("SimpleERC20Token");
-var CentralizedExchange = artifacts.require("CentralizedExchange.sol");
+var CentralizedExchange = artifacts.require("CentralizedExchange");
+var FundTemplate = artifacts.require("../contracts/libs/FundTemplate");
+var TestReimbursable = artifacts.require("../contracts/test/TestReimbursable");
+
 const args = require('../scripts/libs/args')
 
 function deployOnDev(deployer, num) {
@@ -29,6 +37,10 @@ function deployOnDev(deployer, num) {
     return deployer.deploy(CentralizedExchange, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(FundTemplate, 'test_symbol', 'test_name', 18);
+  }).then(() => {
+    return deployer.deploy(TestReimbursable);
   })
 }
 
@@ -104,6 +116,8 @@ module.exports = function (deployer, network) {
 
   return deployer.then(() => {
     return deployer.deploy(PermissionProvider);
+  }).then(() => {
+    return deployer.deploy(RebalanceMock);
   }).then((err, result) => {
     return deployer.deploy(Core, PermissionProvider.address);
   }).then(() => {
@@ -114,6 +128,10 @@ module.exports = function (deployer, network) {
     return deployer.deploy(ExtendedStorage, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(OlympusStorage, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(TokenizationProvider, PermissionProvider.address);
+  }).then(() => {
+    return deployer.deploy(RiskManagement, PermissionProvider.address);
   }).then(() => {
     return deployExchangeProviderWrap(deployer, network);
   })
@@ -139,6 +157,8 @@ function deployOnKovan(deployer, num) {
   }).then(() => {
     return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
   }).then(() => {
+    return deployer.deploy(RiskManagement, PermissionProvider.address);
+  }).then(() => {
     kyberNetworkAddress = '0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50';
     return deployer.deploy(KyberNetworkExchange, kyberNetworkAddress, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
   }).then(async () => {
@@ -154,6 +174,7 @@ function deployOnKovan(deployer, num) {
     let kyberExchangeInstance = await KyberNetworkExchange.deployed();
     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
     let exchangeProvider = await ExchangeProvider.deployed();
+    let riskManagement = await RiskManagement.deployed();
 
     console.info(`Adding kyberExchange ${kyberExchangeInstance.address}`);
     await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);

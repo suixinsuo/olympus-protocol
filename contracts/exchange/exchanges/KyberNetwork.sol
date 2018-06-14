@@ -41,7 +41,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
     event PlacedOrder(uint orderId);
 
-    function KyberNetworkExchange(KyberNetwork _kyber, address _manager,address _exchange, address _permission) public
+    constructor (KyberNetwork _kyber, address _manager,address _exchange, address _permission) public
     ExchangePermissions(_permission)
     ExchangeAdapterBase(_manager, _exchange)
     {
@@ -86,14 +86,100 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
     function isEnabled(bytes32 /*_id*/) external view returns (bool success) {
         return status == Status.ENABLED;
     }
-
+    //buy rate
     function getRate(bytes32 /*id*/, ERC20 token, uint amount) external view returns(int){
         uint expectedRate;
         uint slippageRate;
         (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, token, amount);
         return int(slippageRate);
     }
+    //sell rate
+    function getRateToSell(bytes32 /*id*/, ERC20 token, uint amount) external view returns(int){
+        uint expectedRate;
+        uint slippageRate;
+        (expectedRate, slippageRate) = kyber.getExpectedRate(token, ETH_TOKEN_ADDRESS, amount);
+        return int(slippageRate);
+    }
+    function placeOrderQuicklyToBuy(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
+    external payable returns(bool)
+    {
+        if (address(this).balance < amount) {
+            return false;
+        }
+        require(msg.value == amount);
+        uint expectedRate;
+        uint slippageRate;
 
+        (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, dest, amount);
+        if(slippageRate < rate){
+            return false;
+        }
+
+        uint beforeTokenBalance = dest.balanceOf(deposit);
+        slippageRate = rate;
+        /*uint actualAmount = kyber.trade.value(amount)(*/
+        kyber.trade.value(msg.value)(
+            ETH_TOKEN_ADDRESS,
+            amount,
+            dest,
+            deposit,
+            2**256 - 1,
+            slippageRate,
+            walletId);
+        uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
+
+        uint afterTokenBalance = dest.balanceOf(deposit);
+        assert(afterTokenBalance > beforeTokenBalance);
+
+        uint actualAmount = afterTokenBalance - beforeTokenBalance;
+        require(actualAmount >= expectAmount);
+
+        /**
+        // Kyber Bug in Kovan that actualAmount returns always zero
+        */
+
+        if(!dest.approve(deposit, actualAmount)){
+            return false;
+        }
+        return true;
+    }
+    function placeOrderQuicklyToSell(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
+    external returns(bool)
+    {
+        dest.approve(address(kyber), amount);
+
+        uint expectedRate;
+        uint slippageRate;
+        (expectedRate, slippageRate) = kyber.getExpectedRate(dest, ETH_TOKEN_ADDRESS, amount);
+
+        if(slippageRate < rate){
+            return false;
+        }
+        slippageRate = rate;
+        uint beforeTokenBalance = dest.balanceOf(this);
+        /*uint actualAmount = kyber.trade.value(amount)(*/
+        kyber.trade(
+            dest,
+            amount,
+            ETH_TOKEN_ADDRESS,
+            deposit,
+            2**256 - 1,
+            slippageRate,
+            walletId);
+
+        // uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
+
+        uint afterTokenBalance = dest.balanceOf(this);
+          LogN(afterTokenBalance,'After trading rate');
+
+        // require(afterTokenBalance < beforeTokenBalance);
+
+        uint actualAmount = beforeTokenBalance - afterTokenBalance;
+        // require(actualAmount == amount);
+
+
+        return true;
+    }
     function placeOrder(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
     external payable returns(uint adapterOrderId)
     {
@@ -121,6 +207,7 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
             2**256 - 1,
             slippageRate,
             walletId);
+
         uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
         uint afterTokenBalance = dest.balanceOf(this);
@@ -192,4 +279,10 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         }
         msg.sender.transfer(sendAmount);
     }
+    event LogN( uint number, string text);
+
+    event LogA( address Address, string text);
+    event LogB( bytes32 Bytes, string text);
+    event LogS( string text);
+
 }

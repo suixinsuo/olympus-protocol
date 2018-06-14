@@ -10,8 +10,8 @@ import "./permission/PermissionProviderInterface.sol";
 import { StorageTypeDefinitions as STD, OlympusStorageInterface } from "./storage/OlympusStorage.sol";
 import { TypeDefinitions as TD } from "./libs/Provider.sol";
 import "./whitelist/WhitelistProviderInterface.sol";
-
-
+import "./Tokenization/TokenizationProvider.sol";
+import "./libs/FundTemplate.sol";
 contract OlympusLabsCore is Manageable {
     using SafeMath for uint256;
 
@@ -28,7 +28,8 @@ contract OlympusLabsCore is Manageable {
     PriceProviderInterface internal priceProvider = PriceProviderInterface(address(0x0));
     OlympusStorageInterface internal olympusStorage = OlympusStorageInterface(address(0x0));
     WhitelistProviderInterface internal whitelistProvider;
-    ERC20 private constant MOT = ERC20(address(0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a));
+    TokenizationProvider internal _Tokenization;
+    ERC20 private constant MOT = ERC20(address(0x41Dee9F481a1d2AA74a3f1d0958C1dB6107c686A));
     // TODO, update for mainnet: 0x263c618480DBe35C300D8d5EcDA19bbB986AcaeD
 
     uint public feePercentage = 100;
@@ -40,6 +41,10 @@ contract OlympusLabsCore is Manageable {
 
     modifier allowProviderOnly(TD.ProviderType _type) {
         require(msg.sender == subContracts[uint8(_type)]);
+        _;
+    }
+    modifier allowTokenizationOnly() {
+        require(msg.sender == address(_Tokenization));
         _;
     }
 
@@ -55,7 +60,7 @@ contract OlympusLabsCore is Manageable {
 
     PermissionProviderInterface internal permissionProvider;
 
-    function OlympusLabsCore(address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 
@@ -107,10 +112,7 @@ contract OlympusLabsCore is Manageable {
     }
 
     function getStrategyTokenPrice(uint strategyId, uint tokenIndex) public view returns (uint price) {
-        uint totalLength;
-
-        uint tokenLength = strategyProvider.getStrategyTokenCount(strategyId);
-        require(tokenIndex <= totalLength);
+        require(tokenIndex <= strategyProvider.getStrategyTokenCount(strategyId));
         address[] memory tokens;
         uint[] memory weights;
         (,,,,tokens,weights,,,) = strategyProvider.getStrategy(strategyId);
@@ -139,6 +141,9 @@ contract OlympusLabsCore is Manageable {
         } else if(_type == TD.ProviderType.Whitelist) {
             emit Log("WhitelistProvider");
             whitelistProvider = WhitelistProviderInterface(_providerAddress);
+        } else if(_type == TD.ProviderType.TokenizationProvider) {
+            emit Log("TokenizationProvider");
+            _Tokenization = TokenizationProvider(_providerAddress);
         } else {
             emit Log("Unknown provider type supplied.");
             revert();
@@ -206,8 +211,8 @@ contract OlympusLabsCore is Manageable {
                 revert();
             }
 
-            subOrderTemp[0][i] = amounts[2] * weights[i] / 100;
-            subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]);
+            subOrderTemp[0][i] = amounts[2] * weights[i] / 100; // Amount
+            subOrderTemp[1][i] = getPrice(tokens[i], subOrderTemp[0][i]); // Price
 
             emit LogAddress(tokens[i]);
             emit LogNumber(subOrderTemp[0][i]);
@@ -216,8 +221,7 @@ contract OlympusLabsCore is Manageable {
         }
 
         olympusStorage.addTokenDetails(
-            indexOrderId,
-            tokens, weights, subOrderTemp[0], subOrderTemp[1]
+            indexOrderId, tokens, weights, subOrderTemp[0], subOrderTemp[1]
         );
 
 
@@ -359,10 +363,53 @@ contract OlympusLabsCore is Manageable {
         require(ERC20(_tokenAddress).transfer(receiveAddress,_balance));
         return true;
     }
+
     function withdrawETH(address receiveAddress) public onlyOwner returns(bool success)
     {
         require(receiveAddress != 0x0);
-        receiveAddress.transfer(this.balance);
+        receiveAddress.transfer(address(this).balance);
         return true;
     }
+
+    function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public payable returns (bool success) {
+        uint sum = 0;
+        for (uint i = 0; i < amounts.length; i++) {
+            sum += amounts[i];
+        }
+        require(msg.value == sum);
+        require(exchangeProvider.buyToken.value(msg.value)(exchangeId, tokens, amounts, rates, deposit));
+        return true;
+    }
+
+    function sellToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) public returns (bool success) {
+        for (uint i = 0; i < tokens.length; i++) {
+            require(tokens[i].transferFrom(msg.sender, address(exchangeProvider), amounts[i]));
+        }
+        require(exchangeProvider.sellToken(exchangeId, tokens, amounts, rates, deposit));
+        return true;
+    }
+
+    function fundSellToken(bytes32 exchangeId, address fundAddress, ERC20[] tokens, uint[] amounts, uint[] rates) public returns (bool success) {
+        require(FundTemplate(fundAddress).sellToken(exchangeId, tokens, amounts, rates));
+        return true;
+    }
+
+    function fundBuyToken(
+        bytes32 exchangeId, address fundAddress, uint ethAmount,
+        ERC20[] tokens, uint[] amounts, uint[] rates) public payable returns (bool success) {
+
+        require(FundTemplate(fundAddress).isFundOwner());
+        require(FundTemplate(fundAddress).buyToken(exchangeId, ethAmount, tokens, amounts, rates));
+        require(FundTemplate(fundAddress).updateTokens(tokens));
+        return true;
+    }
+
+
+    function addTokenization(address token, uint8 tokenType) public allowTokenizationOnly returns (bool success) {
+        require(olympusStorage.addTokenization(token, tokenType));
+        return true;
+    }
+    event LogS( string text);
+    event LogA( address Address, string text);
+    event LogN( uint value, string text);
 }

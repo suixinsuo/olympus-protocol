@@ -18,10 +18,6 @@ contract StrategyProviderInterface is Provider {
     }
 
     Combo[] public comboHub;
-    modifier _checkIndex(uint _index) {
-        require(_index < comboHub.length);
-        _;
-    }
 
    // To core smart contract
     function getStrategyCount() public view returns (uint length);
@@ -29,7 +25,7 @@ contract StrategyProviderInterface is Provider {
     function getStrategyTokenCount(uint strategyId) public view returns (uint length);
     function getStrategyTokenByIndex(uint strategyId, uint tokenIndex) public view returns (address token, uint weight);
 
-    function getStrategy(uint _index) public _checkIndex(_index) view returns (
+    function getStrategy(uint _index) public view returns (
         uint id,
         string name,
         string description,

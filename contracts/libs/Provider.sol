@@ -11,9 +11,14 @@ library TypeDefinitions {
         Exchange,
         Storage,
         ExtendedStorage,
-        Whitelist
+        Whitelist,
+        RiskManagement,
+        TokenizationProvider
     }
-
+    enum TokenizationType {
+        Fund,
+        Index
+    }
     struct ProviderStatistic {
         uint counter;
         uint amountInEther;

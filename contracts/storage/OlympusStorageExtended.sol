@@ -21,7 +21,7 @@ contract OlympusStorageExtended is OlympusStorageExtendedInterface {
         _;
     }
 
-    function OlympusStorageExtended(address _permissionProvider) public {
+    constructor (address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
     }
 

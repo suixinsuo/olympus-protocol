@@ -8,7 +8,7 @@ contract StrategyProvider is StrategyProviderInterface {
     event StrategyChanged(uint strategyId);
 
     address owner;
-
+    address[] public whitelistuser;
     mapping(address => uint[]) public comboIndex;
     mapping(uint => address) public comboOwner;
     mapping(address => bool) public StrategyWhiteList;
@@ -16,6 +16,11 @@ contract StrategyProvider is StrategyProviderInterface {
     event ComboUpdated(uint id, string name);
 
     PermissionProviderInterface internal permissionProvider;
+
+    modifier _checkIndex(uint _index) {
+        require(_index < comboHub.length);
+        _;
+    }
 
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -32,16 +37,17 @@ contract StrategyProvider is StrategyProviderInterface {
     }
 
     function changeWhitelist(address[] whitelistAddresses) public onlyOwner {
-        for (uint index = 0; index < whitelistAddresses.length; index++) {
-            if (StrategyWhiteList[whitelistAddresses[index]]) {
-                StrategyWhiteList[whitelistAddresses[index]] = false;
-            } else {
-                StrategyWhiteList[whitelistAddresses[index]] = true;
-            }
+
+        for (uint8 i = 0; i < whitelistuser.length; i++) {
+            StrategyWhiteList[whitelistuser[i]] = false;
         }
+        for (uint8 index = 0; index < whitelistAddresses.length; index++) {
+            StrategyWhiteList[whitelistAddresses[index]] = true;
+        }
+        whitelistuser = whitelistAddresses;
     }
 
-    function StrategyProvider(address _permissionProvider) public {
+    constructor(address _permissionProvider) public {
         permissionProvider = PermissionProviderInterface(_permissionProvider);
         owner = msg.sender;
         StrategyWhiteList[owner] = true;
@@ -66,6 +72,9 @@ contract StrategyProvider is StrategyProviderInterface {
         return comboHub[_index].tokenAddresses.length;
     }
 
+    function getStrategywhitelist() public view returns (address[] whitelistusers ){
+        return whitelistuser;
+    }
 
     function getStrategyTokenByIndex(uint _index, uint tokenIndex) public view returns (address token, uint weight){
         return (comboHub[_index].tokenAddresses[tokenIndex], comboHub[_index].weights[tokenIndex]);
@@ -173,7 +182,7 @@ contract StrategyProvider is StrategyProviderInterface {
         for (uint i = 0; i < _weights.length; ++i) {
             total += _weights[i];
         }
-        return total == 100;
+        return total <= 100;
     }
 
 
