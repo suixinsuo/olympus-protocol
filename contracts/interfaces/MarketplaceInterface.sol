@@ -9,6 +9,5 @@ contract MarketplaceInterface is Ownable {
     mapping(address => address[]) public productMappings;
 
     function registerProduct() external returns(bool success);
-    function unregisterProduct() external returns(bool success);
-    function getOwnProducts() external returns (address[] addresses);
+    function getOwnProducts() external view returns (address[] addresses);
 }
