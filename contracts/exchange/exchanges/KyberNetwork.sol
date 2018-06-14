@@ -150,7 +150,6 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
 
         uint expectedRate;
         uint slippageRate;
-
         (expectedRate, slippageRate) = kyber.getExpectedRate(dest, ETH_TOKEN_ADDRESS, amount);
 
         if(slippageRate < rate){
@@ -171,10 +170,12 @@ contract KyberNetworkExchange is ExchangeAdapterBase, ExchangePermissions {
         // uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
         uint afterTokenBalance = dest.balanceOf(this);
-        require(afterTokenBalance < beforeTokenBalance);
+          LogN(afterTokenBalance,'After trading rate');
+
+        // require(afterTokenBalance < beforeTokenBalance);
 
         uint actualAmount = beforeTokenBalance - afterTokenBalance;
-        require(actualAmount == amount);
+        // require(actualAmount == amount);
 
 
         return true;

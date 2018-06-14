@@ -146,7 +146,7 @@ contract ExchangeProvider is ExchangeProviderInterface, ExchangePermissions {
             }
             adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
             //TODO need to add refund if transaction failed
-             tokens[i].transfer(address(adapter), amounts[i]);
+            tokens[i].transfer(address(adapter), amounts[i]);
             // tokens[i].approve(exchangeManager.getExchangeAdapter(exchangeId), amounts[i]);
             require(
                 adapter.placeOrderQuicklyToSell(
