@@ -1,5 +1,5 @@
 
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 import "./ERC20.sol";
 interface CoreInterface {
     function buyToken(bytes32 exchangeId, ERC20[] tokens, uint[] amounts, uint[] rates, address deposit) external payable returns (bool success);
