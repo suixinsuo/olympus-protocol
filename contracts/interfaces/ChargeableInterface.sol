@@ -5,10 +5,10 @@ import "./ComponentInterface.sol";
 
 contract ChargeableInterface is ComponentInterface {
     uint public constant DENOMINATOR = 10000;
-    uint public feePercentage;    
+    uint public feePercentage;
     string public feeName;
 
-    function calculateFee(uint _amount) 
-        external 
+    function calculateFee(uint _amount)
+        external
     returns(uint totalFeeAmount, address tokenAddress);
 }
