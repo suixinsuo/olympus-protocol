@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../libs/ERC20.sol";
 import "../libs/Ownable.sol";
 import "./ComponentContainerInterface.sol";
 

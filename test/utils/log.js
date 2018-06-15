@@ -13,6 +13,20 @@ module.exports = {
       console.error(e);
       assert(false, 'Exception occured under the test');
     }
-  }
+  },
+
+  printObject: (data) => {
+    data = data.map((attribute) => {
+
+      if (typeof attribute == 'BigNumber') {
+        return attribute.toNumber();
+      }
+      // Number
+      return attribute;
+    });
+    console.log(JSON.stringify(data, null, 2));
+
+  },
+
 
 }
