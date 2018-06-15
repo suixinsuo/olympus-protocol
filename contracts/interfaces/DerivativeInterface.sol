@@ -20,7 +20,7 @@ contract DerivativeInterface is ERC20, Ownable, ComponentContainerInterface {
 
     // invest, withdraw is done in transfer.
     function invest() public payable returns(bool success);
-    function changeStatus(uint _status) public returns(bool);
+    function changeStatus(DerivativeStatus _status) public returns(bool);
     function getPrice() public view returns(uint);
 
 
