@@ -20,15 +20,20 @@ contract MockWithdrawClient is MockDerivative  {
     function withdraw() external returns(bool) {
         uint _transfers = 0;
         address[] memory _requests = asyncWithdraw.getUserRequests();
-        uint amount =0;
+        uint _eth;
+        uint tokens;
+
         if(!asyncWithdraw.isInProgress()) {
             asyncWithdraw.start();
         }
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
-            amount = asyncWithdraw.withdraw(_requests[i]);
-            if(amount == 0) { continue;}
-            transfer(_requests[i], amount);
+
+            (_eth, tokens) = asyncWithdraw.withdraw(_requests[i]);
+            if(tokens == 0) {continue;}
+
+            balances[_requests[i]] -= tokens;
+            address(_requests[i]).transfer(_eth);
             _transfers++;
         }
 
@@ -36,6 +41,10 @@ contract MockWithdrawClient is MockDerivative  {
             asyncWithdraw.unlock();
         }
 
+        return !asyncWithdraw.isInProgress(); // True if completed
+    }
+
+    function withdrawInProgress() external view returns(bool) {
         return asyncWithdraw.isInProgress();
     }
 

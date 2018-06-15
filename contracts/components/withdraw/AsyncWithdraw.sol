@@ -12,6 +12,7 @@ contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
     struct ContractInfo {
         uint price;
         address[]  userRequests;
+        mapping (address => bool)  withdrawPending;
         mapping (address => uint)  amountPerUser;
         uint totalWithdrawAmount;
         bool withdrawRequestLock;
@@ -25,12 +26,10 @@ contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
     }
 
     function isInProgress() external view returns(bool) {
-        return contracts[msg.sender].totalWithdrawAmount > 0;
+        return contracts[msg.sender].withdrawRequestLock &&
+            contracts[msg.sender].totalWithdrawAmount > 0;
     }
-   event LogA(address _address, string text);
-   event LogN(uint _number, string text);
-   event LogS(string text);
-   event LogB(bool _bool, string text);
+
 
     function request(address _investor, uint256 _amount) external returns (bool) {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
@@ -43,23 +42,30 @@ contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
             contracts[msg.sender].userRequests.push(_investor);
         }
         contracts[msg.sender].amountPerUser[_investor] += _amount;
+        contracts[msg.sender].withdrawPending[_investor] = true;
         contracts[msg.sender].totalWithdrawAmount += _amount;
+
         emit WithdrawRequest(_investor, contracts[msg.sender].amountPerUser[_investor]);
 
         return true;
     }
 
 
-    function withdraw(address _investor) external returns(uint) {
+    function withdraw(address _investor) external returns(uint eth, uint tokens) {
         require(contracts[msg.sender].withdrawRequestLock); // Only withdraw after lock
+        // Jump the already withdrawed
+        if(contracts[msg.sender].withdrawPending[_investor] == false) {return(0,0);}
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
-        uint ethToReturn = (contracts[msg.sender].amountPerUser[_investor] * contracts[msg.sender].price) / 10 ** derivative.decimals();
+        tokens = contracts[msg.sender].amountPerUser[_investor];
+        eth = (tokens * contracts[msg.sender].price) / 10 ** derivative.decimals();
 
-        contracts[msg.sender].totalWithdrawAmount -= contracts[msg.sender].amountPerUser[_investor];
+        contracts[msg.sender].totalWithdrawAmount -= tokens;
         contracts[msg.sender].amountPerUser[_investor] = 0;
-        emit Withdrawed(_investor, contracts[msg.sender].amountPerUser[_investor]);
-        return 1;
+        contracts[msg.sender].withdrawPending[_investor] = false;
+
+        emit Withdrawed(_investor, tokens, eth);
+        return( eth, tokens);
     }
 
     function start() external {

@@ -16,7 +16,7 @@ contract MockDerivative is  DerivativeInterface, ComponentContainer  {
     // ------------  DERIVATIVE ------------
     function invest() public payable returns(bool success) {return true;}
     function changeStatus(DerivativeStatus) public returns(bool) {return true;}
-    function getPrice() public view returns(uint)  { return 10*18;}
+    function getPrice() public view returns(uint)  { return 10**decimals;}
     // ----------- ERC20 ----------
     mapping(address => uint256) balances;
     mapping(address => mapping (address => uint256)) allowed;

@@ -12,3 +12,4 @@ scTopics
 aws.config.dev.json
 npm-debug.log
 package-lock.json
+./build/*
