@@ -19,15 +19,13 @@ contract Marketplace is MarketplaceInterface {
     // Will revert on duplicated products
     function registerProduct() external returns(bool success) {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
-        products.push(msg.sender);
-
         address creator = derivative.getOwner();
 
         for (uint i = 0; i < productMappings[creator].length; i++) {
             require(productMappings[creator][i] != msg.sender);
         }
         productMappings[creator].push(msg.sender);
-
+        products.push(msg.sender);
         return true;
     }
 }
