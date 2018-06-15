@@ -18,7 +18,6 @@ const args = require('../scripts/libs/args')
 
 function deployOnDev(deployer, num) {
   return deployer.then(() => {
-    // return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
     return deployer.deploy(MarketplaceProvider);
   })
 
@@ -103,10 +102,10 @@ module.exports = function (deployer, network) {
   } else if (network == 'kovan') {
     return deployOnKovan(deployer, network);
   }
-
-  return deployer.then(() => {
-    return deployExchangeProviderWrap(deployer, network);
-  })
+  deployOnDev(deployer, network);
+  // return deployer.then(() => {
+  //   return deployExchangeProviderWrap(deployer, network);
+  // })
   // return deployer.then(() => {
   //   return deployer.deploy(PermissionProvider);
   // }).then(() => {
