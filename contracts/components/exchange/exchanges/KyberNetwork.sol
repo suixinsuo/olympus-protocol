@@ -1,4 +1,4 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.24;
 
 // import "../ExchangeAdapterBase.sol";
 // import "../../libs/ERC20.sol";

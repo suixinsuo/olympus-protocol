@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 library LogLib{
 
     struct log{bool isLog;}
-    
+
     event LogBytes32(string _msg, bytes32 value);
     event LogUint(string _msg, uint value);
     event LogString(string _msg, string value);
