@@ -37,7 +37,6 @@ contract('MarketPlace', (accounts) => {
       await product1.register(marketplace.address);
       assert(false, 'Must revert');
     } catch (e) {
-      console.log('Reverted');
       assert(true);
     }
 
