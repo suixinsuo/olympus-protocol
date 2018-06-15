@@ -2,8 +2,10 @@ pragma solidity 0.4.24;
 
 import "../ExchangeInterface.sol";
 import "../PriceProviderInterface.sol";
+import "../../libs/Ownable.sol";
 
-contract OlympusExchangeInterface is ExchangeInterface, PriceProviderInterface {
+
+contract OlympusExchangeInterface is ExchangeInterface, PriceProviderInterface, Ownable {
     /*
      * @dev Buy multiple tokens at once with ETH.
      * @param ERC20[] _tokens The tokens to buy, should be an array of ERC20 addresses.

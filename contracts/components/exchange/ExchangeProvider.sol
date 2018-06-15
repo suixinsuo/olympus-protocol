@@ -1,32 +1,25 @@
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
 import "./Interfaces.sol";
 import "../../interfaces/implementations/OlympusExchangeInterface.sol";
 import { ExchangeAdapterBase as EAB} from "./ExchangeAdapterBase.sol";
 import "../../libs/utils.sol";
 
+
 contract ExchangeProvider is OlympusExchangeInterface {
 
-    IExchangeAdapterManager exchangeManager;
+    IExchangeAdapterManager private exchangeManager;
 
     mapping (uint => uint) private balances;
 
-    constructor () public {
-
-    }
-
-    function setExchangeManager(address _exchangeManager) public /* TODO modifier */ {
-        _setExchangeManager(_exchangeManager);
-    }
-
-    function _setExchangeManager(address _exchangeManager) private  {
+    function setExchangeManager(address _exchangeManager) external onlyOwner {
         exchangeManager = IExchangeAdapterManager(_exchangeManager);
     }
 
-    function buyTokens(ERC20[] tokens, uint256[] amounts, uint256[] rates, bytes32 /*id*/, address deposit) external payable returns(bool) {
+    function buyTokens(ERC20[] tokens, uint256[] amounts, uint256[] rates, bytes32 _exchangeId, address deposit) external payable returns(bool) {
         IExchangeAdapter adapter;
         for (uint i = 0; i < tokens.length; i++ ) {
-            bytes32 exchangeId = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
+            bytes32 exchangeId = _exchangeId == "" ? exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]) : _exchangeId;
             if(exchangeId == 0){
                 return false;
             }
@@ -42,10 +35,10 @@ contract ExchangeProvider is OlympusExchangeInterface {
         }
         return true;
     }
-    function sellTokens(ERC20[] tokens, uint256[] amounts, uint256[] rates, bytes32 /*id*/, address deposit) external returns(bool) {
+    function sellTokens(ERC20[] tokens, uint256[] amounts, uint256[] rates, bytes32 _exchangeId, address deposit) external returns(bool) {
         IExchangeAdapter adapter;
         for (uint i = 0; i < tokens.length; i++ ) {
-            bytes32 exchangeId = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
+            bytes32 exchangeId = _exchangeId == "" ? exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]) : _exchangeId;
             if(exchangeId == 0){
                 return false;
             }
