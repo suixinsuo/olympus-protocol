@@ -53,7 +53,7 @@ contract('Withdraw', (accounts) => {
 
 
   }));
-  it.only("Most simple implementation of withdraw", async () => log.catch(async () => {
+  it("Most simple implementation of withdraw", async () => log.catch(async () => {
     const product1 = await MockWithdraw.new((await Simpleithdraw.deployed()).address);
 
     await product1.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorA });
