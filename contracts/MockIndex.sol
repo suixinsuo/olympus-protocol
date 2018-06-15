@@ -2,7 +2,6 @@ pragma solidity 0.4.24;
 
 import "./Derivative.sol";
 import "./interfaces/IndexInterface.sol";
-import "./libs/ERC20.sol";
 import "./libs/SimpleERC20Token.sol";
 import "./libs/SafeMath.sol";
 
@@ -45,7 +44,7 @@ contract MockIndex is Derivative, IndexInterface, SimpleERC20Token {
         balances[msg.sender].add(mintAmount);
     }
 
-    function changeStatus(uint8 _statusId) public onlyOwner returns(bool) {
+    function changeStatus(uint _statusId) public onlyOwner returns(bool) {
 
         if (DerivativeStatus(_statusId) == DerivativeStatus.Active || 
             DerivativeStatus(_statusId) == DerivativeStatus.Paused || 
