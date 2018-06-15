@@ -15,6 +15,8 @@ let CentralizedExchange = artifacts.require("CentralizedExchange");
 
 
 const args = require('../scripts/libs/args')
+let RiskControl = artifacts.require("RiskControl");
+
 
 function deployOnDev(deployer, num) {
   return deployer.then(() => {
@@ -129,84 +131,7 @@ module.exports = function (deployer, network) {
   // })
 }
 
-// function deployOnKovan(deployer, num) {
-//   return deployer.then(() => {
-//     return deployer.deploy(PermissionProvider);
-//   }).then((err, result) => {
-//     return deployer.deploy(Core, PermissionProvider.address);
-//   }).then(() => {
-//     return deployer.deploy(StrategyProvider, PermissionProvider.address);
-//   }).then(() => {
-//     return deployer.deploy(PriceProvider, PermissionProvider.address);
-//   }).then(() => {
-//     return deployer.deploy(ExtendedStorage, PermissionProvider.address);
-//   }).then(() => {
-//     return deployer.deploy(OlympusStorage, PermissionProvider.address);
-//   }).then(() => {
-//     return deployer.deploy(WhitelistProvider, PermissionProvider.address);
-//   }).then(() => {
-//     return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
-//   }).then(() => {
-//     return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
-//   }).then(() => {
-//     return deployer.deploy(RiskManagement, PermissionProvider.address);
-//   }).then(() => {
-//     kyberNetworkAddress = '0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50';
-//     return deployer.deploy(KyberNetworkExchange, kyberNetworkAddress, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
-//   }).then(async () => {
-//     console.info('Setting providers');
-//     let core = await Core.deployed();
-//     let strategy = await StrategyProvider.deployed();
-//     let price = await PriceProvider.deployed();
-//     let extended = await ExtendedStorage.deployed();
-//     let storage = await OlympusStorage.deployed();
-//     let whitelist = await WhitelistProvider.deployed();
-//     let permission = await PermissionProvider.deployed();
-//     let exchange = await ExchangeProvider.deployed();
-//     let kyberExchangeInstance = await KyberNetworkExchange.deployed();
-//     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
-//     let exchangeProvider = await ExchangeProvider.deployed();
-//     let riskManagement = await RiskManagement.deployed();
-
-//     console.info(`Adding kyberExchange ${kyberExchangeInstance.address}`);
-//     await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
-
-
-//     //需要往这个地址打以太坊作为押金 kyberExchange
-//     console.info(`Sending 0.1 Ether to kyberExchange`);
-//     await kyberExchangeInstance.send(web3.toWei(0.1, "ether"));
-
-
-
-//     console.info('Exchange provider set core');
-//     await exchangeProvider.setCore(core.address);
-
-//     console.info('setStrategyProvider');
-//     await core.setProvider(0, strategy.address);
-
-//     console.info('setPriceProvider');
-//     await core.setProvider(1, price.address);
-
-//     console.info('setExtendedStorageProvider');
-//     await core.setProvider(2, exchangeProvider.address);
-
-//     console.info('setExtendedStorageProvider');
-//     await storage.setProvider(4, extended.address);
-
-//     console.info('setStorageProvider');
-//     await core.setProvider(3, storage.address);
-
-//     console.info('setWhitelistProvider');
-//     await core.setProvider(5, whitelist.address);
-
-//     console.info('SetCore');
-//     await permission.adminAdd(Core.address, "core");
-
-//     console.info('add strategy');
-//     await strategy.createStrategy('MOT', 'MOT', 'MOT', ['0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a'], [100], "0x0000000000000000000000000000000000000000000000000000000000000000");
-
-//     console.info('add token support');
-//     await price.changeTokens(["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a", "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b", "0x7dc75361d616f4d5748a9f050d7cbb8ca3781b0b"]);
-
-//   });
-// }
+  return deployer.then(() => {
+    return deployer.deploy(RiskControl);
+  });
+}
