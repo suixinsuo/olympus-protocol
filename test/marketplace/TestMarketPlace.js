@@ -19,6 +19,8 @@ contract('MarketPlace', (accounts) => {
     const product3 = await DummyDerivative.new({ from: accounts[1] });
     await product3.register(marketplace.address, { from: accounts[1] });
 
+    assert.equal(await product1.getComponentByName(await product1.MARKET()), marketplace.address);
+
     const myProducts = await marketplace.getOwnProducts();
 
     assert.equal(myProducts.length, 2, 'Account 0 has 2 produts');
