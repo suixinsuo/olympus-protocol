@@ -1,23 +1,33 @@
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 import "../../contracts/interfaces/DerivativeInterface.sol";
 import "../../contracts/components/base/ComponentContainer.sol";
 import "../../contracts/interfaces/MarketplaceInterface.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 
 
-contract DummyDelivative is  DerivativeInterface, ComponentContainer {
+contract DummyDerivative is StandardToken, DerivativeInterface, ComponentContainer  {
 
     string private constant MARKET = "MarketPlace";
+    uint256 public totalSupply = 0;
+    string public name = "Dummy";
+    uint256 public decimals = 18;
+    string public symbol = "DMY";
 
-    // Require to be register on creation
-    constructor (address marketplace) {
-        require(setComponent(MARKET, marketplace));
-        require(MarketplaceInterface(marketplace).registerProduct());
-    }
 
     // Can change from market place
-    function register(address marketplace) external onlyOwner returns(bool) {
-        require(setComponent(MARKET, marketplace));
-        return MarketplaceInterface(marketplace).registerProduct();
+    function register(address marketplace) external onlyOwner  returns(bool) {
+        if(MarketplaceInterface(marketplace).registerProduct()) {
+            require(setComponent(MARKET, marketplace));
+            return true;
+        }
+        return false;
     }
+    // ------------  DERIVATIVE ------------
+    function invest() public payable returns(bool success) {return true;}
+    function changeStatus(DerivativeStatus) public returns(bool) {return true;}
+    function getPrice() public view returns(uint)  { return 0;}
+
+
 }
+

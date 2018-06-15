@@ -20,8 +20,8 @@ function bytes32ToString(bytes32) {
 const Promise = require('bluebird');
 
 contract('MockKyberNetwork', (accounts) => {
-    it("MockKyberNetwork should be able to trade.", async () => {
-
-    })
+  it("MockKyberNetwork should be able to trade.", async () => {
+    assert(true);
+  })
 });
 
