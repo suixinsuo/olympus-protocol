@@ -1,11 +1,11 @@
 pragma solidity ^0.4.24;
 
 import "./Interfaces.sol";
-import "./ExchangeProviderInterface.sol";
+import "../../interfaces/implementations/OlympusExchangeInterface.sol";
 import { ExchangeAdapterBase as EAB} from "./ExchangeAdapterBase.sol";
 import "../../libs/utils.sol";
 
-contract ExchangeProvider is ExchangeProviderInterface {
+contract ExchangeProvider is OlympusExchangeInterface {
 
     IExchangeAdapterManager exchangeManager;
 
@@ -23,12 +23,7 @@ contract ExchangeProvider is ExchangeProviderInterface {
         exchangeManager = IExchangeAdapterManager(_exchangeManager);
     }
 
-    modifier onlyAdapter(){
-        require(exchangeManager.isValidAdapter(msg.sender));
-        _;
-    }
-
-    function buyToken(bytes32 /*id*/, ERC20[] tokens, uint256[] amounts, uint256[] rates, address deposit) external payable returns(bool) {
+    function buyTokens(ERC20[] tokens, uint256[] amounts, uint256[] rates, bytes32 /*id*/, address deposit) external payable returns(bool) {
         IExchangeAdapter adapter;
         for (uint i = 0; i < tokens.length; i++ ) {
             bytes32 exchangeId = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
@@ -47,7 +42,7 @@ contract ExchangeProvider is ExchangeProviderInterface {
         }
         return true;
     }
-    function sellToken(bytes32 /*id*/, ERC20[] tokens, uint256[] amounts, uint256[] rates, address deposit) external returns(bool) {
+    function sellTokens(ERC20[] tokens, uint256[] amounts, uint256[] rates, bytes32 /*id*/, address deposit) external returns(bool) {
         IExchangeAdapter adapter;
         for (uint i = 0; i < tokens.length; i++ ) {
             bytes32 exchangeId = exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]);
