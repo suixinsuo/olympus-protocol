@@ -8,6 +8,7 @@ contract Marketplace is MarketplaceInterface {
     address[] public products;
     mapping(address => address[]) public productMappings;
 
+    // Will revert on duplicated products
     function registerProduct() external returns(bool success) {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         products.push(msg.sender);

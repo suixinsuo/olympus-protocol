@@ -17,11 +17,9 @@ contract DummyDerivative is StandardToken, DerivativeInterface, ComponentContain
 
     // Can change from market place
     function register(address marketplace) external onlyOwner  returns(bool) {
-        if(MarketplaceInterface(marketplace).registerProduct()) {
-            require(setComponent(MARKET, marketplace));
-            return true;
-        }
-        return false;
+        require(MarketplaceInterface(marketplace).registerProduct());
+        require(setComponent(MARKET, marketplace));
+
     }
     // ------------  DERIVATIVE ------------
     function invest() public payable returns(bool success) {return true;}
