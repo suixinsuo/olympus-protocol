@@ -1,5 +1,7 @@
 const KyberConfig = require('../scripts/libs/kyber_config');
 const args = require('../scripts/libs/args')
+let RiskControl = artifacts.require("RiskControl");
+
 
 function deployOnMainnet(deployer) {
   let kyberNetwork = '0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e';
@@ -23,6 +25,6 @@ module.exports = function (deployer, network) {
   }
 
   return deployer.then(() => {
-
+    return deployer.deploy(RiskControl);
   });
 }
