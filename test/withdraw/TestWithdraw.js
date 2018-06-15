@@ -1,6 +1,7 @@
 const log = require('../utils/log');
 const MockWithdraw = artifacts.require("MockWithdrawClient");
 const AsyncWithdraw = artifacts.require("../../contracts/components/widrwaw/AsyncWithdraw.sol");
+const Simpleithdraw = artifacts.require("../../contracts/components/widrwaw/SimpleWithdraw.sol");
 
 const toToken = (amount) => {
   return amount * 10 ** 18;
@@ -50,6 +51,16 @@ contract('Withdraw', (accounts) => {
     assert.equal(Math.round(initialEthA), Math.round(endEthA), 'A  recover ETH');
     assert.equal(Math.round(initialEthB), Math.round(endEthB), 'B recover ETH'); assert.equal(Math.round(initialEthB), Math.round(initialEthB), 'B  recover ETH');
 
+
+  }));
+  it.only("Most simple implementation of withdraw", async () => log.catch(async () => {
+    const product1 = await MockWithdraw.new((await Simpleithdraw.deployed()).address);
+
+    await product1.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorA });
+    await product1.requestWithdraw(toToken(1), { from: investorA });
+    await product1.withdraw();
+
+    assert.equal((await product1.balanceOf(investorA)).toNumber(), 0, 'B has withdraw');
 
   }));
 
