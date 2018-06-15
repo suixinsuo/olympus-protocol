@@ -8,6 +8,7 @@ contract ComponentContainer is ComponentContainerInterface {
         components[_name] = _componentAddress;
         return true;
     }
+
     function getComponentByName(string _name) external view returns (address) {
         return components[_name];
     }
