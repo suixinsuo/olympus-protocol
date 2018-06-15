@@ -4,6 +4,8 @@
 
 let MarketplaceProvider = artifacts.require("Marketplace");
 let AsyncWithdraw = artifacts.require("AsyncWithdraw");
+let SimpleWithdraw = artifacts.require("SimpleWithdraw");
+
 let DummyDerivative = artifacts.require("MockDerivative");
 
 const args = require('../scripts/libs/args')
@@ -19,6 +21,7 @@ function deployMarketplace(deployer, network) {
 function deployWithdraw(deployer, network) {
   deployer.deploy([
     AsyncWithdraw,
+    SimpleWithdraw,
   ]);
 }
 
