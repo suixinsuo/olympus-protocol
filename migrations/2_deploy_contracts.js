@@ -5,6 +5,9 @@ let KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
 let ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 let ExchangeProvider = artifacts.require("ExchangeProvider");
 let ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
+let MarketplaceProvider = artifacts.require("MarketPlace");
+let DummyDerivative = artifacts.require("DummyDerivative")
+
 let MockKyberNetwork = artifacts.require("MockKyberNetwork");
 let SimpleERC20Token = artifacts.require("SimpleERC20Token");
 let CentralizedExchange = artifacts.require("CentralizedExchange");
@@ -16,7 +19,9 @@ const args = require('../scripts/libs/args')
 function deployOnDev(deployer, num) {
   return deployer.then(() => {
     // return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
+    return deployer.deploy(MarketplaceProvider);
   })
+
   // .then(() => {
   //   return deployer.deploy(MockKyberNetwork, num, 18);
   // }).then(() => {
@@ -33,6 +38,15 @@ function deployOnDev(deployer, num) {
   //   return deployer.deploy(TestReimbursable);
   // })
 }
+
+function deployOnKovan(deployer, num) {
+  return deployer.then(() => {
+    return deployer.deploy(MarketplaceProvider);
+  }).then((err, result) => {
+    return deployer.deploy(DummyDerivative, MarketplaceProvider.address);
+  });
+}
+
 
 // function deployOnMainnet(deployer) {
 
@@ -91,6 +105,8 @@ function deployExchangeProviderWrap(deployer, network) {
     return deployer.deploy(KyberNetworkExchange, kyberNetwork.network, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(MarketplaceProvider);
   })
 }
 

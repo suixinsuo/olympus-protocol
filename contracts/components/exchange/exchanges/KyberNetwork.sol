@@ -150,7 +150,7 @@ contract KyberNetwork {
 //         // if (address(this).balance < amount) {
 //         //     return false;
 //         // }
- 
+
 //         dest.approve(address(kyber), amount);
 
 //         uint expectedRate;
@@ -176,7 +176,7 @@ contract KyberNetwork {
 
 //         uint afterTokenBalance = dest.balanceOf(this);
 //         assert(afterTokenBalance < beforeTokenBalance);
-        
+
 //         uint actualAmount = beforeTokenBalance - afterTokenBalance;
 //         require(actualAmount == amount);
 
@@ -210,7 +210,7 @@ contract KyberNetwork {
 //             2**256 - 1,
 //             slippageRate,
 //             walletId);
-            
+
 //         uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
 
 //         uint afterTokenBalance = dest.balanceOf(this);

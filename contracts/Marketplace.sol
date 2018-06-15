@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.4.23;
 
 import "./interfaces/MarketplaceInterface.sol";
 import "./interfaces/DerivativeInterface.sol";
@@ -11,7 +11,9 @@ contract Marketplace is MarketplaceInterface {
     function registerProduct() external returns(bool success) {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         products.push(msg.sender);
-        address creator = derivative.owner();
+
+        address creator = derivative.getOwner();
+
         for (uint i = 0; i < productMappings[creator].length; i++) {
             require(productMappings[creator][i] != msg.sender);
         }
@@ -23,4 +25,5 @@ contract Marketplace is MarketplaceInterface {
     function getOwnProducts() external view returns (address[] addresses) {
         return productMappings[msg.sender];
     }
+
 }
