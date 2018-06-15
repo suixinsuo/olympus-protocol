@@ -6,7 +6,7 @@ const toToken = (amount) => {
   return amount * 10 ** 18;
 }
 
-contract.only('Withdraw', (accounts) => {
+contract('Withdraw', (accounts) => {
   let asyncWithdraw;
   const investorA = accounts[0];
   const investorB = accounts[1];
