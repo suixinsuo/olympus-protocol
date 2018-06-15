@@ -1,7 +1,7 @@
 'use strict';
 
 const KyberConfig = require('../scripts/libs/kyber_config');
-let KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
+// let KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
 let ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 let ExchangeProvider = artifacts.require("ExchangeProvider");
 let ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
@@ -84,8 +84,8 @@ function deployOnKovan(deployer, num) {
     return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
-  }).then(() => {
-    return deployer.deploy(KyberNetworkExchange, kyberNetwork.network, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
+    // }).then(() => {
+    //   return deployer.deploy(KyberNetworkExchange, kyberNetwork.network, ExchangeAdapterManager.address, ExchangeProvider.address, PermissionProvider.address);
   }).then(() => {
     return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
   }).then(() => {
