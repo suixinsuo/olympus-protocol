@@ -1,5 +1,5 @@
 const ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
-const KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
+const KyberNetworkAdapter = artifacts.require("KyberNetworkAdapter");
 const ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 const SimpleERC20Token = artifacts.require("SimpleERC20Token");
 const MockKyberNetwork = artifacts.require("MockKyberNetwork");
@@ -63,7 +63,7 @@ module.exports = function (callback) {
       tokensTotal = kyberNetwork.tokens.length;
     }
 
-    KyberNetworkExchange.deployed().then(instance => {
+    KyberNetworkAdapter.deployed().then(instance => {
       instance.send(web3.toWei(0.05 * tokensTotal, "ether")).then(r => {
         console.log(r.tx);
       }).catch((res) => { })
@@ -88,7 +88,7 @@ module.exports = function (callback) {
 
     // addKyber and deposit
     (async () => {
-      let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+      let kyberExchangeInstance = await KyberNetworkAdapter.deployed();
       let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
       let result = await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
       let log = result.logs.find(l => { return l.event == 'AddedExchange' });
@@ -99,7 +99,7 @@ module.exports = function (callback) {
 
   } else if (method === 'withdraw') {
     (async () => {
-      let kyberExchangeInstance = await KyberNetworkExchange.deployed();
+      let kyberExchangeInstance = await KyberNetworkAdapter.deployed();
       await kyberExchangeInstance.withdraw(0);
     })()
   } else {

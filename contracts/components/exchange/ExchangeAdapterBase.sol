@@ -1,44 +1,18 @@
-pragma solidity ^0.4.17;
-contract ExchangeAdapterBase {}
-// import "../libs/utils.sol";
-// import "../libs/ERC20.sol";
-// import "../permission/PermissionProviderInterface.sol";
+pragma solidity 0.4.24;
 
-// contract ExchangeAdapterBase {
+import "../../libs/utils.sol";
+import "../../libs/ERC20.sol";
 
-//     address internal adapterManager;
-//     address internal exchangeExchange;
 
-//     enum Status {
-//         ENABLED,
-//         DISABLED
-//     }
+contract ExchangeAdapterBase {
 
-//     enum OrderStatus {
-//         Pending,
-//         Approved,
-//         PartiallyCompleted,
-//         Completed,
-//         Cancelled,
-//         Errored
-//     }
+    address internal exchangeExchange;
 
-//     constructor (address _manager,address _exchange) public {
-//         adapterManager = _manager;
-//         exchangeExchange = _exchange;
-//     }
+    constructor (address _exchange) public {
+        exchangeExchange = _exchange;
+    }
 
-//     function getExpectAmount(uint eth, uint destDecimals, uint rate) internal pure returns(uint){
-//         return Utils.calcDstQty(eth, 18, destDecimals, rate);
-//     }
-
-//     modifier onlyAdaptersManager(){
-//         require(msg.sender == adapterManager);
-//         _;
-//     }
-
-//     modifier onlyExchangeProvider(){
-//         require(msg.sender == exchangeExchange);
-//         _;
-//     }
-// }
+    function getExpectAmount(uint eth, uint destDecimals, uint rate) internal pure returns(uint) {
+        return Utils.calcDstQty(eth, 18, destDecimals, rate);
+    }
+}
