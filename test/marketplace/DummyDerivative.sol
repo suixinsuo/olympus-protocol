@@ -8,7 +8,7 @@ import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 
 contract DummyDerivative is StandardToken, DerivativeInterface, ComponentContainer  {
 
-    string private constant MARKET = "MarketPlace";
+    string public constant MARKET = "MarketPlace";
     uint256 public totalSupply = 0;
     string public name = "Dummy";
     uint256 public decimals = 18;

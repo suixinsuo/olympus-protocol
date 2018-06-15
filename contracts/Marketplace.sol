@@ -8,6 +8,14 @@ contract Marketplace is MarketplaceInterface {
     address[] public products;
     mapping(address => address[]) public productMappings;
 
+    function getAllProducts() external view returns (address[] allProducts) {
+        return products;
+    }
+
+    function getOwnProducts() external view returns (address[] addresses) {
+        return productMappings[msg.sender];
+    }
+
     // Will revert on duplicated products
     function registerProduct() external returns(bool success) {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
@@ -22,13 +30,4 @@ contract Marketplace is MarketplaceInterface {
 
         return true;
     }
-
-    function getAllProducts() external view returns (address[] allProducts) {
-        return products;
-    }
-
-    function getOwnProducts() external view returns (address[] addresses) {
-        return productMappings[msg.sender];
-    }
-
 }
