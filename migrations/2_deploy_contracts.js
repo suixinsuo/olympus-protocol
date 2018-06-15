@@ -2,7 +2,7 @@
 
 // const KyberConfig = require('../scripts/libs/kyber_config');
 
-let MarketplaceProvider = artifacts.require("MarketPlace");
+let MarketplaceProvider = artifacts.require("Marketplace");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
