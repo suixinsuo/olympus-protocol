@@ -10,7 +10,7 @@ contract ExchangeAdapterBase {}
 //     address internal exchangeExchange;
 
 //     enum Status {
-//         ENABLED, 
+//         ENABLED,
 //         DISABLED
 //     }
 

@@ -79,23 +79,7 @@ function deployOnKovan(deployer, num) {
 //   return deploy;
 // }
 
-function deployExchangeProviderWrap(deployer, network) {
-
-  let kyberNetwork = KyberConfig[network];
-  if (network === 'development') {
-    return deployOnDev(deployer, kyberNetwork.mockTokenNum);
-  }
-
-  let flags = args.parseArgs();
-  var isMockKyber = flags["mockkyber"];
-  if (isMockKyber) {
-    return deployOnDev(deployer, kyberNetwork.mockTokenNum);
-  }
-
-  if (!kyberNetwork) {
-    console.error("Unknown KyberNetwork address", network)
-    return;
-  }
+function deployOnKovan(deployer, num) {
 
   return deployer.then(() => {
     return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);

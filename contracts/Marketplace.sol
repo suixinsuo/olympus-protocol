@@ -22,6 +22,10 @@ contract Marketplace is MarketplaceInterface {
         return true;
     }
 
+    function getAllProducts() external view returns (address[] allProducts) {
+        return products;
+    }
+
     function getOwnProducts() external view returns (address[] addresses) {
         return productMappings[msg.sender];
     }
