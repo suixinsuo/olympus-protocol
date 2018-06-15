@@ -1,18 +1,9 @@
 'use strict';
 
-const KyberConfig = require('../scripts/libs/kyber_config');
-// let KyberNetworkExchange = artifacts.require("KyberNetworkExchange");
-let ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
-let ExchangeProvider = artifacts.require("ExchangeProvider");
-let ExchangeProviderWrap = artifacts.require("ExchangeProviderWrap");
+// const KyberConfig = require('../scripts/libs/kyber_config');
+
 let MarketplaceProvider = artifacts.require("MarketPlace");
-let DummyDerivative = artifacts.require("DummyDerivative")
-
-let MockKyberNetwork = artifacts.require("MockKyberNetwork");
-let SimpleERC20Token = artifacts.require("SimpleERC20Token");
-let CentralizedExchange = artifacts.require("CentralizedExchange");
-
-
+let DummyDerivative = artifacts.require("DummyDerivative");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
@@ -69,12 +60,6 @@ function deployOnMainnet(deployer) {
 function deployOnKovan(deployer, num) {
 
   return deployer.then(() => {
-    return deployer.deploy(ExchangeAdapterManager, PermissionProvider.address);
-  }).then(() => {
-    return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, PermissionProvider.address);
-  }).then(() => {
-    return deployer.deploy(ExchangeProviderWrap, ExchangeProvider.address);
-  }).then(() => {
     return deployer.deploy(MarketplaceProvider);
   })
 }
