@@ -3,7 +3,6 @@
 // const KyberConfig = require('../scripts/libs/kyber_config');
 
 let MarketplaceProvider = artifacts.require("MarketPlace");
-let DummyDerivative = artifacts.require("DummyDerivative");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
@@ -20,8 +19,6 @@ function deployOnDev(deployer, num) {
 function deployOnKovan(deployer, num) {
   return deployer.then(() => {
     return deployer.deploy(MarketplaceProvider);
-  }).then((err, result) => {
-    return deployer.deploy(DummyDerivative, MarketplaceProvider.address);
   });
 }
 
