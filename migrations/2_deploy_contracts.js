@@ -87,10 +87,8 @@ module.exports = function (deployer, network) {
     return deployOnKovan(deployer, network);
   }
 
-  if (flags.suite && typeof `deployOn${flags.suite}` === 'function') {
-    console.log('Executing suit ', flags.suite);
-
-    return new Function(`deploy${flags.suite}`).call(null, deployer, network);
+  if (flags.suite && typeof eval(`deploy${flags.suite}`) === 'function') {
+    return eval(`deploy${flags.suite}(deployer,network)`);
   }
 
   return deployOnDev(deployer, network);

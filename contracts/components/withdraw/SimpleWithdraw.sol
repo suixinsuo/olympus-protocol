@@ -16,10 +16,11 @@ contract SimpleWithdraw is WithdrawInterface {
         return requests;
     }
 
-    function withdraw(address _requester) external returns(uint) {
+    function withdraw(address _requester) external returns(uint eth, uint tokens) {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
-        uint ethToReturn = (derivative.balanceOf(_requester) * derivative.getPrice()) / 10 ** derivative.decimals();
-        emit Withdrawed(_requester, ethToReturn);
-        return ethToReturn;
+        tokens = derivative.balanceOf(_requester);
+        eth = (tokens * derivative.getPrice()) / 10 ** derivative.decimals();
+        emit Withdrawed(_requester, derivative.balanceOf(_requester), eth);
+        return (eth,tokens);
     }
 }
