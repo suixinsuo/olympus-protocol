@@ -1,28 +1,27 @@
 pragma solidity 0.4.24;
 
-import "./Interfaces.sol";
+import "../../libs/Ownable.sol";
+import "../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 
 
-contract ExchangeAdapterManager {
+contract ExchangeAdapterManager is Ownable {
 
-    mapping(bytes32 => IExchangeAdapter) public exchangeAdapters;
+    mapping(bytes32 => OlympusExchangeAdapterInterface) public exchangeAdapters;
     bytes32[] public exchanges;
     uint private genExchangeId = 1000;
     mapping(address=>uint) private adapters;
+    ERC20 private constant ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
-    constructor () public {
-      // TODO
-    }
 
     event AddedExchange(bytes32 id);
 
     function addExchange(bytes32 name, address adapter)
-    external /* TODO modifier */ returns(bool) {
+    external onlyOwner returns(bool) {
         require(adapter != 0x0);
-        bytes32 id = keccak256(abi.encodePacked(genExchangeId++));
-        require(IExchangeAdapter(adapter).addExchange(id, name));
+        bytes32 id = keccak256(abi.encodePacked(adapter, genExchangeId++));
+        require(OlympusExchangeAdapterInterface(adapter).setExchangeDetails(id, name));
         exchanges.push(id);
-        exchangeAdapters[id] = IExchangeAdapter(adapter);
+        exchangeAdapters[id] = OlympusExchangeAdapterInterface(adapter);
         adapters[adapter]++;
 
         emit AddedExchange(id);
@@ -35,10 +34,10 @@ contract ExchangeAdapterManager {
 
     function getExchangeInfo(bytes32 id)
     external view returns(bytes32 name, bool status) {
-        IExchangeAdapter adapter = exchangeAdapters[id];
+        OlympusExchangeAdapterInterface adapter = exchangeAdapters[id];
         require(address(adapter) != 0x0);
 
-        return adapter.getExchange(id);
+        return adapter.getExchangeDetails();
     }
 
     function getExchangeAdapter(bytes32 id)
@@ -49,18 +48,25 @@ contract ExchangeAdapterManager {
 
     /// >0  : found exchangeId
     /// ==0 : not found
-    function pickExchange(ERC20 token, uint amount, uint rate) external view returns (bytes32 exchangeId) {
+    function pickExchange(ERC20 token, uint amount, uint rate, bool isBuying) external view returns (bytes32 exchangeId) {
 
         int maxRate = -1;
         for (uint i = 0; i < exchanges.length; i++) {
 
             bytes32 id = exchanges[i];
-            IExchangeAdapter adapter = exchangeAdapters[id];
-            if (!adapter.isEnabled(id)) {
+            OlympusExchangeAdapterInterface adapter = exchangeAdapters[id];
+            if (!adapter.isEnabled()) {
                 continue;
             }
+            uint adapterResultRate;
+            if (isBuying){
+                (,adapterResultRate) = adapter.getPrice(ETH_TOKEN_ADDRESS, token, amount);
+            } else {
+                (,adapterResultRate) = adapter.getPrice(token, ETH_TOKEN_ADDRESS, amount);
+            }
+            int _rate = int(adapterResultRate);
 
-            int _rate = adapter.getRate(id, token, amount);
+
             if (_rate == 0) { // not support
                 continue;
             }
@@ -78,20 +84,27 @@ contract ExchangeAdapterManager {
         return 0x0;
     }
 
-    function checkTokenSupported(ERC20 token) external view returns (bool) {
+    function checkTokenSupported(ERC20 token, bool isBuying) external view returns (bool) {
 
         for (uint i = 0; i < exchanges.length; i++) {
 
             bytes32 id = exchanges[i];
 
-            IExchangeAdapter adapter = exchangeAdapters[id];
+            OlympusExchangeAdapterInterface adapter = exchangeAdapters[id];
 
-            if (!adapter.isEnabled(id)) {
+            if (!adapter.isEnabled()) {
                 continue;
             }
-            if (adapter.getRate(id, token, 0) != 0) {
-                return true;
+            if (isBuying) {
+                if (adapter.supportsTradingPair(ETH_TOKEN_ADDRESS, token)) {
+                    return true;
+                }
+            } else {
+                if (adapter.supportsTradingPair(token, ETH_TOKEN_ADDRESS)) {
+                    return true;
+                }
             }
+
         }
         return false;
     }

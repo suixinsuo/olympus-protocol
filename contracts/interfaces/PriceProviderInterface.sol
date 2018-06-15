@@ -15,5 +15,5 @@ contract PriceProviderInterface is ComponentInterface {
      * @return returns the expected and slippage rate for the specified conversion
      */
     function getPrice(address _sourceAddress, address _destAddress, uint _amount, bytes32 _exchangeId)
-        external returns(uint expectedRate, uint slippageRate);
+        external view returns(uint expectedRate, uint slippageRate);
 }

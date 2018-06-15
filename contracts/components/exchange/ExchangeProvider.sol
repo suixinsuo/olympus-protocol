@@ -1,66 +1,60 @@
 pragma solidity 0.4.24;
 
-import "./Interfaces.sol";
+import "../../interfaces/implementations/OlympusExchangeAdapterManagerInterface.sol";
+import "../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../interfaces/implementations/OlympusExchangeInterface.sol";
-import { ExchangeAdapterBase as EAB} from "./ExchangeAdapterBase.sol";
 import "../../libs/utils.sol";
 
 
 contract ExchangeProvider is OlympusExchangeInterface {
 
-    IExchangeAdapterManager private exchangeManager;
-
-    mapping (uint => uint) private balances;
+    OlympusExchangeAdapterManagerInterface private exchangeManager;
 
     function setExchangeManager(address _exchangeManager) external onlyOwner {
-        exchangeManager = IExchangeAdapterManager(_exchangeManager);
+        exchangeManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
     }
 
     function buyTokens(ERC20[] tokens, uint256[] amounts, uint256[] rates, bytes32 _exchangeId, address deposit) external payable returns(bool) {
-        IExchangeAdapter adapter;
+        OlympusExchangeAdapterInterface adapter;
         for (uint i = 0; i < tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == "" ? exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]) : _exchangeId;
             if(exchangeId == 0){
                 return false;
             }
-            adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
+            adapter = OlympusExchangeAdapterInterface(exchangeManager.getExchangeAdapter(exchangeId));
             require(
-                adapter.placeOrderQuicklyToBuy.value(amounts[i])(
-                    exchangeId,
+                adapter.buyToken.value(amounts[i])(
                     tokens[i],
                     amounts[i],
                     rates[i],
-                    deposit)
+                    deposit,
+                    "",
+                    0x0)
             );
         }
         return true;
     }
     function sellTokens(ERC20[] tokens, uint256[] amounts, uint256[] rates, bytes32 _exchangeId, address deposit) external returns(bool) {
-        IExchangeAdapter adapter;
+        OlympusExchangeAdapterInterface adapter;
         for (uint i = 0; i < tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == "" ? exchangeManager.pickExchange(tokens[i], amounts[i], rates[i]) : _exchangeId;
             if(exchangeId == 0){
                 return false;
             }
-            adapter = IExchangeAdapter(exchangeManager.getExchangeAdapter(exchangeId));
+            adapter = OlympusExchangeAdapterInterface(exchangeManager.getExchangeAdapter(exchangeId));
             //TODO need to add refund if transaction failed
 
-            tokens[i].transfer(address(adapter), amounts[i]);
-            // tokens[i].approve(exchangeManager.getExchangeAdapter(exchangeId), amounts[i]);
+            tokens[i].transferFrom(msg.sender, address(adapter), amounts[i]);
             require(
-                adapter.placeOrderQuicklyToSell(
-                    exchangeId,
+                adapter.sellToken(
                     tokens[i],
                     amounts[i],
                     rates[i],
-                    deposit)
+                    deposit,
+                    0x0)
             );
         }
         return true;
-    }
-
-    function getExpectAmount(uint eth, uint destDecimals, uint rate) internal pure returns(uint){
-        return Utils.calcDstQty(eth, 18, destDecimals, rate);
     }
 
     function checkTokenSupported(ERC20 token) external view returns (bool){
