@@ -1,126 +1,115 @@
 pragma solidity 0.4.24;
 
-import "../ExchangeAdapterBase.sol";
+import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../libs/ERC20.sol";
 
-contract KyberNetwork {
+contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
 
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty)
-        external view returns (uint expectedRate, uint slippageRate);
-
-    function trade(
-        ERC20 source,
-        uint srcAmount,
-        ERC20 dest,
-        address destAddress,
-        uint maxDestAmount,
-        uint minConversionRate,
-        address walletId)
-        external payable returns(uint);
-}
-
-contract KyberNetworkAdapter is ExchangeAdapterBase {
-
-    KyberNetwork private kyber;
+    KyberNetworkInterface private kyber;
+    address private exchangeAdapterManager;
     bytes32 private exchangeId;
     bytes32 private name;
     ERC20 private constant ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     address private walletId = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
 
-    struct Order{
-        uint amount;
-        uint destCompletedAmount;
-    }
-
     bool public adapterEnabled;
 
-    constructor (KyberNetwork _kyber) public {
+    modifier onlyExchangeAdapterManager() {
+        require(msg.sender == address(exchangeAdapterManager));
+        _;
+    }
+
+    constructor (KyberNetworkInterface _kyber) public {
         require(address(_kyber) != 0x0);
         kyber = _kyber;
         adapterEnabled = true;
     }
 
+    function setExchangeAdapterManager(address _exchangeAdapterManager) external onlyOwner{
+        exchangeAdapterManager = _exchangeAdapterManager;
+    }
+
     function setExchangeDetails(bytes32 _id, bytes32 _name)
-    public /* TODO modifier */returns(bool)
+    external onlyExchangeAdapterManager returns(bool)
     {
         exchangeId = _id;
         name = _name;
         return true;
     }
 
-
-    function getExchange(bytes32 /*_id*/)
-    public view returns(bytes32, bool)
+    function getExchangeDetails()
+    external view returns(bytes32 _name, bool _enabled)
     {
         return (name, adapterEnabled);
     }
 
+    function getExpectAmount(uint eth, uint destDecimals, uint rate) internal pure returns(uint){
+        return Utils.calcDstQty(eth, 18, destDecimals, rate);
+    }
 
-    function configKyberNetwork(KyberNetwork _kyber, address _walletId) public /* TODO modifier */ {
+    function configAdapter(KyberNetworkInterface _kyber, address _walletId) external onlyOwner returns(bool success) {
         if(address(_kyber) != 0x0){
             kyber = _kyber;
         }
         if(_walletId != 0x0){
             walletId = _walletId;
         }
+        return true;
     }
 
-    function enable(bytes32 /*_id*/) public /* TODO modifier */ returns(bool){
+    function supportsTradingPair(address _srcAddress, address _destAddress) external view returns(bool supported){
+        // Get price for selling one
+        uint amount = 10**(ERC20(_srcAddress) == ETH_TOKEN_ADDRESS ? 18 : ERC20(_srcAddress).decimals());
+        uint price;
+        (price, ) = this.getPrice(ERC20(_srcAddress), ERC20(_destAddress), amount);
+        return price > 0;
+    }
+
+    function enable() external onlyOwner returns(bool){
         adapterEnabled = true;
         return true;
     }
 
-    function disable(bytes32 /*_id*/) public /* TODO modifier */ returns(bool){
+    function disable() external onlyOwner returns(bool){
         adapterEnabled = false;
         return true;
     }
 
-    function isEnabled(bytes32 /*_id*/) external view returns (bool success) {
+    function isEnabled() external view returns (bool success) {
         return adapterEnabled;
     }
-    //buy rate
-    function getRate(bytes32 /*id*/, ERC20 token, uint amount) external view returns(int){
-        uint expectedRate;
-        uint slippageRate;
-        (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, token, amount);
-        return int(slippageRate);
+
+    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount) public view returns(uint, uint){
+        return kyber.getExpectedRate(_sourceAddress, _destAddress, _amount);
     }
-    //sell rate
-    function getRateToSell(bytes32 /*id*/, ERC20 token, uint amount) external view returns(int){
-        uint expectedRate;
-        uint slippageRate;
-        (expectedRate, slippageRate) = kyber.getExpectedRate(token, ETH_TOKEN_ADDRESS, amount);
-        return int(slippageRate);
-    }
-    function placeOrderQuicklyToBuy(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
-    external payable returns(bool)
-    {
-        if (address(this).balance < amount) {
+
+    function buyToken(ERC20 _token, uint _amount, uint _minimumRate, address _depositAddress, bytes32 /*_exchangeId*/, address _partnerId)
+    external payable returns(bool) {
+        if (address(this).balance < _amount) {
             return false;
         }
-        require(msg.value == amount);
+        require(msg.value == _amount);
         uint expectedRate;
         uint slippageRate;
 
-        (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, dest, amount);
-        if(slippageRate < rate){
+        (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, _token, _amount);
+        if(slippageRate < _minimumRate){
             return false;
         }
 
-        uint beforeTokenBalance = dest.balanceOf(deposit);
-        slippageRate = rate;
-        /*uint actualAmount = kyber.trade.value(amount)(*/
+        uint beforeTokenBalance = _token.balanceOf(_depositAddress);
+        slippageRate = _minimumRate;
         kyber.trade.value(msg.value)(
             ETH_TOKEN_ADDRESS,
-            amount,
-            dest,
-            deposit,
+            _amount,
+            _token,
+            _depositAddress,
             2**256 - 1,
             slippageRate,
-            walletId);
-        uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
+            _partnerId == address(0x0) ? walletId : _partnerId);
+        uint expectAmount = getExpectAmount(_amount, _token.decimals(), _minimumRate);
 
-        uint afterTokenBalance = dest.balanceOf(deposit);
+        uint afterTokenBalance = _token.balanceOf(_depositAddress);
         assert(afterTokenBalance > beforeTokenBalance);
 
         uint actualAmount = afterTokenBalance - beforeTokenBalance;
@@ -130,63 +119,52 @@ contract KyberNetworkAdapter is ExchangeAdapterBase {
         // Kyber Bug in Kovan that actualAmount returns always zero
         */
 
-        if(!dest.approve(deposit, actualAmount)){
-            return false;
-        }
         return true;
     }
-    function placeOrderQuicklyToSell(bytes32 /*id*/, ERC20 dest, uint amount, uint rate, address deposit)
-    external returns(bool)
+    function sellToken(ERC20 _token, uint _amount, uint _minimumRate, address _depositAddress, address _partnerId)
+    external returns(bool success)
     {
-        dest.approve(address(kyber), amount);
+        _token.approve(address(kyber), _amount);
 
         uint expectedRate;
         uint slippageRate;
-        (expectedRate, slippageRate) = kyber.getExpectedRate(dest, ETH_TOKEN_ADDRESS, amount);
+        (expectedRate, slippageRate) = kyber.getExpectedRate(_token, ETH_TOKEN_ADDRESS, _amount);
 
-        if(slippageRate < rate){
+        if(slippageRate < _minimumRate){
             return false;
         }
-        slippageRate = rate;
-        uint beforeTokenBalance = dest.balanceOf(this);
-        /*uint actualAmount = kyber.trade.value(amount)(*/
+        slippageRate = _minimumRate;
+        uint beforeTokenBalance = _token.balanceOf(this);
         kyber.trade(
-            dest,
-            amount,
+            _token,
+            _amount,
             ETH_TOKEN_ADDRESS,
-            deposit,
+            _depositAddress,
             2**256 - 1,
             slippageRate,
-            walletId);
+            _partnerId == address(0x0) ? walletId : _partnerId);
 
-        // uint expectAmount = getExpectAmount(amount, dest.decimals(), rate);
+        // uint expectAmount = getExpectAmount(_amount, _token.decimals(), _minimumRate);
 
-        uint afterTokenBalance = dest.balanceOf(this);
+        uint afterTokenBalance = _token.balanceOf(this);
         assert(afterTokenBalance < beforeTokenBalance);
 
         uint actualAmount = beforeTokenBalance - afterTokenBalance;
-        require(actualAmount == amount);
+        require(actualAmount == _amount);
 
 
         return true;
     }
 
-    function() public /* TODO modifier */ payable { }
-
-    function withdraw(uint amount) public /* TODO modifier */ {
+    function withdraw(uint amount) external onlyOwner {
 
         require(amount <= address(this).balance);
 
         uint sendAmount = amount;
-        if(amount==0){
+        if (amount == 0){
             sendAmount = address(this).balance;
         }
         msg.sender.transfer(sendAmount);
     }
-    event LogN( uint number, string text);
-
-    event LogA( address Address, string text);
-    event LogB( bytes32 Bytes, string text);
-    event LogS( string text);
 
 }

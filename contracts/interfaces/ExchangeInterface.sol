@@ -14,7 +14,7 @@ contract ExchangeInterface is ComponentInterface {
      * @return boolean whether or not the trading pair is supported by this exchange provider
      */
     function supportsTradingPair(address _srcAddress, address _destAddress, bytes32 _exchangeId)
-        external returns(bool supported);
+        external view returns(bool supported);
 
     /*
      * @dev Buy a single token with ETH.
