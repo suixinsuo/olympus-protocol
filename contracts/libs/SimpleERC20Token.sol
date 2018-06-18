@@ -36,6 +36,9 @@ contract SimpleERC20Token {
         return _totalSupply;
     }
 
+    function decimals() external view returns (uint) {
+        return _tokenDecimals;
+    }
 
     // Get the token balance for account `tokenOwner`
     function balanceOf(address tokenOwner) external view returns (uint balance) {
