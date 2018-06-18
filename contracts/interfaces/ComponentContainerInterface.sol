@@ -7,6 +7,6 @@ contract ComponentContainerInterface {
     event ComponentUpdated (string _name, address _componentAddress);
 
     function setComponent(string _name, address _providerAddress) public returns (bool success);
-    function getComponentByName(string name) external view returns (address);
+    function getComponentByName(string name) public view returns (address);
 
 }
