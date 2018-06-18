@@ -46,6 +46,18 @@ contract ExchangeAdapterManager is Ownable {
         return address(exchangeAdapters[id]);
     }
 
+    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount, bytes32 _exchangeId)
+        external view returns(uint expectedRate, uint slippageRate) {
+        if(_exchangeId != ""){
+            return exchangeAdapters[_exchangeId].getPrice(_sourceAddress, _destAddress, _amount);
+        }
+        for(uint i = 0; i < exchanges.length; i++) {
+            bytes32 id = exchanges[i];
+            return exchangeAdapters[id].getPrice(_sourceAddress, _destAddress, _amount);
+        }
+        return(0, 0);
+    }
+
     /// >0  : found exchangeId
     /// ==0 : not found
     function pickExchange(ERC20 token, uint amount, uint rate, bool isBuying) external view returns (bytes32 exchangeId) {
@@ -84,28 +96,29 @@ contract ExchangeAdapterManager is Ownable {
         return 0x0;
     }
 
-    function checkTokenSupported(ERC20 token, bool isBuying) external view returns (bool) {
-
-        for (uint i = 0; i < exchanges.length; i++) {
-
-            bytes32 id = exchanges[i];
-
-            OlympusExchangeAdapterInterface adapter = exchangeAdapters[id];
-
-            if (!adapter.isEnabled()) {
-                continue;
+    function supportsTradingPair(address _srcAddress, address _destAddress, bytes32 _exchangeId) external view returns (bool) {
+        OlympusExchangeAdapterInterface adapter;
+        if(_exchangeId != ""){
+            adapter = exchangeAdapters[id];
+            if(!adapter.isEnabled()){
+                return false;
             }
-            if (isBuying) {
-                if (adapter.supportsTradingPair(ETH_TOKEN_ADDRESS, token)) {
+            if (adapter.supportsTradingPair(_srcAddress, _destAddress)) {
+                return true;
+            }
+        } else {
+            for (uint i = 0; i < exchanges.length; i++) {
+                bytes32 id = exchanges[i];
+                adapter = exchangeAdapters[id];
+                if (!adapter.isEnabled()) {
+                    continue;
+                }
+                if (adapter.supportsTradingPair(_srcAddress, _destAddress)) {
                     return true;
                 }
-            } else {
-                if (adapter.supportsTradingPair(token, ETH_TOKEN_ADDRESS)) {
-                    return true;
-                }
             }
-
         }
+
         return false;
     }
 

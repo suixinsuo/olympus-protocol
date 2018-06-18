@@ -8,6 +8,9 @@
 # Olympus 2.0
 
 ## Kovan
+KyberNetworkAdapter 0x11f421612544fd59e3dbf196ff55e6c30da69998
+ExchangeAdapterManager 0xedcc9fab18d884717a61fbc06ce39170f55099ed
+ExchangeProvider 0xb08f0df07f4ee0e0d4cd9aaaf7b7d36a174ff34f
 Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
 
 

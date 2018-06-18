@@ -1,6 +1,11 @@
 'use strict';
 
-// const KyberConfig = require('../scripts/libs/kyber_config');
+const KyberConfig = require('../scripts/libs/kyber_config');
+
+let ExchangeProvider = artifacts.require("ExchangeProvider");
+let ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
+let KyberNetworkAdapter = artifacts.require("../contracts/components/exchange/exchanges/KyberNetworkAdapter.sol");
+let MockKyberNetwork = artifacts.require("MockKyberNetwork");
 
 let MarketplaceProvider = artifacts.require("Marketplace");
 let AsyncWithdraw = artifacts.require("AsyncWithdraw");
@@ -25,22 +30,58 @@ function deployWithdraw(deployer, network) {
   ]);
 }
 
+function deployExchange(deployer, network) {
+  let kyberNetwork = KyberConfig[network];
+  let kyberAddress = network === 'kovan' ? '0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50' : '0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e';
+  return deployer.then(() => {
+    return deployer.deploy(KyberNetworkAdapter, kyberAddress);
+  }).then(() => {
+    return deployer.deploy(ExchangeAdapterManager);
+  }).then(() => {
+    return deployer.deploy(ExchangeProvider);
+  }).then(() => {
+    if (network === 'development') {
+      return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18);
+    }
+  }).then(async () => {
+    let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
+    let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+    let exchangeProvider = await ExchangeProvider.deployed();
+    if (network === 'development') {
+      let mockKyberNetwork = await MockKyberNetwork.deployed();
+      await kyberNetworkAdapter.configAdapter(mockKyberNetwork.address, 0x0);
+    }
+    await kyberNetworkAdapter.setExchangeAdapterManager(exchangeAdapterManager.address);
+    await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
+    await exchangeProvider.setExchangeAdapterManager('0xedcc9fab18d884717a61fbc06ce39170f55099ed');
+    return deployer;
+  });
+}
+
 function deployOnDev(deployer, num) {
-  deployer.deploy([
-    MarketplaceProvider,
-    AsyncWithdraw,
-    RiskControl,
-    SimpleWithdraw,
-  ]);
+  return deployer.then(() => {
+    // return deployer.deploy([
+    //   MarketplaceProvider,
+    //   AsyncWithdraw,
+    //   RiskControl,
+    //   DummyDerivative,
+    // ]);
+  }).then(() => {
+    return deployExchange(deployer, 'kovan');
+  });
 }
 
 function deployOnKovan(deployer, num) {
-  deployer.deploy([
-    MarketplaceProvider,
-    AsyncWithdraw,
-    RiskControl,
-    DummyDerivative,
-  ]);
+  return deployer.then(() => {
+    // return deployer.deploy([
+    //   MarketplaceProvider,
+    //   AsyncWithdraw,
+    //   RiskControl,
+    //   DummyDerivative,
+    // ]);
+  }).then(() => {
+    return deployExchange(deployer, 'kovan');
+  });
 }
 
 
@@ -75,12 +116,12 @@ function deployOnMainnet(deployer) {
   //   return deploy;
 }
 
-function deployOnKovan(deployer, num) {
+// function deployOnKovan(deployer, num) {
 
-  return deployer.then(() => {
-    return deployer.deploy(MarketplaceProvider);
-  })
-}
+//   return deployer.then(() => {
+//     return deployer.deploy(MarketplaceProvider);
+//   })
+// }
 
 module.exports = function (deployer, network) {
   let flags = args.parseArgs();
@@ -98,6 +139,3 @@ module.exports = function (deployer, network) {
   return deployOnDev(deployer, network);
 
 }
-
-
-

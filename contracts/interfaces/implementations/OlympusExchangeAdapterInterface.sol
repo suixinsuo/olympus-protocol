@@ -6,22 +6,25 @@ import "./KyberNetworkInterface.sol";
 import "../../libs/Ownable.sol";
 
 
-contract OlympusExchangeAdapterInterface is ExchangeInterface, Ownable {
+contract OlympusExchangeAdapterInterface is Ownable {
 
-    // Overwrite functions, because we don't need the exchangeId here
-    // Except for the buyToken, we don't overwrite that
-    // Because of issues with the overloading of payable functions
     function supportsTradingPair(address _srcAddress, address _destAddress)
         external view returns(bool supported);
 
     function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount)
-        public view returns(uint expectedRate, uint slippageRate);
+        external view returns(uint expectedRate, uint slippageRate);
 
     function sellToken
         (
         ERC20 _token, uint _amount, uint _minimumRate,
         address _depositAddress, address _partnerId
         ) external returns(bool success);
+
+    function buyToken
+        (
+        ERC20 _token, uint _amount, uint _minimumRate,
+        address _depositAddress, address _partnerId
+        ) external payable returns(bool success);
 
     function enable() external returns(bool);
     function disable() external returns(bool);
