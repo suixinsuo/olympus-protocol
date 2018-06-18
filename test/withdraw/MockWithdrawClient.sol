@@ -49,7 +49,7 @@ contract MockWithdrawClient is MockDerivative  {
     }
 
     function () external payable {
-        balances[msg.sender] = msg.value; // 1 ETH 1 Fund Token
+        balances[msg.sender] += msg.value; // 1 ETH 1 Fund Token
         emit Transfer(owner, msg.sender, msg.value);
     }
 
