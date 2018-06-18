@@ -91,6 +91,6 @@ contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
         userRequests = contracts[msg.sender].userRequests;
         totalWithdrawAmount = contracts[msg.sender].totalWithdrawAmount;
         withdrawRequestLock = contracts[msg.sender].withdrawRequestLock;
-     }
+    }
 
 }
