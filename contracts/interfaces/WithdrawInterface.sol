@@ -11,8 +11,8 @@ contract WithdrawInterface is ComponentInterface {
     function isInProgress() external view returns(bool);
     function unlock() external;
     function getUserRequests() external view returns(address[]);
+    function getTotalWithdrawAmount() external view returns(uint);
 
     event WithdrawRequest(address _requester, uint amountOfToken);
     event Withdrawed(address _requester,  uint amountOfToken , uint amountOfEther);
-
 }

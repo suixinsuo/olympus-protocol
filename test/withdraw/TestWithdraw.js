@@ -52,7 +52,8 @@ contract('Withdraw', (accounts) => {
     assert.equal(Math.round(initialEthB), Math.round(endEthB), 'B recover ETH'); assert.equal(Math.round(initialEthB), Math.round(initialEthB), 'B  recover ETH');
 
 
-  }));
+  }))
+
   it("Most simple implementation of withdraw", async () => log.catch(async () => {
     const product1 = await MockWithdraw.new((await SimpleWithdraw.deployed()).address);
 

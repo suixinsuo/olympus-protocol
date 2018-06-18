@@ -21,6 +21,7 @@ contract SimpleWithdraw is WithdrawInterface {
     function start() external {return;}
     function unlock() external  {return;}
     function isInProgress() external view returns(bool) { return false; }
+    function getTotalWithdrawAmount() external view returns(uint) {return 0;}
 
     function getUserRequests() external view returns(address[]) {
         return  contracts[msg.sender].userRequests;

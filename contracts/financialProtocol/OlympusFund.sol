@@ -1,0 +1,232 @@
+pragma solidity 0.4.24;
+
+import "../Derivative.sol";
+import "../interfaces/FundInterface.sol";
+// import "../interfaces/ExchangeInterface.sol";
+import "../interfaces/WithdrawInterface.sol";
+import "../interfaces/MarketplaceInterface.sol";
+import "../components/base/ComponentContainer.sol";
+
+contract OlympusFund is FundInterface, Derivative, ComponentContainer {
+
+    uint public constant DENOMINATOR = 100000;
+    uint public constant INTIAL_VALUE =  10**18;
+
+    string public constant MARKET = "MarketProvider";
+    string public constant EXCHANGE = "ExchangeProvider";
+    string public constant WITHDRAW = "WithdrawProvider";
+    string public constant RISK = "RiskProvider";
+    string public constant WHITELIST = "WhitelistProvider";
+
+    uint public totalSupply;
+
+    mapping(address => uint) investors;
+    mapping(address => uint) amounts;
+    mapping(address => bool) activeTokens;
+
+    uint maxTransfers = 10;
+
+    constructor(
+      string _name,
+      string _symbol,
+      string _description,
+      uint _decimals
+    ) public {
+
+        name = _name;
+        symbol = _symbol;
+        description = _description;
+        version = "1.0";
+        decimals = _decimals;
+        status = DerivativeStatus.New;
+        fundType = DerivativeType.Fund;
+    }
+
+    // ----------------------------- CONFIG -----------------------------
+    // One time call
+    function initialize(address _market, address _exchange, address _withdraw, address _risk, address _whitelist) onlyOwner external {
+        require(status == DerivativeStatus.New);
+        setComponent(MARKET, _market);
+        setComponent(EXCHANGE, _exchange);
+        setComponent(WITHDRAW, _withdraw);
+        setComponent(RISK, _risk);
+        setComponent(WHITELIST, _whitelist);
+        MarketplaceInterface(_market).registerProduct();
+        status = DerivativeStatus.Active;
+    }
+
+    function getTokens() external view returns(address[], uint[]) {
+        uint[] memory _amounts = new uint[](tokens.length);
+        for (uint i = 0; i < tokens.length; i++) {
+            _amounts[i] = amounts[tokens[i]];
+        }
+        return (tokens, _amounts);
+    }
+
+    // Call after you have updated the MARKET provider, not required after initialize
+    function registerInNewMarketplace() external onlyOwner returns(bool) {
+        require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
+        return true;
+    }
+
+    // ----------------------------- FUND INTERFACE -----------------------------
+
+    function updateTokens(ERC20[] _updatedTokens) internal returns(bool success) {
+        ERC20 tokenAddress;
+        for (uint i = 0; i < _updatedTokens.length; i++) {
+            tokenAddress = _updatedTokens[i];
+            amounts[tokenAddress] = 0;
+            // amounts[tokenAddress] = tokenAddress.balanceOf(this); TODO after exchange provider
+            if (amounts[tokenAddress] > 0 && !activeTokens[tokenAddress]) {
+                tokens.push(tokenAddress);
+                activeTokens[tokenAddress] = true;
+                continue;
+            }
+        }
+        return true;
+    }
+
+
+
+    function buyTokens(string  /*_exchangeId*/, ERC20[] _tokens, uint[] /*_amounts*/, uint[]  /*_rates*/) public onlyOwner returns(bool) {
+        // TODO in other task
+        // uint sum = 0;
+        // for (uint i = 0; i < _amounts.length; i++) {
+        //     sum += _amounts[i];
+        // }
+        // // Check we have the ethAmount required
+        // if (sum != ethAmount){ return false; }
+        // ExchangeProvider exchange = ExchangeProvider(getComponentByName(EXCHANGE));
+        // exchange.buyToken.value(ethAmount)(exchangeId, _tokens, _amounts, rates, address(this));
+        updateTokens(_tokens);
+        return true;
+
+    }
+
+    function sellTokens(string /*_exchangeId*/, ERC20[] _tokens, uint[] _amounts, uint[]  /*_rates*/) public onlyOwner returns (bool) {
+        for(uint i = 0; i < tokens.length; i++) {
+            _tokens[i].approve(msg.sender, _amounts[i]);
+        }
+        // TODO in other task
+        // ExchangeProvider exchange = ExchangeProvider(getComponentByName(EXCHANGE));
+        // exchange.buyToken.sellToken(exchangeId, _tokens, _amounts, rates, address(this));
+        updateTokens(_tokens);
+        return true;
+    }
+
+    // ----------------------------- DERIVATIVE -----------------------------
+
+    function invest() public payable returns(bool) {
+        require(status == DerivativeStatus.Active, "The Fund is not active");
+        require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH");
+
+        // Current value is already added in the balance, reduce it
+        uint _sharePrice;
+        if(totalSupply > 0) {
+            _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply);
+        } else {
+            _sharePrice = INTIAL_VALUE;
+        }
+
+        uint _investorShare = ((msg.value * DENOMINATOR) / _sharePrice) * ((10 ** decimals) / DENOMINATOR);
+
+        balances[msg.sender] += _investorShare;
+        totalSupply += _investorShare;
+
+        emit Transfer(owner, msg.sender, _investorShare);
+        return true;
+    }
+
+    function changeStatus(DerivativeStatus _status) public returns(bool) {
+        require(_status != DerivativeStatus.New);
+        status = _status;
+        return true;
+    }
+
+    function getPrice() public view returns(uint)  {
+        if(totalSupply == 0) {
+            return INTIAL_VALUE;
+        }
+         // Total Value in ETH among its tokens + ETH new added value
+        return (
+          ((getAssetsValue() + address(this).balance ) * 10 ** decimals ) / totalSupply,
+        );
+    }
+
+    function getAssetsValue() internal view returns (uint) {
+        // TODO cast to OlympusExchangeInterface
+        // address exchangeProvider = getComponentByName(EXCHANGE);
+        uint _totalTokensValue = 0;
+        // Iterator
+        uint _expectedRate;
+        ERC20 _erc20;
+
+        if(totalSupply == 0) {return INTIAL_VALUE;}  // 1 Eth
+
+        for (uint16 i = 0; i < tokens.length; i++) {
+
+            if(!activeTokens[tokens[i]]) {continue;}
+
+            _erc20 = ERC20(tokens[i]);
+
+            uint _balance = _erc20.balanceOf(address(this));
+            // TODO Implement Exchange interface
+            // uint _decimal = _erc20.decimals();
+
+            if(_balance == 0){continue;}
+
+            // (_expectedRate, ) = exchangeProvider.getPrice(tokens[i], 10**_decimal);
+            if(_expectedRate == 0){continue;}
+
+            _totalTokensValue += (_balance * 10**18) / _expectedRate;
+        }
+        return _totalTokensValue;
+    }
+
+    // ----------------------------- WITHDRAW -----------------------------
+    function requestWithdraw(uint amount) external {
+        WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
+    }
+
+    function setMaxTransfers(uint _maxTransfers) external onlyOwner {
+        maxTransfers = _maxTransfers;
+    }
+
+    function withdraw() onlyOwner external returns(bool) {
+        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+
+        uint _transfers = 0;
+        address[] memory _requests = withdrawProvider.getUserRequests();
+        uint _eth;
+        uint tokens;
+
+        if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
+            // Sell tokens
+        }
+
+        if (!withdrawProvider.isInProgress()) {
+            withdrawProvider.start();
+        }
+
+        for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
+
+            (_eth, tokens) = withdrawProvider.withdraw(_requests[i]);
+            if(tokens == 0) {continue;}
+
+            balances[_requests[i]] -= tokens;
+            address(_requests[i]).transfer(_eth);
+            _transfers++;
+        }
+
+        if(!withdrawProvider.isInProgress()) {
+            withdrawProvider.unlock();
+        }
+
+        return !withdrawProvider.isInProgress(); // True if completed
+    }
+
+    function withdrawInProgress() external view returns(bool) {
+        return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
+    }
+
+}

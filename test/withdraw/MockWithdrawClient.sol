@@ -33,6 +33,7 @@ contract MockWithdrawClient is MockDerivative  {
             if(tokens == 0) {continue;}
 
             balances[_requests[i]] -= tokens;
+            totalSupply -= tokens;
             address(_requests[i]).transfer(_eth);
             _transfers++;
         }
@@ -50,6 +51,7 @@ contract MockWithdrawClient is MockDerivative  {
 
     function invest() public payable  returns(bool) {
         balances[msg.sender] += msg.value; // 1 ETH 1 Fund Token
+        totalSupply += msg.value;
         emit Transfer(owner, msg.sender, msg.value);
         return true;
     }
