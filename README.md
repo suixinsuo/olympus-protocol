@@ -4,6 +4,13 @@
 
 [![coverage report](https://gitlab.com/aireach/olympus-protocol/badges/develop/coverage.svg)](https://gitlab.com/aireach/olympus-protocol/commits/develop)
 
+
+# Olympus 2.0
+
+## Kovan
+Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
+
+
 # Deployed addresses
 
 ## Mainnet
