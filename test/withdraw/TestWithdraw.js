@@ -1,7 +1,7 @@
 const log = require('../utils/log');
 const MockWithdraw = artifacts.require("MockWithdrawClient");
 const AsyncWithdraw = artifacts.require("../../contracts/components/widrwaw/AsyncWithdraw.sol");
-const Simpleithdraw = artifacts.require("../../contracts/components/widrwaw/SimpleWithdraw.sol");
+const SimpleWithdraw = artifacts.require("../../contracts/components/widrwaw/SimpleWithdraw.sol");
 
 const toToken = (amount) => {
   return amount * 10 ** 18;
@@ -54,7 +54,7 @@ contract('Withdraw', (accounts) => {
 
   }));
   it("Most simple implementation of withdraw", async () => log.catch(async () => {
-    const product1 = await MockWithdraw.new((await Simpleithdraw.deployed()).address);
+    const product1 = await MockWithdraw.new((await SimpleWithdraw.deployed()).address);
 
     await product1.invest({ value: web3.toWei(1, 'ether'), from: investorA });
     await product1.requestWithdraw(toToken(1), { from: investorA });

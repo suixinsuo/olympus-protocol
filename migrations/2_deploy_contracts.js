@@ -29,9 +29,7 @@ function deployWithdraw(deployer, network) {
 async function deployMockfund(deployer, network) {
   deployer.deploy([
     SimpleWithdraw, // Exchannge Provider
-  ]).then(async () => {
-    await deployer.deploy(MockFund, SimpleWithdraw.address);
-  });
+  ]);
 }
 
 function deployOnDev(deployer, num) {
@@ -40,9 +38,7 @@ function deployOnDev(deployer, num) {
     AsyncWithdraw,
     RiskControl,
     SimpleWithdraw,
-  ]).then(async () => {
-    await deployer.deploy(MockFund, SimpleWithdraw.address);
-  });;
+  ]);
 }
 
 function deployOnKovan(deployer, num) {
