@@ -3,23 +3,44 @@
 // const KyberConfig = require('../scripts/libs/kyber_config');
 
 let MarketplaceProvider = artifacts.require("Marketplace");
+let AsyncWithdraw = artifacts.require("AsyncWithdraw");
+let SimpleWithdraw = artifacts.require("SimpleWithdraw");
+
+let DummyDerivative = artifacts.require("MockDerivative");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
 
 
+function deployMarketplace(deployer, network) {
+  deployer.deploy([
+    MarketplaceProvider,
+  ]);
+}
+
+function deployWithdraw(deployer, network) {
+  deployer.deploy([
+    AsyncWithdraw,
+    SimpleWithdraw,
+  ]);
+}
+
 function deployOnDev(deployer, num) {
-  return deployer.then(() => {
-    return deployer.deploy(MarketplaceProvider);
-  }).then(() => {
-    return deployer.deploy(RiskControl);
-  });
+  deployer.deploy([
+    MarketplaceProvider,
+    AsyncWithdraw,
+    RiskControl,
+    SimpleWithdraw,
+  ]);
 }
 
 function deployOnKovan(deployer, num) {
-  return deployer.then(() => {
-    return deployer.deploy(MarketplaceProvider);
-  });
+  deployer.deploy([
+    MarketplaceProvider,
+    AsyncWithdraw,
+    RiskControl,
+    DummyDerivative,
+  ]);
 }
 
 
@@ -62,7 +83,6 @@ function deployOnKovan(deployer, num) {
 }
 
 module.exports = function (deployer, network) {
-
   let flags = args.parseArgs();
 
   if (network == 'mainnet' && flags.contract == "exchange") {
@@ -70,6 +90,11 @@ module.exports = function (deployer, network) {
   } else if (network == 'kovan') {
     return deployOnKovan(deployer, network);
   }
+
+  if (flags.suite && typeof eval(`deploy${flags.suite}`) === 'function') {
+    return eval(`deploy${flags.suite}(deployer,network)`);
+  }
+
   return deployOnDev(deployer, network);
 
 }
