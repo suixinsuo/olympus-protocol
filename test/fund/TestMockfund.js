@@ -1,5 +1,5 @@
 const log = require('../utils/log');
-const Fund = artifacts.require("Mockfund");
+const Fund = artifacts.require("MockFund");
 const SimpleWithdraw = artifacts.require("../../contracts/components/widrwaw/SimpleWithdraw.sol");
 
 const TOKEN1 = 0x0041dee9f481a1d2aa74a3f1d0958c1db6107c686a;
