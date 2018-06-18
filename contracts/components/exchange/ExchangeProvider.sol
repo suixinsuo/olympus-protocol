@@ -7,6 +7,10 @@ import "../../libs/utils.sol";
 
 
 contract ExchangeProvider is OlympusExchangeInterface {
+    string public name = "OlympusExchangeProvider";
+    string public description = "Exchange provider of Olympus Labs, which additionally supports buy and sellTokens for multiple tokens at the same time";
+    string public category = "exchange";
+    string public version = "v1.0";
 
     OlympusExchangeAdapterManagerInterface private exchangeManager;
 
