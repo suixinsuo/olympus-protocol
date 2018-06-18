@@ -22,8 +22,8 @@ contract MockFund is FundInterface, MockDerivative {
         ERC20 tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
             tokenAddress = _updatedTokens[i];
-            amounts[tokenAddress] = tokenAddress.balanceOf(this);
-
+            // amounts[tokenAddress] = tokenAddress.balanceOf(this);
+            amounts[tokenAddress] = 100000000000000000;
             if (amounts[tokenAddress] > 0 && !activeTokens[tokenAddress]) {
                 tokens.push(tokenAddress);
                 activeTokens[tokenAddress] = true;
@@ -59,13 +59,15 @@ contract MockFund is FundInterface, MockDerivative {
         return true;
     }
 
-    function () external payable {
+    function invest() public payable returns(bool) {
         balances[msg.sender] += msg.value; // 1 ETH 1 Fund Token
         totalSupply += msg.value;
         investors[msg.sender] += msg.value;
         emit Transfer(owner, msg.sender, msg.value);
+        return true;
     }
 
+    // Mock
     function requestWithdraw(uint amount) external {
         require(investors[msg.sender] >= amount);
         msg.sender.transfer(amount);

@@ -40,7 +40,9 @@ function deployOnDev(deployer, num) {
     AsyncWithdraw,
     RiskControl,
     SimpleWithdraw,
-  ]);
+  ]).then(async () => {
+    await deployer.deploy(MockFund, SimpleWithdraw.address);
+  });;
 }
 
 function deployOnKovan(deployer, num) {

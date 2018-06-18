@@ -24,8 +24,8 @@ contract('Withdraw', (accounts) => {
     const product1 = await MockWithdraw.new(asyncWithdraw.address);
 
     // The investor send eth
-    await product1.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorA });
-    await product1.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorB });
+    await product1.invest({ value: web3.toWei(1, 'ether'), from: investorA });
+    await product1.invest({ value: web3.toWei(1, 'ether'), from: investorB });
 
     // Request
     await product1.requestWithdraw(toToken(1), { from: investorA });
@@ -56,7 +56,7 @@ contract('Withdraw', (accounts) => {
   it("Most simple implementation of withdraw", async () => log.catch(async () => {
     const product1 = await MockWithdraw.new((await Simpleithdraw.deployed()).address);
 
-    await product1.sendTransaction({ value: web3.toWei(1, 'ether'), from: investorA });
+    await product1.invest({ value: web3.toWei(1, 'ether'), from: investorA });
     await product1.requestWithdraw(toToken(1), { from: investorA });
     await product1.withdraw();
 
