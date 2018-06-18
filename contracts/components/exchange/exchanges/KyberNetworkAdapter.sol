@@ -61,7 +61,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
         // Get price for selling one
         uint amount = 10**(ERC20(_srcAddress) == ETH_TOKEN_ADDRESS ? 18 : ERC20(_srcAddress).decimals());
         uint price;
-        (price, ) = this.getPrice(ERC20(_srcAddress), ERC20(_destAddress), amount);
+        (price,) = this.getPrice(ERC20(_srcAddress), ERC20(_destAddress), amount);
         return price > 0;
     }
 
@@ -79,20 +79,19 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
         return adapterEnabled;
     }
 
-    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount) public view returns(uint, uint){
+    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount) external view returns(uint, uint){
         return kyber.getExpectedRate(_sourceAddress, _destAddress, _amount);
     }
 
-    function buyToken(ERC20 _token, uint _amount, uint _minimumRate, address _depositAddress, bytes32 /*_exchangeId*/, address _partnerId)
+    function buyToken(ERC20 _token, uint _amount, uint _minimumRate, address _depositAddress, address _partnerId)
     external payable returns(bool) {
         if (address(this).balance < _amount) {
             return false;
         }
         require(msg.value == _amount);
-        uint expectedRate;
         uint slippageRate;
 
-        (expectedRate, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, _token, _amount);
+        (, slippageRate) = kyber.getExpectedRate(ETH_TOKEN_ADDRESS, _token, _amount);
         if(slippageRate < _minimumRate){
             return false;
         }
@@ -107,17 +106,8 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
             2**256 - 1,
             slippageRate,
             _partnerId == address(0x0) ? walletId : _partnerId);
-        uint expectAmount = getExpectAmount(_amount, _token.decimals(), _minimumRate);
 
-        uint afterTokenBalance = _token.balanceOf(_depositAddress);
-        assert(afterTokenBalance > beforeTokenBalance);
-
-        uint actualAmount = afterTokenBalance - beforeTokenBalance;
-        require(actualAmount >= expectAmount);
-
-        /**
-        // Kyber Bug in Kovan that actualAmount returns always zero
-        */
+        require(_token.balanceOf(_depositAddress) > beforeTokenBalance);
 
         return true;
     }
@@ -126,15 +116,14 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
     {
         _token.approve(address(kyber), _amount);
 
-        uint expectedRate;
         uint slippageRate;
-        (expectedRate, slippageRate) = kyber.getExpectedRate(_token, ETH_TOKEN_ADDRESS, _amount);
+        (,slippageRate) = kyber.getExpectedRate(_token, ETH_TOKEN_ADDRESS, _amount);
 
         if(slippageRate < _minimumRate){
             return false;
         }
         slippageRate = _minimumRate;
-        uint beforeTokenBalance = _token.balanceOf(this);
+        // uint beforeTokenBalance = _token.balanceOf(this);
         kyber.trade(
             _token,
             _amount,
@@ -144,14 +133,8 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
             slippageRate,
             _partnerId == address(0x0) ? walletId : _partnerId);
 
-        // uint expectAmount = getExpectAmount(_amount, _token.decimals(), _minimumRate);
-
-        uint afterTokenBalance = _token.balanceOf(this);
-        assert(afterTokenBalance < beforeTokenBalance);
-
-        uint actualAmount = beforeTokenBalance - afterTokenBalance;
-        require(actualAmount == _amount);
-
+        // require(_token.balanceOf(this) < beforeTokenBalance);
+        // require((beforeTokenBalance - _token.balanceOf(this)) == _amount);
 
         return true;
     }

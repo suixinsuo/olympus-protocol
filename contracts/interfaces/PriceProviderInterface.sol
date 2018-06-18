@@ -14,6 +14,6 @@ contract PriceProviderInterface is ComponentInterface {
      * @param bytes32 _exchangeId The exchangeId to choose. If it's an empty string, then the exchange will be chosen automatically.
      * @return returns the expected and slippage rate for the specified conversion
      */
-    function getPrice(address _sourceAddress, address _destAddress, uint _amount, bytes32 _exchangeId)
+    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount, bytes32 _exchangeId)
         external view returns(uint expectedRate, uint slippageRate);
 }

@@ -34,7 +34,7 @@ contract OlympusExchangeInterface is ExchangeInterface, PriceProviderInterface, 
      */
     function sellTokens
         (
-        ERC20[] _tokens, uint[] _amounts, uint[] _rates,
-        address _depositAddress, string _exchangeId, address _partnerId
+        ERC20[] _tokens, uint[] _amounts, uint[] _minimumRates,
+        address _depositAddress, bytes32 _exchangeId, address _partnerId
         ) external returns(bool success);
 }
