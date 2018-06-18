@@ -25,7 +25,7 @@ contract MockDerivative is  DerivativeInterface, ComponentContainer  {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
     function totalSupply() external view returns (uint supply) {
-        return balances[address(this)];
+        return totalSupply;
     }
 
     function decimals() external view returns (uint) {

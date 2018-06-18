@@ -7,6 +7,12 @@
 
 # Olympus 2.0
 
+## Test
+`npm run test` will test all the suits.
+
+`truffle test --suite=Mockfund ./test/fund/TestMockUpFund.js` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
+The suit option will limit the number of deployment required for the concrete test file.
+
 ## Kovan
 Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
 
