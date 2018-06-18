@@ -14,7 +14,15 @@ contract MockFund is FundInterface, MockDerivative {
 
     string public constant EXCHANGE = "Exchange";
 
-    constructor(address exchangeAddress) public {
+    constructor(
+      string _name,
+      string _symbol,
+      string _description,
+      address exchangeAddress) public {
+        name = _name;
+        symbol = _symbol;
+        description = _description;
+
         setComponent(EXCHANGE, exchangeAddress);
     }
 
