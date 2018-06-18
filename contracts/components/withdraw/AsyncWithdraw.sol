@@ -8,7 +8,6 @@ import "../../interfaces/WithdrawInterface.sol";
 
 contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
 
-    // Withdraw withdraw;
     struct ContractInfo {
         uint price;
         address[]  userRequests;
