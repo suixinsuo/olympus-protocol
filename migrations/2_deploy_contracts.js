@@ -30,6 +30,7 @@ function deployOnDev(deployer, num) {
     MarketplaceProvider,
     AsyncWithdraw,
     RiskControl,
+    SimpleWithdraw,
   ]);
 }
 
