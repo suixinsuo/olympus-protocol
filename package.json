@@ -11,7 +11,7 @@
     "testCoverage": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test --network coverage' ",
     "deploy": "./node_modules/.bin/run-with-testrpc --port 8545  --network development 'truffle migrate --reset' ",
     "deploytestnet": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network kovan' ",
-    "linting": "#solhint 'contracts/components/exchange/**/*.sol'",
+    "linting": "#solhint 'contracts/**/*.sol'",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "version": "truffle version",
     "build-contracts": "sol-merger \"./contracts/financialProtocol/*.sol\" ./build"
