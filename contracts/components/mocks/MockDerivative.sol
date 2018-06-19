@@ -6,7 +6,7 @@ import "../../interfaces/MarketplaceInterface.sol";
 
 contract MockDerivative is  DerivativeInterface, ComponentContainer  {
 
-    string public constant MARKET = "MarketPlace";
+    string public constant MARKET = "Marketplace";
     uint256 public totalSupply = 0;
     string public name = "Dummy";
     uint256 public decimals = 18;
