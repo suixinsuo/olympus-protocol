@@ -8,7 +8,5 @@ contract ChargeableInterface is ComponentInterface {
     uint public feePercentage;
     string public feeName;
 
-    function calculateFee(uint _amount)
-        external
-    returns(uint totalFeeAmount, address tokenAddress);
+    function calculateFee(uint _amount) external returns(uint totalFeeAmount, address tokenAddress);
 }

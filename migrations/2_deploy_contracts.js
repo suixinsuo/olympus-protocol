@@ -3,6 +3,10 @@
 // const KyberConfig = require('../scripts/libs/kyber_config');
 
 let MarketplaceProvider = artifacts.require("Marketplace");
+let AsyncWithdraw = artifacts.require("AsyncWithdraw");
+let SimpleWithdraw = artifacts.require("SimpleWithdraw");
+
+let DummyDerivative = artifacts.require("MockDerivative");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
@@ -10,20 +14,58 @@ let MockIndex = artifacts.require("MockIndex");
 // let MockFund = artifacts.require("MockFund");
 
 
+function deployMarketplace(deployer, network) {
+  deployer.deploy([
+    MarketplaceProvider,
+  ]);
+}
+
+function deployWithdraw(deployer, network) {
+  deployer.deploy([
+    AsyncWithdraw,
+    SimpleWithdraw,
+  ]);
+}
+
+async function deployMockfund(deployer, network) {
+  deployer.deploy([
+    SimpleWithdraw, // Exchannge Provider
+  ]);
+}
+
+async function deployOlympusFund(deployer, network) {
+  deployer.deploy([
+    AsyncWithdraw,
+    SimpleWithdraw, // Exchannge Provider
+    RiskControl,
+    MarketplaceProvider,
+  ]);
+}
+
 function deployOnDev(deployer, num) {
-  return deployer.then(() => {
-    return deployer.deploy(MarketplaceProvider)
-  }).then(() => {
-    return deployer.deploy(RiskControl);
-  }).then(() => {
-    return deployer.deploy(MockIndex, 18, "this is test index description", "test", false, [0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9,0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e], [20, 80]);
-  });
+  // return deployer.then(() => {
+  //   return deployer.deploy(MarketplaceProvider)
+  // }).then(() => {
+  //   return deployer.deploy(RiskControl);
+  // }).then(() => {
+  //   return deployer.deploy(MockIndex, 18, "this is test index description", "test", false, [0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9,0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e], [20, 80]);
+  // });
+  deployer.deploy([
+    MarketplaceProvider,
+    AsyncWithdraw,
+    RiskControl,
+    SimpleWithdraw
+    // MockIndex(18, "this is test index description", "test", false, [0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9,0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e], [20, 80])
+  ]);
 }
 
 function deployOnKovan(deployer, num) {
-  return deployer.then(() => {
-    return deployer.deploy(MarketplaceProvider);
-  });
+  deployer.deploy([
+    MarketplaceProvider,
+    AsyncWithdraw,
+    RiskControl,
+    DummyDerivative,
+  ]);
 }
 
 
@@ -66,7 +108,6 @@ function deployOnKovan(deployer, num) {
 }
 
 module.exports = function (deployer, network) {
-
   let flags = args.parseArgs();
 
   if (network == 'mainnet' && flags.contract == "exchange") {
@@ -74,6 +115,11 @@ module.exports = function (deployer, network) {
   } else if (network == 'kovan') {
     return deployOnKovan(deployer, network);
   }
+
+  if (flags.suite && typeof eval(`deploy${flags.suite}`) === 'function') {
+    return eval(`deploy${flags.suite}(deployer,network)`);
+  }
+
   return deployOnDev(deployer, network);
 
 }
