@@ -11,7 +11,7 @@ contract SimpleERC20Token {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
     uint public decimals;
-    uint public totalSupply;
+
     // Balances for each account
     mapping(address => uint256) balances;
 
