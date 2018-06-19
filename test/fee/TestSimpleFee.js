@@ -11,7 +11,7 @@ const toToken = (amount) => {
 contract('Fee', (accounts) => {
   const investorA = accounts[1];
 
-  it("Shall be able execute AutomaticFee", async () => log.catch(async () => {
+  it("Shall be able execute Simple fee", async () => log.catch(async () => {
     const fee = await PercentageFee.new();
     const client = await MockFeeClient.new(fee.address);
 
