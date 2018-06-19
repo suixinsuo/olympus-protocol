@@ -8,7 +8,6 @@ contract MockFund is FundInterface, MockDerivative {
     uint public totalSupply;
     mapping(address => uint) investors;
 
-    address[] tokens;
     mapping(address => uint) amounts;
     mapping(address => bool) activeTokens;
 
