@@ -67,7 +67,7 @@ function deployOnDev(deployer, num) {
       DummyDerivative,
     ]);
   }).then(() => {
-    return deployExchange(deployer, 'kovan');
+    return deployExchange(deployer, 'development');
   });
 }
 
