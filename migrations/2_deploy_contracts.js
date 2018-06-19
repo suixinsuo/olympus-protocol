@@ -7,6 +7,7 @@ let MarketplaceProvider = artifacts.require("Marketplace");
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
 let MockIndex = artifacts.require("MockIndex");
+// let MockFund = artifacts.require("MockFund");
 
 
 function deployOnDev(deployer, num) {
@@ -15,7 +16,7 @@ function deployOnDev(deployer, num) {
   }).then(() => {
     return deployer.deploy(RiskControl);
   }).then(() => {
-    // return deployer.deploy(MockIndex, 18, "this is test index description", "test", false, ["0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9","0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e"], [20, 80]);
+    return deployer.deploy(MockIndex, 18, "this is test index description", "test", false, [0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9,0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e], [20, 80]);
   });
 }
 
