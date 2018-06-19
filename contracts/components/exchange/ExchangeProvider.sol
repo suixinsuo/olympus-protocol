@@ -54,6 +54,8 @@ contract ExchangeProvider is OlympusExchangeInterface {
             return false;
         }
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
+        _token.transferFrom(msg.sender, address(adapter), _amount);
+
         require(
             adapter.sellToken(
                 _token,

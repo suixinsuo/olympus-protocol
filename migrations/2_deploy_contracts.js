@@ -53,19 +53,19 @@ function deployExchange(deployer, network) {
     }
     await kyberNetworkAdapter.setExchangeAdapterManager(exchangeAdapterManager.address);
     await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
-    await exchangeProvider.setExchangeAdapterManager('0xedcc9fab18d884717a61fbc06ce39170f55099ed');
+    await exchangeProvider.setExchangeAdapterManager(exchangeAdapterManager.address);
     return deployer;
   });
 }
 
 function deployOnDev(deployer, num) {
   return deployer.then(() => {
-    // return deployer.deploy([
-    //   MarketplaceProvider,
-    //   AsyncWithdraw,
-    //   RiskControl,
-    //   DummyDerivative,
-    // ]);
+    return deployer.deploy([
+      MarketplaceProvider,
+      AsyncWithdraw,
+      RiskControl,
+      DummyDerivative,
+    ]);
   }).then(() => {
     return deployExchange(deployer, 'kovan');
   });
@@ -73,12 +73,12 @@ function deployOnDev(deployer, num) {
 
 function deployOnKovan(deployer, num) {
   return deployer.then(() => {
-    // return deployer.deploy([
-    //   MarketplaceProvider,
-    //   AsyncWithdraw,
-    //   RiskControl,
-    //   DummyDerivative,
-    // ]);
+    return deployer.deploy([
+      MarketplaceProvider,
+      AsyncWithdraw,
+      RiskControl,
+      DummyDerivative,
+    ]);
   }).then(() => {
     return deployExchange(deployer, 'kovan');
   });
