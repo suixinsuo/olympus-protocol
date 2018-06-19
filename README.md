@@ -7,12 +7,19 @@
 
 # Olympus 2.0
 
+## Test
+`npm run test` will test all the suits.
+
+`truffle test --suite=Mockfund ./test/fund/TestMockUpFund.js` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
+The suit option will limit the number of deployment required for the concrete test file.
+
 ## Kovan
 KyberNetworkAdapter 0x11f421612544fd59e3dbf196ff55e6c30da69998
 ExchangeAdapterManager 0xedcc9fab18d884717a61fbc06ce39170f55099ed
 ExchangeProvider 0xb08f0df07f4ee0e0d4cd9aaaf7b7d36a174ff34f
 Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
-
+AsyncWithdraw  0xc296e480365f7d65beb388f2699e197d05aa4948
+MockWithdrawClient 0x6b0c8fe99884ddf73627d4e017c8673ef30c99a0 
 
 # Deployed addresses
 
