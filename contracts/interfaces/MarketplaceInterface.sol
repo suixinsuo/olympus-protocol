@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../libs/Ownable.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
 contract MarketplaceInterface is Ownable {
