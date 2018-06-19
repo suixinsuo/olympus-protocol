@@ -1,13 +1,13 @@
 pragma solidity 0.4.24;
 
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../libs/ERC20.sol";
 import "../libs/Ownable.sol";
 import "./ComponentContainerInterface.sol";
 
 
 contract DerivativeInterface is ERC20, Ownable, ComponentContainerInterface {
 
-    enum DerivativeStatus { Active, Paused, Closed }
+    enum DerivativeStatus { New, Active, Paused, Closed }
     enum DerivativeType { Index, Fund }
 
     string public description;
@@ -22,6 +22,4 @@ contract DerivativeInterface is ERC20, Ownable, ComponentContainerInterface {
     function invest() public payable returns(bool success);
     function changeStatus(DerivativeStatus _status) public returns(bool);
     function getPrice() public view returns(uint);
-
-
 }

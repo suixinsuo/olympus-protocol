@@ -1,15 +1,22 @@
 pragma solidity 0.4.24;
 
-import "./interfaces/DerivativeInterface.sol";
+import "../../interfaces/DerivativeInterface.sol";
+import "../../components/base/ComponentContainer.sol";
+import "../../interfaces/MarketplaceInterface.sol";
 
+contract MockDerivative is  DerivativeInterface, ComponentContainer  {
 
-// Abstract class that implements the common functions to all our derivatives
-contract Derivative is DerivativeInterface {
-    uint256 public decimals;
+    string public constant MARKET = "Marketplace";
     uint256 public totalSupply = 0;
-    string public name;
-    string public symbol;
+    string public name = "Dummy";
+    uint256 public decimals = 18;
+    string public symbol = "DMY";
 
+
+    // ------------  DERIVATIVE ------------
+    function invest() public payable returns(bool success) {return true;}
+    function changeStatus(DerivativeStatus) public returns(bool) {return true;}
+    function getPrice() public view returns(uint)  { return 10**decimals;}
     // ----------- ERC20 ----------
     mapping(address => uint256) balances;
     mapping(address => mapping (address => uint256)) allowed;
@@ -24,7 +31,6 @@ contract Derivative is DerivativeInterface {
     function decimals() external view returns (uint) {
         return decimals;
     }
-
 
     function balanceOf(address tokenOwner) external view returns (uint balance) {
         return balances[tokenOwner];
@@ -54,4 +60,6 @@ contract Derivative is DerivativeInterface {
     function allowance(address tokenOwner, address spender) external view returns (uint remaining) {
         return allowed[tokenOwner][spender];
     }
+
 }
+

@@ -4,6 +4,20 @@
 
 [![coverage report](https://gitlab.com/aireach/olympus-protocol/badges/develop/coverage.svg)](https://gitlab.com/aireach/olympus-protocol/commits/develop)
 
+
+# Olympus 2.0
+
+## Test
+`npm run test` will test all the suits.
+
+`truffle test --suite=Mockfund ./test/fund/TestMockUpFund.js` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
+The suit option will limit the number of deployment required for the concrete test file.
+
+## Kovan
+Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
+AsyncWithdraw  0xc296e480365f7d65beb388f2699e197d05aa4948
+MockWithdrawClient 0x6b0c8fe99884ddf73627d4e017c8673ef30c99a0 
+
 # Deployed addresses
 
 ## Mainnet
