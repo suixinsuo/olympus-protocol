@@ -7,6 +7,7 @@ let AsyncWithdraw = artifacts.require("AsyncWithdraw");
 let SimpleWithdraw = artifacts.require("SimpleWithdraw");
 
 let DummyDerivative = artifacts.require("MockDerivative");
+let MockFund = artifacts.require("MockFund");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
@@ -27,6 +28,13 @@ function deployWithdraw(deployer, network) {
 
 function deployFee(deployer, network) {
   deployer.deploy([]); // Empty suit
+
+}
+
+async function deployMockfund(deployer, network) {
+  deployer.deploy([
+    SimpleWithdraw, // Exchannge Provider
+  ]);
 }
 
 function deployOnDev(deployer, num) {
