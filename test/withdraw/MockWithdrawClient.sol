@@ -17,7 +17,7 @@ contract MockWithdrawClient is MockDerivative  {
         asyncWithdraw.request(msg.sender, amount);
     }
 
-    function withdraw() external returns(bool) {
+    function withdraw() onlyOwner external returns(bool) {
         uint _transfers = 0;
         address[] memory _requests = asyncWithdraw.getUserRequests();
         uint _eth;
@@ -33,6 +33,7 @@ contract MockWithdrawClient is MockDerivative  {
             if(tokens == 0) {continue;}
 
             balances[_requests[i]] -= tokens;
+            totalSupply -= tokens;
             address(_requests[i]).transfer(_eth);
             _transfers++;
         }
@@ -48,9 +49,11 @@ contract MockWithdrawClient is MockDerivative  {
         return asyncWithdraw.isInProgress();
     }
 
-    function () external payable {
+    function invest() public payable  returns(bool) {
         balances[msg.sender] += msg.value; // 1 ETH 1 Fund Token
+        totalSupply += msg.value;
         emit Transfer(owner, msg.sender, msg.value);
+        return true;
     }
 
 

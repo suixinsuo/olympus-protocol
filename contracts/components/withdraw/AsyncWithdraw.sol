@@ -24,6 +24,10 @@ contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
         return contracts[msg.sender].userRequests;
     }
 
+    function getTotalWithdrawAmount() external view returns(uint) {
+        return contracts[msg.sender].totalWithdrawAmount;
+    }
+
     function isInProgress() external view returns(bool) {
         return contracts[msg.sender].withdrawRequestLock &&
             contracts[msg.sender].totalWithdrawAmount > 0;
@@ -34,9 +38,9 @@ contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
          // Safe checks
         require(contracts[msg.sender].withdrawRequestLock == false); // Cant request while withdrawing
-        require(derivative.balanceOf(msg.sender) >= contracts[msg.sender].totalWithdrawAmount + _amount);
+        require(derivative.totalSupply() >= contracts[msg.sender].totalWithdrawAmount + _amount);
         require(derivative.balanceOf(_investor) >= _amount + contracts[msg.sender].amountPerUser[_investor]);
-        // Add user to the list of requesters
+        // // Add user to the list of requesters
         if (contracts[msg.sender].amountPerUser[_investor] == 0) {
             contracts[msg.sender].userRequests.push(_investor);
         }

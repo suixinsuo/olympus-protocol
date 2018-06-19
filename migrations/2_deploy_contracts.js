@@ -58,6 +58,21 @@ function deployExchange(deployer, network) {
   });
 }
 
+async function deployMockfund(deployer, network) {
+  deployer.deploy([
+    SimpleWithdraw, // Exchannge Provider
+  ]);
+}
+
+async function deployOlympusFund(deployer, network) {
+  deployer.deploy([
+    AsyncWithdraw,
+    SimpleWithdraw, // Exchannge Provider
+    RiskControl,
+    MarketplaceProvider,
+  ]);
+}
+
 function deployOnDev(deployer, num) {
   return deployer.then(() => {
     return deployer.deploy([
@@ -115,13 +130,6 @@ function deployOnMainnet(deployer) {
   //   })
   //   return deploy;
 }
-
-// function deployOnKovan(deployer, num) {
-
-//   return deployer.then(() => {
-//     return deployer.deploy(MarketplaceProvider);
-//   })
-// }
 
 module.exports = function (deployer, network) {
   let flags = args.parseArgs();
