@@ -79,7 +79,7 @@ function deployOnDev(deployer, num) {
       MarketplaceProvider,
       AsyncWithdraw,
       RiskControl,
-      DummyDerivative,
+      SimpleWithdraw,
     ]);
   }).then(() => {
     return deployExchange(deployer, 'development');
