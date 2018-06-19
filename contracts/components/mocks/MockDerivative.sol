@@ -6,7 +6,7 @@ import "../../interfaces/MarketplaceInterface.sol";
 
 contract MockDerivative is  DerivativeInterface, ComponentContainer  {
 
-    string public constant MARKET = "MarketPlace";
+    string public constant MARKET = "Marketplace";
     uint256 public totalSupply = 0;
     string public name = "Dummy";
     uint256 public decimals = 18;
@@ -16,7 +16,7 @@ contract MockDerivative is  DerivativeInterface, ComponentContainer  {
     // ------------  DERIVATIVE ------------
     function invest() public payable returns(bool success) {return true;}
     function changeStatus(DerivativeStatus) public returns(bool) {return true;}
-    function getPrice() public view returns(uint)  { return 10*18;}
+    function getPrice() public view returns(uint)  { return 10**decimals;}
     // ----------- ERC20 ----------
     mapping(address => uint256) balances;
     mapping(address => mapping (address => uint256)) allowed;
@@ -25,7 +25,7 @@ contract MockDerivative is  DerivativeInterface, ComponentContainer  {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
     function totalSupply() external view returns (uint supply) {
-        return balances[address(this)];
+        return totalSupply;
     }
 
     function decimals() external view returns (uint) {

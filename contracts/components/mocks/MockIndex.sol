@@ -39,6 +39,7 @@ contract MockIndex is IndexInterface, MockDerivative {
 
         balances[msg.sender] += balances[msg.sender].add(mintAmount);
         emit Invest(msg.sender, msg.value, price, mintAmount);
+        return true;
     }
     function changeStatus(DerivativeStatus _statusId) public returns(bool) {
 
