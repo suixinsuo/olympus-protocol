@@ -17,7 +17,7 @@ contract('Mock Fund', (accounts) => {
   const investorB = accounts[2];
 
   before('Mock Fund Test', async () => {
-    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, SimpleWithdraw.addess);
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, SimpleWithdraw.address);
   });
 
   it("Fund shall be able deploy", async () => log.catch(async () => {

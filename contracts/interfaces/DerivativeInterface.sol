@@ -7,7 +7,7 @@ import "./ComponentContainerInterface.sol";
 
 contract DerivativeInterface is ERC20Extended, Ownable, ComponentContainerInterface {
 
-    enum DerivativeStatus { Active, Paused, Closed }
+    enum DerivativeStatus { New, Active, Paused, Closed }
     enum DerivativeType { Index, Fund }
 
     string public description;

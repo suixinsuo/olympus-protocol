@@ -28,4 +28,6 @@ contract Marketplace is MarketplaceInterface {
         products.push(msg.sender);
         return true;
     }
+
+    event LogA(address _address, string text);
 }

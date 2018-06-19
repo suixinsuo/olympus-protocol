@@ -4,7 +4,7 @@ const MarketplaceProvider = artifacts.require("../../contracts/Marketplace.sol")
 
 
 
-contract('MarketPlace', (accounts) => {
+contract('Marketplace', (accounts) => {
   let marketplace;
 
   before('Run marketplace', async () => {
