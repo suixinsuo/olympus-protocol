@@ -25,6 +25,10 @@ function deployWithdraw(deployer, network) {
   ]);
 }
 
+function deployFee(deployer, network) {
+  deployer.deploy([]); // Empty suit
+}
+
 function deployOnDev(deployer, num) {
   deployer.deploy([
     MarketplaceProvider,

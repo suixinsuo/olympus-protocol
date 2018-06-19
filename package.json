@@ -14,7 +14,7 @@
     "linting": "#solhint 'contracts/**/*.sol'",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "version": "truffle version",
-    "build-contracts": "sol-merger \"./contracts/*.sol\" ./build"
+    "build-contracts": "sol-merger \"./contracts/components/fee/*.sol\" ./build"
   },
   "repository": {
     "type": "git",

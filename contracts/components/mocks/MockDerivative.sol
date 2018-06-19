@@ -24,15 +24,15 @@ contract MockDerivative is  DerivativeInterface, ComponentContainer  {
     event Transfer(address indexed _from, address indexed _to, uint _value);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
-    function totalSupply() external view returns (uint supply) {
+    function totalSupply() public view returns (uint supply) {
         return balances[address(this)];
     }
 
-    function decimals() external view returns (uint) {
+    function decimals() public view returns (uint) {
         return decimals;
     }
 
-    function balanceOf(address tokenOwner) external view returns (uint balance) {
+    function balanceOf(address tokenOwner) public view returns (uint balance) {
         return balances[tokenOwner];
     }
 
@@ -43,7 +43,7 @@ contract MockDerivative is  DerivativeInterface, ComponentContainer  {
         return true;
     }
 
-    function transferFrom(address from, address to, uint tokens) external returns (bool success) {
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
         balances[from] = balances[from] - tokens;
         allowed[from][msg.sender] = allowed[from][msg.sender] - tokens;
         balances[to] = balances[to] + tokens;
@@ -51,13 +51,13 @@ contract MockDerivative is  DerivativeInterface, ComponentContainer  {
         return true;
     }
 
-    function approve(address spender, uint tokens) external returns (bool success) {
+    function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
         emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
-    function allowance(address tokenOwner, address spender) external view returns (uint remaining) {
+    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
         return allowed[tokenOwner][spender];
     }
 

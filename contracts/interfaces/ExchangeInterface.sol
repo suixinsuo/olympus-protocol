@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../libs/ERC20.sol";
+import "../libs/ERC20Extended.sol";
 import "./ComponentInterface.sol";
 
 
@@ -9,13 +9,13 @@ contract ExchangeInterface is ComponentInterface {
         external returns(bool supported);
 
     function buyTokens(
-        string _exchangeId, ERC20[] _tokens, uint[] _amounts,
+        string _exchangeId, ERC20Extended[] _tokens, uint[] _amounts,
         uint[] _rates, address _depositAddress, address _partnerId
     )
         external payable
     returns(bool success);
 
-    function sellTokens(string _exchangeId, ERC20[] _tokens,
+    function sellTokens(string _exchangeId, ERC20Extended[] _tokens,
         uint[] _amounts, uint[] _rates, address _depositAddress, address _partnerId
     )
         external
