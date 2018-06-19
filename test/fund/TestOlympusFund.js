@@ -2,7 +2,7 @@ const log = require('../utils/log');
 const Fund = artifacts.require("OlympusFund");
 const AsyncWithdraw = artifacts.require("../../contracts/components/widrwaw/AsyncWithdraw.sol");
 const RiskControl = artifacts.require("../../contracts/components/RiskControl.sol");
-const MarketPlace = artifacts.require("../../contracts/MarketPlace.sol");
+const Marketplace = artifacts.require("../../contracts/Marketplace.sol");
 
 
 const TOKEN1 = 0x0041dee9f481a1d2aa74a3f1d0958c1db6107c686a;
@@ -26,7 +26,7 @@ contract('Fund', (accounts) => {
   const investorB = accounts[2];
 
   it('Create a fund', async () => {
-    market = await MarketPlace.deployed();
+    market = await Marketplace.deployed();
 
     fund = await Fund.new(fundData.name,
       fundData.symbol,
@@ -37,7 +37,7 @@ contract('Fund', (accounts) => {
     assert.equal(await fund.status(), 0); // new
     console.log(AsyncWithdraw.address, 'Async address');
     await fund.initialize(
-      MarketPlace.address,
+      Marketplace.address,
       0x01, // Exchange, TODO add
       AsyncWithdraw.address,
       RiskControl.address,
