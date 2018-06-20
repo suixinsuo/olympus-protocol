@@ -5,6 +5,7 @@
 let MarketplaceProvider = artifacts.require("Marketplace");
 let AsyncWithdraw = artifacts.require("AsyncWithdraw");
 let SimpleWithdraw = artifacts.require("SimpleWithdraw");
+let Reimbursable = artifacts.require("Reimbursable");
 
 let DummyDerivative = artifacts.require("MockDerivative");
 let PercentageFee = artifacts.require("PercentageFee");
@@ -37,6 +38,12 @@ async function deployMockfund(deployer, network) {
   ]);
 }
 
+async function deployReimbursable(deployer, network) {
+  deployer.deploy([
+    Reimbursable,
+  ]);
+}
+
 async function deployOlympusFund(deployer, network) {
   deployer.deploy([
     AsyncWithdraw,
@@ -44,6 +51,7 @@ async function deployOlympusFund(deployer, network) {
     RiskControl,
     MarketplaceProvider,
     PercentageFee,
+    Reimbursable,
   ]);
 }
 
@@ -55,6 +63,7 @@ function deployOnDev(deployer, num) {
     RiskControl,
     SimpleWithdraw,
     PercentageFee,
+    Reimbursable,
   ]);
 }
 

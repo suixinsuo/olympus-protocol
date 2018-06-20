@@ -6,6 +6,7 @@ const AsyncWithdraw = artifacts.require("../../contracts/components/widrwaw/Asyn
 const RiskControl = artifacts.require("../../contracts/components/RiskControl.sol");
 const Marketplace = artifacts.require("../../contracts/Marketplace.sol");
 const PercentageFee = artifacts.require("../../contracts/components/fee/PercentageFee.sol");
+const Reimbursable = artifacts.require("../../contracts/components/fee/Reimbursable.sol");
 
 
 const TOKEN1 = 0x0041dee9f481a1d2aa74a3f1d0958c1db6107c686a;
@@ -18,6 +19,7 @@ const fundData = {
   description: 'Sample of real fund',
   decimals: 18,
   managmentFee: 0.1,
+  ethDeposit: 0.5, // ETH
 }
 
 const toToken = (amount) => {
@@ -36,13 +38,13 @@ contract('Fund', (accounts) => {
   it('Create a fund', async () => {
     market = await Marketplace.deployed();
 
-    fund = await Fund.new(fundData.name,
+    fund = await Fund.new(
+      fundData.name,
       fundData.symbol,
       fundData.description,
       fundData.decimals
     );
-
-    assert.equal(await fund.status(), 0); // new
+    assert.equal((await fund.status()).toNumber(), 0); // new
 
     await fund.initialize(
       Marketplace.address,
@@ -50,14 +52,19 @@ contract('Fund', (accounts) => {
       AsyncWithdraw.address,
       RiskControl.address,
       0x01, // Whitelist, to do
+      Reimbursable.address,
       PercentageFee.address,
       0,
+      { value: web3.toWei(fundData.ethDeposit, 'ether') }
     );
     const myProducts = await market.getOwnProducts();
 
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], fund.address);
-    assert.equal(await fund.status(), 1); // Active
+    assert.equal((await fund.status()).toNumber(), 1); // Active
+    // The fee send is not taked in account in the price but as a fee
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, 'ether'));
+    assert.equal((await fund.accumulatedFee()).toNumber(), web3.toWei(0.5, 'ether'));
 
   });
 
@@ -96,7 +103,7 @@ contract('Fund', (accounts) => {
   }));
 
   it("Shall be able to request and withdraw", async () => log.catch(async () => {
-
+    let tx;
     await fund.setMaxTransfers(1); // For testing
 
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1), 'A has invested');
@@ -107,13 +114,17 @@ contract('Fund', (accounts) => {
     await fund.requestWithdraw(toToken(1), { from: investorB });
 
     // Withdraw max transfers is set to 1
-    await fund.withdraw();
+    tx = await fund.withdraw();
+    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, ' Owner got Reimbursed');
+
     assert.equal(await fund.withdrawInProgress(), true, ' Withdraw has not finished');
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, ' A has withdraw');
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toToken(1), ' B has no withdraw');
 
     // Second withdraw succeeds
-    await fund.withdraw();
+    tx = await fund.withdraw();
+    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, ' Owner got Reimbursed 2');
+
     assert.equal(await fund.withdrawInProgress(), false, ' Withdraw has finished');
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, 'B has withdraw');
 
@@ -130,22 +141,33 @@ contract('Fund', (accounts) => {
   }));
 
   it("Manager shall be able to collect a from investment and withdraw it", async () => log.catch(async () => {
-
     // Set fee
     const denominator = (await (await PercentageFee.deployed()).DENOMINATOR()).toNumber();
     await fund.setManagementFee(fundData.managmentFee * denominator);
     assert.equal((await fund.getManagementFee()).toNumber(), fundData.managmentFee * denominator, 'Fee is set correctly');
     // Invest two times (two different logics for first time and others)
     await fund.invest({ value: web3.toWei(1, 'ether'), from: investorA });
+
     await fund.invest({ value: web3.toWei(1, 'ether'), from: investorA });
 
-    assert.equal((await fund.accumulatedFee()).toNumber(), web3.toWei(2, 'ether') * fundData.managmentFee, 'Owner got fee');
+    const expectedFee = 0.5 + 0.2 - 0.01; // Base Fee + Fee from investments - commision of withdraw
+    assert(calc.inRange(
+      (await fund.accumulatedFee()).toNumber(),
+      web3.toWei(expectedFee, 'ether'),
+      web3.toWei(0.1, 'ether')),
+      'Owner got fee');
+
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1.8), 'A has invested with fee');
 
     // Withdraw
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
-    await fund.witdrawFee();
-    assert.equal((await fund.accumulatedFee()).toNumber(), 0, 'Fee got withdrawed');
+    await fund.witdrawFee(web3.toWei(0.2, 'ether'));
+
+    assert(calc.inRange(
+      (await fund.accumulatedFee()).toNumber(),
+      web3.toWei(expectedFee - 0.2, 'ether'),
+      web3.toWei(0.1, 'ether')),
+      'Owner pending fee');
 
     const ownerBalanceAfter = await calc.ethBalance(accounts[0]);
 
