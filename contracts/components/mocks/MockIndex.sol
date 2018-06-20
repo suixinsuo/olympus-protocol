@@ -31,8 +31,8 @@ contract MockIndex is IndexInterface, MockDerivative {
         weights = _weights;
     }
     function invest() public payable returns(bool success){
-        require(msg.value > 0);
         require(status == DerivativeStatus.Active);
+        require(msg.value > 0);
 
         uint price = getPrice();
         uint mintAmount = msg.value.mul(price).mul(10 ** (decimals - 18)).div(PRECISION);
@@ -42,16 +42,13 @@ contract MockIndex is IndexInterface, MockDerivative {
         return true;
     }
     function changeStatus(DerivativeStatus _statusId) public returns(bool) {
+        require(status != DerivativeStatus.Closed);
 
         if (DerivativeStatus(_statusId) == DerivativeStatus.Active || 
             DerivativeStatus(_statusId) == DerivativeStatus.Paused || 
             DerivativeStatus(_statusId) == DerivativeStatus.Closed) {
 
-            if (status == DerivativeStatus.Closed) {
-                revert();
-            } else {
-                status = DerivativeStatus(_statusId);
-            }
+            status = DerivativeStatus(_statusId);
             return true;
 
         } else {
