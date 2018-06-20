@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "./SafeMath.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract Reimbursable {
     using SafeMath for uint256;

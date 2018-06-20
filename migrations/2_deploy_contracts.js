@@ -25,6 +25,11 @@ function deployWithdraw(deployer, network) {
   ]);
 }
 
+function deployFee(deployer, network) {
+  deployer.deploy([]); // Empty suit
+
+}
+
 async function deployMockfund(deployer, network) {
   deployer.deploy([
     SimpleWithdraw, // Exchannge Provider
