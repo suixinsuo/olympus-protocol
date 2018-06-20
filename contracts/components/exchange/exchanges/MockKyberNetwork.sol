@@ -3,7 +3,8 @@ pragma solidity 0.4.24;
 import "../../../libs/utils.sol";
 import "../../../libs/SimpleERC20Token.sol";
 
-import "../../../libs/ERC20.sol";
+import "../../../libs/ERC20Extended.sol";
+
 
 contract MockKyberNetwork {
 
@@ -32,13 +33,13 @@ contract MockKyberNetwork {
         return tokens;
     }
 
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) external view
+    function getExpectedRate(ERC20Extended src, ERC20Extended dest, uint srcQty) external view
     returns (uint expectedRate, uint slippageRate)
     {
         return _getExpectedRate(src,dest,srcQty);
     }
 
-    function _getExpectedRate(ERC20 /*src*/, ERC20 dest, uint) private view
+    function _getExpectedRate(ERC20Extended /*src*/, ERC20Extended dest, uint) private view
     returns (uint expectedRate, uint slippageRate)
     {
         if (address(dest) == ETH_ADDRESS) {
@@ -54,9 +55,9 @@ contract MockKyberNetwork {
     }
 
     function trade(
-        ERC20 source,
+        ERC20Extended source,
         uint srcAmount,
-        ERC20 dest,
+        ERC20Extended dest,
         address destAddress,
         uint ,
         uint minConversionRate,

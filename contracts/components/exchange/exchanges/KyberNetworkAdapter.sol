@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
-import "../../../libs/ERC20.sol";
+import "../../../libs/ERC20Extended.sol";
 
 contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
 
@@ -9,7 +9,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
     address private exchangeAdapterManager;
     bytes32 private exchangeId;
     bytes32 private name;
-    ERC20 private constant ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+    ERC20Extended private constant ETH_TOKEN_ADDRESS = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     address private walletId = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
 
     bool public adapterEnabled;
@@ -61,7 +61,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
         // Get price for selling one
         uint amount = 0;
         uint price;
-        (price,) = this.getPrice(ERC20(_srcAddress), ERC20(_destAddress), amount);
+        (price,) = this.getPrice(ERC20Extended(_srcAddress), ERC20Extended(_destAddress), amount);
         return price > 0;
     }
 
@@ -79,11 +79,11 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
         return adapterEnabled;
     }
 
-    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount) external view returns(uint, uint){
+    function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount) external view returns(uint, uint){
         return kyber.getExpectedRate(_sourceAddress, _destAddress, _amount);
     }
 
-    function buyToken(ERC20 _token, uint _amount, uint _minimumRate, address _depositAddress, address _partnerId)
+    function buyToken(ERC20Extended _token, uint _amount, uint _minimumRate, address _depositAddress, address _partnerId)
     external payable returns(bool) {
         if (address(this).balance < _amount) {
             return false;
@@ -111,7 +111,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
 
         return true;
     }
-    function sellToken(ERC20 _token, uint _amount, uint _minimumRate, address _depositAddress, address _partnerId)
+    function sellToken(ERC20Extended _token, uint _amount, uint _minimumRate, address _depositAddress, address _partnerId)
     external returns(bool success)
     {
         _token.approve(address(kyber), _amount);

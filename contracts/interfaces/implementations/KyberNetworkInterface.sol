@@ -1,16 +1,16 @@
 pragma solidity 0.4.24;
 
-import "../../libs/ERC20.sol";
+import "../../libs/ERC20Extended.sol";
 
 contract KyberNetworkInterface {
 
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty)
+    function getExpectedRate(ERC20Extended src, ERC20Extended dest, uint srcQty)
         external view returns (uint expectedRate, uint slippageRate);
 
     function trade(
-        ERC20 source,
+        ERC20Extended source,
         uint srcAmount,
-        ERC20 dest,
+        ERC20Extended dest,
         address destAddress,
         uint maxDestAmount,
         uint minConversionRate,

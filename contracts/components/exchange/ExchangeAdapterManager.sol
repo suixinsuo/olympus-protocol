@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../../libs/Ownable.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 
 
@@ -10,7 +10,7 @@ contract ExchangeAdapterManager is Ownable {
     bytes32[] public exchanges;
     uint private genExchangeId = 1000;
     mapping(address=>uint) private adapters;
-    ERC20 private constant ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+    ERC20Extended private constant ETH_TOKEN_ADDRESS = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
 
     event AddedExchange(bytes32 id);
@@ -46,7 +46,7 @@ contract ExchangeAdapterManager is Ownable {
         return address(exchangeAdapters[id]);
     }
 
-    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount, bytes32 _exchangeId)
+    function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId)
         external view returns(uint expectedRate, uint slippageRate) {
         if(_exchangeId != ""){
             return exchangeAdapters[_exchangeId].getPrice(_sourceAddress, _destAddress, _amount);
@@ -60,7 +60,7 @@ contract ExchangeAdapterManager is Ownable {
 
     /// >0  : found exchangeId
     /// ==0 : not found
-    function pickExchange(ERC20 token, uint amount, uint rate, bool isBuying) external view returns (bytes32 exchangeId) {
+    function pickExchange(ERC20Extended token, uint amount, uint rate, bool isBuying) external view returns (bytes32 exchangeId) {
 
         int maxRate = -1;
         for (uint i = 0; i < exchanges.length; i++) {

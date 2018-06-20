@@ -21,7 +21,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
 
     function buyToken
         (
-        ERC20 _token, uint _amount, uint _minimumRate,
+        ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId, address _partnerId
         ) external payable returns(bool success) {
         require(msg.value == _amount);
@@ -44,7 +44,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
 
     function sellToken
         (
-        ERC20 _token, uint _amount, uint _minimumRate,
+        ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId, address _partnerId
         ) external returns(bool success) {
 
@@ -69,7 +69,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
 
     function buyTokens
         (
-        ERC20[] _tokens, uint[] _amounts, uint[] _minimumRates,
+        ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address _partnerId
         ) external payable returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
@@ -94,7 +94,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
 
     function sellTokens
         (
-        ERC20[] _tokens, uint[] _amounts, uint[] _minimumRates,
+        ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address _partnerId
         ) external returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
@@ -124,7 +124,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
         return exchangeAdapterManager.supportsTradingPair(_srcAddress, _destAddress, _exchangeId);
     }
 
-    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount, bytes32 _exchangeId)
+    function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId)
         external view returns(uint expectedRate, uint slippageRate) {
         return exchangeAdapterManager.getPrice(_sourceAddress, _destAddress, _amount, _exchangeId);
     }
