@@ -60,7 +60,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
 
     function supportsTradingPair(address _srcAddress, address _destAddress) external view returns(bool supported){
         // Get price for selling one
-        uint amount = 0;
+        uint amount = ERC20Extended(_srcAddress) == ETH_TOKEN_ADDRESS ? 10**18 : 10**ERC20Extended(_srcAddress).decimals();
         uint price;
         (price,) = this.getPrice(ERC20Extended(_srcAddress), ERC20Extended(_destAddress), amount);
         return price > 0;
