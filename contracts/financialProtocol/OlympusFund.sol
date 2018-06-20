@@ -5,9 +5,8 @@ import "../interfaces/FundInterface.sol";
 // import "../interfaces/ExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
-import "../components/base/ComponentContainer.sol";
 
-contract OlympusFund is FundInterface, Derivative, ComponentContainer {
+contract OlympusFund is FundInterface, Derivative {
 
     uint public constant DENOMINATOR = 100000;
     uint public constant INTIAL_VALUE =  10**18;
@@ -18,7 +17,8 @@ contract OlympusFund is FundInterface, Derivative, ComponentContainer {
     string public constant RISK = "RiskProvider";
     string public constant WHITELIST = "WhitelistProvider";
 
-    uint public totalSupply;
+    string public name;
+    string public symbol;
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
@@ -122,8 +122,8 @@ contract OlympusFund is FundInterface, Derivative, ComponentContainer {
 
         // Current value is already added in the balance, reduce it
         uint _sharePrice;
-        if(totalSupply > 0) {
-            _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply);
+        if(totalSupply_ > 0) {
+            _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply_);
         } else {
             _sharePrice = INTIAL_VALUE;
         }
@@ -131,7 +131,7 @@ contract OlympusFund is FundInterface, Derivative, ComponentContainer {
         uint _investorShare = ((msg.value * DENOMINATOR) / _sharePrice) * ((10 ** decimals) / DENOMINATOR);
 
         balances[msg.sender] += _investorShare;
-        totalSupply += _investorShare;
+        totalSupply_ += _investorShare;
 
         emit Transfer(owner, msg.sender, _investorShare);
         return true;
@@ -144,12 +144,12 @@ contract OlympusFund is FundInterface, Derivative, ComponentContainer {
     }
 
     function getPrice() public view returns(uint)  {
-        if(totalSupply == 0) {
+        if(totalSupply_ == 0) {
             return INTIAL_VALUE;
         }
          // Total Value in ETH among its tokens + ETH new added value
         return (
-          ((getAssetsValue() + address(this).balance ) * 10 ** decimals ) / totalSupply,
+          ((getAssetsValue() + address(this).balance ) * 10 ** decimals ) / totalSupply_,
         );
     }
 
@@ -161,7 +161,7 @@ contract OlympusFund is FundInterface, Derivative, ComponentContainer {
         uint _expectedRate;
         ERC20 _erc20;
 
-        if(totalSupply == 0) {return INTIAL_VALUE;}  // 1 Eth
+        if(totalSupply_ == 0) {return INTIAL_VALUE;}  // 1 Eth
 
         for (uint16 i = 0; i < tokens.length; i++) {
 
