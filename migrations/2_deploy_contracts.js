@@ -57,6 +57,10 @@ function deployExchange(deployer, network) {
     return deployer;
   });
 }
+function deployFee(deployer, network) {
+  deployer.deploy([]); // Empty suit
+
+}
 
 async function deployMockfund(deployer, network) {
   deployer.deploy([
