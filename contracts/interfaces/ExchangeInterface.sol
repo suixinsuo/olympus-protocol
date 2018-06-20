@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../libs/ERC20.sol";
+import "../libs/ERC20Extended.sol";
 import "./ComponentInterface.sol";
 
 
