@@ -5,6 +5,8 @@ import "../interfaces/FundInterface.sol";
 // import "../interfaces/ExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
+import "../interfaces/ChargeableInterface.sol";
+
 
 contract OlympusFund is FundInterface, Derivative {
 
@@ -16,22 +18,22 @@ contract OlympusFund is FundInterface, Derivative {
     string public constant WITHDRAW = "WithdrawProvider";
     string public constant RISK = "RiskProvider";
     string public constant WHITELIST = "WhitelistProvider";
+    string public constant FEE = "FeeProvider";
 
-    string public name;
-    string public symbol;
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
     mapping(address => bool) activeTokens;
 
-    uint maxTransfers = 10;
+    uint public maxTransfers = 10;
+    uint public accumulatedFee = 0;
 
     constructor(
       string _name,
       string _symbol,
       string _description,
       uint _decimals
-    ) public {
+     ) public {
 
         name = _name;
         symbol = _symbol;
@@ -44,14 +46,24 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _market, address _exchange, address _withdraw, address _risk, address _whitelist) onlyOwner external {
+    function initialize(
+        address _market,
+        address _exchange,
+        address _withdraw,
+        address _risk,
+        address _whitelist,
+        address _feeProvider,
+        uint _initialFundFee) onlyOwner external {
+
         require(status == DerivativeStatus.New);
         setComponent(MARKET, _market);
         setComponent(EXCHANGE, _exchange);
         setComponent(WITHDRAW, _withdraw);
         setComponent(RISK, _risk);
         setComponent(WHITELIST, _whitelist);
+        setComponent(FEE, _feeProvider);
         MarketplaceInterface(_market).registerProduct();
+        ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
         status = DerivativeStatus.Active;
     }
 
@@ -113,27 +125,31 @@ contract OlympusFund is FundInterface, Derivative {
         updateTokens(_tokens);
         return true;
     }
-
-    // ----------------------------- DERIVATIVE -----------------------------
+     // ----------------------------- DERIVATIVE -----------------------------
 
     function invest() public payable returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH");
-
-        // Current value is already added in the balance, reduce it
+         // Current value is already added in the balance, reduce it
         uint _sharePrice;
+
         if(totalSupply_ > 0) {
             _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply_);
-        } else {
+         } else {
             _sharePrice = INTIAL_VALUE;
         }
+        ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
+        uint fee = feeManager.calculateFee(msg.sender, msg.value);
 
-        uint _investorShare = ((msg.value * DENOMINATOR) / _sharePrice) * ((10 ** decimals) / DENOMINATOR);
+        uint _investorShare = ( ( (msg.value-fee) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
+        _investorShare = _investorShare  / DENOMINATOR;
 
+
+        accumulatedFee += fee;
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
 
-        emit Transfer(owner, msg.sender, _investorShare);
+        emit Transfer(msg.sender, owner, msg.value);
         return true;
     }
 
@@ -149,7 +165,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
          // Total Value in ETH among its tokens + ETH new added value
         return (
-          ((getAssetsValue() + address(this).balance ) * 10 ** decimals ) / totalSupply_,
+          ((getAssetsValue() + address(this).balance  - accumulatedFee) * 10 ** decimals ) / (totalSupply_),
         );
     }
 
@@ -183,6 +199,24 @@ contract OlympusFund is FundInterface, Derivative {
         return _totalTokensValue;
     }
 
+    // ----------------------------- FEES  -----------------------------
+
+
+    function witdrawFee() external onlyOwner returns(bool) {
+        require(accumulatedFee > 0);
+        msg.sender.transfer(accumulatedFee);
+        accumulatedFee = 0;
+        return true;
+    }
+
+    function setManagementFee(uint _fee) external onlyOwner {
+        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
+    }
+
+    function getManagementFee() external view returns(uint) {
+        return ChargeableInterface(getComponentByName(FEE)).getFeePercentage();
+    }
+
     // ----------------------------- WITHDRAW -----------------------------
     function requestWithdraw(uint amount) external {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
@@ -214,6 +248,7 @@ contract OlympusFund is FundInterface, Derivative {
             if(tokens == 0) {continue;}
 
             balances[_requests[i]] -= tokens;
+            totalSupply_ -= tokens;
             address(_requests[i]).transfer(_eth);
             _transfers++;
         }
