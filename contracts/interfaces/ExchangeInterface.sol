@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../libs/ERC20.sol";
+import "../libs/ERC20Extended.sol";
 import "./ComponentInterface.sol";
 
 
@@ -28,7 +28,7 @@ contract ExchangeInterface is ComponentInterface {
      */
     function buyToken
         (
-        ERC20 _token, uint _amount, uint _minimumRate,
+        ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId, address _partnerId
         ) external payable returns(bool success);
 
@@ -44,7 +44,7 @@ contract ExchangeInterface is ComponentInterface {
      */
     function sellToken
         (
-        ERC20 _token, uint _amount, uint _minimumRate,
+        ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId, address _partnerId
         ) external returns(bool success);
 }

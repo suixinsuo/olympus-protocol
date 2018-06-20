@@ -1,11 +1,11 @@
 pragma solidity 0.4.24;
 
-import "../libs/ERC20.sol";
-import "../libs/Ownable.sol";
+import "../libs/ERC20Extended.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ComponentContainerInterface.sol";
 
 
-contract DerivativeInterface is ERC20, Ownable, ComponentContainerInterface {
+contract DerivativeInterface is ERC20Extended, Ownable, ComponentContainerInterface {
 
     enum DerivativeStatus { New, Active, Paused, Closed }
     enum DerivativeType { Index, Fund }
