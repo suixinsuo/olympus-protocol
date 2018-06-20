@@ -26,7 +26,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
     function buyToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external payable returns(bool success) {
         require(msg.value == _amount);
         OlympusExchangeAdapterInterface adapter;
@@ -40,8 +40,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
                 _token,
                 _amount,
                 _minimumRate,
-                _depositAddress,
-                _partnerId)
+                _depositAddress)
         );
         return true;
     }
@@ -49,7 +48,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
     function sellToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external returns(bool success) {
 
         OlympusExchangeAdapterInterface adapter;
@@ -65,8 +64,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
                 _token,
                 _amount,
                 _minimumRate,
-                _depositAddress,
-                _partnerId)
+                _depositAddress)
             );
         return true;
     }
@@ -74,7 +72,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
     function buyTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external payable returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
         for (uint i = 0; i < _tokens.length; i++ ) {
@@ -89,8 +87,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
                     _tokens[i],
                     _amounts[i],
                     _minimumRates[i],
-                    _depositAddress,
-                    _partnerId)
+                    _depositAddress)
             );
         }
         return true;
@@ -99,7 +96,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
     function sellTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
         for (uint i = 0; i < _tokens.length; i++ ) {
@@ -117,8 +114,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
                     _tokens[i],
                     _amounts[i],
                     _minimumRates[i],
-                    _depositAddress,
-                    _partnerId)
+                    _depositAddress)
             );
         }
         return true;

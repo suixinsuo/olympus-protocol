@@ -17,13 +17,13 @@ contract OlympusExchangeAdapterInterface is Ownable {
     function sellToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, address _partnerId
+        address _depositAddress
         ) external returns(bool success);
 
     function buyToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, address _partnerId
+        address _depositAddress
         ) external payable returns(bool success);
 
     function enable() external returns(bool);
