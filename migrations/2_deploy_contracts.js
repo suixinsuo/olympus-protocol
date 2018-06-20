@@ -43,19 +43,11 @@ async function deployOlympusFund(deployer, network) {
 }
 
 function deployOnDev(deployer, num) {
-  // return deployer.then(() => {
-  //   return deployer.deploy(MarketplaceProvider)
-  // }).then(() => {
-  //   return deployer.deploy(RiskControl);
-  // }).then(() => {
-  //   return deployer.deploy(MockIndex, 18, "this is test index description", "test", false, [0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9,0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e], [20, 80]);
-  // });
   deployer.deploy([
     MarketplaceProvider,
     AsyncWithdraw,
     RiskControl,
     SimpleWithdraw
-    // MockIndex(18, "this is test index description", "test", false, [0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9,0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e], [20, 80])
   ]);
 }
 

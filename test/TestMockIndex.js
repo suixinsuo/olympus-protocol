@@ -2,7 +2,7 @@
 
 // const log = require('../utils/log');
 const MockMarketClient = artifacts.require("MockMarketClient");
-const MarketplaceProvider = artifacts.require("Marketplace.sol");
+const MarketplaceProvider = artifacts.require("Marketplace");
 
 const MockIndex = artifacts.require("MockIndex");
 const SimpleERC20Token = artifacts.require("SimpleERC20Token");
