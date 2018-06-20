@@ -16,120 +16,99 @@ function bytes32ToString(bytes32) {
 
 const Promise = require('bluebird');
 
-contract('ExchangeProvider', (accounts) => {
 
+contract('ExchangeProvider', (accounts) => {
+  let tokens;
+  let exchangeProvider;
+  const deposit = accounts[0];
   before(async () => {
     return await Promise.all([
       MockKyberNetwork.deployed(),
       KyberNetworkAdapter.deployed(),
       ExchangeAdapterManager.deployed(),
       ExchangeProvider.deployed(),
-    ]).spread((mockKyberNetwork, kyberNetworkAdapter, exchangeAdapterManager, exchangeProvider) => {
-      assert.ok(mockKyberNetwork, 'MockKyberNetwork contract is not deployed.');
-      assert.ok(kyberNetworkAdapter, 'KyberNetworkExchange contract is not deployed.');
-      assert.ok(exchangeAdapterManager, 'ExchangeAdapterManager contract is not deployed.');
-      assert.ok(exchangeProvider, 'ExchangeProvider contract is not deployed.');
+    ]).spread(async (_mockKyberNetwork, _kyberNetworkAdapter, _exchangeAdapterManager, _exchangeProvider) => {
+      assert.ok(_mockKyberNetwork, 'MockKyberNetwork contract is not deployed.');
+      assert.ok(_kyberNetworkAdapter, 'KyberNetworkExchange contract is not deployed.');
+      assert.ok(_exchangeAdapterManager, 'ExchangeAdapterManager contract is not deployed.');
+      assert.ok(_exchangeProvider, 'ExchangeProvider contract is not deployed.');
+      tokens = await _mockKyberNetwork.supportedTokens();
+      exchangeProvider = _exchangeProvider;
     });
   });
 
   it("OlympusExchange should be able to buy multiple tokens.", async () => {
-    let mockKyberNetwork = await MockKyberNetwork.deployed();
-    let tokens = await mockKyberNetwork.supportedTokens();
-    let exchangeProvider = await ExchangeProvider.deployed();
+    const srcAmountETH = 1;
 
-    let srcAmountETH = 1;
+    const erc20Token = await SimpleERC20Token.at(tokens[0]);
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+    const beforeBalance = await erc20Token.balanceOf(deposit);
 
-    let erc20Token = await SimpleERC20Token.at(tokens[0]);
-    let deposit = accounts[0];
-    let amount = web3.toWei(srcAmountETH);
-    let rate = expectedRate;
-    let actualBalance = await erc20Token.balanceOf(deposit);
+    await exchangeProvider.buyToken(tokens[0], amount, rate, deposit, "", 0x0, { value: web3.toWei(srcAmountETH) });
 
-    result = await exchangeProvider.buyToken(tokens[0], amount, rate, deposit, "", 0x0, { value: web3.toWei(srcAmountETH) });
-
-    let tokenBalance = await erc20Token.balanceOf(deposit);
-    assert.equal(new BigNumber(actualBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(), tokenBalance.toNumber())
+    const afterBalance = await erc20Token.balanceOf(deposit);
+    assert.equal(new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(), afterBalance.toNumber())
   });
 
   it("OlympusExchange should be able to buy multiple tokens.", async () => {
-    let mockKyberNetwork = await MockKyberNetwork.deployed();
-    let tokens = await mockKyberNetwork.supportedTokens();
-    let exchangeProvider = await ExchangeProvider.deployed();
+    const srcAmountETH = 1;
+    const totalSrcAmountETH = srcAmountETH * tokens.length;
 
-    let srcAmountETH = 1;
-    let totalSrcAmountETH = srcAmountETH * tokens.length;
-
-    let deposit = accounts[0];
-    let amounts = [];
-    let rates = [];
-    let actualBalance = [];
+    const amounts = [];
+    const rates = [];
+    const beforeBalance = [];
 
     for (let i = 0; i < tokens.length; i++) {
-      let erc20Token = await SimpleERC20Token.at(tokens[i]);
-      actualBalance.push(await erc20Token.balanceOf(deposit));
+      const erc20Token = await SimpleERC20Token.at(tokens[i]);
+      beforeBalance.push(await erc20Token.balanceOf(deposit));
       amounts.push(web3.toWei(srcAmountETH));
       rates.push(expectedRate);
     }
-    result = await exchangeProvider.buyTokens(tokens, amounts, rates, deposit, "", 0x0, { value: web3.toWei(totalSrcAmountETH) });
+    await exchangeProvider.buyTokens(tokens, amounts, rates, deposit, "", 0x0, { value: web3.toWei(totalSrcAmountETH) });
 
     for (let i = 0; i < tokens.length; i++) {
-      let erc20Token = await SimpleERC20Token.at(tokens[i]);
-      let tokenBalance = await erc20Token.balanceOf(deposit);
-      assert.equal(new BigNumber(actualBalance[i]).plus(expectedRate.mul(srcAmountETH)).toNumber(), tokenBalance.toNumber())
+      const erc20Token = await SimpleERC20Token.at(tokens[i]);
+      const afterBalance = await erc20Token.balanceOf(deposit);
+      assert.equal(new BigNumber(beforeBalance[i]).plus(expectedRate.mul(srcAmountETH)).toNumber(), afterBalance.toNumber())
     }
   });
 
   it("OlympusExchange should be able to sell a single token.", async () => {
-    let mockKyberNetwork = await MockKyberNetwork.deployed();
-    let tokens = await mockKyberNetwork.supportedTokens();
-    let exchangeProvider = await ExchangeProvider.deployed();
-
-    let deposit = accounts[0];
-
-    let erc20Token = await SimpleERC20Token.at(tokens[0]);
-    let amount = await erc20Token.balanceOf(deposit);
-    let rate = expectedRateToSell;
+    const erc20Token = await SimpleERC20Token.at(tokens[0]);
+    const amount = await erc20Token.balanceOf(deposit);
+    const rate = expectedRateToSell;
     await erc20Token.approve(exchangeProvider.address, amount);
 
-    let beforeBalance = await web3.eth.getBalance(deposit);
-    result = await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, "", 0x0);
+    const beforeBalance = await web3.eth.getBalance(deposit);
+    await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, "", 0x0);
 
     assert.ok(new BigNumber(await web3.eth.getBalance(deposit)).minus(beforeBalance).toNumber() > 0);
   });
 
   it("OlympusExchange should be able to sell multiple tokens.", async () => {
-    let mockKyberNetwork = await MockKyberNetwork.deployed();
-    let tokens = await mockKyberNetwork.supportedTokens();
-    let exchangeProvider = await ExchangeProvider.deployed();
-
-    let deposit = accounts[0];
-    let amounts = [];
-    let rates = [];
-    let beforeBalance = 0;
+    const amounts = [];
+    const rates = [];
 
     for (let i = 0; i < tokens.length; i++) {
-      let erc20Token = await SimpleERC20Token.at(tokens[i]);
-      let actualBalance = await erc20Token.balanceOf(deposit);
+      const erc20Token = await SimpleERC20Token.at(tokens[i]);
+      const actualBalance = await erc20Token.balanceOf(deposit);
       amounts.push(actualBalance);
       rates.push(expectedRateToSell);
       await erc20Token.transfer(exchangeProvider.address, actualBalance);
     }
 
-    beforeBalance = await web3.eth.getBalance(deposit);
-    result = await exchangeProvider.sellTokens(tokens, amounts, rates, deposit, "", 0x0);
+    const beforeBalance = await web3.eth.getBalance(deposit);
+    await exchangeProvider.sellTokens(tokens, amounts, rates, deposit, "", 0x0);
 
     assert.ok(new BigNumber(await web3.eth.getBalance(deposit)).minus(beforeBalance).toNumber() > 0);
   });
 
   it('Should be able to check availability for a token', async () => {
-    let mockKyberNetwork = await MockKyberNetwork.deployed();
-    let tokens = await mockKyberNetwork.supportedTokens();
-    let exchangeProvider = await ExchangeProvider.deployed();
-
-    let result = await exchangeProvider.supportsTradingPair.call(ethToken, tokens[0], "");
-    let nonExistent = await exchangeProvider.supportsTradingPair.call(ethToken, 0x4532453245, "");
+    const result = await exchangeProvider.supportsTradingPair.call(ethToken, tokens[0], "");
+    const nonExistent = await exchangeProvider.supportsTradingPair.call(ethToken, 0x4532453245, "");
     assert.ok(result);
-    assert.ok(!nonExistent)
+    assert.ok(!nonExistent);
   });
 });
 
