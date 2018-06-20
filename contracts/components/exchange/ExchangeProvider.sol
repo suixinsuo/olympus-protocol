@@ -15,6 +15,10 @@ contract ExchangeProvider is OlympusExchangeInterface {
 
     OlympusExchangeAdapterManagerInterface private exchangeAdapterManager;
 
+    constructor(address _exchangeManager) public {
+        exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
+    }
+
     function setExchangeAdapterManager(address _exchangeManager) external onlyOwner {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
     }
