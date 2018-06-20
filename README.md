@@ -14,9 +14,11 @@
 The suit option will limit the number of deployment required for the concrete test file.
 
 ## Kovan
-KyberNetworkAdapter 0x2133158f4f005dd6c850ecbfcc6c685aa8f3adbe
-ExchangeAdapterManager 0x8938608d449cff2e8efa2589ae6c4da3d33c5a3d
-ExchangeProvider 0xfd7ff529d48fc4fcdf4a920ee11bde34370ff5a0
+Exchange component:
+- KyberNetworkAdapter 0xf153aa2f20f944f73e4ea95450be89af8df664e6
+- ExchangeAdapterManager 0x9b5d32ae77345ca621b0a3d4369e50790bdf7235
+- ExchangeProvider 0x304730f75cf4c92596fc61cc239a649febc0e36e
+
 Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
 AsyncWithdraw  0xc296e480365f7d65beb388f2699e197d05aa4948
 MockWithdrawClient 0x6b0c8fe99884ddf73627d4e017c8673ef30c99a0
