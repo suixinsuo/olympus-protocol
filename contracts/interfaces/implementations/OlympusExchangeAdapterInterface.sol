@@ -3,7 +3,7 @@ pragma solidity 0.4.24;
 import "../../libs/utils.sol";
 import "../ExchangeInterface.sol";
 import "./KyberNetworkInterface.sol";
-import "../../libs/Ownable.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
 contract OlympusExchangeAdapterInterface is Ownable {
@@ -11,18 +11,18 @@ contract OlympusExchangeAdapterInterface is Ownable {
     function supportsTradingPair(address _srcAddress, address _destAddress)
         external view returns(bool supported);
 
-    function getPrice(ERC20 _sourceAddress, ERC20 _destAddress, uint _amount)
+    function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount)
         external view returns(uint expectedRate, uint slippageRate);
 
     function sellToken
         (
-        ERC20 _token, uint _amount, uint _minimumRate,
+        ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, address _partnerId
         ) external returns(bool success);
 
     function buyToken
         (
-        ERC20 _token, uint _amount, uint _minimumRate,
+        ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, address _partnerId
         ) external payable returns(bool success);
 

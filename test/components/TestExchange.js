@@ -1,6 +1,6 @@
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const KyberNetworkAdapter = artifacts.require("../contracts/components/exchange/exchanges/KyberNetworkAdapter");
-const SimpleERC20Token = artifacts.require("../contracts/libs/SimpleERC20Token");
+const SimpleERC20Token = artifacts.require("../contracts/libs/ERC20Extended");
 const ExchangeAdapterManager = artifacts.require("../contracts/components/exchange/ExchangeAdapterManager");
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 
