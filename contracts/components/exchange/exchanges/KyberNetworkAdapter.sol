@@ -19,9 +19,10 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
         _;
     }
 
-    constructor (KyberNetworkInterface _kyber) public {
+    constructor (KyberNetworkInterface _kyber, address _exchangeAdapterManager) public {
         require(address(_kyber) != 0x0);
         kyber = _kyber;
+        exchangeAdapterManager = _exchangeAdapterManager;
         adapterEnabled = true;
     }
 

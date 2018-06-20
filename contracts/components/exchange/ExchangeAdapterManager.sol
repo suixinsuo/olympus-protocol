@@ -15,14 +15,14 @@ contract ExchangeAdapterManager is Ownable {
 
     event AddedExchange(bytes32 id);
 
-    function addExchange(bytes32 name, address adapter)
+    function addExchange(bytes32 _name, address _adapter)
     external onlyOwner returns(bool) {
-        require(adapter != 0x0);
-        bytes32 id = keccak256(abi.encodePacked(adapter, genExchangeId++));
-        require(OlympusExchangeAdapterInterface(adapter).setExchangeDetails(id, name));
+        require(_adapter != 0x0);
+        bytes32 id = keccak256(abi.encodePacked(_adapter, genExchangeId++));
+        require(OlympusExchangeAdapterInterface(_adapter).setExchangeDetails(id, _name));
         exchanges.push(id);
-        exchangeAdapters[id] = OlympusExchangeAdapterInterface(adapter);
-        adapters[adapter]++;
+        exchangeAdapters[id] = OlympusExchangeAdapterInterface(_adapter);
+        adapters[_adapter]++;
 
         emit AddedExchange(id);
         return true;
@@ -32,18 +32,18 @@ contract ExchangeAdapterManager is Ownable {
         return exchanges;
     }
 
-    function getExchangeInfo(bytes32 id)
+    function getExchangeInfo(bytes32 _id)
     external view returns(bytes32 name, bool status) {
-        OlympusExchangeAdapterInterface adapter = exchangeAdapters[id];
+        OlympusExchangeAdapterInterface adapter = exchangeAdapters[_id];
         require(address(adapter) != 0x0);
 
         return adapter.getExchangeDetails();
     }
 
-    function getExchangeAdapter(bytes32 id)
+    function getExchangeAdapter(bytes32 _id)
     external view returns(address)
     {
-        return address(exchangeAdapters[id]);
+        return address(exchangeAdapters[_id]);
     }
 
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId)
@@ -60,7 +60,7 @@ contract ExchangeAdapterManager is Ownable {
 
     /// >0  : found exchangeId
     /// ==0 : not found
-    function pickExchange(ERC20Extended token, uint amount, uint rate, bool isBuying) external view returns (bytes32 exchangeId) {
+    function pickExchange(ERC20Extended _token, uint _amount, uint _rate, bool _isBuying) external view returns (bytes32 exchangeId) {
 
         int maxRate = -1;
         for (uint i = 0; i < exchanges.length; i++) {
@@ -71,25 +71,25 @@ contract ExchangeAdapterManager is Ownable {
                 continue;
             }
             uint adapterResultRate;
-            if (isBuying){
-                (,adapterResultRate) = adapter.getPrice(ETH_TOKEN_ADDRESS, token, amount);
+            if (_isBuying){
+                (,adapterResultRate) = adapter.getPrice(ETH_TOKEN_ADDRESS, _token, _amount);
             } else {
-                (,adapterResultRate) = adapter.getPrice(token, ETH_TOKEN_ADDRESS, amount);
+                (,adapterResultRate) = adapter.getPrice(_token, ETH_TOKEN_ADDRESS, _amount);
             }
-            int _rate = int(adapterResultRate);
+            int resultRate = int(adapterResultRate);
 
 
-            if (_rate == 0) { // not support
+            if (resultRate == 0) { // not support
                 continue;
             }
 
             // TODO: fix it
-            if (_rate < int(rate)) {
+            if (resultRate < int(_rate)) {
                 continue;
             }
 
-            if (_rate >= maxRate) {
-                maxRate = _rate;
+            if (resultRate >= maxRate) {
+                maxRate = resultRate;
                 return id;
             }
         }
@@ -106,23 +106,23 @@ contract ExchangeAdapterManager is Ownable {
             if (adapter.supportsTradingPair(_srcAddress, _destAddress)) {
                 return true;
             }
-        } else {
-            for (uint i = 0; i < exchanges.length; i++) {
-                bytes32 id = exchanges[i];
-                adapter = exchangeAdapters[id];
-                if (!adapter.isEnabled()) {
-                    continue;
-                }
-                if (adapter.supportsTradingPair(_srcAddress, _destAddress)) {
-                    return true;
-                }
+            return false;
+        }
+        for (uint i = 0; i < exchanges.length; i++) {
+            bytes32 id = exchanges[i];
+            adapter = exchangeAdapters[id];
+            if (!adapter.isEnabled()) {
+                continue;
+            }
+            if (adapter.supportsTradingPair(_srcAddress, _destAddress)) {
+                return true;
             }
         }
 
         return false;
     }
 
-    function isValidAdapter(address adapter) external view returns (bool) {
-        return adapters[adapter] > 0;
+    function isValidAdapter(address _adapter) external view returns (bool) {
+        return adapters[_adapter] > 0;
     }
 }
