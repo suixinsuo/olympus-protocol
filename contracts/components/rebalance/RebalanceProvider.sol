@@ -195,8 +195,10 @@ contract RebalanceProvider is Ownable, ComponentInterface {
         (,slippage) = exchangeProvider.getPrice(ERC20Extended(_src), ERC20Extended(_dest), _amount, "");
 
         if(_src == ETH_TOKEN){
+            // TODO: where do we get the ETH from?
             return exchangeProvider.buyToken.value(_amount)(ERC20Extended(_dest),_amount,slippage,address(msg.sender),"",0x0);
         } else {
+            // TODO: where do we get the tokens from?
             ERC20Extended(_src).approve(address(exchangeProvider),2**255);
             return exchangeProvider.sellToken(ERC20Extended(_src),_amount,slippage,address(msg.sender),"",0x0);
         }
