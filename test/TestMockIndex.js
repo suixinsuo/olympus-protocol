@@ -10,6 +10,7 @@ const SimpleERC20Token = artifacts.require("SimpleERC20Token");
 
 const Promise = require('bluebird');
 let mockIndexData = {
+    name: 'test_name',
     decimals: 18,
     description: "this is test index description",
     category: "test",
@@ -21,9 +22,11 @@ let mockIndexData = {
 contract('MockIndex', (accounts) => {
     let instance;
     before('Mock Index Test', async () => {
-        instance = await MockIndex.new(mockIndexData.decimals, mockIndexData.description, mockIndexData.category, mockIndexData.isRebalance, mockIndexData.tokens, mockIndexData.weights);
+        instance = await MockIndex.new(mockIndexData.name, mockIndexData.decimals, mockIndexData.description, mockIndexData.category, mockIndexData.isRebalance, mockIndexData.tokens, mockIndexData.weights);
       });
     it("Should be able to new", async () => {
+
+        let name = await instance.name();
         let decimals = await instance.decimals(); 
         let description = await instance.description();
         let category = await instance.category();
@@ -31,6 +34,7 @@ contract('MockIndex', (accounts) => {
         let status = await instance.status();
         let totalSupply = await instance.totalSupply();
 
+        assert.equal(name.toString(), mockIndexData.name);
         assert.equal(decimals.toNumber(), mockIndexData.decimals);
         assert.equal(description.toString(), mockIndexData.description);
         assert.equal(category.toString(), mockIndexData.category);

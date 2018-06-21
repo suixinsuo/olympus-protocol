@@ -17,8 +17,8 @@ contract MockIndex is IndexInterface, MockDerivative {
         require(_tokens.length == _weights.length);
         _;
     }
-    constructor (uint _decimals, string _description, string _category, bool _rebalance, ERC20[] _tokens, uint[] _weights) checkLength(_tokens, _weights) public {
-
+    constructor (string _name, uint _decimals, string _description, string _category, bool _rebalance, ERC20[] _tokens, uint[] _weights) checkLength(_tokens, _weights) public {
+        name = _name;
         totalSupply = 0;
         decimals = _decimals;
         description = _description;
