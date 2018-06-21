@@ -17,7 +17,7 @@ contract PercentageFee is ChargeableInterface {
     }
 
     function setFeePercentage(uint _fee) external returns(bool success) {
-        require(_fee > 0);
+        require(_fee >= 0);
         require(_fee < DENOMINATOR);
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
@@ -25,12 +25,16 @@ contract PercentageFee is ChargeableInterface {
         return true;
     }
 
-    function getFeePercentage() external returns (uint) {
+    function getFeePercentage() external view returns (uint) {
         return fees[DerivativeInterface(msg.sender).owner()][msg.sender];
     }
 
     function calculateFee(address /*_caller*/,  uint _amount)  external returns(uint) {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
+        if(fees[derivative.owner()][msg.sender] == 0) {
+            return 0;
+        }
+
         uint _fee = _amount * fees[derivative.owner()][msg.sender]/DENOMINATOR;
         return _fee;
     }
