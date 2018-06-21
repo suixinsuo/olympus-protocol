@@ -5,6 +5,9 @@ import "../interfaces/FundInterface.sol";
 // import "../interfaces/ExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
+import "../interfaces/ChargeableInterface.sol";
+import "../interfaces/ReimbursableInterface.sol";
+
 
 contract OlympusFund is FundInterface, Derivative {
 
@@ -16,22 +19,24 @@ contract OlympusFund is FundInterface, Derivative {
     string public constant WITHDRAW = "WithdrawProvider";
     string public constant RISK = "RiskProvider";
     string public constant WHITELIST = "WhitelistProvider";
+    string public constant FEE = "FeeProvider";
+    string public constant REIMBURSABLE = "Reimbursable";
 
-    string public name;
-    string public symbol;
+    event Reimbursed(uint amount);
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
     mapping(address => bool) activeTokens;
 
-    uint maxTransfers = 10;
+    uint public maxTransfers = 10;
+    uint public accumulatedFee = 0;
 
     constructor(
       string _name,
       string _symbol,
       string _description,
       uint _decimals
-    ) public {
+     ) public {
 
         name = _name;
         symbol = _symbol;
@@ -44,15 +49,31 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _market, address _exchange, address _withdraw, address _risk, address _whitelist) onlyOwner external {
+    function initialize(
+        address _market,
+        address _exchange,
+        address _withdraw,
+        address _risk,
+        address _whitelist,
+        address _reimbursable,
+        address _feeProvider,
+        uint _initialFundFee) onlyOwner external payable  {
         require(status == DerivativeStatus.New);
+        require (msg.value > 0); // Require some balance for internal opeations as reimbursable
+
         setComponent(MARKET, _market);
         setComponent(EXCHANGE, _exchange);
         setComponent(WITHDRAW, _withdraw);
         setComponent(RISK, _risk);
         setComponent(WHITELIST, _whitelist);
+        setComponent(FEE, _feeProvider);
+        setComponent(REIMBURSABLE, _reimbursable);
+
         MarketplaceInterface(_market).registerProduct();
+        ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
         status = DerivativeStatus.Active;
+
+        accumulatedFee += msg.value;
     }
 
     function getTokens() external view returns(address[], uint[]) {
@@ -113,43 +134,49 @@ contract OlympusFund is FundInterface, Derivative {
         updateTokens(_tokens);
         return true;
     }
-
-    // ----------------------------- DERIVATIVE -----------------------------
+     // ----------------------------- DERIVATIVE -----------------------------
 
     function invest() public payable returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.1 ETH");
-
-        // Current value is already added in the balance, reduce it
+         // Current value is already added in the balance, reduce it
         uint _sharePrice;
+
         if(totalSupply_ > 0) {
             _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply_);
-        } else {
+         } else {
             _sharePrice = INTIAL_VALUE;
         }
 
-        uint _investorShare = ((msg.value * DENOMINATOR) / _sharePrice) * ((10 ** decimals) / DENOMINATOR);
+        ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
+        uint fee = feeManager.calculateFee(msg.sender, msg.value);
 
+        uint _investorShare = ( ( (msg.value-fee) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
+        _investorShare = _investorShare / DENOMINATOR;
+
+        accumulatedFee += fee;
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
 
-        emit Transfer(owner, msg.sender, _investorShare);
+        emit Transfer(msg.sender, owner, msg.value);
         return true;
     }
 
     function changeStatus(DerivativeStatus _status) public returns(bool) {
-        require(_status != DerivativeStatus.New);
+        require(_status != DerivativeStatus.New && status != DerivativeStatus.New);
         status = _status;
         return true;
     }
+
 
     function getPrice() public view returns(uint)  {
         if(totalSupply_ == 0) {
             return INTIAL_VALUE;
         }
-         // Total Value in ETH among its tokens + ETH new added value
+
+        // Total Value in ETH among its tokens + ETH new added value
         return (
-          ((getAssetsValue() + address(this).balance ) * 10 ** decimals ) / totalSupply_,
+          ((getAssetsValue() + address(this).balance  - accumulatedFee) * 10 ** decimals ) / (totalSupply_),
         );
     }
 
@@ -183,6 +210,27 @@ contract OlympusFund is FundInterface, Derivative {
         return _totalTokensValue;
     }
 
+    // ----------------------------- FEES  -----------------------------
+    // Owner can send ETH to the Index, to perform some task, this eth belongs to him
+    function addOwnerBalance() external payable onlyOwner {
+        accumulatedFee += msg.value;
+    }
+
+    function witdrawFee(uint amount) external onlyOwner returns(bool) {
+        require(accumulatedFee >= amount);
+        msg.sender.transfer(amount);
+        accumulatedFee -= amount;
+        return true;
+    }
+
+    function setManagementFee(uint _fee) external onlyOwner {
+        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
+    }
+
+    function getManagementFee() external view returns(uint) {
+        return ChargeableInterface(getComponentByName(FEE)).getFeePercentage();
+    }
+
     // ----------------------------- WITHDRAW -----------------------------
     function requestWithdraw(uint amount) external {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
@@ -192,20 +240,27 @@ contract OlympusFund is FundInterface, Derivative {
         maxTransfers = _maxTransfers;
     }
 
-    function withdraw() onlyOwner external returns(bool) {
+    function withdraw() external returns(bool) {
+
+        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        // Check if there is request
+        address[] memory _requests = withdrawProvider.getUserRequests();
+        if(_requests.length == 0) {
+            reimburse();
+            return true;
+        }
 
         uint _transfers = 0;
-        address[] memory _requests = withdrawProvider.getUserRequests();
         uint _eth;
         uint tokens;
 
-        if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
-            // Sell tokens
-        }
-
         if (!withdrawProvider.isInProgress()) {
             withdrawProvider.start();
+        }
+
+        if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
+            // TODO: Sell tokens
         }
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
@@ -214,6 +269,7 @@ contract OlympusFund is FundInterface, Derivative {
             if(tokens == 0) {continue;}
 
             balances[_requests[i]] -= tokens;
+            totalSupply_ -= tokens;
             address(_requests[i]).transfer(_eth);
             _transfers++;
         }
@@ -221,12 +277,19 @@ contract OlympusFund is FundInterface, Derivative {
         if(!withdrawProvider.isInProgress()) {
             withdrawProvider.unlock();
         }
-
+        reimburse();
         return !withdrawProvider.isInProgress(); // True if completed
     }
 
     function withdrawInProgress() external view returns(bool) {
         return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
+    }
+
+    function reimburse() internal {
+        uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
+        accumulatedFee -= reimbursedAmount;
+        emit Reimbursed(reimbursedAmount);
+        msg.sender.transfer(reimbursedAmount);
     }
 
 }
