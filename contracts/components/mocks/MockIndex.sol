@@ -2,8 +2,7 @@ pragma solidity 0.4.24;
 
 import "./MockDerivative.sol";
 import "../../interfaces/IndexInterface.sol";
-import "../../libs/SafeMath.sol";
-
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 contract MockIndex is IndexInterface, MockDerivative {
     using SafeMath for uint256;
 
