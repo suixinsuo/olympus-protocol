@@ -28,7 +28,9 @@ contract MockIndex is IndexInterface, MockDerivative {
         fundType = DerivativeType.Index;
         isRebalance = _rebalance;
 
-        tokens = _tokens;
+        for (uint i = 0; i < _tokens.length; i++) {
+            tokens.push(address(_tokens[i]));
+        }
         weights = _weights;
     }
 
@@ -67,6 +69,9 @@ contract MockIndex is IndexInterface, MockDerivative {
     }
     function rebalance() public returns (bool success) {
         return false;
+    }
+    function getTokens() public view returns (address[] _tokens, uint[] _weights) {
+        return (tokens, weights);
     }
     function getPrice() public view returns(uint) {
         //mock 1 eth to 1 token
