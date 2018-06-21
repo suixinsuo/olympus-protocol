@@ -49,5 +49,4 @@ contract Reimbursable is  ReimbursableInterface {
         return gasToReimburse;
     }
 
-    event LogN(uint number, string text);
 }
