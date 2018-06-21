@@ -138,7 +138,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function changeStatus(DerivativeStatus _status) public returns(bool) {
-        require(_status != DerivativeStatus.New);
+        require(_status != DerivativeStatus.New && status != DerivativeStatus.New);
         status = _status;
         return true;
     }
