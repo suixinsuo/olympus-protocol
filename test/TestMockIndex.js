@@ -46,6 +46,10 @@ contract('MockIndex', (accounts) => {
         let result = await instance.getPrice();
         assert.equal(result, 10 ** 18);
     })
+    it("Should be able to get tokens.", async () => {
+        let result = await instance.getTokens();
+        console.log(result);
+    })
     it("Should be able to buy one token.", async () => {
         let erc20Token = await SimpleERC20Token.at(instance.address);
 
