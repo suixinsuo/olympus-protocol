@@ -40,11 +40,11 @@ contract RebalanceProvider is Ownable, ComponentInterface {
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
-    function initializeRebalance(uint rebalanceInterval) public returns (bool success){
+    function initializeRebalance(uint _rebalanceInterval) public returns (bool success){
         tokenStep[msg.sender] = DEFAULT_TOKEN_STEP;
-        rebalanceInterval[msg.sender] = rebalanceInterval > 1 weeks ? rebalanceInterval : DEFAULT_INTERVAL;
+        rebalanceInterval[msg.sender] = _rebalanceInterval > 1 weeks ? _rebalanceInterval : DEFAULT_INTERVAL;
         // solium-disable-next-line security/no-block-members
-        lastRebalance = now;
+        lastRebalance[msg.sender] = now;
         return true;
     }
 
