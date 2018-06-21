@@ -9,7 +9,7 @@ import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 contract Derivative is DerivativeInterface, ComponentContainer, StandardToken {
 
     // Set component from outside the chain
-    function setProvider(string name, address provider) external onlyOwner returns(bool) {
+    function setComponentExternal(string name, address provider) external onlyOwner returns(bool) {
         setComponent(name, provider);
         return true;
     }
