@@ -1,0 +1,17 @@
+{
+  "extends": "default",
+  "rules": {
+    "indent": [
+      false,
+      4
+    ],
+    "quotes": [
+      "error",
+      "double"
+    ],
+    "max-line-length": [
+      "error",
+      120
+    ]
+  }
+}
