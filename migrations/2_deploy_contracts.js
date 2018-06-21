@@ -61,6 +61,8 @@ async function deployMockfund(deployer, network) {
   deployer.deploy([
     SimpleWithdraw, // Exchannge Provider
   ]);
+  await deployExchange(deployer, network);
+
 }
 
 async function deployReimbursable(deployer, network) {
