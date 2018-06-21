@@ -54,7 +54,7 @@ contract('MockIndex', (accounts) => {
         let getIndexEth = await web3.eth.getBalance(instance.address).minus(beforeIndexEthBalance);
         let price = await instance.getPrice();
         let decimals = await instance.decimals(); 
-        let exceptTokenAmount = getIndexEth.mul(price).mul(10 ** (decimals - 18)).div(10 ** 18);
+        let exceptTokenAmount = getIndexEth.div(price).mul(10 ** (decimals - 18)).mul(10 ** 18);
         assert.equal(exceptTokenAmount, getTokenAmount)
     })
     it("Should be able to pause the index.", async () => {

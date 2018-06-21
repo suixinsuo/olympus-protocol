@@ -3,6 +3,8 @@ pragma solidity 0.4.24;
 import "./MockDerivative.sol";
 import "../../interfaces/IndexInterface.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../interfaces/MarketplaceInterface.sol";
+
 contract MockIndex is IndexInterface, MockDerivative {
     using SafeMath for uint256;
 
@@ -29,12 +31,20 @@ contract MockIndex is IndexInterface, MockDerivative {
         tokens = _tokens;
         weights = _weights;
     }
+
+    // One time call
+    function initialize(address _market, address /*_exchange*/, address /*_withdraw*/, address /*_risk*/, address /*_whitelist*/) onlyOwner external {
+        // require(status == DerivativeStatus.New);
+        MarketplaceInterface(_market).registerProduct();
+        status = DerivativeStatus.Active;
+    }
+
     function invest() public payable returns(bool success){
         require(status == DerivativeStatus.Active);
         require(msg.value > 0);
 
         uint price = getPrice();
-        uint mintAmount = msg.value.mul(price).mul(10 ** (decimals - 18)).div(PRECISION);
+        uint mintAmount = msg.value.mul(PRECISION).div(price).mul(10 ** (decimals - 18));
 
         balances[msg.sender] += balances[msg.sender].add(mintAmount);
         emit Invest(msg.sender, msg.value, price, mintAmount);
