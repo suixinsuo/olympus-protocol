@@ -168,6 +168,12 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
+    function close() public onlyOwner returns(bool success){
+        require(status != DerivativeStatus.New);
+        //sellTokens();
+        status = DerivativeStatus.Closed;
+        return true;
+    }
 
     function getPrice() public view returns(uint)  {
         if(totalSupply_ == 0) {
@@ -291,5 +297,4 @@ contract OlympusFund is FundInterface, Derivative {
         emit Reimbursed(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
-
 }
