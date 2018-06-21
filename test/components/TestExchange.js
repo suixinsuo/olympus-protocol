@@ -16,7 +16,9 @@ function bytes32ToString(bytes32) {
 
 const Promise = require('bluebird');
 
-
+const checkPercentageDifference = (value1, value2, percentage) => {
+  return value1 > value2 ? (value1 - (value1 * percentage / 100)) < value2 : (value1 + (value1 * percentage / 100)) > value2;
+}
 contract('ExchangeProvider', (accounts) => {
   let tokens;
   let exchangeProvider;
@@ -76,31 +78,42 @@ contract('ExchangeProvider', (accounts) => {
 
   it("OlympusExchange should be able to sell a single token.", async () => {
     const erc20Token = await SimpleERC20Token.at(tokens[0]);
-    const amount = await erc20Token.balanceOf(deposit);
+    const amount = (await erc20Token.balanceOf(deposit) / 2); // Keep some for multiple sell tokens
     const rate = expectedRateToSell;
     await erc20Token.approve(exchangeProvider.address, amount);
 
     const beforeBalance = await web3.eth.getBalance(deposit);
     await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, "", 0x0);
-
-    assert.ok(new BigNumber(await web3.eth.getBalance(deposit)).minus(beforeBalance).toNumber() > 0);
+    const expectedAmount = amount * expectedRateToSell.toNumber() / 10 ** 18; // ETH decimals
+    assert.ok(
+      checkPercentageDifference(
+        new BigNumber(await web3.eth.getBalance(deposit)).minus(beforeBalance).toNumber(),
+        expectedAmount,
+        1));
   });
 
   it("OlympusExchange should be able to sell multiple tokens.", async () => {
     const amounts = [];
     const rates = [];
+    const expectedAmounts = [];
 
     for (let i = 0; i < tokens.length; i++) {
       const erc20Token = await SimpleERC20Token.at(tokens[i]);
       const actualBalance = await erc20Token.balanceOf(deposit);
       amounts.push(actualBalance);
       rates.push(expectedRateToSell);
-      await erc20Token.transfer(exchangeProvider.address, actualBalance);
+      expectedAmounts.push(actualBalance * expectedRateToSell.toNumber() / 10 ** 18); // ETH decimals
+
+      await erc20Token.approve(exchangeProvider.address, actualBalance);
     }
 
     const beforeBalance = await web3.eth.getBalance(deposit);
     await exchangeProvider.sellTokens(tokens, amounts, rates, deposit, "", 0x0);
-
+    assert.ok(checkPercentageDifference(
+      new BigNumber(await web3.eth.getBalance(deposit)).minus(beforeBalance).toNumber(),
+      expectedAmounts.reduce((a, b) => a + b, 0),
+      1
+    ))
     assert.ok(new BigNumber(await web3.eth.getBalance(deposit)).minus(beforeBalance).toNumber() > 0);
   });
 
@@ -112,3 +125,6 @@ contract('ExchangeProvider', (accounts) => {
   });
 });
 
+999907855000000000
+1000000000000000
+1000000000000000000
