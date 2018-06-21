@@ -7,10 +7,8 @@ import "../../interfaces/implementations/OlympusExchangeInterface.sol";
 
 
 contract RebalanceProvider is Ownable, ComponentInterface {
+    // TODO: is component
     OlympusExchangeInterface private exchangeProvider = OlympusExchangeInterface(0x304730f75cf4C92596FC61Cc239a649FEbC0E36E);
-    /**
-    Start Rebalance parameters
-     */
     enum RebalanceStatus {
         INACTIVE,
         INITIATED,
@@ -37,11 +35,18 @@ contract RebalanceProvider is Ownable, ComponentInterface {
 
     uint private PERCENTAGE_DENOMINATOR = 10000;
     uint private rebalanceDeltaPercentage = 30; // 0.3%
+    uint private constant DEFAULT_TOKEN_STEP = 10;
+    uint private constant DEFAULT_INTERVAL = 4 weeks;
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
-    /**
-    End Rebalance parameters
-     */
+
+    function initializeRebalance(uint rebalanceInterval) public returns (bool success){
+        tokenStep[msg.sender] = DEFAULT_TOKEN_STEP;
+        rebalanceInterval[msg.sender] = rebalanceInterval > 1 weeks ? rebalanceInterval : DEFAULT_INTERVAL;
+        // solium-disable-next-line security/no-block-members
+        lastRebalance = now;
+        return true;
+    }
 
     function rebalancePrepareSellAndBuy() private returns (bool success){
         if(rebalanceStatus == RebalanceStatus.INITIATED){
