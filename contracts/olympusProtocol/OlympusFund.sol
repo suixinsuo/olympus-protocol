@@ -135,7 +135,6 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
      // ----------------------------- DERIVATIVE -----------------------------
-    event LogN(uint number, string text);
 
     function invest() public payable returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
@@ -248,7 +247,7 @@ contract OlympusFund is FundInterface, Derivative {
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
         if(_requests.length == 0) {
-            reimburs();
+            reimburse();
             return true;
         }
 
@@ -261,7 +260,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
 
         if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
-            // Sell tokens
+            // TODO: Sell tokens
         }
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
@@ -278,7 +277,7 @@ contract OlympusFund is FundInterface, Derivative {
         if(!withdrawProvider.isInProgress()) {
             withdrawProvider.unlock();
         }
-        reimburs();
+        reimburse();
         return !withdrawProvider.isInProgress(); // True if completed
     }
 
@@ -286,7 +285,7 @@ contract OlympusFund is FundInterface, Derivative {
         return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
     }
 
-    function reimburs() internal {
+    function reimburse() internal {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
         accumulatedFee -= reimbursedAmount;
         emit Reimbursed(reimbursedAmount);
