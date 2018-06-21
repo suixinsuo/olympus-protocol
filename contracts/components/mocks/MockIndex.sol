@@ -17,7 +17,7 @@ contract MockIndex is IndexInterface, MockDerivative {
         require(_tokens.length == _weights.length);
         _;
     }
-    constructor (string _name, uint _decimals, string _description, string _category, bool _rebalance, ERC20[] _tokens, uint[] _weights) checkLength(_tokens, _weights) public {
+    constructor (string _name, uint _decimals, string _description, string _category, ERC20[] _tokens, uint[] _weights) checkLength(_tokens, _weights) public {
         name = _name;
         totalSupply = 0;
         decimals = _decimals;
@@ -26,7 +26,7 @@ contract MockIndex is IndexInterface, MockDerivative {
         status = DerivativeStatus.Active;
         version = "1.0";
         fundType = DerivativeType.Index;
-        isRebalance = _rebalance;
+        isRebalance = false;
 
         for (uint i = 0; i < _tokens.length; i++) {
             tokens.push(address(_tokens[i]));
@@ -52,14 +52,15 @@ contract MockIndex is IndexInterface, MockDerivative {
         emit Invest(msg.sender, msg.value, price, mintAmount);
         return true;
     }
-    function changeStatus(DerivativeStatus _statusId) public returns(bool) {
+
+    function changeStatus(DerivativeStatus _status) public returns(bool) {
         require(status != DerivativeStatus.Closed);
 
-        if (DerivativeStatus(_statusId) == DerivativeStatus.Active || 
-            DerivativeStatus(_statusId) == DerivativeStatus.Paused || 
-            DerivativeStatus(_statusId) == DerivativeStatus.Closed) {
+        if (_status == DerivativeStatus.Active || 
+            _status == DerivativeStatus.Paused || 
+            _status == DerivativeStatus.Closed) {
 
-            status = DerivativeStatus(_statusId);
+            status = _status;
             return true;
 
         } else {
