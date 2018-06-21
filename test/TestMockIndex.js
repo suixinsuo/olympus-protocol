@@ -22,7 +22,7 @@ let mockIndexData = {
 contract('MockIndex', (accounts) => {
     let instance;
     before('Mock Index Test', async () => {
-        instance = await MockIndex.new(mockIndexData.name, mockIndexData.decimals, mockIndexData.description, mockIndexData.category, mockIndexData.isRebalance, mockIndexData.tokens, mockIndexData.weights);
+        instance = await MockIndex.new(mockIndexData.name, mockIndexData.decimals, mockIndexData.description, mockIndexData.category, mockIndexData.tokens, mockIndexData.weights);
       });
     it("Should be able to new", async () => {
 
@@ -47,14 +47,14 @@ contract('MockIndex', (accounts) => {
         assert.equal(result, 10 ** 18);
     })
     it("Should be able to get tokens.", async () => {
-        let result = await instance.getTokens();
+        const result = await instance.getTokens();
         console.log(result);
     })
     it("Should be able to buy one token.", async () => {
-        let erc20Token = await SimpleERC20Token.at(instance.address);
+        const erc20Token = await SimpleERC20Token.at(instance.address);
 
-        let beforeTokenBalance = await erc20Token.balanceOf(accounts[0]);
-        let beforeIndexEthBalance = await web3.eth.getBalance(instance.address);
+        const beforeTokenBalance = await erc20Token.balanceOf(accounts[0]);
+        const beforeIndexEthBalance = await web3.eth.getBalance(instance.address);
 
         await instance.invest({from: accounts[0], value: web3.toWei(1)});
         
