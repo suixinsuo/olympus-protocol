@@ -6,6 +6,7 @@ import "../interfaces/FundInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
+import "../interfaces/ReimbursableInterface.sol";
 
 
 contract OlympusFund is FundInterface, Derivative {
@@ -19,7 +20,9 @@ contract OlympusFund is FundInterface, Derivative {
     string public constant RISK = "RiskProvider";
     string public constant WHITELIST = "WhitelistProvider";
     string public constant FEE = "FeeProvider";
+    string public constant REIMBURSABLE = "Reimbursable";
 
+    event Reimbursed(uint amount);
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
@@ -52,19 +55,25 @@ contract OlympusFund is FundInterface, Derivative {
         address _withdraw,
         address _risk,
         address _whitelist,
+        address _reimbursable,
         address _feeProvider,
-        uint _initialFundFee) onlyOwner external {
-
+        uint _initialFundFee) onlyOwner external payable  {
         require(status == DerivativeStatus.New);
+        require (msg.value > 0); // Require some balance for internal opeations as reimbursable
+
         setComponent(MARKET, _market);
         setComponent(EXCHANGE, _exchange);
         setComponent(WITHDRAW, _withdraw);
         setComponent(RISK, _risk);
         setComponent(WHITELIST, _whitelist);
         setComponent(FEE, _feeProvider);
+        setComponent(REIMBURSABLE, _reimbursable);
+
         MarketplaceInterface(_market).registerProduct();
         ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
         status = DerivativeStatus.Active;
+
+        accumulatedFee += msg.value;
     }
 
     function getTokens() external view returns(address[], uint[]) {
@@ -138,12 +147,12 @@ contract OlympusFund is FundInterface, Derivative {
          } else {
             _sharePrice = INTIAL_VALUE;
         }
+
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
 
         uint _investorShare = ( ( (msg.value-fee) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
-        _investorShare = _investorShare  / DENOMINATOR;
-
+        _investorShare = _investorShare / DENOMINATOR;
 
         accumulatedFee += fee;
         balances[msg.sender] += _investorShare;
@@ -159,11 +168,13 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
+
     function getPrice() public view returns(uint)  {
         if(totalSupply_ == 0) {
             return INTIAL_VALUE;
         }
-         // Total Value in ETH among its tokens + ETH new added value
+
+        // Total Value in ETH among its tokens + ETH new added value
         return (
           ((getAssetsValue() + address(this).balance  - accumulatedFee) * 10 ** decimals ) / (totalSupply_),
         );
@@ -200,12 +211,15 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     // ----------------------------- FEES  -----------------------------
+    // Owner can send ETH to the Index, to perform some task, this eth belongs to him
+    function addOwnerBalance() external payable onlyOwner {
+        accumulatedFee += msg.value;
+    }
 
-
-    function witdrawFee() external onlyOwner returns(bool) {
-        require(accumulatedFee > 0);
-        msg.sender.transfer(accumulatedFee);
-        accumulatedFee = 0;
+    function witdrawFee(uint amount) external onlyOwner returns(bool) {
+        require(accumulatedFee >= amount);
+        msg.sender.transfer(amount);
+        accumulatedFee -= amount;
         return true;
     }
 
@@ -226,20 +240,27 @@ contract OlympusFund is FundInterface, Derivative {
         maxTransfers = _maxTransfers;
     }
 
-    function withdraw() onlyOwner external returns(bool) {
+    function withdraw() external returns(bool) {
+
+        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        // Check if there is request
+        address[] memory _requests = withdrawProvider.getUserRequests();
+        if(_requests.length == 0) {
+            reimburse();
+            return true;
+        }
 
         uint _transfers = 0;
-        address[] memory _requests = withdrawProvider.getUserRequests();
         uint _eth;
         uint tokens;
 
-        if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
-            // Sell tokens
-        }
-
         if (!withdrawProvider.isInProgress()) {
             withdrawProvider.start();
+        }
+
+        if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
+            // TODO: Sell tokens
         }
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
@@ -256,12 +277,19 @@ contract OlympusFund is FundInterface, Derivative {
         if(!withdrawProvider.isInProgress()) {
             withdrawProvider.unlock();
         }
-
+        reimburse();
         return !withdrawProvider.isInProgress(); // True if completed
     }
 
     function withdrawInProgress() external view returns(bool) {
         return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
+    }
+
+    function reimburse() internal {
+        uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
+        accumulatedFee -= reimbursedAmount;
+        emit Reimbursed(reimbursedAmount);
+        msg.sender.transfer(reimbursedAmount);
     }
 
 }
