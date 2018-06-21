@@ -209,7 +209,7 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- FEES  -----------------------------
     // Owner can send ETH to the Index, to perform some task, this eth belongs to him
-    function () external payable onlyOwner {
+    function addOwnerBalance() external payable onlyOwner {
         accumulatedFee += msg.value;
     }
 
@@ -237,21 +237,27 @@ contract OlympusFund is FundInterface, Derivative {
         maxTransfers = _maxTransfers;
     }
 
-    function withdraw() onlyOwner external returns(bool) {
+    function withdraw() external returns(bool) {
+
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        // Check if there is request
+        address[] memory _requests = withdrawProvider.getUserRequests();
+        if(_requests.length == 0) {
+            reimburse();
+            return true;
+        }
 
         uint _transfers = 0;
-        address[] memory _requests = withdrawProvider.getUserRequests();
         uint _eth;
         uint tokens;
 
-        if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
-            // Sell tokens
-        }
-
         if (!withdrawProvider.isInProgress()) {
             withdrawProvider.start();
+        }
+
+        if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
+            // TODO: Sell tokens
         }
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
@@ -268,7 +274,7 @@ contract OlympusFund is FundInterface, Derivative {
         if(!withdrawProvider.isInProgress()) {
             withdrawProvider.unlock();
         }
-        reimburs();
+        reimburse();
         return !withdrawProvider.isInProgress(); // True if completed
     }
 
@@ -276,7 +282,7 @@ contract OlympusFund is FundInterface, Derivative {
         return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
     }
 
-    function reimburs() internal {
+    function reimburse() internal {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
         accumulatedFee -= reimbursedAmount;
         emit Reimbursed(reimbursedAmount);

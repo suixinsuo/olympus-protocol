@@ -12,7 +12,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, StandardToken {
     ERC20Extended internal constant ETH = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
     // Set component from outside the chain
-    function setProvider(string name, address provider) external onlyOwner returns(bool) {
+    function setComponentExternal(string name, address provider) external onlyOwner returns(bool) {
         setComponent(name, provider);
         return true;
     }
