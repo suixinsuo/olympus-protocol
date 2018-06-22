@@ -17,6 +17,8 @@ let PercentageFee = artifacts.require("PercentageFee");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
+let MockIndex = artifacts.require("MockIndex");
+// let MockFund = artifacts.require("MockFund");
 
 
 function deployMarketplace(deployer, network) {
