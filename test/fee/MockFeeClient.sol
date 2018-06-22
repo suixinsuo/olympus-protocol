@@ -19,7 +19,7 @@ contract MockFeeClient is MockDerivative  {
         feeProvider.setFeePercentage(fee);
     }
 
-    function getFee() external onlyOwner returns(uint) {
+    function getFee() external view onlyOwner returns(uint) {
         return feeProvider.getFeePercentage();
     }
 
