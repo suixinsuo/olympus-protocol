@@ -25,6 +25,7 @@ contract OlympusFund is FundInterface, Derivative {
     string public constant REIMBURSABLE = "Reimbursable";
 
     event Reimbursed(uint amount);
+    event UpdateToken(address _token, uint amount);
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
@@ -104,6 +105,7 @@ contract OlympusFund is FundInterface, Derivative {
                 activeTokens[_tokenAddress] = true;
                 continue;
             }
+            emit UpdateToken(_tokenAddress, amounts[_tokenAddress]);
         }
         return true;
     }
@@ -119,19 +121,18 @@ contract OlympusFund is FundInterface, Derivative {
 
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-        exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0);
+        require(exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0));
         updateTokens(_tokens);
         return true;
 
     }
 
-    function sellTokens(bytes32 /*_exchangeId*/, ERC20Extended[] _tokens, uint[] _amounts, uint[]  /*_rates*/) public onlyOwner returns (bool) {
+    function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates) public onlyOwner returns (bool) {
         for(uint i = 0; i < tokens.length; i++) {
             _tokens[i].approve(msg.sender, _amounts[i]);
         }
-        // TODO in other task
-        // OlympusExchangeInterface exchange = ExchangeProvider(getComponentByName(EXCHANGE));
-        // exchange.buyToken.sellToken(_exchangeId, _tokens, _amounts, rates, address(this));
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
         updateTokens(_tokens);
         return true;
     }
@@ -193,7 +194,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint _balance;
 
         for (uint16 i = 0; i < tokens.length; i++) {
-            if(!activeTokens[tokens[i]]) {continue;}
+
             _balance = ERC20(tokens[i]).balanceOf(address(this));
 
             if(_balance == 0){continue;}
@@ -255,9 +256,11 @@ contract OlympusFund is FundInterface, Derivative {
         if (!withdrawProvider.isInProgress()) {
             withdrawProvider.start();
         }
+        uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
 
-        if(withdrawProvider.getTotalWithdrawAmount() > address(this).balance) {
-            // TODO: Sell tokens
+        if(_totalETHToReturn > getETHBalance()) {
+            uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+            getETHFromTokens(_tokenPercentToSell);
         }
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
@@ -267,7 +270,9 @@ contract OlympusFund is FundInterface, Derivative {
 
             balances[_requests[i]] -= tokens;
             totalSupply_ -= tokens;
-            address(_requests[i]).transfer(_eth);
+            if(address(this).balance >= _eth) {
+                address(_requests[i]).transfer(_eth);
+            }
             _transfers++;
         }
 
@@ -288,6 +293,44 @@ contract OlympusFund is FundInterface, Derivative {
         emit Reimbursed(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
+
+    function tokensWithAmount() public view returns( ERC20Extended[] memory) {
+      // First check the length
+        uint8 length = 0;
+        for (uint8 i = 0; i < tokens.length; i++) {
+            if(amounts[tokens[i]]> 0) {length++;}
+        }
+
+        ERC20Extended[] memory _tokensWithAmount = new ERC20Extended[](length);
+        // Then create they array
+        uint8 index = 0;
+        for (uint8 j = 0; j < tokens.length; j++) {
+            if(amounts[tokens[j]] > 0) {
+                _tokensWithAmount[index] = ERC20Extended(tokens[j]);
+                index++;
+            }
+        }
+        return _tokensWithAmount;
+    }
+
+
+    function getETHFromTokens(uint _tokenPercentage ) internal {
+        ERC20Extended[] memory _tokensToSell = tokensWithAmount();
+        uint[] memory _amounts = new uint[](  _tokensToSell.length);
+        uint[] memory _sellRates = new uint[]( _tokensToSell.length);
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+
+        for (uint8 i = 0; i < _tokensToSell.length; i++) {
+
+            _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
+            ( _sellRates[i], ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
+            _tokensToSell[i].approve(exchange,  _amounts[i]);
+        }
+
+        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
+    }
+
+
 
     event LogA(address _address, string text);
     event LogN(uint number, string text);
