@@ -1,17 +1,26 @@
 pragma solidity 0.4.24;
 
-import "./MockDerivative.sol";
+import "../../Derivative.sol";
 import "../../interfaces/FundInterface.sol";
+import "../../libs/ERC20Extended.sol";
+import "../../interfaces/implementations/OlympusExchangeInterface.sol";
 
-contract MockFund is FundInterface, MockDerivative {
+contract MockFund is FundInterface, Derivative {
 
-    uint public totalSupply;
+    string public name = "Dummy";
+    uint256 public decimals = 18;
+    string public symbol = "DMY";
+
     mapping(address => uint) investors;
-
     mapping(address => uint) amounts;
     mapping(address => bool) activeTokens;
 
+    event Invested(address user, uint amount);
+
+
     string public constant EXCHANGE = "Exchange";
+    uint public constant INTIAL_VALUE =  10**18;
+    uint public constant DENOMINATOR = 100000;
 
     constructor(
       string _name,
@@ -21,19 +30,18 @@ contract MockFund is FundInterface, MockDerivative {
         name = _name;
         symbol = _symbol;
         description = _description;
-
+        status = DerivativeStatus.Active;
         setComponent(EXCHANGE, exchangeAddress);
     }
 
-    function updateTokens(ERC20[] _updatedTokens) internal returns(bool success) {
-        ERC20 tokenAddress;
+    function updateTokens(ERC20Extended[] _updatedTokens) internal returns(bool success) {
+        ERC20 _tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
-            tokenAddress = _updatedTokens[i];
-            // amounts[tokenAddress] = tokenAddress.balanceOf(this);
-            amounts[tokenAddress] = 100000000000000000;
-            if (amounts[tokenAddress] > 0 && !activeTokens[tokenAddress]) {
-                tokens.push(tokenAddress);
-                activeTokens[tokenAddress] = true;
+            _tokenAddress = _updatedTokens[i];
+            amounts[_tokenAddress] = _tokenAddress.balanceOf(this);
+            if (amounts[_tokenAddress] > 0 && !activeTokens[_tokenAddress]) {
+                tokens.push(_tokenAddress);
+                activeTokens[_tokenAddress] = true;
                 continue;
             }
         }
@@ -41,22 +49,23 @@ contract MockFund is FundInterface, MockDerivative {
     }
 
 
+    function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
+         public onlyOwner returns(bool) {
 
-    function buyTokens(string  /*_exchangeId*/, ERC20[] _tokens, uint[] /*_amounts*/, uint[]  /*_rates*/) public onlyOwner returns(bool) {
-        // uint sum = 0;
-        // for (uint i = 0; i < _amounts.length; i++) {
-        //     sum += _amounts[i];
-        // }
-        // // Check we have the ethAmount required
-        // if (sum != ethAmount){ return false; }
-        // ExchangeProvider exchange = ExchangeProvider(getComponentByName(EXCHANGE));
-        // exchange.buyToken.value(ethAmount)(exchangeId, _tokens, _amounts, rates, address(this));
+        // Check we have the ethAmount required
+        uint totalEthRequired = 0;
+        for (uint i = 0; i < _amounts.length; i++) {totalEthRequired += _amounts[i];}
+        require(address(this).balance >= totalEthRequired);
+
+
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0);
         updateTokens(_tokens);
         return true;
 
     }
 
-    function sellTokens(string /*_exchangeId*/, ERC20[] _tokens, uint[] _amounts, uint[]  /*_rates*/) public onlyOwner returns (bool) {
+    function sellTokens(bytes32 /*_exchangeId*/, ERC20Extended[] _tokens, uint[] _amounts, uint[]  /*_rates*/) public onlyOwner returns (bool) {
         for(uint i = 0; i < tokens.length; i++) {
             _tokens[i].approve(msg.sender, _amounts[i]);
         }
@@ -66,24 +75,33 @@ contract MockFund is FundInterface, MockDerivative {
         return true;
     }
 
-    function invest() public payable returns(bool) {
-        balances[msg.sender] += msg.value; // 1 ETH 1 Fund Token
-        totalSupply += msg.value;
-        investors[msg.sender] += msg.value;
-        emit Transfer(owner, msg.sender, msg.value);
+    function changeStatus(DerivativeStatus _status) public returns(bool) {
+        require(_status != DerivativeStatus.New && status != DerivativeStatus.New);
+        status = _status;
         return true;
     }
 
-    // Mock
-    function requestWithdraw(uint amount) external {
-        require(investors[msg.sender] >= amount);
-        msg.sender.transfer(amount);
-        investors[msg.sender] -= amount;
-        totalSupply -= amount;
-        emit Transfer(owner, msg.sender, amount);
+    function invest() public payable returns(bool) {
+          // Current value is already added in the balance, reduce it
+        uint _sharePrice;
+
+        if(totalSupply_ > 0) {
+            _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply_);
+         } else {
+            _sharePrice = INTIAL_VALUE;
+        }
+
+
+        uint _investorShare = ( ( (msg.value) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
+        _investorShare = _investorShare / DENOMINATOR;
+
+        balances[msg.sender] += _investorShare;
+        totalSupply_ += _investorShare;
+
+        emit Invested(msg.sender, _investorShare);
+        return true;
     }
 
-    // ------------------- OUT OF THE INTERFACE ----------------- ----
     function getTokens() external view returns(address[], uint[]) {
         uint[] memory _amounts = new uint[](tokens.length);
         for (uint i = 0; i < tokens.length; i++) {
@@ -92,4 +110,45 @@ contract MockFund is FundInterface, MockDerivative {
         return (tokens, _amounts);
     }
 
+    function getPrice() public view returns(uint)  {
+        if(totalSupply_ == 0) {
+            return INTIAL_VALUE;
+        }
+
+        // Total Value in ETH among its tokens + ETH new added value
+        return (
+          ((getAssetsValue() + address(this).balance ) * 10 ** decimals ) / (totalSupply_),
+        );
+    }
+
+    function getAssetsValue() internal view returns (uint) {
+        OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+      uint _totalTokensValue = 0;
+        // Iterator
+        uint _expectedRate;
+        uint _balance;
+
+        for (uint16 i = 0; i < tokens.length; i++) {
+            if(!activeTokens[tokens[i]]) {continue;}
+            _balance = ERC20(tokens[i]).balanceOf(address(this));
+
+            if(_balance == 0){continue;}
+
+            (_expectedRate, ) = exchangeProvider.getPrice( ETH,ERC20Extended(tokens[i]), _balance, 0x0);
+
+            if(_expectedRate == 0){continue;}
+            _totalTokensValue += (_balance * 10**18) / _expectedRate;
+
+        }
+        return _totalTokensValue;
+    }
+
+
+  // Mock
+    function requestWithdraw(uint amount) external {
+        require(investors[msg.sender] >= amount);
+        msg.sender.transfer(amount);
+        investors[msg.sender] -= amount;
+        totalSupply_ -= amount;
+    }
 }
