@@ -23,7 +23,7 @@ contract RebalanceProvider is Ownable, ComponentInterface {
         uint tokenWeight;
         uint amount;
     }
-    mapping(address => rebalanceStatus) rebalanceStatus;
+    mapping(address => RebalanceStatus) rebalanceStatus;
     mapping(address => uint) tokenStep;
     mapping(address => uint) rebalancingTokenProgress;
     mapping(address => uint) lastRebalance;
@@ -231,9 +231,9 @@ contract RebalanceProvider is Ownable, ComponentInterface {
 
     // We should have this function, so that if there is an issue with a token (e.g. costing a lot of gas)
     // we can reduce the limit to narrow down the problematic token, or just temporary limit
-    function updateTokensPerRebalance(uint tokenAmount) public returns(bool){
-        require(tokenAmount > 0);
-        tokenStep[msg.sender] = tokenAmount;
+    function updateTokensPerRebalance(uint _tokenAmount) public returns(bool){
+        require(_tokenAmount > 0);
+        tokenStep[msg.sender] = _tokenAmount;
         return true;
     }
 }
