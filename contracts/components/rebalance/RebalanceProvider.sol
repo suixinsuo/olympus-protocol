@@ -29,7 +29,7 @@ contract RebalanceProvider is Ownable, ComponentInterface {
             (ETHTokenPrice,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
 
             if (ETHTokenPrice == 0) {
-                tokensWithPriceIssues.push(indexTokenAddresses[i]);
+                tokensWithPriceIssues[i] = indexTokenAddresses[i];
             }
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)); //
             uint shouldHaveAmountOfTokensInETH = (totalIndexValue * indexTokenWeights[i]) / 100;
@@ -37,20 +37,21 @@ contract RebalanceProvider is Ownable, ComponentInterface {
 
             // minus delta
             if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                tokensToSell.push(indexTokenAddresses[i]);
-                amountsToSell.push(currentTokenBalance - shouldHaveAmountOfTokens);
+                tokensToSell[i] = indexTokenAddresses[i];
+                amountsToSell[i] = currentTokenBalance - shouldHaveAmountOfTokens;
             // minus delta
             } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                tokensToBuy.push(indexTokenAddresses[i]);
-                amountsToBuy.push(((shouldHaveAmountOfTokensInETH - currentTokenBalance) * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice);
+                tokensToBuy[i] = indexTokenAddresses[i];
+                amountsToBuy[i] = ((shouldHaveAmountOfTokensInETH - currentTokenBalance) * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice;
             }
             //TODO Does this run out of gas for 100 tokens?
         }
-        return (tokensToSell,amountsToSell,tokensToBuy,tokensToSell,tokensWithPriceIssues);
+        return (tokensToSell,amountsToSell,tokensToBuy,amountsToBuy,tokensWithPriceIssues);
     }
 
     function recalculateTokensToBuyAfterSale(uint _receivedETHFromSale, uint[] _amountsToBuy)
     external view returns(uint[] recalculatedAmountsToBuy) {
+        uint i;
         uint assumedAmountOfEthToBuy;
         uint differencePercentage;
         bool surplus;
@@ -75,13 +76,13 @@ contract RebalanceProvider is Ownable, ComponentInterface {
 
             if(differencePercentage > 0){
                 // Calculate the actual amount we should buy, based on the actual ETH received from selling tokens
-                slippage = (amountsToBuy[i] * differencePercentage) / PERCENTAGE_DENOMINATOR;
+                slippage = (_amountsToBuy[i] * differencePercentage) / PERCENTAGE_DENOMINATOR;
             }
             if(surplus == true){
-                recalculatedAmountsToBuy.push(_amountsToBuy[i].amount + slippage);
+                recalculatedAmountsToBuy[i] = _amountsToBuy[i] + slippage;
                 continue;
             }
-            recalculatedAmountsToBuy.push(_amountsToBuy[i].amount - slippage);
+            recalculatedAmountsToBuy[i] = _amountsToBuy[i] - slippage;
         }
         return recalculatedAmountsToBuy;
     }
