@@ -8,11 +8,16 @@ const Marketplace = artifacts.require("../../contracts/Marketplace.sol");
 const PercentageFee = artifacts.require("../../contracts/components/fee/PercentageFee.sol");
 const Reimbursable = artifacts.require("../../contracts/components/fee/Reimbursable.sol");
 
+// Buy and sell tokens
+const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
+const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
+const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
 
-const TOKEN1 = 0x0041dee9f481a1d2aa74a3f1d0958c1db6107c686a;
-const TOKEN2 = 0x3fb1c5555a04fc478784846296a35d1d2bf7e57c;
 
+// Constants
 
+const ethToken = '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+let DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
 const fundData = {
   name: 'OlympusFund',
   symbol: 'MOF',
@@ -31,12 +36,17 @@ const toToken = (amount) => {
 contract('Fund', (accounts) => {
   let fund;
   let market;
-
+  let mockKyber;
+  let tokens;
   const investorA = accounts[1];
   const investorB = accounts[2];
 
+
   it('Create a fund', async () => {
+
     market = await Marketplace.deployed();
+    mockKyber = await MockKyberNetwork.deployed();
+    tokens = await mockKyber.supportedTokens();
 
     fund = await Fund.new(
       fundData.name,
@@ -48,7 +58,7 @@ contract('Fund', (accounts) => {
 
     await fund.initialize(
       Marketplace.address,
-      0x01, // Exchange, TODO add
+      ExchangeProvider.address, // Exchange, TODO add
       AsyncWithdraw.address,
       RiskControl.address,
       0x01, // Whitelist, to do
@@ -76,10 +86,6 @@ contract('Fund', (accounts) => {
 
   }));
 
-  it.skip("Missng exchanges", async () => log.catch(async () => {
-    // TODO, when all providers are done, set WhiteList and ExchangeProvider into the fund confi
-  }))
-
   it("Fund shall allow investment", async () => log.catch(async () => {
 
     // With 0 supply price is 1 eth
@@ -98,9 +104,7 @@ contract('Fund', (accounts) => {
 
   }));
 
-  it.skip("Shall be able to buy and shell tokens", async () => log.catch(async () => {
 
-  }));
 
   it("Shall be able to request and withdraw", async () => log.catch(async () => {
     let tx;
@@ -176,4 +180,46 @@ contract('Fund', (accounts) => {
       calc.roundTo(ownerBalanceAfter, 2), 'Owner received ether');
 
   }));
+
+  it("Shall be able to buy and shell tokens", async () => log.catch(async () => {
+
+    // From the preivus test we got 1.8 ETH
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'This test must start with 1.8 eth');
+
+    const rates = await Promise.all(tokens.map(async (token) => (await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, 'ether')))))
+    const amounts = [web3.toWei(0.5, 'ether'), web3.toWei(0.5, 'ether')];
+
+    await fund.buyTokens(0x0, tokens, amounts, rates.map((rate) => rate[0]));
+    const fundTokensAndBalance = await fund.getTokens();
+    for (let i = 0; i < tokens.length; i++) {
+      let erc20 = await ERC20.at(tokens[i]);
+      let balance = await erc20.balanceOf(fund.address);
+      assert.equal(balance, 0.5 * rates[i][0], ' Fund get ERC20 correct balance');
+      // Check the fund data is updated correctly
+      assert.equal(fundTokensAndBalance[0][i], tokens[i], 'Token exist in fund');
+      assert.equal(fundTokensAndBalance[1][i].toNumber(), 0.5 * rates[i][0], 'Balance is correct in th fund');
+    }
+
+    // Price is constant
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, 'ether'), 'Price keeps constant after buy tokens');
+    // ETH balance is reduced
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0.8, 'ether'), 'ETH balance reduced');
+  }));
+
+  it("Shall be able to change the status and close the fund", async () => log.catch(async () => {
+
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, 'Status Is active');
+    await fund.changeStatus(DerivativeStatus.Paused);
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Status is paused');
+
+
+    try {
+      await fund.changeStatus(DerivativeStatus.New);
+      assert(false, 'Shall not be able to change to New')
+    } catch (e) {
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to new, shall keep being previous');
+
+    }
+  }));
+
 });
