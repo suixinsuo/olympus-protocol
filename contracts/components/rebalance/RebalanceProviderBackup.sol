@@ -48,9 +48,8 @@ contract RebalanceProvider is Ownable, ComponentInterface {
         return true;
     }
 
-    function rebalanceGetTokensToSellAndBuy() public returns
-    (address[] tokensToSell, uint[] amountsToSell, address[] tokensToBuy, uint[] amountsToBuy) {
-        if (rebalanceStatus[msg.sender] == RebalanceStatus.INITIATED){
+    function rebalancePrepareSellAndBuy() public returns (bool success){
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.INITIATED){
             uint totalIndexValue = getTotalIndexValue();
             uint i;
             address[] memory indexTokenAddresses;
