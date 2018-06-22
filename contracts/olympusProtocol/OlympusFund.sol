@@ -165,8 +165,16 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function changeStatus(DerivativeStatus _status) public returns(bool) {
-        require(_status != DerivativeStatus.New && status != DerivativeStatus.New);
+        require(_status != DerivativeStatus.New && status != DerivativeStatus.New &&_status != DerivativeStatus.Closed);
+        require(status != DerivativeStatus.Closed&&_status != DerivativeStatus.Closed);
         status = _status;
+        return true;
+    }
+
+    function close() public onlyOwner returns(bool success){
+        require(status != DerivativeStatus.New);
+        //sellTokens();
+        status = DerivativeStatus.Closed;
         return true;
     }
 
@@ -289,5 +297,4 @@ contract OlympusFund is FundInterface, Derivative {
         emit Reimbursed(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
-
 }

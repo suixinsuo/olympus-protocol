@@ -212,14 +212,12 @@ contract('Fund', (accounts) => {
     await fund.changeStatus(DerivativeStatus.Paused);
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Status is paused');
 
-    await fund.changeStatus(DerivativeStatus.Closed);
-    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Status is closed');
 
     try {
       await fund.changeStatus(DerivativeStatus.New);
       assert(false, 'Shall not be able to change to New')
     } catch (e) {
-      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Cant change to new, shall keep being previous');
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to new, shall keep being previous');
 
     }
   }));

@@ -123,7 +123,7 @@ contract MockFund is FundInterface, Derivative {
 
     function getAssetsValue() internal view returns (uint) {
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-        uint _totalTokensValue = 0;
+      uint _totalTokensValue = 0;
         // Iterator
         uint _expectedRate;
         uint _balance;

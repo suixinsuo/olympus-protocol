@@ -18,4 +18,3 @@ contract MockDerivative is  Derivative {
     function getPrice() public view returns(uint)  { return 10**decimals;}
 
 }
-
