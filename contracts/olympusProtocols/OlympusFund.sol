@@ -24,6 +24,7 @@ contract OlympusFund is FundInterface, Derivative {
     string public constant FEE = "FeeProvider";
     string public constant REIMBURSABLE = "Reimbursable";
 
+    event Invested(address user, uint amount);
     event Reimbursed(uint amount);
     event UpdateToken(address _token, uint amount);
 
@@ -160,7 +161,7 @@ contract OlympusFund is FundInterface, Derivative {
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
 
-        emit Transfer(msg.sender, owner, msg.value);
+        emit Invested(msg.sender, _investorShare);
         return true;
     }
 
@@ -301,8 +302,6 @@ contract OlympusFund is FundInterface, Derivative {
         emit Reimbursed(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
-
-
 
     function tokensWithAmount() public view returns( ERC20Extended[] memory) {
         // First check the length

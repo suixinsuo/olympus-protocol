@@ -14,9 +14,9 @@
     "linting": "#solhint 'contracts/**/*.sol'",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "version": "truffle version",
-    "build-contracts": "sol-merger \"./contracts/components/mocks/*.sol\" ./build"
+    "build-contracts": "sol-merger \"./contracts/*.sol\" ./build"
   },
-  "repository": {
+"repository": {
     "type": "git",
     "url": "git@github.com:Olympus-Labs/protocol-architecture.git"
   },

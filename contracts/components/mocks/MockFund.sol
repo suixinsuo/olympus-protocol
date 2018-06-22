@@ -13,9 +13,11 @@ contract MockFund is FundInterface, Derivative {
     string public category = "Test";
 
     mapping(address => uint) investors;
-
     mapping(address => uint) amounts;
     mapping(address => bool) activeTokens;
+
+    event Invested(address user, uint amount);
+
 
     string public constant EXCHANGE = "Exchange";
     uint public constant INTIAL_VALUE =  10**18;
@@ -99,7 +101,7 @@ contract MockFund is FundInterface, Derivative {
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
 
-        emit Transfer(msg.sender, owner, totalSupply_);
+        emit Invested(msg.sender, _investorShare);
         return true;
     }
 
@@ -123,9 +125,8 @@ contract MockFund is FundInterface, Derivative {
     }
 
     function getAssetsValue() internal view returns (uint) {
-        // TODO cast to OlympusExchangeInterface
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-        uint _totalTokensValue = 0;
+      uint _totalTokensValue = 0;
         // Iterator
         uint _expectedRate;
         uint _balance;
@@ -152,6 +153,5 @@ contract MockFund is FundInterface, Derivative {
         msg.sender.transfer(amount);
         investors[msg.sender] -= amount;
         totalSupply_ -= amount;
-        emit Transfer(owner, msg.sender, amount);
     }
 }

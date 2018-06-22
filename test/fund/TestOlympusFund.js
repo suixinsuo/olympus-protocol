@@ -300,7 +300,6 @@ contract('Fund', (accounts) => {
       assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to new, shall keep being previous');
     }
 
-
     try {
       await fund.changeStatus(DerivativeStatus.Closed);
       assert(false, 'Shall not be able to change to Close')
