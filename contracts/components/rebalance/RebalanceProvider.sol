@@ -50,7 +50,7 @@ contract RebalanceProvider is Ownable, ComponentInterface {
     }
 
     function recalculateTokensToBuyAfterSale(uint _receivedETHFromSale, uint[] _amountsToBuy)
-    external view returns(uint[] recalculatedAmountsToBuy) {
+    external pure returns(uint[] recalculatedAmountsToBuy) {
         uint i;
         uint assumedAmountOfEthToBuy;
         uint differencePercentage;
