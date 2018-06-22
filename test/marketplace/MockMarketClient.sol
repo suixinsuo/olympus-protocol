@@ -1,4 +1,3 @@
-
 pragma solidity 0.4.24;
 
 import "../../contracts/components/mocks/MockDerivative.sol";
@@ -11,4 +10,3 @@ contract MockMarketClient is MockDerivative {
         return true;
     }
 }
-

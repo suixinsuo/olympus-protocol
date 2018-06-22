@@ -10,11 +10,15 @@ let MockKyberNetwork = artifacts.require("MockKyberNetwork");
 let MarketplaceProvider = artifacts.require("Marketplace");
 let AsyncWithdraw = artifacts.require("AsyncWithdraw");
 let SimpleWithdraw = artifacts.require("SimpleWithdraw");
+let Reimbursable = artifacts.require("Reimbursable");
 
 let DummyDerivative = artifacts.require("MockDerivative");
+let PercentageFee = artifacts.require("PercentageFee");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
+let MockIndex = artifacts.require("MockIndex");
+// let MockFund = artifacts.require("MockFund");
 
 
 function deployMarketplace(deployer, network) {
@@ -61,15 +65,24 @@ async function deployMockfund(deployer, network) {
   ]);
 }
 
+async function deployReimbursable(deployer, network) {
+  deployer.deploy([
+    Reimbursable,
+  ]);
+}
+
 async function deployOlympusFund(deployer, network) {
   deployer.deploy([
     AsyncWithdraw,
     SimpleWithdraw, // Exchannge Provider
     RiskControl,
     MarketplaceProvider,
+    PercentageFee,
+    Reimbursable,
   ]);
 }
 
+// Running all the suits
 function deployOnDev(deployer, num) {
   return deployer.then(() => {
     return deployer.deploy([
@@ -77,6 +90,8 @@ function deployOnDev(deployer, num) {
       AsyncWithdraw,
       RiskControl,
       SimpleWithdraw,
+      PercentageFee,
+      Reimbursable,
     ]);
   }).then(() => {
     return deployExchange(deployer, 'development');
