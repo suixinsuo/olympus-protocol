@@ -286,23 +286,42 @@ contract('Fund', (accounts) => {
 
   }));
 
-  it("Shall be able to change the status and close the fund", async () => log.catch(async () => {
+  it("Shall be able to change the status", async () => log.catch(async () => {
 
 
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, 'Status Is active');
     await fund.changeStatus(DerivativeStatus.Paused);
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Status is paused');
 
-    await fund.changeStatus(DerivativeStatus.Closed);
-    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Status is closed');
-
     try {
       await fund.changeStatus(DerivativeStatus.New);
       assert(false, 'Shall not be able to change to New')
     } catch (e) {
-      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Cant change to new, shall keep being previous');
-
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to new, shall keep being previous');
     }
+
+
+    try {
+      await fund.changeStatus(DerivativeStatus.Closed);
+      assert(false, 'Shall not be able to change to Close')
+    } catch (e) {
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to close, shall keep being previous');
+    }
+
+  }));
+
+  it("Shall be able to close a fund", async () => log.catch(async () => {
+
+    await fund.close();
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Status is closed');
+
+    try {
+      await fund.changeStatus(DerivativeStatus.Active);
+      assert(false, 'Shall not be able to change from close')
+    } catch (e) {
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Cant change to active, shall keep being closed');
+    }
+
   }));
 
 

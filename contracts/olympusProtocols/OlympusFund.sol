@@ -165,13 +165,21 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function changeStatus(DerivativeStatus _status) public returns(bool) {
-        require(_status != DerivativeStatus.New && status != DerivativeStatus.New);
+        require(_status != DerivativeStatus.New && status != DerivativeStatus.New &&_status != DerivativeStatus.Closed);
+        require(status != DerivativeStatus.Closed&&_status != DerivativeStatus.Closed);
         status = _status;
         return true;
     }
 
+    function close() public onlyOwner returns(bool success){
+        require(status != DerivativeStatus.New);
+        //sellTokens();
+        status = DerivativeStatus.Closed;
+        return true;
+    }
+
     function getPrice() public view returns(uint)  {
-         if(totalSupply_ == 0) {
+        if(totalSupply_ == 0) {
             return INTIAL_VALUE;
         }
 
@@ -294,11 +302,13 @@ contract OlympusFund is FundInterface, Derivative {
         msg.sender.transfer(reimbursedAmount);
     }
 
+
+
     function tokensWithAmount() public view returns( ERC20Extended[] memory) {
-      // First check the length
+        // First check the length
         uint8 length = 0;
         for (uint8 i = 0; i < tokens.length; i++) {
-            if(amounts[tokens[i]]> 0) {length++;}
+            if(amounts[tokens[i]] > 0) {length++;}
         }
 
         ERC20Extended[] memory _tokensWithAmount = new ERC20Extended[](length);
@@ -312,7 +322,6 @@ contract OlympusFund is FundInterface, Derivative {
         }
         return _tokensWithAmount;
     }
-
 
     function getETHFromTokens(uint _tokenPercentage ) internal {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
@@ -331,9 +340,4 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
 
-
-    event LogA(address _address, string text);
-    event LogN(uint number, string text);
-    event LogS(string text);
-    event LogU(bool _bool, string text);
 }
