@@ -11,4 +11,6 @@ contract MarketplaceInterface is Ownable {
     function getAllProducts() external view returns (address[] allProducts);
     function registerProduct() external returns(bool success);
     function getOwnProducts() external view returns (address[] addresses);
+
+    event Registered(address product, address owner);
 }
