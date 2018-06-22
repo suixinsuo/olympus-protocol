@@ -23,7 +23,7 @@ contract RebalanceProvider is Ownable, ComponentInterface {
         uint tokenWeight;
         uint amount;
     }
-    RebalanceStatus private rebalanceStatus = RebalanceStatus.INACTIVE;
+    mapping(address => rebalanceStatus) rebalanceStatus;
     mapping(address => uint) tokenStep;
     mapping(address => uint) rebalancingTokenProgress;
     mapping(address => uint) lastRebalance;
@@ -43,13 +43,14 @@ contract RebalanceProvider is Ownable, ComponentInterface {
     function initializeRebalance(uint _rebalanceInterval) public returns (bool success){
         tokenStep[msg.sender] = DEFAULT_TOKEN_STEP;
         rebalanceInterval[msg.sender] = _rebalanceInterval > 1 weeks ? _rebalanceInterval : DEFAULT_INTERVAL;
+        rebalanceStatus[msg.sender] = RebalanceStatus.INACTIVE;
         // solium-disable-next-line security/no-block-members
         lastRebalance[msg.sender] = now;
         return true;
     }
 
     function rebalancePrepareSellAndBuy() private returns (bool success){
-        if(rebalanceStatus == RebalanceStatus.INITIATED){
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.INITIATED){
             uint totalIndexValue = getTotalIndexValue();
             uint i;
             address[] memory indexTokenAddresses;
@@ -86,7 +87,7 @@ contract RebalanceProvider is Ownable, ComponentInterface {
                 }
             //TODO Does this run out of gas for 100 tokens?
             }
-            rebalanceStatus = RebalanceStatus.READY_TO_TRADE;
+            rebalanceStatus[msg.sender] = RebalanceStatus.READY_TO_TRADE;
         }
         return false;
     }
@@ -95,19 +96,19 @@ contract RebalanceProvider is Ownable, ComponentInterface {
         // solium-disable-next-line security/no-block-members
         require(lastRebalance[msg.sender] + rebalanceInterval[msg.sender] <= now, "Time is not here yet");
 
-        if(rebalanceStatus == RebalanceStatus.INACTIVE){
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.INACTIVE){
             ethValueRebalanceStart[msg.sender] = address(msg.sender).balance;
             delete rebalanceTokensToSell[msg.sender];
             delete rebalanceTokensToBuy[msg.sender];
-            rebalanceStatus = RebalanceStatus.INITIATED;
+            rebalanceStatus[msg.sender] = RebalanceStatus.INITIATED;
         }
         uint i;
         uint currentProgress = rebalancingTokenProgress[msg.sender];
 
         require(rebalancePrepareSellAndBuy(), "Prepare sell and buy failed");
 
-        if(rebalanceStatus == RebalanceStatus.READY_TO_TRADE || rebalanceStatus == RebalanceStatus.SELLING_IN_PROGRESS){
-            rebalanceStatus = rebalanceTokensToSell[msg.sender].length > 0 ? RebalanceStatus.SELLING_IN_PROGRESS : RebalanceStatus.SELLING_COMPLETE;
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.READY_TO_TRADE || rebalanceStatus[msg.sender] == RebalanceStatus.SELLING_IN_PROGRESS){
+            rebalanceStatus[msg.sender] = rebalanceTokensToSell[msg.sender].length > 0 ? RebalanceStatus.SELLING_IN_PROGRESS : RebalanceStatus.SELLING_COMPLETE;
             // First sell tokens
             for(i = currentProgress; i < rebalanceTokensToSell[msg.sender].length; i++){
                 if(i > currentProgress + tokenStep[msg.sender]){
@@ -118,19 +119,19 @@ contract RebalanceProvider is Ownable, ComponentInterface {
                 exchange(rebalanceTokensToSell[msg.sender][i].tokenAddress,ETH_TOKEN,rebalanceTokensToSell[msg.sender][i].amount);
                 rebalancingTokenProgress[msg.sender]++;
                 if(i == rebalanceTokensToSell[msg.sender].length - 1){
-                    rebalanceStatus = RebalanceStatus.SELLING_COMPLETE;
+                    rebalanceStatus[msg.sender] = RebalanceStatus.SELLING_COMPLETE;
                 }
             }
         }
 
 
-        if(rebalanceStatus == RebalanceStatus.SELLING_COMPLETE){
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.SELLING_COMPLETE){
             rebalanceSoldTokensETHReceived[msg.sender] = address(msg.sender).balance - ethValueRebalanceStart[msg.sender];
-            rebalanceStatus = rebalanceTokensToBuy[msg.sender].length > 0 && rebalanceSoldTokensETHReceived[msg.sender] > 0 ? RebalanceStatus.BUYING_IN_PROGRESS : RebalanceStatus.BUYING_COMPLETE;
+            rebalanceStatus[msg.sender] = rebalanceTokensToBuy[msg.sender].length > 0 && rebalanceSoldTokensETHReceived[msg.sender] > 0 ? RebalanceStatus.BUYING_IN_PROGRESS : RebalanceStatus.BUYING_COMPLETE;
         }
 
         // Then buy tokens
-        if(rebalanceStatus == RebalanceStatus.BUYING_IN_PROGRESS){
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.BUYING_IN_PROGRESS){
             uint sellTxs = rebalancingTokenProgress[msg.sender] - currentProgress;
             rebalancingTokenProgress[msg.sender] = 0;
             uint assumedAmountOfEthToBuy;
@@ -174,16 +175,16 @@ contract RebalanceProvider is Ownable, ComponentInterface {
                 }
                 rebalancingTokenProgress[msg.sender]++;
                 if(i == rebalanceTokensToBuy[msg.sender].length - 1){
-                    rebalanceStatus = RebalanceStatus.BUYING_COMPLETE;
+                    rebalanceStatus[msg.sender] = RebalanceStatus.BUYING_COMPLETE;
                 }
             }
 
         }
-        if(rebalanceStatus == RebalanceStatus.BUYING_COMPLETE){
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.BUYING_COMPLETE){
             // Yay, done! Reset everything, ready for the next time
             // solium-disable-next-line security/no-block-members
             lastRebalance[msg.sender] = now;
-            rebalanceStatus = RebalanceStatus.INACTIVE;
+            rebalanceStatus[msg.sender] = RebalanceStatus.INACTIVE;
             rebalancingTokenProgress[msg.sender] = 0;
             return true;
         }
@@ -220,8 +221,8 @@ contract RebalanceProvider is Ownable, ComponentInterface {
     // Can not be executed once the actual trading has started for safety.
     function resetRebalance() public returns(bool) {
         require(
-            rebalanceStatus == RebalanceStatus.INACTIVE || rebalanceStatus == RebalanceStatus.INITIATED || rebalanceStatus == RebalanceStatus.READY_TO_TRADE);
-        rebalanceStatus = RebalanceStatus.INACTIVE;
+            rebalanceStatus[msg.sender] == RebalanceStatus.INACTIVE || rebalanceStatus[msg.sender] == RebalanceStatus.INITIATED || rebalanceStatus[msg.sender] == RebalanceStatus.READY_TO_TRADE);
+        rebalanceStatus[msg.sender] = RebalanceStatus.INACTIVE;
         rebalancingTokenProgress[msg.sender] = 0;
         delete rebalanceTokensToSell[msg.sender];
         delete rebalanceTokensToBuy[msg.sender];
