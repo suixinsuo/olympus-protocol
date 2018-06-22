@@ -24,6 +24,7 @@ contract OlympusFund is FundInterface, Derivative {
     string public constant FEE = "FeeProvider";
     string public constant REIMBURSABLE = "Reimbursable";
 
+    event Invested(address user, uint amount);
     event Reimbursed(uint amount);
 
     mapping(address => uint) investors;
@@ -159,7 +160,7 @@ contract OlympusFund is FundInterface, Derivative {
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
 
-        emit Transfer(msg.sender, owner, msg.value);
+        emit Invested(msg.sender, _investorShare);
         return true;
     }
 
@@ -170,7 +171,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function getPrice() public view returns(uint)  {
-         if(totalSupply_ == 0) {
+        if(totalSupply_ == 0) {
             return INTIAL_VALUE;
         }
 
@@ -289,8 +290,4 @@ contract OlympusFund is FundInterface, Derivative {
         msg.sender.transfer(reimbursedAmount);
     }
 
-    event LogA(address _address, string text);
-    event LogN(uint number, string text);
-    event LogS(string text);
-    event LogU(bool _bool, string text);
 }

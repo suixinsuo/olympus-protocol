@@ -26,8 +26,10 @@ contract Marketplace is MarketplaceInterface {
         }
         productMappings[creator].push(msg.sender);
         products.push(msg.sender);
+
+        emit Registered(msg.sender, creator);
+
         return true;
     }
 
-    event LogA(address _address, string text);
 }
