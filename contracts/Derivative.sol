@@ -17,4 +17,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, StandardToken {
         return true;
     }
 
+    function () public payable {
+
+    }
 }
