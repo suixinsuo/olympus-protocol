@@ -124,7 +124,3 @@ contract('ExchangeProvider', (accounts) => {
     assert.ok(!nonExistent);
   });
 });
-
-999907855000000000
-1000000000000000
-1000000000000000000

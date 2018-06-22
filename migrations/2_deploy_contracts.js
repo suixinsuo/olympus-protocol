@@ -18,9 +18,12 @@ let PercentageFee = artifacts.require("PercentageFee");
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
 let MockIndex = artifacts.require("MockIndex");
+
+let RebalanceProvider = artifacts.require("RebalanceProvider");
+let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
 // let MockFund = artifacts.require("MockFund");
 
-
+let devTokens;
 function deployMarketplace(deployer, network) {
   deployer.deploy([
     MarketplaceProvider,
@@ -52,6 +55,7 @@ function deployExchange(deployer, network) {
     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
     if (network === 'development') {
       let mockKyberNetwork = await MockKyberNetwork.deployed();
+      devTokens = await mockKyberNetwork.supportedTokens();
       await kyberNetworkAdapter.configAdapter(mockKyberNetwork.address, 0x0);
     }
     await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
@@ -89,15 +93,19 @@ async function deployOlympusFund(deployer, network) {
 function deployOnDev(deployer, num) {
   return deployer.then(() => {
     return deployer.deploy([
-      MarketplaceProvider,
-      AsyncWithdraw,
-      RiskControl,
-      SimpleWithdraw,
-      PercentageFee,
-      Reimbursable,
+      // MarketplaceProvider,
+      // AsyncWithdraw,
+      // RiskControl,
+      // SimpleWithdraw,
+      // PercentageFee,
+      // Reimbursable,
     ]);
   }).then(() => {
     return deployExchange(deployer, 'development');
+  }).then(() => {
+    return deployer.deploy(RebalanceProvider, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address);
   });
 }
 
