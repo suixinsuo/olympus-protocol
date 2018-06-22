@@ -8,12 +8,20 @@ import "../../interfaces/PriceProviderInterface.sol";
 
 contract RebalanceProvider is Ownable, ComponentInterface {
     // TODO: is component
-    PriceProviderInterface private priceProvider = PriceProviderInterface(0x304730f75cf4C92596FC61Cc239a649FEbC0E36E);
+    PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
     uint private rebalanceDeltaPercentage = 30; // 0.3%
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+    constructor(PriceProviderInterface _priceProvider) public {
+        priceProvider = _priceProvider;
+    }
+
+    function updatePriceProvider(PriceProviderInterface _priceProvider) public onlyOwner returns(bool success){
+        priceProvider = _priceProvider;
+        return true;
+    }
 
     function rebalanceGetTokensToSellAndBuy() external view returns
     (address[] tokensToSell, uint[] amountsToSell, address[] tokensToBuy, uint[] amountsToBuy, address[] tokensWithPriceIssues) {
