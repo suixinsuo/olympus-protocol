@@ -2,11 +2,13 @@ pragma solidity 0.4.24;
 
 import "../Derivative.sol";
 import "../interfaces/FundInterface.sol";
-// import "../interfaces/ExchangeInterface.sol";
+import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
+import "../libs/ERC20Extended.sol";
+
 
 
 contract OlympusFund is FundInterface, Derivative {
@@ -22,6 +24,7 @@ contract OlympusFund is FundInterface, Derivative {
     string public constant FEE = "FeeProvider";
     string public constant REIMBURSABLE = "Reimbursable";
 
+    event Invested(address user, uint amount);
     event Reimbursed(uint amount);
 
     mapping(address => uint) investors;
@@ -92,15 +95,14 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- FUND INTERFACE -----------------------------
 
-    function updateTokens(ERC20[] _updatedTokens) internal returns(bool success) {
-        ERC20 tokenAddress;
+    function updateTokens(ERC20Extended[] _updatedTokens) internal returns(bool success) {
+        ERC20 _tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
-            tokenAddress = _updatedTokens[i];
-            amounts[tokenAddress] = 0;
-            // amounts[tokenAddress] = tokenAddress.balanceOf(this); TODO after exchange provider
-            if (amounts[tokenAddress] > 0 && !activeTokens[tokenAddress]) {
-                tokens.push(tokenAddress);
-                activeTokens[tokenAddress] = true;
+            _tokenAddress = _updatedTokens[i];
+            amounts[_tokenAddress] = _tokenAddress.balanceOf(this);
+            if (amounts[_tokenAddress] > 0 && !activeTokens[_tokenAddress]) {
+                tokens.push(_tokenAddress);
+                activeTokens[_tokenAddress] = true;
                 continue;
             }
         }
@@ -108,29 +110,29 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
 
+    function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
+         public onlyOwner returns(bool) {
 
-    function buyTokens(string  /*_exchangeId*/, ERC20[] _tokens, uint[] /*_amounts*/, uint[]  /*_rates*/) public onlyOwner returns(bool) {
-        // TODO in other task
-        // uint sum = 0;
-        // for (uint i = 0; i < _amounts.length; i++) {
-        //     sum += _amounts[i];
-        // }
-        // // Check we have the ethAmount required
-        // if (sum != ethAmount){ return false; }
-        // ExchangeProvider exchange = ExchangeProvider(getComponentByName(EXCHANGE));
-        // exchange.buyToken.value(ethAmount)(exchangeId, _tokens, _amounts, rates, address(this));
+        // Check we have the ethAmount required
+        uint totalEthRequired = 0;
+        for (uint i = 0; i < _amounts.length; i++) {totalEthRequired += _amounts[i];}
+        require(getETHBalance() >= totalEthRequired);
+
+
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0);
         updateTokens(_tokens);
         return true;
 
     }
 
-    function sellTokens(string /*_exchangeId*/, ERC20[] _tokens, uint[] _amounts, uint[]  /*_rates*/) public onlyOwner returns (bool) {
+    function sellTokens(bytes32 /*_exchangeId*/, ERC20Extended[] _tokens, uint[] _amounts, uint[]  /*_rates*/) public onlyOwner returns (bool) {
         for(uint i = 0; i < tokens.length; i++) {
             _tokens[i].approve(msg.sender, _amounts[i]);
         }
         // TODO in other task
-        // ExchangeProvider exchange = ExchangeProvider(getComponentByName(EXCHANGE));
-        // exchange.buyToken.sellToken(exchangeId, _tokens, _amounts, rates, address(this));
+        // OlympusExchangeInterface exchange = ExchangeProvider(getComponentByName(EXCHANGE));
+        // exchange.buyToken.sellToken(_exchangeId, _tokens, _amounts, rates, address(this));
         updateTokens(_tokens);
         return true;
     }
@@ -158,7 +160,7 @@ contract OlympusFund is FundInterface, Derivative {
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
 
-        emit Transfer(msg.sender, owner, msg.value);
+        emit Invested(msg.sender, _investorShare);
         return true;
     }
 
@@ -183,36 +185,33 @@ contract OlympusFund is FundInterface, Derivative {
 
         // Total Value in ETH among its tokens + ETH new added value
         return (
-          ((getAssetsValue() + address(this).balance  - accumulatedFee) * 10 ** decimals ) / (totalSupply_),
+          ((getAssetsValue() + getETHBalance() ) * 10 ** decimals ) / (totalSupply_),
         );
+    }
+
+    function getETHBalance() public view returns(uint){
+        return address(this).balance - accumulatedFee;
     }
 
     function getAssetsValue() internal view returns (uint) {
         // TODO cast to OlympusExchangeInterface
-        // address exchangeProvider = getComponentByName(EXCHANGE);
+        OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         uint _totalTokensValue = 0;
         // Iterator
         uint _expectedRate;
-        ERC20 _erc20;
-
-        if(totalSupply_ == 0) {return INTIAL_VALUE;}  // 1 Eth
+        uint _balance;
 
         for (uint16 i = 0; i < tokens.length; i++) {
-
             if(!activeTokens[tokens[i]]) {continue;}
-
-            _erc20 = ERC20(tokens[i]);
-
-            uint _balance = _erc20.balanceOf(address(this));
-            // TODO Implement Exchange interface
-            // uint _decimal = _erc20.decimals();
+            _balance = ERC20(tokens[i]).balanceOf(address(this));
 
             if(_balance == 0){continue;}
 
-            // (_expectedRate, ) = exchangeProvider.getPrice(tokens[i], 10**_decimal);
-            if(_expectedRate == 0){continue;}
+            (_expectedRate, ) = exchangeProvider.getPrice( ETH,ERC20Extended(tokens[i]), _balance, 0x0);
 
+            if(_expectedRate == 0){continue;}
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
+
         }
         return _totalTokensValue;
     }

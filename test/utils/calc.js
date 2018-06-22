@@ -4,7 +4,7 @@ module.exports = {
   },
 
   ethBalance: async (address) => {
-    return parseFloat(web3.fromWei(await web3.eth.getBalance(address).toNumber(), 'ether'), 10);
+    return parseFloat(web3.fromWei((await web3.eth.getBalance(address)).toNumber(), 'ether'), 10);
   },
 
   inRange: async (value, range, offset) => {
@@ -13,5 +13,8 @@ module.exports = {
 
   getEvent: (tx, name) => {
     return tx.logs.map((log) => ({ event: log.event, args: log.args })).find((event) => event.event === name);
-  }
+  },
+
+  ethToken: '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+
 }

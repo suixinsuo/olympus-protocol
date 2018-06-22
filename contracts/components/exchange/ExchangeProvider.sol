@@ -28,6 +28,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external payable returns(bool success) {
+
         require(msg.value == _amount);
         OlympusExchangeAdapterInterface adapter;
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, true) : _exchangeId;

@@ -63,6 +63,8 @@ async function deployMockfund(deployer, network) {
   deployer.deploy([
     SimpleWithdraw, // Exchannge Provider
   ]);
+  await deployExchange(deployer, network);
+
 }
 
 async function deployReimbursable(deployer, network) {
@@ -72,7 +74,7 @@ async function deployReimbursable(deployer, network) {
 }
 
 async function deployOlympusFund(deployer, network) {
-  deployer.deploy([
+  await deployer.deploy([
     AsyncWithdraw,
     SimpleWithdraw, // Exchannge Provider
     RiskControl,
@@ -80,6 +82,7 @@ async function deployOlympusFund(deployer, network) {
     PercentageFee,
     Reimbursable,
   ]);
+  await deployExchange(deployer, network);
 }
 
 // Running all the suits

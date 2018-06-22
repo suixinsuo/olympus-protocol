@@ -10,4 +10,5 @@ contract Log {
     function setLog(bool _isLog) public{
         l.isLog = _isLog;
     }
+
 }

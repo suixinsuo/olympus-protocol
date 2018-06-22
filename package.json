@@ -16,7 +16,7 @@
     "version": "truffle version",
     "build-contracts": "sol-merger \"./contracts/*.sol\" ./build"
   },
-  "repository": {
+"repository": {
     "type": "git",
     "url": "git@github.com:Olympus-Labs/protocol-architecture.git"
   },
