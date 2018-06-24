@@ -29,11 +29,14 @@ contract RebalanceProvider is Ownable, ComponentInterface {
         uint i;
         address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
+        uint sellCounter;
+        uint buyCounter;
         (indexTokenAddresses, indexTokenWeights) = IndexInterface(msg.sender).getTokens();
 
         for(i = 0; i < indexTokenAddresses.length; i++) {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
+
             (ETHTokenPrice,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
 
             if (ETHTokenPrice == 0) {
@@ -45,12 +48,14 @@ contract RebalanceProvider is Ownable, ComponentInterface {
 
             // minus delta
             if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                tokensToSell[i] = indexTokenAddresses[i];
-                amountsToSell[i] = currentTokenBalance - shouldHaveAmountOfTokens;
+                tokensToSell[sellCounter] = indexTokenAddresses[i];
+                amountsToSell[sellCounter] = currentTokenBalance - shouldHaveAmountOfTokens;
+                sellCounter++;
             // minus delta
             } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                tokensToBuy[i] = indexTokenAddresses[i];
-                amountsToBuy[i] = ((shouldHaveAmountOfTokensInETH - currentTokenBalance) * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice;
+                tokensToBuy[buyCounter] = indexTokenAddresses[i];
+                amountsToBuy[buyCounter] = ((shouldHaveAmountOfTokensInETH - currentTokenBalance) * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice;
+                buyCounter++;
             }
             //TODO Does this run out of gas for 100 tokens?
         }
