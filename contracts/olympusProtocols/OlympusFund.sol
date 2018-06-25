@@ -14,7 +14,7 @@ import "../libs/ERC20Extended.sol";
 contract OlympusFund is FundInterface, Derivative {
 
     uint public constant DENOMINATOR = 100000;
-    uint public constant INTIAL_VALUE =  10**18;
+    uint public constant INITIAL_VALUE =  10**18;
 
     string public constant MARKET = "MarketProvider";
     string public constant EXCHANGE = "ExchangeProvider";
@@ -27,6 +27,7 @@ contract OlympusFund is FundInterface, Derivative {
     event Invested(address user, uint amount);
     event Reimbursed(uint amount);
     event UpdateToken(address _token, uint amount);
+    event ChangeStatus(DerivativeStatus status);
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
@@ -76,6 +77,7 @@ contract OlympusFund is FundInterface, Derivative {
         MarketplaceInterface(_market).registerProduct();
         ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
         status = DerivativeStatus.Active;
+        emit ChangeStatus(status);
 
         accumulatedFee += msg.value;
     }
@@ -129,10 +131,11 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates) public onlyOwner returns (bool) {
-        for(uint i = 0; i < tokens.length; i++) {
-            _tokens[i].approve(msg.sender, _amounts[i]);
-        }
+
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        for(uint i = 0; i < tokens.length; i++) {
+            _tokens[i].approve(exchange, _amounts[i]);
+        }
         require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
         updateTokens(_tokens);
         return true;
@@ -148,7 +151,7 @@ contract OlympusFund is FundInterface, Derivative {
         if(totalSupply_ > 0) {
             _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply_);
          } else {
-            _sharePrice = INTIAL_VALUE;
+            _sharePrice = INITIAL_VALUE;
         }
 
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
@@ -169,6 +172,7 @@ contract OlympusFund is FundInterface, Derivative {
         require(_status != DerivativeStatus.New && status != DerivativeStatus.New &&_status != DerivativeStatus.Closed);
         require(status != DerivativeStatus.Closed&&_status != DerivativeStatus.Closed);
         status = _status;
+        emit ChangeStatus(status);
         return true;
     }
 
@@ -176,12 +180,13 @@ contract OlympusFund is FundInterface, Derivative {
         require(status != DerivativeStatus.New);
         //sellTokens();
         status = DerivativeStatus.Closed;
+        emit ChangeStatus(status);
         return true;
     }
 
     function getPrice() public view returns(uint)  {
         if(totalSupply_ == 0) {
-            return INTIAL_VALUE;
+            return INITIAL_VALUE;
         }
 
         // Total Value in ETH among its tokens + ETH new added value
@@ -240,6 +245,10 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- WITHDRAW -----------------------------
     function requestWithdraw(uint amount) external {
+        WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
+    }
+
+      function estimateWithdrawReturn(uint amount) external {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 

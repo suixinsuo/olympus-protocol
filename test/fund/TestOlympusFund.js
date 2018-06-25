@@ -260,7 +260,7 @@ contract('Fund', (accounts) => {
       assert.equal(balance.toNumber(), 0.9 * rates[i][0], ' Fund get ERC20 correct balance');
     }
 
-    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, 'ether'), 'We sall all into tokens');
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, 'ether'), 'We sold all into tokens');
 
     // Request
     await fund.requestWithdraw(toToken(1.8), { from: investorA });

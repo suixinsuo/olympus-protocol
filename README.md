@@ -20,8 +20,13 @@ Exchange component:
 - ExchangeProvider 0x304730f75cf4c92596fc61cc239a649febc0e36e
 
 Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
-AsyncWithdraw  0xc296e480365f7d65beb388f2699e197d05aa4948
+AsyncWithdraw   0x186ddb35f59231d972869a6de3334eae410f26a2  //  0x035b67efd86462356d104e52b6975f7d2bfe198c
 MockWithdrawClient 0x6b0c8fe99884ddf73627d4e017c8673ef30c99a0
+Reimbursable 0x5b81830a3399f29d1c2567c7d09376503b607058
+PercentageFee 0x4dc61e1e74eec68e32538cf2ef5509e17e0fc2bc
+
+## Sample Fund
+Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
 
 # Deployed addresses
 

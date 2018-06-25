@@ -20,7 +20,7 @@ contract MockFund is FundInterface, Derivative {
 
 
     string public constant EXCHANGE = "Exchange";
-    uint public constant INTIAL_VALUE =  10**18;
+    uint public constant INITIAL_VALUE =  10**18;
     uint public constant DENOMINATOR = 100000;
 
     constructor(
@@ -91,7 +91,7 @@ contract MockFund is FundInterface, Derivative {
         if(totalSupply_ > 0) {
             _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply_);
          } else {
-            _sharePrice = INTIAL_VALUE;
+            _sharePrice = INITIAL_VALUE;
         }
 
 
@@ -115,7 +115,7 @@ contract MockFund is FundInterface, Derivative {
 
     function getPrice() public view returns(uint)  {
         if(totalSupply_ == 0) {
-            return INTIAL_VALUE;
+            return INITIAL_VALUE;
         }
 
         // Total Value in ETH among its tokens + ETH new added value
