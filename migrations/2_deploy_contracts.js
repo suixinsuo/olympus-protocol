@@ -20,6 +20,7 @@ let RiskControl = artifacts.require("RiskControl");
 let MockIndex = artifacts.require("MockIndex");
 // let MockFund = artifacts.require("MockFund");
 
+let OlympusFund = artifacts.require('OlympusFund');
 
 function deployMarketplace(deployer, network) {
   deployer.deploy([
@@ -74,6 +75,28 @@ async function deployReimbursable(deployer, network) {
 }
 
 async function deployOlympusFund(deployer, network) {
+  const args = args.parseArgs();
+
+  if (network === 'kovan') {
+    if (args.name && args.symbol) {
+      await deployer.deploy(OlympusFund, args.name, args.symbol, 'Created by automatic deployment', 18);
+      const fund = OlympusFund.deployed;
+      await fund.initialize(
+        0xfe818847198201ef8d800809d40f0c504f7d9a8c, // Market
+        0x304730f75cf4c92596fc61cc239a649febc0e36e, // Exchange
+        0x186ddb35f59231d972869a6de3334eae410f26a2, // Withdraw
+        0x1, // Risk
+        0x1111111111111111111111111111111111111111, // whitelist
+        0x5b81830a3399f29d1c2567c7d09376503b607058, // Reimbursable
+        0x4dc61e1e74eec68e32538cf2ef5509e17e0fc2bc, // Managment fee
+        1000
+      );
+    }
+    else {
+      console.error('Required name and symbol as parametter');
+    }
+    return;
+  }
   await deployer.deploy([
     AsyncWithdraw,
     SimpleWithdraw, // Exchannge Provider
@@ -149,15 +172,18 @@ function deployOnMainnet(deployer) {
 module.exports = function (deployer, network) {
   let flags = args.parseArgs();
 
+
+  if (flags.suite && typeof eval(`deploy${flags.suite}`) === 'function') {
+    return eval(`deploy${flags.suite}(deployer,network)`);
+  }
+
+
   if (network == 'mainnet' && flags.contract == "exchange") {
     return deployOnMainnet(deployer, network);
   } else if (network == 'kovan') {
     return deployOnKovan(deployer, network);
   }
 
-  if (flags.suite && typeof eval(`deploy${flags.suite}`) === 'function') {
-    return eval(`deploy${flags.suite}(deployer,network)`);
-  }
 
   return deployOnDev(deployer, network);
 

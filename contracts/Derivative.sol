@@ -16,8 +16,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, StandardToken {
         setComponent(name, provider);
         return true;
     }
-
-    function () public payable {
+     function () public payable {
 
     }
 }
