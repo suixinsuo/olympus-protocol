@@ -248,10 +248,6 @@ contract OlympusFund is FundInterface, Derivative {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
-      function estimateWithdrawReturn(uint amount) external {
-        WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
-    }
-
     function setMaxTransfers(uint _maxTransfers) external onlyOwner {
         maxTransfers = _maxTransfers;
     }
@@ -288,9 +284,8 @@ contract OlympusFund is FundInterface, Derivative {
 
             balances[_requests[i]] -= tokens;
             totalSupply_ -= tokens;
-            if(address(this).balance >= _eth) {
-                address(_requests[i]).transfer(_eth);
-            }
+            address(_requests[i]).transfer(_eth);
+
             _transfers++;
         }
 
