@@ -93,12 +93,12 @@ async function deployOlympusFund(deployer, network) {
 function deployOnDev(deployer, num) {
   return deployer.then(() => {
     return deployer.deploy([
-      // MarketplaceProvider,
-      // AsyncWithdraw,
-      // RiskControl,
-      // SimpleWithdraw,
-      // PercentageFee,
-      // Reimbursable,
+      MarketplaceProvider,
+      AsyncWithdraw,
+      RiskControl,
+      SimpleWithdraw,
+      PercentageFee,
+      Reimbursable,
     ]);
   }).then(() => {
     return deployExchange(deployer, 'development');

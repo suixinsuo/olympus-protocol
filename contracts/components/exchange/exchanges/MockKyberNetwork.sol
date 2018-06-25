@@ -72,15 +72,14 @@ contract MockKyberNetwork {
         if (address(source) == ETH_ADDRESS) {
             require(msg.value == srcAmount);
 
-            uint destAmount = getExpectAmount(srcAmount, dest.decimals(), minConversionRate);
+            uint destAmount = getExpectAmount(srcAmount, dest.decimals(), expectedRate);
 
             dest.transfer(destAddress,destAmount);
             return destAmount;
         } else {
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
-            // uint ethAmount = getExpectAmount(srcAmount, 18, minConversionRate);
-            uint ethAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, minConversionRate);
+            uint ethAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
             destAddress.transfer(ethAmount);
             return ethAmount;
         }
