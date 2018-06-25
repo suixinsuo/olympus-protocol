@@ -1,17 +1,22 @@
 pragma solidity 0.4.24;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "../../interfaces/ComponentInterface.sol";
+import "../../interfaces/RebalanceInterface.sol";
 import "../../interfaces/IndexInterface.sol";
 import "../../interfaces/PriceProviderInterface.sol";
 
 
-contract RebalanceProvider is Ownable, ComponentInterface {
+contract RebalanceProvider is Ownable, RebalanceInterface {
     // TODO: is component
     PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
     uint private rebalanceDeltaPercentage = 30; // 0.3%
+    address[] private tokensToSell;
+    uint[] private amountsToSell;
+    address[] private tokensToBuy;
+    uint[] private amountsToBuy;
+    address[] private tokensWithPriceIssues;
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     constructor(PriceProviderInterface _priceProvider) public {
@@ -23,16 +28,45 @@ contract RebalanceProvider is Ownable, ComponentInterface {
         return true;
     }
 
-    function rebalanceGetTokensToSellAndBuy() external view returns
-    (address[] tokensToSell, uint[] amountsToSell, address[] tokensToBuy, uint[] amountsToBuy, address[] tokensWithPriceIssues) {
+    function getArrayLengths(uint totalIndexValue, address[] indexTokenAddresses, uint[] indexTokenWeights)
+    private view returns(uint sellCounter, uint buyCounter, uint issueCounter){
+        uint i;
+        for(i = 0; i < indexTokenAddresses.length; i++) {
+            // Get the amount of tokens expected for 1 ETH
+            uint ETHTokenPrice;
+
+            (ETHTokenPrice,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
+
+            if (ETHTokenPrice == 0) {
+                issueCounter++;
+            }
+            uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)); //
+            uint shouldHaveAmountOfTokensInETH = (totalIndexValue * indexTokenWeights[i]) / 100;
+            uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH * ETHTokenPrice) / 10**18;
+            if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+                sellCounter++;
+            } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+                buyCounter++;
+            }
+            //TODO Does this run out of gas for 100 tokens?
+        }
+    }
+
+    function rebalanceGetTokensToSellAndBuy() external returns
+    (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues) {
         uint totalIndexValue = getTotalIndexValue();
         uint i;
         address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
-        uint sellCounter;
-        uint buyCounter;
+        uint[] memory arrayLengths = new uint[](3);
         (indexTokenAddresses, indexTokenWeights) = IndexInterface(msg.sender).getTokens();
-
+        uint[] memory buySellCounters = new uint[](2);
+        (arrayLengths[0], arrayLengths[1], arrayLengths[2]) = getArrayLengths(totalIndexValue, indexTokenAddresses, indexTokenWeights);
+        _tokensToSell = new address[](arrayLengths[0]);
+        _amountsToSell = new uint[](arrayLengths[0]);
+        _tokensToBuy = new address[](arrayLengths[1]);
+        _amountsToBuy = new uint[](arrayLengths[1]);
+        _tokensWithPriceIssues = new address[](arrayLengths[2]);
         for(i = 0; i < indexTokenAddresses.length; i++) {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
@@ -48,26 +82,27 @@ contract RebalanceProvider is Ownable, ComponentInterface {
 
             // minus delta
             if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                tokensToSell[sellCounter] = indexTokenAddresses[i];
-                amountsToSell[sellCounter] = currentTokenBalance - shouldHaveAmountOfTokens;
-                sellCounter++;
+                _tokensToSell[buySellCounters[1]] = indexTokenAddresses[i];
+                _amountsToSell[buySellCounters[1]] = currentTokenBalance - shouldHaveAmountOfTokens;
+                buySellCounters[1]++;
             // minus delta
             } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
-                tokensToBuy[buyCounter] = indexTokenAddresses[i];
-                amountsToBuy[buyCounter] = ((shouldHaveAmountOfTokensInETH - currentTokenBalance) * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice;
-                buyCounter++;
+                _tokensToBuy[buySellCounters[0]] = indexTokenAddresses[i];
+                _amountsToBuy[buySellCounters[0]] = ((shouldHaveAmountOfTokensInETH - currentTokenBalance) * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice;
+                buySellCounters[0]++;
             }
             //TODO Does this run out of gas for 100 tokens?
         }
-        return (tokensToSell,amountsToSell,tokensToBuy,amountsToBuy,tokensWithPriceIssues);
+
     }
 
     function recalculateTokensToBuyAfterSale(uint _receivedETHFromSale, uint[] _amountsToBuy)
-    external pure returns(uint[] recalculatedAmountsToBuy) {
+    external pure returns(uint[] _recalculatedAmountsToBuy) {
         uint i;
         uint assumedAmountOfEthToBuy;
         uint differencePercentage;
         bool surplus;
+        _recalculatedAmountsToBuy = new uint[](_amountsToBuy.length);
 
         // Get the total amount of ETH that we are supposed to buy
         for(i = 0; i < _amountsToBuy.length; i++){
@@ -92,12 +127,12 @@ contract RebalanceProvider is Ownable, ComponentInterface {
                 slippage = (_amountsToBuy[i] * differencePercentage) / PERCENTAGE_DENOMINATOR;
             }
             if(surplus == true){
-                recalculatedAmountsToBuy[i] = _amountsToBuy[i] + slippage;
+                _recalculatedAmountsToBuy[i] = _amountsToBuy[i] + slippage;
                 continue;
             }
-            recalculatedAmountsToBuy[i] = _amountsToBuy[i] - slippage;
+            _recalculatedAmountsToBuy[i] = _amountsToBuy[i] - slippage;
         }
-        return recalculatedAmountsToBuy;
+        return _recalculatedAmountsToBuy;
     }
 
     function getTotalIndexValue() public view returns (uint totalValue){
