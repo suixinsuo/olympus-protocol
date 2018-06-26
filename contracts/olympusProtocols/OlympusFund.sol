@@ -8,10 +8,11 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
+import "../components/base/Debugger.sol";
 
 
 
-contract OlympusFund is FundInterface, Derivative {
+contract OlympusFund is FundInterface, Derivative, Debugger {
 
     uint public constant DENOMINATOR = 100000;
     uint public constant INITIAL_VALUE =  10**18;
@@ -178,7 +179,9 @@ contract OlympusFund is FundInterface, Derivative {
 
     function close() public onlyOwner returns(bool success){
         require(status != DerivativeStatus.New);
-        //sellTokens();
+        /// ADD this line
+        getETHFromTokens(DENOMINATOR); // 100% all the tokens
+        ///;
         status = DerivativeStatus.Closed;
         emit ChangeStatus(status);
         return true;
@@ -270,29 +273,34 @@ contract OlympusFund is FundInterface, Derivative {
         if (!withdrawProvider.isInProgress()) {
             withdrawProvider.start();
         }
+        if(!d[3]) {
         uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
-
-        if(_totalETHToReturn > getETHBalance()) {
+        emit LogN(_totalETHToReturn,"ETH to return");
+        if(!d[4] &&  _totalETHToReturn > getETHBalance()) {
             uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+            emit LogN(_tokenPercentToSell,"Token percentage of sell");
             getETHFromTokens(_tokenPercentToSell);
         }
-
+      }
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
 
+             if(!d[4]) {
             (_eth, tokens) = withdrawProvider.withdraw(_requests[i]);
             if(tokens == 0) {continue;}
 
             balances[_requests[i]] -= tokens;
             totalSupply_ -= tokens;
             address(_requests[i]).transfer(_eth);
-
+             }
             _transfers++;
         }
 
         if(!withdrawProvider.isInProgress()) {
             withdrawProvider.unlock();
         }
-        reimburse();
+        if(!d[5]) {
+          reimburse();
+        }
         return !withdrawProvider.isInProgress(); // True if completed
     }
 
@@ -336,10 +344,14 @@ contract OlympusFund is FundInterface, Derivative {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( _sellRates[i], ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
-            _tokensToSell[i].approve(exchange,  _amounts[i]);
+            if(!d[0]) {
+              _tokensToSell[i].approve(exchange,  _amounts[i]);
+            }
         }
+            if(!d[1]) {
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
+            }
     }
 
 
