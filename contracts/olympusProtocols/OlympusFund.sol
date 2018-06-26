@@ -179,9 +179,7 @@ contract OlympusFund is FundInterface, Derivative, Debugger {
 
     function close() public onlyOwner returns(bool success){
         require(status != DerivativeStatus.New);
-        /// ADD this line
         getETHFromTokens(DENOMINATOR); // 100% all the tokens
-        ///;
         status = DerivativeStatus.Closed;
         emit ChangeStatus(status);
         return true;
