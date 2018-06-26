@@ -3,7 +3,8 @@ pragma solidity 0.4.24;
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../libs/ERC20Extended.sol";
 
-contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
+
+contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
 
     KyberNetworkInterface private kyber;
     address private exchangeAdapterManager;
@@ -115,16 +116,19 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
     function sellToken(ERC20Extended _token, uint _amount, uint _minimumRate, address _depositAddress)
     external returns(bool success)
     {
-        _token.approve(address(kyber), _amount);
 
-        uint slippageRate;
-        (,slippageRate) = kyber.getExpectedRate(_token, ETH_TOKEN_ADDRESS, _amount);
+          _token.approve(kyber, _amount);
+          uint slippageRate;
+          (,slippageRate) = kyber.getExpectedRate(_token, ETH_TOKEN_ADDRESS, _amount);
 
-        if(slippageRate < _minimumRate){
-            return false;
-        }
-        slippageRate = _minimumRate;
+          if(slippageRate < _minimumRate){
+              return false;
+          }
+          slippageRate = _minimumRate;
+
+
         // uint beforeTokenBalance = _token.balanceOf(this);
+
         kyber.trade(
             _token,
             _amount,
