@@ -32,6 +32,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
     function () public payable {
 
     }
+
     function rebalance() public returns (bool success) {
         address[] memory tokensToSell;
         uint[] memory amountsToSell;
