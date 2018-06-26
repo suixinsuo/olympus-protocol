@@ -79,6 +79,33 @@ contract('Mock Fund', (accounts) => {
     assert.equal(await calc.ethBalance(fund.address), 1, 'ETH balance reduced');
   }));
 
+  it("Shall be able to sell  tokens", async () => log.catch(async () => {
+
+    // From the preivus test we got 1.8 ETH
+    assert.equal(await calc.ethBalance(fund.address), 1, 'This test must start with 2 eth');
+    let fundTokensAndBalance = await fund.getTokens();
+
+    const sellRates = await Promise.all(tokens.map(async (token, index) => (await mockKyber.getExpectedRate(token, calc.ethToken, fundTokensAndBalance[1][index]))))
+    // We sell all
+    await fund.sellTokens("", fundTokensAndBalance[0], fundTokensAndBalance[1], sellRates.map((rate) => rate[0]));
+
+    fundTokensAndBalance = await fund.getTokens();
+
+    for (let i = 0; i < tokens.length; i++) {
+      let erc20 = await ERC20.at(tokens[i]);
+      let balance = await erc20.balanceOf(fund.address);
+      assert.equal(balance.toNumber(), 0, ' Fund get ERC20 correct balance');
+      // Check the fund data is updated correctly
+      assert.equal(fundTokensAndBalance[0][i], tokens[i], 'Token exist in fund');
+      assert.equal(fundTokensAndBalance[1][i].toNumber(), 0, 'Balance is correct in the fund');
+    }
+
+    // Price is constant
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, 'ether'), 'Price keeps constant after buy tokens');
+    // ETH balance is reduced
+    assert.equal(await calc.ethBalance(fund.address), 2, 'This test must start with 2 eth');
+  }));
+
   it("Shall be able to change the status and close the fund", async () => log.catch(async () => {
 
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, 'Status Is active');
