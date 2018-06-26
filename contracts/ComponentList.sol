@@ -2,7 +2,7 @@ pragma solidity 0.4.24;
 
 import "./interfaces/ComponentInterface.sol";
 
-contract MockComponentList {
+contract ComponentList {
 
     mapping(string => mapping(string => address)) components;
 
