@@ -69,6 +69,7 @@ contract MockKyberNetwork {
         (expectedRate, slippageRate) = _getExpectedRate(source,dest,srcAmount);
         require(slippageRate>=minConversionRate);
 
+
         if (address(source) == ETH_ADDRESS) {
             require(msg.value == srcAmount);
 
@@ -79,7 +80,6 @@ contract MockKyberNetwork {
         } else {
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
-            // uint ethAmount = getExpectAmount(srcAmount, 18, minConversionRate);
             uint ethAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, minConversionRate);
             destAddress.transfer(ethAmount);
             return ethAmount;
@@ -89,4 +89,11 @@ contract MockKyberNetwork {
     function getExpectAmount(uint amount, uint destDecimals, uint rate) private pure returns(uint){
         return Utils.calcDstQty(amount, 18, destDecimals, rate);
     }
+
+    function () public payable  {
+
+    }
+    event LogA(address _address, string text);
+
+    event LogN(uint number, string text);
 }
