@@ -100,6 +100,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
+
         for (uint i = 0; i < _tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == bytes32("") ?
             exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], false) : _exchangeId;
@@ -108,7 +109,6 @@ contract ExchangeProvider is OlympusExchangeInterface {
             }
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             //TODO need to add refund if transaction failed
-
             _tokens[i].transferFrom(msg.sender, address(adapter), _amounts[i]);
             require(
                 adapter.sellToken(
