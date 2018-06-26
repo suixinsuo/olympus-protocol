@@ -10,6 +10,7 @@ contract MockFund is FundInterface, Derivative {
     string public name = "Dummy";
     uint256 public decimals = 18;
     string public symbol = "DMY";
+    string public category = "Test";
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
@@ -19,7 +20,7 @@ contract MockFund is FundInterface, Derivative {
 
 
     string public constant EXCHANGE = "Exchange";
-    uint public constant INTIAL_VALUE =  10**18;
+    uint public constant INITIAL_VALUE =  10**18;
     uint public constant DENOMINATOR = 100000;
 
     constructor(
@@ -30,6 +31,8 @@ contract MockFund is FundInterface, Derivative {
         name = _name;
         symbol = _symbol;
         description = _description;
+        fundType = DerivativeType.Fund;
+
         status = DerivativeStatus.Active;
         setComponent(EXCHANGE, exchangeAddress);
     }
@@ -65,12 +68,12 @@ contract MockFund is FundInterface, Derivative {
 
     }
 
-    function sellTokens(bytes32 /*_exchangeId*/, ERC20Extended[] _tokens, uint[] _amounts, uint[]  /*_rates*/) public onlyOwner returns (bool) {
+    function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates) public onlyOwner returns (bool) {
         for(uint i = 0; i < tokens.length; i++) {
             _tokens[i].approve(msg.sender, _amounts[i]);
         }
-        // ExchangeProvider exchange = ExchangeProvider(getComponentByName(EXCHANGE));
-        // exchange.buyToken.sellToken(exchangeId, _tokens, _amounts, rates, address(this));
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0);
         updateTokens(_tokens);
         return true;
     }
@@ -88,7 +91,7 @@ contract MockFund is FundInterface, Derivative {
         if(totalSupply_ > 0) {
             _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply_);
          } else {
-            _sharePrice = INTIAL_VALUE;
+            _sharePrice = INITIAL_VALUE;
         }
 
 
@@ -112,7 +115,7 @@ contract MockFund is FundInterface, Derivative {
 
     function getPrice() public view returns(uint)  {
         if(totalSupply_ == 0) {
-            return INTIAL_VALUE;
+            return INITIAL_VALUE;
         }
 
         // Total Value in ETH among its tokens + ETH new added value

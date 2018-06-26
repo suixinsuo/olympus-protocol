@@ -47,7 +47,6 @@ contract('Fund', (accounts) => {
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
     tokens = await mockKyber.supportedTokens();
-
     fund = await Fund.new(
       fundData.name,
       fundData.symbol,
@@ -55,6 +54,14 @@ contract('Fund', (accounts) => {
       fundData.decimals
     );
     assert.equal((await fund.status()).toNumber(), 0); // new
+
+    try {
+      await fund.changeStatus(DerivativeStatus.Active);
+      assert(false, 'Shall not be able to from New to other status')
+    } catch (e) {
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.New, 'Must be still new');
+
+    }
 
     await fund.initialize(
       Marketplace.address,
@@ -136,14 +143,6 @@ contract('Fund', (accounts) => {
 
   }))
 
-  it.skip("Shall be able to dispatch a broken token", async () => log.catch(async () => {
-
-  }));
-
-  it.skip("Shall be able to close a fund", async () => log.catch(async () => {
-
-  }));
-
   it("Manager shall be able to collect a from investment and withdraw it", async () => log.catch(async () => {
     // Set fee
     const denominator = (await (await PercentageFee.deployed()).DENOMINATOR()).toNumber();
@@ -180,8 +179,17 @@ contract('Fund', (accounts) => {
       calc.roundTo(ownerBalanceAfter, 2), 'Owner received ether');
 
   }));
+  it("Buy  tokens fails if ethr required is not enough", async () => log.catch(async () => {
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'This test must start with 1.8 eth');
+    try {
+      const amounts = [web3.toWei(1, 'ether'), web3.toWei(1, 'ether')];
+      await fund.buyTokens(0x0, tokens, amounts, rates.map((rate) => rate[0]));
+    } catch (e) {
+      assert(true, 'reverte if fund balance is not enough');
+    }
+  }))
 
-  it("Shall be able to buy and shell tokens", async () => log.catch(async () => {
+  it("Shall be able to buy  tokens", async () => log.catch(async () => {
 
     // From the preivus test we got 1.8 ETH
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'This test must start with 1.8 eth');
@@ -189,7 +197,8 @@ contract('Fund', (accounts) => {
     const rates = await Promise.all(tokens.map(async (token) => (await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, 'ether')))))
     const amounts = [web3.toWei(0.5, 'ether'), web3.toWei(0.5, 'ether')];
 
-    await fund.buyTokens(0x0, tokens, amounts, rates.map((rate) => rate[0]));
+    await fund.buyTokens("", tokens, amounts, rates.map((rate) => rate[0]));
+
     const fundTokensAndBalance = await fund.getTokens();
     for (let i = 0; i < tokens.length; i++) {
       let erc20 = await ERC20.at(tokens[i]);
@@ -206,20 +215,113 @@ contract('Fund', (accounts) => {
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0.8, 'ether'), 'ETH balance reduced');
   }));
 
-  it("Shall be able to change the status and close the fund", async () => log.catch(async () => {
+  it("Shall be able to sell  tokens", async () => log.catch(async () => {
+
+    // From the preivus test we got 1.8 ETH
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0.8, 'ether'), 'This test must start with 1.8 eth');
+    let fundTokensAndBalance = await fund.getTokens();
+
+    const sellRates = await Promise.all(tokens.map(async (token, index) => (await mockKyber.getExpectedRate(token, ethToken, fundTokensAndBalance[1][index]))))
+    // We sell all
+    await fund.sellTokens("", fundTokensAndBalance[0], fundTokensAndBalance[1], sellRates.map((rate) => rate[0]));
+
+    fundTokensAndBalance = await fund.getTokens();
+
+    for (let i = 0; i < tokens.length; i++) {
+      let erc20 = await ERC20.at(tokens[i]);
+      let balance = await erc20.balanceOf(fund.address);
+      assert.equal(balance.toNumber(), 0, ' Fund get ERC20 correct balance');
+      // Check the fund data is updated correctly
+      assert.equal(fundTokensAndBalance[0][i], tokens[i], 'Token exist in fund');
+      assert.equal(fundTokensAndBalance[1][i].toNumber(), 0, 'Balance is correct in the fund');
+    }
+
+    // Price is constant
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, 'ether'), 'Price keeps constant after buy tokens');
+    // ETH balance is reduced
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'ETH balance reduced');
+  }));
+
+
+  it("Shall be able to sell tokens to get enough eth for withdraw", async () => log.catch(async () => {
+
+    // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'This test must start with 1.8 eth');
+    assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1.8), 'A has invested with fee');
+    const investorABefore = await calc.ethBalance(investorA);
+
+    const rates = await Promise.all(tokens.map(async (token) => (await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, 'ether')))))
+    const amounts = [web3.toWei(0.9, 'ether'), web3.toWei(0.9, 'ether')];
+    await fund.buyTokens("", tokens, amounts, rates.map((rate) => rate[0]));
+
+    for (let i = 0; i < tokens.length; i++) {
+      let erc20 = await ERC20.at(tokens[i]);
+      let balance = await erc20.balanceOf(fund.address);
+      assert.equal(balance.toNumber(), 0.9 * rates[i][0], ' Fund get ERC20 correct balance');
+    }
+
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, 'ether'), 'We sold all into tokens');
+
+    // Request
+    await fund.requestWithdraw(toToken(1.8), { from: investorA });
+    tx = await fund.withdraw();
+
+
+    // Investor has recover all his eth sepp9jgt tokens
+    const investorAAfter = await calc.ethBalance(investorA);
+    assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(0), 'Investor redeemed all the founds');
+    assert.equal(
+      calc.roundTo(investorABefore + 1.8, 2),
+      calc.roundTo(investorAAfter, 2), 'Owner received ether');
+
+    // Price is constant
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, 'ether'), 'Price keeps constant after buy tokens');
+
+
+
+  }));
+
+
+  it.skip("Shall be able to dispatch a broken token", async () => log.catch(async () => {
+
+  }));
+
+  it("Shall be able to change the status", async () => log.catch(async () => {
+
 
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, 'Status Is active');
     await fund.changeStatus(DerivativeStatus.Paused);
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Status is paused');
-
 
     try {
       await fund.changeStatus(DerivativeStatus.New);
       assert(false, 'Shall not be able to change to New')
     } catch (e) {
       assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to new, shall keep being previous');
-
     }
+
+    try {
+      await fund.changeStatus(DerivativeStatus.Closed);
+      assert(false, 'Shall not be able to change to Close')
+    } catch (e) {
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to close, shall keep being previous');
+    }
+
   }));
+
+  it("Shall be able to close a fund", async () => log.catch(async () => {
+
+    await fund.close();
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Status is closed');
+
+    try {
+      await fund.changeStatus(DerivativeStatus.Active);
+      assert(false, 'Shall not be able to change from close')
+    } catch (e) {
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Cant change to active, shall keep being closed');
+    }
+
+  }));
+
 
 });

@@ -8,6 +8,10 @@ import "../../interfaces/WithdrawInterface.sol";
 
 contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
 
+    string public name = "AsyncWithdraw";
+    string public description = "Withdraw one by one";
+    string public category = "Withdraw";
+    string public version = "1.0";
     struct ContractInfo {
         uint price;
         address[]  userRequests;
@@ -96,4 +100,11 @@ contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
         withdrawRequestLock = contracts[msg.sender].withdrawRequestLock;
     }
 
+    /// Out of interface
+    function getWithdrawBalance(address product) external view returns(uint){
+        return contracts[product].amountPerUser[msg.sender];
+    }
+    function getTotalWithdrawAmount(address product) external view returns(uint){
+        return contracts[product].totalWithdrawAmount;
+    }
 }
