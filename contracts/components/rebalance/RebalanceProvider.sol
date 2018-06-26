@@ -12,11 +12,6 @@ contract RebalanceProvider is Ownable, RebalanceInterface {
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
     uint private rebalanceDeltaPercentage = 30; // 0.3%
-    address[] private tokensToSell;
-    uint[] private amountsToSell;
-    address[] private tokensToBuy;
-    uint[] private amountsToBuy;
-    address[] private tokensWithPriceIssues;
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     constructor(PriceProviderInterface _priceProvider) public {
@@ -51,10 +46,11 @@ contract RebalanceProvider is Ownable, RebalanceInterface {
             //TODO Does this run out of gas for 100 tokens?
         }
     }
-
+    event LogUint(string desc, uint val);
     function rebalanceGetTokensToSellAndBuy() external returns
     (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues) {
         uint totalIndexValue = getTotalIndexValue();
+        emit LogUint("HELLO", totalIndexValue);
         uint i;
         address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
@@ -74,7 +70,7 @@ contract RebalanceProvider is Ownable, RebalanceInterface {
             (ETHTokenPrice,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
 
             if (ETHTokenPrice == 0) {
-                tokensWithPriceIssues[i] = indexTokenAddresses[i];
+                _tokensWithPriceIssues[i] = indexTokenAddresses[i];
             }
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)); //
             uint shouldHaveAmountOfTokensInETH = (totalIndexValue * indexTokenWeights[i]) / 100;
@@ -134,14 +130,14 @@ contract RebalanceProvider is Ownable, RebalanceInterface {
         }
         return _recalculatedAmountsToBuy;
     }
-
+    event LogA(string desc, address val);
     function getTotalIndexValue() public view returns (uint totalValue){
         uint price;
         address[] memory indexTokenAddresses;
         (indexTokenAddresses, ) = IndexInterface(msg.sender).getTokens();
 
-        for(uint i = 0; i < indexTokenAddresses.length; i++){
-            (price,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
+        for(uint i = 0; i < indexTokenAddresses.length; i++) {
+            (price,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
             totalValue += ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender))*
             10**ERC20Extended(indexTokenAddresses[i]).decimals() / price;
         }

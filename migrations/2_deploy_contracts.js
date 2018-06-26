@@ -119,6 +119,10 @@ function deployOnKovan(deployer, num) {
     ]);
   }).then(() => {
     return deployExchange(deployer, 'kovan');
+  }).then(() => {
+    return deployer.deploy(RebalanceProvider, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(MockRebalanceIndex, ['0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a', '0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b'], [50, 50], RebalanceProvider.address, ExchangeProvider.address);
   });
 }
 
