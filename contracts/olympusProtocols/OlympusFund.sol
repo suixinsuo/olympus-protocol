@@ -8,11 +8,10 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
-import "../components/base/Debugger.sol";
 
 
 
-contract OlympusFund is FundInterface, Derivative, Debugger {
+contract OlympusFund is FundInterface, Derivative {
 
     uint public constant DENOMINATOR = 100000;
     uint public constant INITIAL_VALUE =  10**18;
@@ -273,34 +272,29 @@ contract OlympusFund is FundInterface, Derivative, Debugger {
         if (!withdrawProvider.isInProgress()) {
             withdrawProvider.start();
         }
-        if(!d[3]) {
-        uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
-        emit LogN(_totalETHToReturn,"ETH to return");
-        if(!d[4] &&  _totalETHToReturn > getETHBalance()) {
+
+        if(_totalETHToReturn > getETHBalance()) {
             uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
             emit LogN(_tokenPercentToSell,"Token percentage of sell");
             getETHFromTokens(_tokenPercentToSell);
         }
-      }
+
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
 
-             if(!d[4]) {
+
             (_eth, tokens) = withdrawProvider.withdraw(_requests[i]);
             if(tokens == 0) {continue;}
 
             balances[_requests[i]] -= tokens;
             totalSupply_ -= tokens;
             address(_requests[i]).transfer(_eth);
-             }
             _transfers++;
         }
 
         if(!withdrawProvider.isInProgress()) {
             withdrawProvider.unlock();
         }
-        if(!d[5]) {
-          reimburse();
-        }
+        reimburse();
         return !withdrawProvider.isInProgress(); // True if completed
     }
 
@@ -334,7 +328,7 @@ contract OlympusFund is FundInterface, Derivative, Debugger {
         return _tokensWithAmount;
     }
 
-    function getETHFromTokens(uint _tokenPercentage ) internal {
+    function getETHFromTokens(uint _tokenPercentage ) public {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](  _tokensToSell.length);
         uint[] memory _sellRates = new uint[]( _tokensToSell.length);
@@ -344,14 +338,12 @@ contract OlympusFund is FundInterface, Derivative, Debugger {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( _sellRates[i], ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
-            if(!d[0]) {
-              _tokensToSell[i].approve(exchange,  _amounts[i]);
-            }
+            _tokensToSell[i].approve(exchange,  _amounts[i]);
+
         }
-            if(!d[1]) {
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
-            }
+
     }
 
 
