@@ -292,28 +292,42 @@ contract('Fund', (accounts) => {
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, 'Status Is active');
     await fund.changeStatus(DerivativeStatus.Paused);
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Status is paused');
-
+    await fund.changeStatus(DerivativeStatus.Active);
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, 'Status Is active');
     try {
       await fund.changeStatus(DerivativeStatus.New);
       assert(false, 'Shall not be able to change to New')
     } catch (e) {
-      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to new, shall keep being previous');
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, ' Cant change to new, shall keep being previous');
     }
 
     try {
       await fund.changeStatus(DerivativeStatus.Closed);
       assert(false, 'Shall not be able to change to Close')
     } catch (e) {
-      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Cant change to close, shall keep being previous');
+      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, ' Cant change to close, shall keep being previous');
     }
 
   }));
 
   it("Shall be able to close a fund", async () => log.catch(async () => {
 
+    await fund.invest({ value: web3.toWei(2, 'ether'), from: accounts[3] });
+
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'This test must start with 1.8 eth');
+    assert.equal((await fund.balanceOf(accounts[3])).toNumber(), toToken(1.8), 'A has invested with fee');
+
+    const rates = await Promise.all(tokens.map(async (token) => (await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, 'ether')))))
+    const amounts = [web3.toWei(0.9, 'ether'), web3.toWei(0.9, 'ether')];
+    await fund.buyTokens("", tokens, amounts, rates.map((rate) => rate[0]));
+
+    // ETH balance is reduced
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, 'ether'), 'ETH balance reduced');
+
     await fund.close();
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Status is closed');
 
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'ETH balance returned');
     try {
       await fund.changeStatus(DerivativeStatus.Active);
       assert(false, 'Shall not be able to change from close')
