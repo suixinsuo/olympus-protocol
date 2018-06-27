@@ -7,7 +7,6 @@ import "../../interfaces/PriceProviderInterface.sol";
 
 
 contract RebalanceProvider is Ownable, RebalanceInterface {
-    // TODO: is component
     PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
