@@ -2,7 +2,7 @@
 pragma solidity 0.4.24;
 
 
-contract LockerInterface  {
+contract LockerInterface {
     /*
      * Inside a require shall be performed
      */
