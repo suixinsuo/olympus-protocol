@@ -43,14 +43,12 @@ contract RebalanceProvider is Ownable, RebalanceInterface {
             } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
                 buyCounter++;
             }
-            //TODO Does this run out of gas for 100 tokens?
         }
     }
-    event LogUint(string desc, uint val);
-    function rebalanceGetTokensToSellAndBuy() external returns
+
+    function rebalanceGetTokensToSellAndBuy() external view returns
     (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues) {
         uint totalIndexValue = getTotalIndexValue();
-        emit LogUint("HELLO", totalIndexValue);
         uint i;
         address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
@@ -130,7 +128,7 @@ contract RebalanceProvider is Ownable, RebalanceInterface {
         }
         return _recalculatedAmountsToBuy;
     }
-    event LogA(string desc, address val);
+
     function getTotalIndexValue() public view returns (uint totalValue){
         uint price;
         address[] memory indexTokenAddresses;
