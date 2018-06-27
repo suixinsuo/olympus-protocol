@@ -84,7 +84,7 @@ contract RebalanceProvider is Ownable, RebalanceInterface {
             // minus delta
             } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
                 _tokensToBuy[buySellCounters[0]] = indexTokenAddresses[i];
-                _amountsToBuy[buySellCounters[0]] = ((shouldHaveAmountOfTokensInETH - currentTokenBalance) * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice;
+                _amountsToBuy[buySellCounters[0]] = (shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice);
                 buySellCounters[0]++;
             }
             //TODO Does this run out of gas for 100 tokens?
