@@ -27,6 +27,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         weights = _weights;
         rebalanceProvider = _rebalanceProvider;
         exchangeProvider = _exchangeProvider;
+        supportRebalance = true;
     }
 
     function () public payable {
