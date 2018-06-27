@@ -40,6 +40,7 @@ contract('Fund', (accounts) => {
   let tokens;
   const investorA = accounts[1];
   const investorB = accounts[2];
+  const investorC = accounts[3];
 
 
   it('Create a fund', async () => {
@@ -312,10 +313,10 @@ contract('Fund', (accounts) => {
 
   it("Shall be able to close a fund", async () => log.catch(async () => {
 
-    await fund.invest({ value: web3.toWei(2, 'ether'), from: accounts[3] });
+    await fund.invest({ value: web3.toWei(2, 'ether'), from: investorC });
 
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'This test must start with 1.8 eth');
-    assert.equal((await fund.balanceOf(accounts[3])).toNumber(), toToken(1.8), 'A has invested with fee');
+    assert.equal((await fund.balanceOf(investorC)).toNumber(), toToken(1.8), 'A has invested with fee');
 
     const rates = await Promise.all(tokens.map(async (token) => (await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, 'ether')))))
     const amounts = [web3.toWei(0.9, 'ether'), web3.toWei(0.9, 'ether')];
@@ -326,8 +327,11 @@ contract('Fund', (accounts) => {
 
     await fund.close();
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Status is closed');
-
+    let fundTokensAndBalance = await fund.getTokens();
+    assert.equal((fundTokensAndBalance[1][0]).toNumber(), 0, 'token amount == 0');
+    assert.equal((fundTokensAndBalance[1][1]).toNumber(), 0, 'token amount == 0');
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'ETH balance returned');
+
     try {
       await fund.changeStatus(DerivativeStatus.Active);
       assert(false, 'Shall not be able to change from close')
