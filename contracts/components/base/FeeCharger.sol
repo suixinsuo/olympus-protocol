@@ -24,6 +24,7 @@ contract FeeCharger is Ownable {
       uint fee = calculateFee(_amount);
       DerivativeInterface derivative = DerivativeInterface(msg.sender);
       require(MOT.balanceOf(derivative.owner()) >= fee);
+      require(MOT.allowance(owner, olympusWallet) >= amount);
       _;
     }
 
@@ -40,12 +41,6 @@ contract FeeCharger is Ownable {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         address owner = derivative.owner();        
 
-        if (MOT.allowance(owner, olympusWallet) < amount) {
-            MOT.approve(olympusWallet, amount);
-        }
-
-        require(MOT.allowance(owner, olympusWallet) >= amount);
-
         uint balanceBefore = MOT.balanceOf(olympusWallet);
         MOT.transferFrom(owner, olympusWallet, amount);
         uint balanceAfter = MOT.balanceOf(olympusWallet);
@@ -57,7 +52,7 @@ contract FeeCharger is Ownable {
     function calculateFee(uint _amount) public view returns (uint amount) {
         uint fee;
         if (feeMode == FeeMode.ByTransactionAmount) {
-            fee = _amount * DENOMINATOR / feePercentage;
+            fee = _amount * feePercentage / DENOMINATOR;
         } else if (feeMode == FeeMode.ByCalls) {
             fee = feeAmount;
         } else {
@@ -93,6 +88,7 @@ contract FeeCharger is Ownable {
         require(_motAddress != 0x0);
         require(_motAddress != address(MOT));
         MOT = ERC20Extended(_motAddress);
+        require(MOT.symbol() == "MOT");
 
         return true;
     }
