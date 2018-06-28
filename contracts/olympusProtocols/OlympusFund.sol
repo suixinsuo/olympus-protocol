@@ -199,7 +199,7 @@ contract OlympusFund is FundInterface, Derivative {
         return address(this).balance - accumulatedFee;
     }
 
-    function getAssetsValue() internal view returns (uint) {
+    function getAssetsValue() public view returns (uint) {
         // TODO cast to OlympusExchangeInterface
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         uint _totalTokensValue = 0;
