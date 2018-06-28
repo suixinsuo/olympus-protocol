@@ -8,11 +8,10 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
-import "../components/base/Debugger.sol";
 
 
 
-contract OlympusFund is FundInterface, Derivative, Debugger {
+contract OlympusFund is FundInterface, Derivative {
 
     uint public constant DENOMINATOR = 100000;
     uint public constant INITIAL_VALUE =  10**18;
