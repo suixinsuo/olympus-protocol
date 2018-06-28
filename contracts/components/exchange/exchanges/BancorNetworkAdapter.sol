@@ -9,10 +9,12 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     address public exchangeAdapterManager;
     bytes32 public exchangeId;
     bytes32 public name;
-    ERC20Extended public constant ETH_TOKEN_ADDRESS = ERC20Extended(0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
-    ERC20Extended public constant bancorToken = ERC20Extended(0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c);
-    ERC20Extended public constant bancorETHToken = ERC20Extended(0xc0829421c1d260bd3cb3e0f06cfe2d52db2ce315);
+    ERC20Extended public constant ETH_TOKEN_ADDRESS = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+    ERC20Extended public constant bancorToken = ERC20Extended(0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C);
+    ERC20Extended public constant bancorETHToken = ERC20Extended(0xc0829421C1d260BD3cB3E0F06cfE2D52db2cE315);
     mapping(address => BancorConverterInterface) public tokenToConverter;
+
+    bool public adapterEnabled;
 
     constructor (address _exchangeAdapterManager, address[] tokenAddresses,
     BancorConverterInterface[] converterAddresses) public {
@@ -22,6 +24,11 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         }
         exchangeAdapterManager = _exchangeAdapterManager;
         adapterEnabled = true;
+    }
+
+    modifier onlyExchangeAdapterManager() {
+        require(msg.sender == address(exchangeAdapterManager));
+        _;
     }
 
     function updateTokenToConverterList(address[] tokenAddresses, BancorConverterInterface[] converterAddresses)
@@ -34,17 +41,22 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     }
 
     function supportsTradingPair(address _srcAddress, address _destAddress) external view returns(bool supported){
-        return true; // TODO
+        address _tokenAddress = ETH_TOKEN_ADDRESS == _srcAddress ? _destAddress : _srcAddress;
+        BancorConverterInterface bancorConverter = tokenToConverter[_tokenAddress];
+        if(address(bancorConverter) == 0x0){
+            return false;
+        }
+        return true;
     }
 
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint /*_amount*/)
     external view returns(uint expectedRate, uint slippageRate) {
         bool isBuying = _sourceAddress == ETH_TOKEN_ADDRESS;
         ERC20Extended targetToken = isBuying ? _destAddress : _sourceAddress;
-        BancorConverterInterface BNTConverter = tokenToConverter(address(bancorToken));
+        BancorConverterInterface BNTConverter = tokenToConverter[address(bancorToken)];
 
         uint rate;
-        BancorConverterInterface targetTokenConverter = tokenToConverter(address(targetToken));
+        BancorConverterInterface targetTokenConverter = tokenToConverter[address(targetToken)];
 
         if(isBuying){
             // Get amount of BNT for 1 ETH
@@ -60,8 +72,8 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         return (rate,0);
     }
 
-    function getPath(ERC20Extended _token, bool isBuying) public returns(ERC20Extended[] tokenPath) {
-        BancorConverterInterface bancorConverter = tokenToConverter(_token);
+    function getPath(ERC20Extended _token, bool isBuying) public view returns(ERC20Extended[] tokenPath) {
+        BancorConverterInterface bancorConverter = tokenToConverter[_token];
         uint pathLength = bancorConverter.getQuickBuyPathLength();
         require(pathLength > 0, "Error with pathLength");
         ERC20Extended[] memory path = new ERC20Extended[](pathLength);
@@ -69,11 +81,16 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         for (uint i = 0; i < pathLength; i++) {
             path[i] = bancorConverter.quickBuyPath(isBuying ? i : pathLength - 1 - i);
         }
+        // When buying, the path we get starts with the Ether token address
+        // Bancor will automatically convert our ETH sent to the converter into Ether Token
+        // For (buying) most relay tokens the path will be something like:
+        // ETH address, BNT address, BNT Address, XXX Token Relay Address (e.g. MOTBNT), XXX Token Address (e.g. MOT)
         return path;
     }
 
+    // In contrast to Kyber, Bancor uses a minimum return for the complete trade, instead of a minimum rate for 1 ETH (for buying) or token (when selling)
     function convertMinimumRateToMinimumReturn(ERC20Extended _token, uint _minimumRate, uint _amount, bool isBuying)
-    internal pure returns(uint minimumReturn) {
+    private view returns(uint minimumReturn) {
         if(isBuying){
             return (_amount * 10**18) / _minimumRate;
         }
@@ -86,17 +103,21 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
     ) external returns(bool success) {
+        // Tokens needs to be transferred to here before this function is called
+        require(_token.balanceOf(address(this)) >= _amount, "Balance of token is not sufficient in adapter");
+
         ERC20Extended[] memory path = getPath(_token, false);
 
-        BancorConverterInterface bancorConverter = tokenToConverter(_token);
+        BancorConverterInterface bancorConverter = tokenToConverter[_token];
         if(address(bancorConverter) == 0x0){
             revert("Token not supported");
         }
+
         _token.approve(address(bancorConverter), _amount);
         uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, false);
         uint returnedAmountOfETH = bancorConverter.quickConvert(path,_amount,minimumReturn);
         require(returnedAmountOfETH > 0, "BancorConverter did not return any ETH");
-        require(_depositAddress.transfer(returnedAmountOfETH), "ETH transfer failure");
+        _depositAddress.transfer(returnedAmountOfETH);
         return true;
     }
 
@@ -104,9 +125,10 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
     ) external payable returns(bool success){
+        require(msg.value == _amount, "Amount of Ether sent is not the same as the amount parameter");
         ERC20Extended[] memory path = getPath(_token, true);
 
-        BancorConverterInterface bancorConverter = tokenToConverter(_token);
+        BancorConverterInterface bancorConverter = tokenToConverter[_token];
         if(address(bancorConverter) == 0x0){
             revert("Token not supported");
         }
