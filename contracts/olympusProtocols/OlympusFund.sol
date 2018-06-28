@@ -341,7 +341,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
-
+        updateTokens(_tokensToSell);
     }
 
 
