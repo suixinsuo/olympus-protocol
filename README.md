@@ -15,9 +15,9 @@ The suit option will limit the number of deployment required for the concrete te
 
 ## Kovan
 Exchange component:
-- KyberNetworkAdapter 0xf153aa2f20f944f73e4ea95450be89af8df664e6
-- ExchangeAdapterManager 0x9b5d32ae77345ca621b0a3d4369e50790bdf7235
-- ExchangeProvider 0x304730f75cf4c92596fc61cc239a649febc0e36e
+- KyberNetworkAdapter 0x8b29ce28b9555b02c99a38affb05d5203674e587
+- ExchangeAdapterManager 0xb6842dce3e9e00a8e21aaa599c9c2b1c0647ca8a
+- ExchangeProvider 0x8bb45686512085d56df444ca35954bff3f4a5862
 
 Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
 AsyncWithdraw   0x186ddb35f59231d972869a6de3334eae410f26a2  //  0x035b67efd86462356d104e52b6975f7d2bfe198c

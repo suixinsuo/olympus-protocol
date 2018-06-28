@@ -48,19 +48,23 @@ contract ExchangeAdapterManager is Ownable {
 
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId)
         external view returns(uint expectedRate, uint slippageRate) {
-        if(_exchangeId != ""){
+
+        if(_exchangeId != 0x0) {
             return exchangeAdapters[_exchangeId].getPrice(_sourceAddress, _destAddress, _amount);
         }
-        for(uint i = 0; i < exchanges.length; i++) {
-            bytes32 id = exchanges[i];
-            return exchangeAdapters[id].getPrice(_sourceAddress, _destAddress, _amount);
+        bytes32 exchangeId = _sourceAddress == ETH_TOKEN_ADDRESS ?
+        pickExchange(_destAddress, _amount, 0, true) :
+        pickExchange(_sourceAddress, _amount, 0, false);
+        if(exchangeId != 0x0) {
+            OlympusExchangeAdapterInterface adapter = exchangeAdapters[exchangeId];
+            return adapter.getPrice(_sourceAddress, _destAddress, _amount);
         }
         return(0, 0);
     }
 
     /// >0  : found exchangeId
     /// ==0 : not found
-    function pickExchange(ERC20Extended _token, uint _amount, uint _rate, bool _isBuying) external view returns (bytes32 exchangeId) {
+    function pickExchange(ERC20Extended _token, uint _amount, uint _rate, bool _isBuying) public view returns (bytes32 exchangeId) {
 
         int maxRate = -1;
         for (uint i = 0; i < exchanges.length; i++) {
@@ -71,15 +75,16 @@ contract ExchangeAdapterManager is Ownable {
                 continue;
             }
             uint adapterResultRate;
+            uint adapterResultSlippage;
             if (_isBuying){
-                (,adapterResultRate) = adapter.getPrice(ETH_TOKEN_ADDRESS, _token, _amount);
+                (adapterResultRate,adapterResultSlippage) = adapter.getPrice(ETH_TOKEN_ADDRESS, _token, _amount);
             } else {
-                (,adapterResultRate) = adapter.getPrice(_token, ETH_TOKEN_ADDRESS, _amount);
+                (adapterResultRate,adapterResultSlippage) = adapter.getPrice(_token, ETH_TOKEN_ADDRESS, _amount);
             }
-            int resultRate = int(adapterResultRate);
+            int resultRate = int(adapterResultSlippage);
 
 
-            if (resultRate == 0) { // not support
+            if (adapterResultRate == 0) { // not support
                 continue;
             }
 
