@@ -178,7 +178,7 @@ contract OlympusFund is FundInterface, Derivative {
 
     function close() public onlyOwner returns(bool success){
         require(status != DerivativeStatus.New);
-        getETHFromTokens(DENOMINATOR);
+        getETHFromTokens(DENOMINATOR); // 100% all the tokens
         status = DerivativeStatus.Closed;
         emit ChangeStatus(status);
         return true;
@@ -199,7 +199,7 @@ contract OlympusFund is FundInterface, Derivative {
         return address(this).balance - accumulatedFee;
     }
 
-    function getAssetsValue() internal view returns (uint) {
+    function getAssetsValue() public view returns (uint) {
         // TODO cast to OlympusExchangeInterface
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         uint _totalTokensValue = 0;
@@ -279,13 +279,13 @@ contract OlympusFund is FundInterface, Derivative {
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
 
+
             (_eth, tokens) = withdrawProvider.withdraw(_requests[i]);
             if(tokens == 0) {continue;}
 
             balances[_requests[i]] -= tokens;
             totalSupply_ -= tokens;
             address(_requests[i]).transfer(_eth);
-
             _transfers++;
         }
 
@@ -337,9 +337,11 @@ contract OlympusFund is FundInterface, Derivative {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( _sellRates[i], ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
             _tokensToSell[i].approve(exchange,  _amounts[i]);
+
         }
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
+        updateTokens(_tokensToSell);
     }
 
 
