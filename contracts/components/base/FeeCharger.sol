@@ -34,8 +34,8 @@ contract FeeCharger is Ownable {
      * this is only used when the fee mode is by transaction amount.
      * @return boolean whether or not the fee is paid.
      */
-    function payFee(uint _amountinMOT) external feePayable(_amountinMOT) returns (bool success) {
-        uint amount = calculateFee(_amountinMOT);
+    function payFee(uint _amountInMOT) external feePayable(_amountInMOT) returns (bool success) {
+        uint amount = calculateFee(_amountInMOT);
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         address owner = derivative.owner();        
