@@ -274,7 +274,6 @@ contract OlympusFund is FundInterface, Derivative {
 
         if(_totalETHToReturn > getETHBalance()) {
             uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-            emit LogN(_tokenPercentToSell,"Token percentage of sell");
             getETHFromTokens(_tokenPercentToSell);
         }
 
