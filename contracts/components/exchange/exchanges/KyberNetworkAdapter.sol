@@ -3,14 +3,15 @@ pragma solidity 0.4.24;
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../libs/ERC20Extended.sol";
 
-contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
 
-    KyberNetworkInterface private kyber;
-    address private exchangeAdapterManager;
-    bytes32 private exchangeId;
-    bytes32 private name;
-    ERC20Extended private constant ETH_TOKEN_ADDRESS = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
-    address private walletId = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
+contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
+
+    KyberNetworkInterface public kyber;
+    address public exchangeAdapterManager;
+    bytes32 public exchangeId;
+    bytes32 public name;
+    ERC20Extended public constant ETH_TOKEN_ADDRESS = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+    address public walletId = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
 
     bool public adapterEnabled;
 
@@ -116,7 +117,6 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
     external returns(bool success)
     {
         _token.approve(address(kyber), _amount);
-
         uint slippageRate;
         (,slippageRate) = kyber.getExpectedRate(_token, ETH_TOKEN_ADDRESS, _amount);
 
@@ -124,6 +124,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface {
             return false;
         }
         slippageRate = _minimumRate;
+
         // uint beforeTokenBalance = _token.balanceOf(this);
         kyber.trade(
             _token,
