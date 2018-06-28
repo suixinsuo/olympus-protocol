@@ -2,7 +2,7 @@ pragma solidity 0.4.24;
 
 import "../../libs/ERC20Extended.sol";
 
-contract BancorConverter {
+contract BancorConverterInterface {
     string public converterType;
     ERC20Extended[] public quickBuyPath;
     /**
