@@ -32,7 +32,8 @@ contract FeeCharger is Ownable {
      * @dev Pay the fee for the call / transaction.
      * Depending on the component itself, the fee is paid differently.
      * @param uint _amountinMot The base amount in MOT, calculation should be one outside. 
-     * this is only used when the fee mode is by transaction amount.
+     * this is only used when the fee mode is by transaction amount. leave it to zero if fee mode is
+     * by calls.
      * @return boolean whether or not the fee is paid.
      */
     function payFee(uint _amountInMOT) external feePayable(_amountInMOT) returns (bool success) {
