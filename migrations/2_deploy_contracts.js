@@ -18,10 +18,13 @@ let PercentageFee = artifacts.require("PercentageFee");
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
 let MockIndex = artifacts.require("MockIndex");
-// let MockFund = artifacts.require("MockFund");
 
+let RebalanceProvider = artifacts.require("RebalanceProvider");
+let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
+// let MockFund = artifacts.require("MockFund");
 let OlympusFund = artifacts.require('OlympusFund');
 
+let devTokens;
 function deployMarketplace(deployer, network) {
   deployer.deploy([
     MarketplaceProvider,
@@ -60,6 +63,7 @@ function deployExchange(deployer, network) {
     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
     if (network === 'development') {
       let mockKyberNetwork = await MockKyberNetwork.deployed();
+      devTokens = await mockKyberNetwork.supportedTokens();
       await kyberNetworkAdapter.configAdapter(mockKyberNetwork.address, 0x0);
     }
     await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
@@ -129,6 +133,10 @@ function deployOnDev(deployer, num) {
     ]);
   }).then(() => {
     return deployExchange(deployer, 'development');
+  }).then(() => {
+    return deployer.deploy(RebalanceProvider, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address);
   });
 }
 
@@ -142,6 +150,10 @@ function deployOnKovan(deployer, num) {
     ]);
   }).then(() => {
     return deployExchange(deployer, 'kovan');
+  }).then(() => {
+    return deployer.deploy(RebalanceProvider, ExchangeProvider.address);
+  }).then(() => {
+    return deployer.deploy(MockRebalanceIndex, ['0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a', '0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b'], [50, 50], RebalanceProvider.address, ExchangeProvider.address);
   });
 }
 
