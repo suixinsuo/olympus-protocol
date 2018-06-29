@@ -1,10 +1,12 @@
 pragma solidity 0.4.24;
 
+import "zeppelin-solidity/contracts/math/SafeMath.sol"
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../interfaces/implementations/BancorConverterInterface.sol";
 import "../../../libs/ERC20Extended.sol";
 
 contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
+    using SafeMath for uint256;
 
     address public exchangeAdapterManager;
     bytes32 public exchangeId;
@@ -49,8 +51,9 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         return true;
     }
 
-    function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint /*_amount*/)
+    function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount)
     external view returns(uint expectedRate, uint slippageRate) {
+        require(_amount > 0);
         bool isBuying = _sourceAddress == ETH_TOKEN_ADDRESS;
         ERC20Extended targetToken = isBuying ? _destAddress : _sourceAddress;
         BancorConverterInterface BNTConverter = tokenToConverter[address(bancorToken)];
@@ -59,14 +62,20 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         BancorConverterInterface targetTokenConverter = tokenToConverter[address(targetToken)];
 
         if(isBuying){
-            // Get amount of BNT for 1 ETH
-            uint ETHToBNTRate = BNTConverter.getReturn(bancorETHToken, bancorToken, 10**18);
-            // Get amount of tokens for the amount of BNT for 1 ETH
+            // Get amount of BNT for amount ETH
+            uint ETHToBNTRate = BNTConverter.getReturn(bancorETHToken, bancorToken, _amount);
+            // Get amount of tokens for the amount of BNT for amount ETH
             rate = targetTokenConverter.getReturn(bancorToken, targetToken, ETHToBNTRate);
+            // Convert rate to 1ETH to token or token to 1 ETH
+            rate = ((rate * 10**18) / _amount);
         } else {
             uint targetTokenToBNTRate = targetTokenConverter.getReturn(targetToken, bancorToken, 10**targetToken.decimals());
             rate = BNTConverter.getReturn(bancorToken, bancorETHToken, targetTokenToBNTRate);
+            // Convert rate to 1ETH to token or token to 1 ETH
+            rate = ((rate * 10**_sourceAddress.decimals()) / _amount);
         }
+
+
 
         // TODO slippage?
         return (rate,0);

@@ -1,10 +1,11 @@
 pragma solidity 0.4.24;
 
+import "zeppelin-solidity/contracts/math/SafeMath.sol"
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../libs/ERC20Extended.sol";
 
-
 contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
+    using SafeMath for uint256;
 
     KyberNetworkInterface public kyber;
     address public exchangeAdapterManager;

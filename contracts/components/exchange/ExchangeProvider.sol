@@ -1,5 +1,6 @@
 pragma solidity 0.4.24;
 
+import "zeppelin-solidity/contracts/math/SafeMath.sol"
 import "../../interfaces/implementations/OlympusExchangeAdapterManagerInterface.sol";
 import "../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../interfaces/implementations/OlympusExchangeInterface.sol";
@@ -7,6 +8,7 @@ import "../../libs/utils.sol";
 
 
 contract ExchangeProvider is OlympusExchangeInterface {
+    using SafeMath for uint256;
     string public name = "OlympusExchangeProvider";
     string public description =
     "Exchange provider of Olympus Labs, which additionally supports buy\and sellTokens for multiple tokens at the same time";
@@ -108,7 +110,6 @@ contract ExchangeProvider is OlympusExchangeInterface {
                 return false;
             }
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
-            //TODO need to add refund if transaction failed
             _tokens[i].transferFrom(msg.sender, address(adapter), _amounts[i]);
             require(
                 adapter.sellToken(
