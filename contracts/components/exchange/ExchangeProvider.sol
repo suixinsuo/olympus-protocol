@@ -4,19 +4,21 @@ import "../../interfaces/implementations/OlympusExchangeAdapterManagerInterface.
 import "../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../../libs/utils.sol";
+import "../../components/base/FeeCharger.sol";
 
-
-contract ExchangeProvider is OlympusExchangeInterface {
+contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     string public name = "OlympusExchangeProvider";
     string public description =
     "Exchange provider of Olympus Labs, which additionally supports buy\and sellTokens for multiple tokens at the same time";
     string public category = "exchange";
     string public version = "v1.0";
+    ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     OlympusExchangeAdapterManagerInterface private exchangeAdapterManager;
 
     constructor(address _exchangeManager) public {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
+        feeMode = FeeMode.ByTransactionAmount;
     }
 
     function setExchangeAdapterManager(address _exchangeManager) external onlyOwner {
@@ -30,11 +32,16 @@ contract ExchangeProvider is OlympusExchangeInterface {
         ) external payable returns(bool success) {
 
         require(msg.value == _amount);
+
         OlympusExchangeAdapterInterface adapter;
+        // solhint-disable-next-line
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, true) : _exchangeId;
         if(exchangeId == 0){
             return false;
         }
+        uint motPrice;
+        (motPrice,) = exchangeAdapterManager.getPrice(ETH, MOT, msg.value, exchangeId);
+        require(payFee(msg.value * motPrice));        
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         require(
             adapter.buyToken.value(msg.value)(

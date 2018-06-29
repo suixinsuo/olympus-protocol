@@ -2,8 +2,10 @@ pragma solidity 0.4.24;
 
 import "../../interfaces/WithdrawInterface.sol";
 import "../../interfaces/DerivativeInterface.sol";
+import "../../components/base/FeeCharger.sol";
 
-contract SimpleWithdraw is WithdrawInterface {
+
+contract SimpleWithdraw is FeeCharger, WithdrawInterface {
 
     struct ContractInfo {
         address[]  userRequests;
@@ -28,7 +30,7 @@ contract SimpleWithdraw is WithdrawInterface {
     }
 
     function withdraw(address _requester) external returns(uint eth, uint tokens) {
-
+        require(payFee(0));
         if(contracts[msg.sender].withdrawPending[_requester] == false) {return(0,0);}
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
