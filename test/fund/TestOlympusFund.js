@@ -186,7 +186,7 @@ contract("Fund", accounts => {
 
       // Withdraw
       const ownerBalanceInital = await calc.ethBalance(accounts[0]);
-      await fund.witdrawFee(web3.toWei(0.2, "ether"));
+      await fund.withdrawFee(web3.toWei(0.2, "ether"));
 
       assert(
         calc.inRange(
@@ -336,6 +336,7 @@ contract("Fund", accounts => {
         )
       );
       const amounts = [web3.toWei(0.9, "ether"), web3.toWei(0.9, "ether")];
+
       await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
 
       for (let i = 0; i < tokens.length; i++) {
