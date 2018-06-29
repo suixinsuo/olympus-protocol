@@ -1,11 +1,11 @@
 pragma solidity 0.4.24;
 
-import "./MockDerivative.sol";
-import "../../interfaces/IndexInterface.sol";
-import "../../interfaces/implementations/OlympusExchangeInterface.sol";
+import "../../contracts/components/mocks/MockDerivative.sol";
+import "../../contracts/interfaces/IndexInterface.sol";
+import "../../contracts/interfaces/implementations/OlympusExchangeInterface.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../interfaces/MarketplaceInterface.sol";
-import "../../interfaces/RebalanceInterface.sol";
+import "../../contracts/interfaces/MarketplaceInterface.sol";
+import "../../contracts/interfaces/RebalanceInterface.sol";
 
 contract MockRebalanceIndex is IndexInterface, MockDerivative {
     using SafeMath for uint256;
@@ -33,6 +33,22 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
     function () public payable {
 
     }
+
+    function buyToken
+        (
+        ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
+        ) external payable returns(bool success){
+          return exchangeProvider.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
+        }
+
+
+    function sellToken
+        (
+        ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
+        ) external returns(bool success){
+            _token.approve(address(exchangeProvider), _amount);
+          return exchangeProvider.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
+        }    
 
     function rebalance() public returns (bool success) {
         address[] memory tokensToSell;
