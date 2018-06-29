@@ -39,9 +39,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         if(exchangeId == 0){
             return false;
         }
-        uint motPrice;
-        (motPrice,) = exchangeAdapterManager.getPrice(ETH, MOT, msg.value, exchangeId);
-        require(payFee(msg.value * motPrice));        
+
+        require(payFee(msg.value * getMotPrice(exchangeId)));        
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         require(
             adapter.buyToken.value(msg.value)(
@@ -64,6 +63,11 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         if(exchangeId == 0){
             return false;
         }
+
+        uint tokenPrice;
+        (tokenPrice,) = exchangeAdapterManager.getPrice(_token, ETH, _amount, exchangeId);
+        require(payFee(tokenPrice * _amount * getMotPrice(exchangeId)));           
+
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         _token.transferFrom(msg.sender, address(adapter), _amount);
 
@@ -77,18 +81,26 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         return true;
     }
 
+    function getMotPrice(bytes32 _exchangeId) private view returns (uint price) {
+        (price,) = exchangeAdapterManager.getPrice(ETH, MOT, msg.value, _exchangeId);
+    }
+
     function buyTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external payable returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
+        
+        require(payFee(msg.value * getMotPrice(_exchangeId)));            
+
         for (uint i = 0; i < _tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == "" ?
             exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId;
             if(exchangeId == 0){
                 return false;
             }
+
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             require(
                 adapter.buyToken.value(_amounts[i])(
@@ -108,12 +120,18 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         ) external returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
 
+        uint[] memory prices = new uint[](3); // 0 tokenPrice, 1 MOT price, 3 totalValueInMOT
         for (uint i = 0; i < _tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == bytes32("") ?
             exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], false) : _exchangeId;
             if(exchangeId == 0){
                 return false;
             }
+
+            (prices[0],) = exchangeAdapterManager.getPrice(_tokens[i], ETH, _amounts[i], exchangeId);
+            (prices[1],) = exchangeAdapterManager.getPrice(ETH, MOT, prices[0] * _amounts[i], exchangeId);
+            prices[2] += prices[0] * _amounts[i] * prices[1];  
+
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             //TODO need to add refund if transaction failed
             _tokens[i].transferFrom(msg.sender, address(adapter), _amounts[i]);
@@ -125,6 +143,9 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
                     _depositAddress)
             );
         }
+
+        require(payFee(prices[2]));
+
         return true;
     }
 
