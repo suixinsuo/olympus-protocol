@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "zeppelin-solidity/contracts/math/SafeMath.sol"
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../interfaces/implementations/BancorConverterInterface.sol";
 import "../../../libs/ERC20Extended.sol";
