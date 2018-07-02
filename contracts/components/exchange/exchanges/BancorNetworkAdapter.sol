@@ -137,12 +137,12 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         require(msg.value == _amount, "Amount of Ether sent is not the same as the amount parameter");
         ERC20Extended[] memory path = getPath(_token, true);
 
-        BancorConverterInterface bancorConverter = tokenToConverter[_token];
-        if(address(bancorConverter) == 0x0){
+        BancorConverterInterface BNTConverter = tokenToConverter[address(bancorToken)];
+        if(address(BNTConverter) == 0x0){
             revert("Token not supported");
         }
         uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, true);
-        uint returnedAmountOfTokens = bancorConverter.quickConvert.value(_amount)(path,_amount,minimumReturn);
+        uint returnedAmountOfTokens = BNTConverter.quickConvert.value(_amount)(path,_amount,minimumReturn);
         require(returnedAmountOfTokens > 0, "BancorConverter did not return any tokens");
         require(_token.transfer(_depositAddress, returnedAmountOfTokens), "Token transfer failure");
         return true;
