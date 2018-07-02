@@ -77,12 +77,12 @@ contract ExchangeProvider is OlympusExchangeInterface {
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external payable returns(bool success) {
-        require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length);
+        require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         uint totalValue;
         for(uint i = 0; i < _amounts.length; i++ ) {
             totalValue += _amounts[i];
         }
-        require(totalValue == msg.value);
+        require(totalValue == msg.value, "msg.value is not the same as total value");
 
         OlympusExchangeAdapterInterface adapter;
 
