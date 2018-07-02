@@ -35,7 +35,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
         OlympusExchangeAdapterInterface adapter;
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, true) : _exchangeId;
         if(exchangeId == 0){
-            return false;
+            revert("No suitable exchange found");
         }
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         require(
@@ -57,9 +57,11 @@ contract ExchangeProvider is OlympusExchangeInterface {
         OlympusExchangeAdapterInterface adapter;
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, false) : _exchangeId;
         if(exchangeId == 0){
-            return false;
+            revert("No suitable exchange found");
         }
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
+        require(_token.allowance(msg.sender, address(this)) >= _amount, "Not enough tokens approved");
+
         _token.transferFrom(msg.sender, address(adapter), _amount);
 
         require(
@@ -113,9 +115,10 @@ contract ExchangeProvider is OlympusExchangeInterface {
             bytes32 exchangeId = _exchangeId == bytes32("") ?
             exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], false) : _exchangeId;
             if(exchangeId == 0){
-                return false;
+                revert("No suitable exchange found");
             }
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
+            require(_tokens[i].allowance(msg.sender, address(this)) >= _amounts[i], "Not enough tokens approved");
             _tokens[i].transferFrom(msg.sender, address(adapter), _amounts[i]);
             require(
                 adapter.sellToken(
