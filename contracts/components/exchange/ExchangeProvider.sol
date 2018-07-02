@@ -79,22 +79,20 @@ contract ExchangeProvider is OlympusExchangeInterface {
         ) external payable returns(bool success) {
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         uint totalValue;
-        for(uint i = 0; i < _amounts.length; i++ ) {
+        uint i;
+        for(i = 0; i < _amounts.length; i++ ) {
             totalValue += _amounts[i];
         }
         require(totalValue == msg.value, "msg.value is not the same as total value");
 
-        OlympusExchangeAdapterInterface adapter;
-
-        for (uint i = 0; i < _tokens.length; i++ ) {
+        for (i = 0; i < _tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == "" ?
             exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId;
-            if(exchangeId == 0){
-                return false;
+            if (exchangeId == 0) {
+                revert("No suitable exchange found");
             }
-            adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             require(
-                adapter.buyToken.value(_amounts[i])(
+                OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId)).buyToken.value(_amounts[i])(
                     _tokens[i],
                     _amounts[i],
                     _minimumRates[i],
