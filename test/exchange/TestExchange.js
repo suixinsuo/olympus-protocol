@@ -49,7 +49,7 @@ contract("ExchangeProvider", accounts => {
           assert.ok(_exchangeAdapterManager, "ExchangeAdapterManager contract is not deployed.");
           assert.ok(_mockToken, "MockToken contract is not deployed.");
           assert.ok(_exchangeProvider, "ExchangeProvider contract is not deployed.");
-          _exchangeProvider.setMotAddress(_mockToken.address);
+          await _exchangeProvider.setMotAddress(_mockToken.address);
           tokens = await _mockKyberNetwork.supportedTokens();
           return (exchangeProvider = _exchangeProvider);
         }

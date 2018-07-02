@@ -2,18 +2,20 @@ pragma solidity 0.4.24;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../interfaces/DerivativeInterface.sol";
+import "../../interfaces/FeeChargerInterface.sol";
 import "../../libs/ERC20Extended.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 
-contract FeeCharger is Ownable {
+contract FeeCharger is Ownable, FeeChargerInterface {
+    using SafeMath for uint256;
+
     FeeMode public feeMode = FeeMode.ByCalls;
     uint public feePercentage = 0;
     uint public feeAmount = 0;
     uint constant public FEE_CHARGER_DENOMINATOR = 10000;
     address private olympusWallet = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
-    // TODO: change this to mainnet MOT address before deployment.
-    // solhint-disable-next-line
-    ERC20Extended internal MOT = ERC20Extended(0x41Dee9F481a1d2AA74a3f1d0958C1dB6107c686A);
+    bool private isPaying = false;
 
     event LogU(string msg, uint value);
 
@@ -27,8 +29,9 @@ contract FeeCharger is Ownable {
       uint fee = calculateFee(_amount);
       emit LogU("Fee", fee);
       DerivativeInterface derivative = DerivativeInterface(msg.sender);
-      require(MOT.balanceOf(derivative.owner()) >= fee);
-      require(MOT.allowance(owner, olympusWallet) >= _amount);
+      // take money directly from the derivative.
+      require(MOT.balanceOf(address(derivative)) >= fee);
+    //   require(MOT.allowance(derivative.owner(), address(derivative)) >= _amount);
       _;
     }
 
@@ -87,21 +90,23 @@ contract FeeCharger is Ownable {
      * @return boolean whether or not the fee is paid.
      */
      
-    function payFee(uint _amountInMOT) internal feePayable(_amountInMOT) returns (bool success) {
+    function payFee(uint _amountInMOT) internal feePayable(calculateFee(_amountInMOT)) returns (bool success) {
         uint amount = calculateFee(_amountInMOT);
         emit LogU("Amount", amount);
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
-        address owner = derivative.owner();        
+        // address owner = derivative.owner();    
 
         uint balanceBefore = MOT.balanceOf(olympusWallet);
         emit LogU("balanceBefore", balanceBefore);
-        MOT.transferFrom(owner, olympusWallet, amount);
+        require(!isPaying);
+        isPaying = true;
+        MOT.transferFrom(address(derivative), olympusWallet, amount);
+        isPaying = false;
         uint balanceAfter = MOT.balanceOf(olympusWallet);
         emit LogU("balanceAfter", balanceAfter);
 
-
-        require(balanceAfter == balanceBefore + amount);   
+        // require(balanceAfter == balanceBefore + amount);   
         return true;     
     }        
 }
