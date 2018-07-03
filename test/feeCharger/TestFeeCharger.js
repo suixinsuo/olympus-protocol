@@ -179,6 +179,147 @@ contract("FeeCharger", accounts => {
       assert.ok(false, "should not revert");
     }
   });
-});
 
-// assert.isAbove((await exchange.feePercentage()).toNumber(), 0);
+  it("should charge MOT fee per tx and send to accounts[1]// buy token", async () => {
+    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+    assert.isAbove(
+      (await mockMOT.balanceOf(accounts[0])).toNumber(),
+      0,
+      "accounts[0] should have MOT."
+    );
+
+    const amount = 10 ** 18; // 1 eth
+    const amountInMot = (amount * expectedRate) / 10 ** 18;
+    const feePercentage = (await exchange.feePercentage()).toNumber();
+
+    const feeAmount = (amountInMot * feePercentage) / (await exchange.FEE_CHARGER_DENOMINATOR());
+    assert.isAbove(feePercentage, 0);
+    assert.isAbove(feeAmount, 0, "fee amout should be greater than zero.");
+
+    // approve first.
+    const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
+    assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
+
+    let result;
+    try {
+      result = await mockFund.buyToken(tokens[0], amount, expectedRate, {
+        value: amount
+      });
+      assert.ok(result, "should be able to call by tx");
+      // accounts[1] should have MOT.
+      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), feeAmount + account1Balance);
+    } catch (e) {
+      console.warn(e);
+      assert.ok(false, "should not revert");
+    }
+  });
+
+  it("should charge MOT fee per tx and send to accounts[1]// buy tokens", async () => {
+    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+    assert.isAbove(
+      (await mockMOT.balanceOf(accounts[0])).toNumber(),
+      0,
+      "accounts[0] should have MOT."
+    );
+
+    const amount = 10 ** 18; // 1 eth
+    const amountInMot = (amount * expectedRate) / 10 ** 18;
+    const feePercentage = (await exchange.feePercentage()).toNumber();
+
+    const feeAmount = (amountInMot * feePercentage) / (await exchange.FEE_CHARGER_DENOMINATOR());
+    assert.isAbove(feePercentage, 0);
+    assert.isAbove(feeAmount, 0, "fee amout should be greater than zero.");
+
+    // approve first.
+    const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
+    assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
+
+    let result;
+    try {
+      result = await mockFund.buyTokens(
+        tokens,
+        [amount / 2, amount / 2],
+        [expectedRate, expectedRate],
+        {
+          value: amount
+        }
+      );
+      assert.ok(result, "should be able to call by tx");
+      // accounts[1] should have MOT.
+      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), feeAmount + account1Balance);
+    } catch (e) {
+      console.warn(e);
+      assert.ok(false, "should not revert");
+    }
+  });
+
+  it("should charge MOT fee per tx and send to accounts[1]// sell token", async () => {
+    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+    assert.isAbove(
+      (await mockMOT.balanceOf(accounts[0])).toNumber(),
+      0,
+      "accounts[0] should have MOT."
+    );
+
+    const amount = 1000 * 10 ** 18; // 1000 tokens
+    const amountInWei = (amount * expectedRateToSell) / 10 ** 18;
+    const amountInMot = (amountInWei * expectedRate) / 10 ** 18;
+    const feePercentage = (await exchange.feePercentage()).toNumber();
+
+    const feeAmount = (amountInMot * feePercentage) / (await exchange.FEE_CHARGER_DENOMINATOR());
+    assert.isAbove(feePercentage, 0);
+    assert.isAbove(feeAmount, 0, "fee amout should be greater than zero.");
+
+    // approve first.
+    const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
+    assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
+
+    let result;
+    try {
+      result = await mockFund.sellToken(tokens[0], amount, expectedRateToSell);
+      assert.ok(result, "should be able to call by tx");
+      // accounts[1] should have MOT.
+      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), account1Balance + feeAmount);
+    } catch (e) {
+      console.warn(e);
+      assert.ok(false, "should not revert");
+    }
+  });
+
+  it("should charge MOT fee per tx and send to accounts[1]// sell tokens", async () => {
+    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+    assert.isAbove(
+      (await mockMOT.balanceOf(accounts[0])).toNumber(),
+      0,
+      "accounts[0] should have MOT."
+    );
+
+    const amount = 1000 * 10 ** 18; // 1000 tokens
+    const amountInWei = (amount * expectedRateToSell) / 10 ** 18;
+    const amountInMot = (amountInWei * expectedRate) / 10 ** 18;
+    const feePercentage = (await exchange.feePercentage()).toNumber();
+
+    const feeAmount = (amountInMot * feePercentage) / (await exchange.FEE_CHARGER_DENOMINATOR());
+    assert.isAbove(feePercentage, 0);
+    assert.isAbove(feeAmount, 0, "fee amout should be greater than zero.");
+
+    // approve first.
+    const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
+    assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
+
+    let result;
+    try {
+      result = await mockFund.sellTokens(
+        tokens,
+        [amount / 2, amount / 2],
+        [expectedRateToSell, expectedRateToSell]
+      );
+      assert.ok(result, "should be able to call by tx");
+      // accounts[1] should have MOT.
+      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), account1Balance + feeAmount);
+    } catch (e) {
+      console.warn(e);
+      assert.ok(false, "should not revert");
+    }
+  });
+});

@@ -47,11 +47,12 @@ contract MockKyberNetwork {
         } else {
             for (uint i = 0; i < supportedTokens.length; i++){
                 if(address(supportedTokens[i].token) == address(dest)){
-                    return (supportedTokens[i].slippageRate,supportedTokens[i].slippageRate);
-                }
+                    return (supportedTokens[i].slippageRate, supportedTokens[i].slippageRate);
+                } 
             }
         }
-        return (0, 0);
+
+        return (10 ** 18 * 1000, 10 ** 18 * 1000);
     }
 
     function trade(

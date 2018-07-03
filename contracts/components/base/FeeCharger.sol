@@ -25,13 +25,13 @@ contract FeeCharger is Ownable, FeeChargerInterface {
     }
 
     modifier feePayable(uint _amount) {
-      emit LogU("Amount", _amount);
+      emit LogU("Amount in modifier", _amount);
       uint fee = calculateFee(_amount);
-      emit LogU("Fee", fee);
+      emit LogU("Fee amount in modifier", fee);
       DerivativeInterface derivative = DerivativeInterface(msg.sender);
       // take money directly from the derivative.
       require(MOT.balanceOf(address(derivative)) >= fee);
-    //   require(MOT.allowance(derivative.owner(), address(derivative)) >= _amount);
+      require(MOT.allowance(address(derivative), address(this)) >= fee);
       _;
     }
 
@@ -91,8 +91,8 @@ contract FeeCharger is Ownable, FeeChargerInterface {
      */
      
     function payFee(uint _amountInMOT) internal feePayable(calculateFee(_amountInMOT)) returns (bool success) {
-        uint amount = calculateFee(_amountInMOT);
-        emit LogU("Amount", amount);
+        uint _feeAmount = calculateFee(_amountInMOT);
+        emit LogU("Amount in payFee", _feeAmount);
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         // address owner = derivative.owner();    
@@ -101,12 +101,12 @@ contract FeeCharger is Ownable, FeeChargerInterface {
         emit LogU("balanceBefore", balanceBefore);
         require(!isPaying);
         isPaying = true;
-        MOT.transferFrom(address(derivative), olympusWallet, amount);
+        MOT.transferFrom(address(derivative), olympusWallet, _feeAmount);
         isPaying = false;
         uint balanceAfter = MOT.balanceOf(olympusWallet);
         emit LogU("balanceAfter", balanceAfter);
 
-        // require(balanceAfter == balanceBefore + amount);   
+        require(balanceAfter == balanceBefore + _feeAmount);   
         return true;     
     }        
 }
