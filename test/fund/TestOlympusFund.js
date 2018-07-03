@@ -18,9 +18,9 @@ const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
 // Constants
 
 const ethToken = '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-let DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
-let DerivativeType = { Index: 0, Fund: 1 };
-let WhitelistType = { Investment: 0, Maintenance: 1 }
+const DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
+const DerivativeType = { Index: 0, Fund: 1 };
+const WhitelistType = { Investment: 0, Maintenance: 1 }
 
 const fundData = {
   name: 'OlympusFund',
@@ -60,13 +60,9 @@ contract('Fund', (accounts) => {
     );
     assert.equal((await fund.status()).toNumber(), 0); // new
 
-    try {
-      await fund.changeStatus(DerivativeStatus.Active);
-      assert(false, 'Shall not be able to from New to other status')
-    } catch (e) {
-      assert.equal((await fund.status()).toNumber(), DerivativeStatus.New, 'Must be still new');
+    calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), 'Must be still new');
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.New, 'Must be still new');
 
-    }
 
     await fund.initialize(
       Marketplace.address,
@@ -91,7 +87,7 @@ contract('Fund', (accounts) => {
   });
 
   it("Cant call initialize twice ", async () => log.catch(async () => {
-    try {
+    calc.assertReverts(async () => {
       await fund.initialize(
         Marketplace.address,
         ExchangeProvider.address,
@@ -104,22 +100,14 @@ contract('Fund', (accounts) => {
         0,
         { value: web3.toWei(fundData.ethDeposit, 'ether') }
       );
-      assert(false, 'Shall revert');
-
-    } catch (e) {
-      assert(true, 'Shall revert');
-    }
+    }, 'Shall revert')
   }));
 
 
   it("Can change market provider and register in the new marketplace ", async () => log.catch(async () => {
     // Cant register without changing of market provider
-    try {
-      await fund.registerInNewMarketplace();
-      assert(false, 'Shall not register');
-    } catch (e) {
-      assert(true, 'Shall not register');
-    }
+    calc.assertReverts(async () => await fund.registerInNewMarketplace(), 'Shall not register');
+
     // Set new market place
     const newMarket = await Marketplace.new();
     await fund.setComponentExternal(await fund.MARKET(), newMarket.address);
@@ -195,12 +183,8 @@ contract('Fund', (accounts) => {
     let tx;
     // Invest Not allowed
     await fund.enableWhitelist(WhitelistType.Investment);
-    try {
-      await fund.invest({ value: web3.toWei(1, 'ether'), from: investorA });
-      assert(false, 'Is not allowed to invest');
-    } catch (e) {
-      assert(true, 'Is not allowed to invest');
-    }
+    calc.assertReverts(async () => await fund.invest({ value: web3.toWei(1, 'ether'), from: investorA }), 'Is not allowed to invest');
+
     // invest allowed
     await fund.setAllowed([investorA, investorB], WhitelistType.Investment, true);
     await fund.invest({ value: web3.toWei(1, 'ether'), from: investorA });
@@ -208,12 +192,8 @@ contract('Fund', (accounts) => {
 
     // Withdraw not allowed
     await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
-    try {
-      await fund.requestWithdraw(toToken(1), { from: investorA });
-      assert(false, 'Is not allowed to request');
-    } catch (e) {
-      assert(true, 'Is not allowed to request');
-    }
+    calc.assertReverts(async () => await fund.requestWithdraw(toToken(1), { from: investorA }), 'Is not allowed to request');
+
     // Request allowed
     await fund.setAllowed([investorA, investorB], WhitelistType.Investment, true);
     await fund.requestWithdraw(toToken(1), { from: investorA });
@@ -413,19 +393,13 @@ contract('Fund', (accounts) => {
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, ' Status is paused');
     await fund.changeStatus(DerivativeStatus.Active);
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, 'Status Is active');
-    try {
-      await fund.changeStatus(DerivativeStatus.New);
-      assert(false, 'Shall not be able to change to New')
-    } catch (e) {
-      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, ' Cant change to new, shall keep being previous');
-    }
 
-    try {
-      await fund.changeStatus(DerivativeStatus.Closed);
-      assert(false, 'Shall not be able to change to Close')
-    } catch (e) {
-      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, ' Cant change to close, shall keep being previous');
-    }
+    calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.New), 'Shall not be able to change to New');
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, ' Cant change to new, shall keep being previous');
+
+    calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Closed), 'Shall not be able to change to Close');
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, ' Cant change to close, shall keep being previous');
+
 
   }));
 
@@ -445,17 +419,15 @@ contract('Fund', (accounts) => {
 
     await fund.close();
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Status is closed');
+
     let fundTokensAndBalance = await fund.getTokens();
     assert.equal((fundTokensAndBalance[1][0]).toNumber(), 0, 'token amount == 0');
     assert.equal((fundTokensAndBalance[1][1]).toNumber(), 0, 'token amount == 0');
-    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'ETH balance returned');
 
-    try {
-      await fund.changeStatus(DerivativeStatus.Active);
-      assert(false, 'Shall not be able to change from close')
-    } catch (e) {
-      assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Cant change to active, shall keep being closed');
-    }
+    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, 'ether'), 'ETH balance returned');
+    calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), 'Shall not be able to change from close');
+    assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, ' Cant change to active, shall keep being closed');
+
 
   }));
 

@@ -5,6 +5,7 @@ import "../interfaces/IndexInterface.sol";
 import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/RebalanceInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
+import "../interfaces/WhitelistInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
@@ -23,6 +24,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     string public constant FEE = "FeeProvider";
     string public constant REIMBURSABLE = "Reimbursable";
     string public constant WITHDRAW = "WithdrawProvider";
+
+    enum WhitelistKeys { Investment, Maintenance }
 
     event ChangeStatus(DerivativeStatus status);
     event Invested(address user, uint amount);
@@ -107,8 +110,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function changeStatus(DerivativeStatus _status) public returns(bool) {
-        require(_status != DerivativeStatus.New && status != DerivativeStatus.New &&_status != DerivativeStatus.Closed);
-        require(status != DerivativeStatus.Closed&&_status != DerivativeStatus.Closed);
+        require(_status != DerivativeStatus.New && status != DerivativeStatus.New && _status != DerivativeStatus.Closed);
+        require(status != DerivativeStatus.Closed && _status != DerivativeStatus.Closed);
 
         status = _status;
         emit ChangeStatus(status);
@@ -125,7 +128,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // ----------------------------- DERIVATIVE -----------------------------
 
-    function invest() public payable returns(bool) {
+    function invest() public payable whitelisted(WhitelistKeys.Investment) returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
          // Current value is already added in the balance, reduce it
@@ -211,7 +214,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- WITHDRAW -----------------------------
-    function requestWithdraw(uint amount) external {
+    function requestWithdraw(uint amount) external whitelisted(WhitelistKeys.Investment) {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -219,7 +222,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         maxTransfers = _maxTransfers;
     }
 
-    function withdraw() external returns(bool) {
+    function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
@@ -310,11 +313,45 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
-     }
+    }
 
     // ----------------------------- REBALANCE -----------------------------
 
-    function rebalance() public returns (bool success) {
-        return false;
+    function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool success) {
+        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+        // CODE HERE
+        reimburse();
+        return true;
     }
+
+    // ----------------------------- WHITELIST -----------------------------
+    // If whitelist is disabled, that will become onlyOwner
+    modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
+        require(
+            msg.sender == owner ||
+            WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender)
+        );
+        _;
+    }
+    // If whitelist is disabled, anyone can do this
+    modifier whitelisted(WhitelistKeys _key) {
+        require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
+        _;
+    }
+
+    function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
+        WhitelistInterface(getComponentByName(WHITELIST)).enable(uint8(_key));
+        return true;
+    }
+
+    function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
+        WhitelistInterface(getComponentByName(WHITELIST)).disable(uint8(_key));
+        return true;
+    }
+
+    function setAllowed(address[] accounts, WhitelistKeys _key,  bool allowed) onlyOwner public returns(bool){
+        WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts,uint8(_key), allowed);
+        return true;
+    }
+
 }
