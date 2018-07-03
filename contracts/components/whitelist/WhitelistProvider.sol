@@ -1,12 +1,12 @@
 pragma solidity ^0.4.17;
 
-import "../../interfaces/WhiteListInterface.sol";
+import "../../interfaces/WhitelistInterface.sol";
 
-contract WhitelistProvider is WhiteListInterface {
+contract WhitelistProvider is WhitelistInterface {
 
-    string public name = "WhiteList Provider";
+    string public name = "Whitelist Provider";
     string public description = "Provides whitelist based information";
-    string public category="WhiteList";
+    string public category="Whitelist";
     string public version="1.0";
 
     function enable(uint8 _key) external {

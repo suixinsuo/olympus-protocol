@@ -3,7 +3,7 @@ pragma solidity 0.4.24;
 import "./ComponentInterface.sol";
 
 
-contract WhiteListInterface is ComponentInterface {
+contract WhitelistInterface is ComponentInterface {
 
     // sender -> category -> user -> allowed
     mapping (address => mapping(uint8 => mapping(address => bool))) public whitelist;

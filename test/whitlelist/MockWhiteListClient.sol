@@ -1,37 +1,37 @@
 pragma solidity 0.4.24;
 
 import "../../contracts/components/mocks/MockDerivative.sol";
-import "../../contracts/interfaces/WhiteListInterface.sol";
+import "../../contracts/interfaces/WhitelistInterface.sol";
 
-contract MockWhiteListClient is MockDerivative {
+contract MockWhitelistClient is MockDerivative {
 
     uint8 public constant CATEGORY_BALANCE = 1;
 
-    WhiteListInterface whiteListProvider;
+    WhitelistInterface whitelistProvider;
 
     mapping (address => uint) public balances; // for testing the whitelist
 
     modifier onlyWhitelistedBalance {
-        require(whiteListProvider.isAllowed(CATEGORY_BALANCE, msg.sender));
+        require(whitelistProvider.isAllowed(CATEGORY_BALANCE, msg.sender));
         _;
     }
 
-    constructor (WhiteListInterface _whiteListProvider) public {
-        whiteListProvider = _whiteListProvider;
+    constructor (WhitelistInterface _whitelistProvider) public {
+        whitelistProvider = _whitelistProvider;
     }
 
-    function enableWhiteList() external onlyOwner returns(bool) {
-        whiteListProvider.enable(CATEGORY_BALANCE);
+    function enableWhitelist() external onlyOwner returns(bool) {
+        whitelistProvider.enable(CATEGORY_BALANCE);
         return true;
     }
 
-    function disableWhiteList() external onlyOwner returns(bool) {
-        whiteListProvider.disable(CATEGORY_BALANCE);
+    function disableWhitelist() external onlyOwner returns(bool) {
+        whitelistProvider.disable(CATEGORY_BALANCE);
         return true;
     }
 
     function setAllowed(address[] accounts,  bool allowed) onlyOwner public returns(bool){
-        whiteListProvider.setAllowed(accounts,CATEGORY_BALANCE, allowed);
+        whitelistProvider.setAllowed(accounts,CATEGORY_BALANCE, allowed);
         return true;
     }
 
