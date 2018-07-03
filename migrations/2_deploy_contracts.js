@@ -20,7 +20,6 @@ let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockIndex = artifacts.require("MockIndex");
-// let MockWhitelistClient = artifacts.require("MockWhitelistClient");
 
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
