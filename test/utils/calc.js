@@ -14,6 +14,14 @@ module.exports = {
   getEvent: (tx, name) => {
     return tx.logs.map((log) => ({ event: log.event, args: log.args })).find((event) => event.event === name);
   },
+  assertReverts: async (call, message) => {
+    try {
+      await call();
+      assert(false, message);
+    } catch (e) {
+      assert(true, message);
+    }
+  },
 
   ethToken: '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
 

@@ -172,8 +172,8 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function changeStatus(DerivativeStatus _status) public returns(bool) {
-        require(_status != DerivativeStatus.New && status != DerivativeStatus.New &&_status != DerivativeStatus.Closed);
-        require(status != DerivativeStatus.Closed&&_status != DerivativeStatus.Closed);
+        require(_status != DerivativeStatus.New && status != DerivativeStatus.New && _status != DerivativeStatus.Closed);
+        require(status != DerivativeStatus.Closed && _status != DerivativeStatus.Closed);
         status = _status;
         emit ChangeStatus(status);
         return true;
@@ -351,8 +351,8 @@ contract OlympusFund is FundInterface, Derivative {
     // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
         require(
-            msg.sender == owner
-            || WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender)
+            msg.sender == owner ||
+            WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender)
         );
         _;
     }
