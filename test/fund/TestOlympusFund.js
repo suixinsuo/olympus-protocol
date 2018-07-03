@@ -20,6 +20,7 @@ const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
 const ethToken = '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 let DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
 let DerivativeType = { Index: 0, Fund: 1 };
+let WhitelistType = { Investment: 0, Maintenance: 1 }
 
 const fundData = {
   name: 'OlympusFund',
@@ -187,6 +188,79 @@ contract('Fund', (accounts) => {
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, 'B has withdraw');
 
     await fund.setMaxTransfers(10); // Restore
+
+  }))
+
+  it("Shall be able to invest and request with whitelist enabled", async () => log.catch(async () => {
+    let tx;
+    // Invest Not allowed
+    await fund.enableWhitelist(WhitelistType.Investment);
+    try {
+      await fund.invest({ value: web3.toWei(1, 'ether'), from: investorA });
+      assert(false, 'Is not allowed to invest');
+    } catch (e) {
+      assert(true, 'Is not allowed to invest');
+    }
+    // invest allowed
+    await fund.setAllowed([investorA, investorB], WhitelistType.Investment, true);
+    await fund.invest({ value: web3.toWei(1, 'ether'), from: investorA });
+    await fund.invest({ value: web3.toWei(1, 'ether'), from: investorB });
+
+    // Withdraw not allowed
+    await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
+    try {
+      await fund.requestWithdraw(toToken(1), { from: investorA });
+      assert(false, 'Is not allowed to request');
+    } catch (e) {
+      assert(true, 'Is not allowed to request');
+    }
+    // Request allowed
+    await fund.setAllowed([investorA, investorB], WhitelistType.Investment, true);
+    await fund.requestWithdraw(toToken(1), { from: investorA });
+    await fund.requestWithdraw(toToken(1), { from: investorB });
+
+    tx = await fund.withdraw();
+    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, ' Owner got Reimbursed');
+
+    assert.equal(await fund.withdrawInProgress(), false, ' Withdraw has finished');
+    assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, ' A has withdraw');
+    assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, ' B has withdraw');
+
+    // Reset permissions and disable, so anyone could invest again
+    await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
+    await fund.disableWhitelist(WhitelistType.Investment);
+
+  }))
+
+  // In this scenario, there are not request, but is enought to check the modifier
+  it("Shall be able to execute withdraw while whitelisted", async () => log.catch(async () => {
+    const bot = accounts[4];
+    let tx;
+    // Only owner is allowed
+    try {
+      await fund.withdraw({ form: bot });
+      assert(false, 'Is not allowed to withdraw (only owner)');
+    } catch (e) {
+      assert(true, 'Is not allowed to withdraw (only owner)');
+    }
+    // Withdraw allowed
+    await fund.enableWhitelist(WhitelistType.Maintenance);
+
+    await fund.setAllowed([bot], WhitelistType.Maintenance, true);
+    tx = await fund.withdraw({ form: bot });
+    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, 'Bot got Reimbursed');
+
+    // Permissions removed
+    await fund.setAllowed([bot], WhitelistType.Maintenance, false);
+    try {
+      await fund.withdraw({ form: bot });
+      assert(false, 'Is not allowed to withdraw');
+    } catch (e) {
+      assert(true, 'Is not allowed to withdraw');
+    }
+
+    //Reset
+    await fund.disableWhitelist(WhitelistType.Maintenance);
 
   }))
 
