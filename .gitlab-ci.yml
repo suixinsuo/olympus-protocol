@@ -49,8 +49,7 @@ test:
  stage: test
  tags: [aireach]
  script:
-   - rm -rf build/*
-   - npm test
+    - npm test
 
 deploy:
  stage: deploy
