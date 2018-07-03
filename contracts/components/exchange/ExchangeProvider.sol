@@ -40,7 +40,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             return false;
         }
 
-        require(payFee(msg.value * getMotPrice(exchangeId)));        
+        require(payFee(msg.value * getMotPrice(exchangeId) / 10 ** 18));        
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         require(
             adapter.buyToken.value(msg.value)(
@@ -66,7 +66,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
         uint tokenPrice;
         (tokenPrice,) = exchangeAdapterManager.getPrice(_token, ETH, _amount, exchangeId);
-        require(payFee(tokenPrice * _amount * getMotPrice(exchangeId)));           
+        require(payFee(tokenPrice  * _amount * getMotPrice(exchangeId) / 10 ** _token.decimals() / 10 ** 18));           
 
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         _token.transferFrom(msg.sender, address(adapter), _amount);
@@ -92,7 +92,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         ) external payable returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
         
-        require(payFee(msg.value * getMotPrice(_exchangeId)));            
+        require(payFee(msg.value * getMotPrice(_exchangeId) / 10 ** 18));            
 
         for (uint i = 0; i < _tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == "" ?
@@ -130,7 +130,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
             (prices[0],) = exchangeAdapterManager.getPrice(_tokens[i], ETH, _amounts[i], exchangeId);
             (prices[1],) = exchangeAdapterManager.getPrice(ETH, MOT, prices[0] * _amounts[i], exchangeId);
-            prices[2] += prices[0] * _amounts[i] * prices[1];  
+            prices[2] += prices[0] * _amounts[i] * prices[1] / 10 ** _tokens[i].decimals() / 10 ** 18;  
 
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             //TODO need to add refund if transaction failed
