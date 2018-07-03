@@ -1,41 +1,41 @@
 const log = require('../utils/log');
-const WhiteListProvider = artifacts.require("WhiteListProvider");
-const MockWhiteList = artifacts.require("MockWhiteListClient");
+const WhitelistProvider = artifacts.require("WhitelistProvider");
+const MockWhitelist = artifacts.require("MockWhitelistClient");
 
 const toToken = (amount) => {
   return amount * 10 ** 18;
 }
 
 contract('Whitelist', (accounts) => {
-  let whiteListProvider;
+  let whitelistProvider;
   let mock;
   let balanceCategory;
   const nonAuthorizedUser = accounts[1];
   const authorizedUser = accounts[2];
 
   before('Deploy Whitelist Mock', async () => {
-    whiteListProvider = await WhiteListProvider.deployed();
-    mock = await MockWhiteList.new(whiteListProvider.address);
+    whitelistProvider = await WhitelistProvider.deployed();
+    mock = await MockWhitelist.new(whitelistProvider.address);
     balanceCategory = (await mock.CATEGORY_BALANCE()).toNumber();
   });
 
   it("Shall be able enable and disable", async () => log.catch(async () => {
-    await mock.enableWhiteList();
-    assert.isTrue(await whiteListProvider.enabled.call(mock.address, balanceCategory), 'Provider is enabled');
+    await mock.enableWhitelist();
+    assert.isTrue(await whitelistProvider.enabled.call(mock.address, balanceCategory), 'Provider is enabled');
 
-    await mock.disableWhiteList();
-    assert.isFalse(await whiteListProvider.enabled.call(mock.address, balanceCategory), 'Provider is disabled');
+    await mock.disableWhitelist();
+    assert.isFalse(await whitelistProvider.enabled.call(mock.address, balanceCategory), 'Provider is disabled');
 
-    await mock.enableWhiteList();
-    assert.isTrue(await whiteListProvider.enabled.call(mock.address, balanceCategory), 'Provider is enabled');
+    await mock.enableWhitelist();
+    assert.isTrue(await whitelistProvider.enabled.call(mock.address, balanceCategory), 'Provider is enabled');
   }))
 
   it("Shall be able to allow users", async () => log.catch(async () => {
     await mock.setAllowed([authorizedUser], true);
     await mock.setAllowed([nonAuthorizedUser], false);
 
-    assert.isTrue(await whiteListProvider.whitelist.call(mock.address, balanceCategory, authorizedUser));
-    assert.isFalse(await whiteListProvider.whitelist.call(mock.address, balanceCategory, nonAuthorizedUser));
+    assert.isTrue(await whitelistProvider.whitelist.call(mock.address, balanceCategory, authorizedUser));
+    assert.isFalse(await whitelistProvider.whitelist.call(mock.address, balanceCategory, nonAuthorizedUser));
 
   }));
 
@@ -58,7 +58,7 @@ contract('Whitelist', (accounts) => {
   it("When whitelisted is disabled, everybody can perform action", async () => log.catch(async () => {
 
 
-    await mock.disableWhiteList();
+    await mock.disableWhitelist();
 
     // Whitelisted
     await mock.updateBalance(200, { from: authorizedUser });

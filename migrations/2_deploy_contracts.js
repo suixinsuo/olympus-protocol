@@ -17,10 +17,10 @@ let PercentageFee = artifacts.require("PercentageFee");
 
 const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
-let WhiteListProvider = artifacts.require("WhiteListProvider");
+let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockIndex = artifacts.require("MockIndex");
-// let MockWhiteListClient = artifacts.require("MockWhiteListClient");
+// let MockWhitelistClient = artifacts.require("MockWhitelistClient");
 
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
@@ -43,7 +43,7 @@ function deployWithdraw(deployer, network) {
 
 function deployWhitelist(deployer, network) {
   deployer.deploy([
-    WhiteListProvider,
+    WhitelistProvider,
   ]);
 }
 
@@ -118,7 +118,7 @@ async function deployOlympusFund(deployer, network) {
     MarketplaceProvider,
     PercentageFee,
     Reimbursable,
-    WhiteListProvider,
+    WhitelistProvider,
   ]);
   await deployExchange(deployer, network);
 }
@@ -133,7 +133,7 @@ function deployOnDev(deployer, num) {
       SimpleWithdraw,
       PercentageFee,
       Reimbursable,
-      WhiteListProvider,
+      WhitelistProvider,
     ]);
   }).then(() => {
     return deployExchange(deployer, 'development');
