@@ -15,14 +15,16 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     ERC20Extended public constant bancorToken = ERC20Extended(0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C);
     ERC20Extended public constant bancorETHToken = ERC20Extended(0xc0829421C1d260BD3cB3E0F06cfE2D52db2cE315);
     mapping(address => BancorConverterInterface) public tokenToConverter;
+    mapping(address => address) public tokenToRelay;
 
     bool public adapterEnabled;
 
     constructor (address _exchangeAdapterManager, address[] tokenAddresses,
-    BancorConverterInterface[] converterAddresses) public {
+    BancorConverterInterface[] converterAddresses, address[] relayAddresses) public {
         require(tokenAddresses.length == converterAddresses.length);
         for(uint i = 0; i < tokenAddresses.length; i++){
             tokenToConverter[tokenAddresses[i]] = converterAddresses[i];
+            tokenToRelay[tokenAddresses[i]] = relayAddresses[i];
         }
         exchangeAdapterManager = _exchangeAdapterManager;
         adapterEnabled = true;
@@ -33,11 +35,12 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         _;
     }
 
-    function updateTokenToConverterList(address[] tokenAddresses, BancorConverterInterface[] converterAddresses)
+    function updateTokenToConverterList(address[] tokenAddresses, BancorConverterInterface[] converterAddresses, address[] relayAddresses)
     public onlyOwner returns (bool success) {
         require(tokenAddresses.length == converterAddresses.length);
         for(uint i = 0; i < tokenAddresses.length; i++){
             tokenToConverter[tokenAddresses[i]] = converterAddresses[i];
+            tokenToRelay[tokenAddresses[i]] = relayAddresses[i];
         }
         return true;
     }
@@ -83,17 +86,35 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
 
     function getPath(ERC20Extended _token, bool isBuying) public view returns(ERC20Extended[] tokenPath) {
         BancorConverterInterface bancorConverter = tokenToConverter[_token];
-        uint pathLength = bancorConverter.getQuickBuyPathLength();
-        require(pathLength > 0, "Error with pathLength");
-        ERC20Extended[] memory path = new ERC20Extended[](pathLength);
+        ERC20Extended relayAddress = ERC20Extended(tokenToRelay[_token]);
+        uint pathLength;
+        ERC20Extended[] memory path;
 
-        for (uint i = 0; i < pathLength; i++) {
-            path[i] = bancorConverter.quickBuyPath(isBuying ? i : pathLength - 1 - i);
-        }
         // When buying, the path we get starts with the Ether token address
         // Bancor will automatically convert our ETH sent to the converter into Ether Token
         // For (buying) most relay tokens the path will be something like:
         // ETH address, BNT address, BNT Address, XXX Token Relay Address (e.g. MOTBNT), XXX Token Address (e.g. MOT)
+        if(isBuying){
+            pathLength = bancorConverter.getQuickBuyPathLength();
+            require(pathLength > 0, "Error with pathLength");
+            path = new ERC20Extended[](pathLength);
+
+            for (uint i = 0; i < pathLength; i++) {
+                path[i] = bancorConverter.quickBuyPath(i);
+            }
+            return path;
+        }
+
+        // Is selling
+        path = new ERC20Extended[](7);
+        path[0] = _token;               // ERC20 Token to sell
+        path[1] = relayAddress;        // Relay address (automatically converted to converter address)
+        path[2] = relayAddress;        // Relay address (used as "to" token)
+        path[3] = relayAddress;        // Relay address (used as "from" token)
+        path[4] = bancorToken;          // BNT Smart token address, as converter
+        path[5] = bancorToken;          // BNT Smart token address, as "to" and "from" token
+        path[6] = bancorETHToken;       // The Bancor ETH token, this will signal we want our return in ETH
+
         return path;
     }
 
