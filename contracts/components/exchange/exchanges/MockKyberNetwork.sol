@@ -36,7 +36,7 @@ contract MockKyberNetwork {
     function getExpectedRate(ERC20Extended src, ERC20Extended dest, uint srcQty) external view
     returns (uint expectedRate, uint slippageRate)
     {
-        return _getExpectedRate(src,dest,srcQty);
+        return _getExpectedRate(src, dest, srcQty);
     }
 
     function _getExpectedRate(ERC20Extended /*src*/, ERC20Extended dest, uint) private view
