@@ -46,6 +46,7 @@ contract("Fund", accounts => {
   let asyncWithdraw;
   let riskControl;
   let percentageFee;
+  let whitelist;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -60,6 +61,7 @@ contract("Fund", accounts => {
     asyncWithdraw = await AsyncWithdraw.deployed();
     riskControl = await RiskControl.deployed();
     percentageFee = await PercentageFee.deployed();
+    whitelist = await Whitelist.deployed();
 
     fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
@@ -70,6 +72,7 @@ contract("Fund", accounts => {
     await asyncWithdraw.setMotAddress(mockMOT.address);
     await riskControl.setMotAddress(mockMOT.address);
     await percentageFee.setMotAddress(mockMOT.address);
+    await whitelist.setMotAddress(mockMOT.address);
 
     await fund.initialize(
       Marketplace.address,
