@@ -30,7 +30,6 @@ contract OlympusExchangeAdapterInterface is Ownable {
     function disable() external returns(bool);
     function isEnabled() external view returns (bool success);
 
-    function configAdapter(KyberNetworkInterface _kyber, address _walletId) external returns(bool success);
     function setExchangeDetails(bytes32 _id, bytes32 _name) external returns(bool success);
     function getExchangeDetails() external view returns(bytes32 _name, bool _enabled);
 

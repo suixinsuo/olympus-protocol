@@ -1,10 +1,11 @@
 pragma solidity 0.4.24;
 
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../libs/ERC20Extended.sol";
 
-
 contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
+    using SafeMath for uint256;
 
     KyberNetworkInterface public kyber;
     address public exchangeAdapterManager;
@@ -116,6 +117,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
     function sellToken(ERC20Extended _token, uint _amount, uint _minimumRate, address _depositAddress)
     external returns(bool success)
     {
+        _token.approve(address(kyber), 0);
         _token.approve(address(kyber), _amount);
         uint slippageRate;
         (,slippageRate) = kyber.getExpectedRate(_token, ETH_TOKEN_ADDRESS, _amount);
