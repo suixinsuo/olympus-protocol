@@ -26,11 +26,6 @@ contract ExchangeProvider is OlympusExchangeInterface {
         _;
     }
 
-    modifier checkArrayLengths(address[] _tokens, uint[] _amounts, uint[] _minimumRates) {
-        require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length);
-        _;
-    }
-
     function setExchangeAdapterManager(address _exchangeManager) external onlyOwner {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
     }
@@ -87,7 +82,8 @@ contract ExchangeProvider is OlympusExchangeInterface {
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
-        ) checkArrayLengths(_tokens, _amounts, _minimumRates) external payable returns(bool success) {
+        ) external payable returns(bool success) {
+        require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         uint totalValue;
         uint i;
         for(i = 0; i < _amounts.length; i++ ) {
@@ -116,7 +112,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
-        ) checkArrayLengths(_tokens, _amounts, _minimumRates) external returns(bool success) {
+        ) external returns(bool success) {
         OlympusExchangeAdapterInterface adapter;
 
         for (uint i = 0; i < _tokens.length; i++ ) {
