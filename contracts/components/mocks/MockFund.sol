@@ -69,10 +69,10 @@ contract MockFund is FundInterface, Derivative {
     }
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates) public onlyOwner returns (bool) {
-        for(uint i = 0; i < tokens.length; i++) {
-            _tokens[i].approve(msg.sender, _amounts[i]);
-        }
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        for(uint i = 0; i < tokens.length; i++) {
+            _tokens[i].approve(address(exchange), _amounts[i]);
+        }
         exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0);
         updateTokens(_tokens);
         return true;
