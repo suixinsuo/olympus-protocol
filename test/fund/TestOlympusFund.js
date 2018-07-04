@@ -7,6 +7,7 @@ const RiskControl = artifacts.require("../../contracts/components/RiskControl.so
 const Marketplace = artifacts.require("../../contracts/Marketplace.sol");
 const PercentageFee = artifacts.require("../../contracts/components/fee/PercentageFee.sol");
 const Reimbursable = artifacts.require("../../contracts/components/fee/Reimbursable.sol");
+const MockToken = artifacts.require("MockToken");
 const Whitelist = artifacts.require("WhitelistProvider");
 
 // Buy and sell tokens
@@ -40,19 +41,35 @@ contract("Fund", accounts => {
   let market;
   let mockKyber;
   let tokens;
+  let mockMOT;
+  let exchange;
+  let asyncWithdraw;
+  let riskControl;
+  let percentageFee;
+
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
 
   it("Create a fund", async () => {
+    mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
     tokens = await mockKyber.supportedTokens();
-    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
+    exchange = await ExchangeProvider.deployed();
+    asyncWithdraw = await AsyncWithdraw.deployed();
+    riskControl = await RiskControl.deployed();
+    percentageFee = await PercentageFee.deployed();
+
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
 
     calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
-    assert.equal((await fund.status()).toNumber(), DerivativeStatus.New, "Must be still new");
+
+    await exchange.setMotAddress(mockMOT.address);
+    await asyncWithdraw.setMotAddress(mockMOT.address);
+    await riskControl.setMotAddress(mockMOT.address);
+    await percentageFee.setMotAddress(mockMOT.address);
 
     await fund.initialize(
       Marketplace.address,

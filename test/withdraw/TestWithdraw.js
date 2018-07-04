@@ -2,6 +2,7 @@ const log = require("../utils/log");
 const MockWithdraw = artifacts.require("MockWithdrawClient");
 const AsyncWithdraw = artifacts.require("../../contracts/components/widrwaw/AsyncWithdraw.sol");
 const SimpleWithdraw = artifacts.require("../../contracts/components/widrwaw/SimpleWithdraw.sol");
+const MockToken = artifacts.require("MockToken");
 
 const toTokenWei = amount => {
   return amount * 10 ** 18;
@@ -14,6 +15,8 @@ contract("Withdraw", accounts => {
 
   before("Run marketplace", async () => {
     asyncWithdraw = await AsyncWithdraw.deployed();
+    let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
+    await asyncWithdraw.setMotAddress(mockMot.address);
   });
 
   it("Shall be able to request and withdraw", async () =>
@@ -55,12 +58,16 @@ contract("Withdraw", accounts => {
 
   it("Most simple implementation of withdraw", async () =>
     log.catch(async () => {
-      const product1 = await MockWithdraw.new((await SimpleWithdraw.deployed()).address);
+      let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
+      const instance = await SimpleWithdraw.deployed();
+      await instance.setMotAddress(mockMot.address);
+
+      const product1 = await MockWithdraw.new(instance.address);
 
       await product1.invest({ value: web3.toWei(1, "ether"), from: investorA });
-      await product1.requestWithdraw(toTokenWei(1), { from: investorA });
+      await product1.requestWithdraw(toToken(1), { from: investorA });
       await product1.withdraw();
 
-      assert.equal((await product1.balanceOf(investorA)).toNumber(), 0, "B has withdrawn");
+      assert.equal((await product1.balanceOf(investorA)).toNumber(), 0, "B has withdraw");
     }));
 });

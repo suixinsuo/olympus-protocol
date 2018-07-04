@@ -19,6 +19,8 @@ const args = require("../scripts/libs/args");
 let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
+let MockToken = artifacts.require("MockToken");
+
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
 
@@ -41,10 +43,13 @@ function deployExchange(deployer, network) {
     network === "kovan" ? "0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50" : "0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e";
   return deployer
     .then(() => deployer.deploy(ExchangeAdapterManager))
-    .then(() => deployer.deploy(KyberNetworkAdapter, kyberAddress, ExchangeAdapterManager.address))
     .then(() => {
-      deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address);
+      if (network === "development") {
+        return deployer.deploy(MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18);
+      }
     })
+    .then(() => deployer.deploy(KyberNetworkAdapter, kyberAddress, ExchangeAdapterManager.address))
+    .then(() => deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address))
     .then(() => {
       if (network === "development") {
         return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18);
@@ -113,7 +118,8 @@ function deployOnDev(deployer, num) {
         SimpleWithdraw,
         PercentageFee,
         Reimbursable,
-        WhitelistProvider
+        WhitelistProvider,
+        [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
       ])
     )
     .then(() => deployExchange(deployer, "development"))
@@ -125,15 +131,9 @@ function deployOnDev(deployer, num) {
 
 function deployOnKovan(deployer, num) {
   return deployer
-    .then(() => {
-      return deployer.deploy([MarketplaceProvider, AsyncWithdraw, RiskControl, DummyDerivative]);
-    })
-    .then(() => {
-      return deployExchange(deployer, "kovan");
-    })
-    .then(() => {
-      return deployer.deploy(RebalanceProvider, ExchangeProvider.address);
-    })
+    .then(() => deployer.deploy([MarketplaceProvider, AsyncWithdraw, RiskControl, DummyDerivative]))
+    .then(() => deployExchange(deployer, "kovan"))
+    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
     .then(() => {
       return deployer.deploy(
         MockRebalanceIndex,

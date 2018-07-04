@@ -36,7 +36,7 @@ contract MockKyberNetwork {
     function getExpectedRate(ERC20Extended src, ERC20Extended dest, uint srcQty) external view
     returns (uint expectedRate, uint slippageRate)
     {
-        return _getExpectedRate(src,dest,srcQty);
+        return _getExpectedRate(src, dest, srcQty);
     }
 
     function _getExpectedRate(ERC20Extended /*src*/, ERC20Extended dest, uint) private view
@@ -47,11 +47,12 @@ contract MockKyberNetwork {
         } else {
             for (uint i = 0; i < supportedTokens.length; i++){
                 if(address(supportedTokens[i].token) == address(dest)){
-                    return (supportedTokens[i].slippageRate,supportedTokens[i].slippageRate);
-                }
+                    return (supportedTokens[i].slippageRate, supportedTokens[i].slippageRate);
+                } 
             }
         }
-        return (0, 0);
+
+        return (10 ** 18 * 1000, 10 ** 18 * 1000);
     }
 
     function trade(
