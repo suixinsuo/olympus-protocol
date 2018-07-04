@@ -8,6 +8,7 @@ const Marketplace = artifacts.require("../../contracts/Marketplace.sol");
 const PercentageFee = artifacts.require("../../contracts/components/fee/PercentageFee.sol");
 const Reimbursable = artifacts.require("../../contracts/components/fee/Reimbursable.sol");
 const MockToken = artifacts.require("MockToken");
+const Whitelist = artifacts.require("WhitelistProvider");
 
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
@@ -20,6 +21,8 @@ const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
 
 const ethToken = "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 let DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
+let DerivativeType = { Index: 0, Fund: 1 };
+
 const fundData = {
   name: "OlympusFund",
   symbol: "MOF",
@@ -75,10 +78,10 @@ contract("Fund", accounts => {
 
     await fund.initialize(
       Marketplace.address,
-      ExchangeProvider.address, // Exchange, TODO add
+      ExchangeProvider.address,
       AsyncWithdraw.address,
       RiskControl.address,
-      0x01, // Whitelist, to do
+      Whitelist.address,
       Reimbursable.address,
       PercentageFee.address,
       0,
@@ -94,12 +97,55 @@ contract("Fund", accounts => {
     assert.equal((await fund.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
   });
 
+  it("Cant call initialize twice ", async () =>
+    log.catch(async () => {
+      try {
+        await fund.initialize(
+          Marketplace.address,
+          ExchangeProvider.address,
+          Rebalance.address,
+          Withdraw.address,
+          RiskControl.address,
+          Whitelist.address,
+          Reimbursable.address,
+          PercentageFee.address,
+          0,
+          { value: web3.toWei(fundData.ethDeposit, "ether") }
+        );
+        assert(false, "Shall revert");
+      } catch (e) {
+        assert(true, "Shall revert");
+      }
+    }));
+
+  it("Can change market provider and register in the new marketplace ", async () =>
+    log.catch(async () => {
+      // Cant register without changing of market provider
+      try {
+        await fund.registerInNewMarketplace();
+        assert(false, "Shall not register");
+      } catch (e) {
+        assert(true, "Shall not register");
+      }
+      // Set new market place
+      const newMarket = await Marketplace.new();
+      await fund.setComponentExternal(await fund.MARKET(), newMarket.address);
+      assert.equal(await fund.getComponentByName(await fund.MARKET()), newMarket.address);
+
+      // Check we have register
+      await fund.registerInNewMarketplace();
+      const myProducts = await newMarket.getOwnProducts();
+      assert.equal(myProducts.length, 1);
+      assert.equal(myProducts[0], fund.address);
+    }));
+
   it("Fund shall be able deploy", async () =>
     log.catch(async () => {
       assert.equal(await fund.name(), fundData.name);
       assert.equal(await fund.description(), fundData.description);
       assert.equal(await fund.symbol(), fundData.symbol);
       assert.equal(await fund.version(), "1.0");
+      assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
     }));
 
   it("Fund shall allow investment", async () =>
@@ -205,7 +251,8 @@ contract("Fund", accounts => {
         "Owner received ether"
       );
     }));
-  it("Buy  tokens fails if ethr required is not enough", async () =>
+
+  it("Buy  tokens fails if ether required is not enough", async () =>
     log.catch(async () => {
       assert.equal(
         (await fund.getETHBalance()).toNumber(),
@@ -336,7 +383,6 @@ contract("Fund", accounts => {
         )
       );
       const amounts = [web3.toWei(0.9, "ether"), web3.toWei(0.9, "ether")];
-
       await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
 
       for (let i = 0; i < tokens.length; i++) {
@@ -365,7 +411,7 @@ contract("Fund", accounts => {
       assert.equal(
         calc.roundTo(investorABefore + 1.8, 2),
         calc.roundTo(investorAAfter, 2),
-        "Owner received ether"
+        "Investor A received ether"
       );
 
       // Price is constant
@@ -420,7 +466,7 @@ contract("Fund", accounts => {
       assert.equal(
         (await fund.balanceOf(investorC)).toNumber(),
         toToken(1.8),
-        "A has invested with fee"
+        "C has invested with fee"
       );
 
       const rates = await Promise.all(
@@ -451,12 +497,12 @@ contract("Fund", accounts => {
 
       try {
         await fund.changeStatus(DerivativeStatus.Active);
-        assert(false, "Shall not be able to change from close");
+        assert(false, "Shall not be able to change to Close");
       } catch (e) {
         assert.equal(
           (await fund.status()).toNumber(),
           DerivativeStatus.Closed,
-          " Cant change to active, shall keep being closed"
+          " Cant change to close, shall keep being previous"
         );
       }
     }));

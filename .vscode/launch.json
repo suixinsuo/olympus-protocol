@@ -10,7 +10,7 @@
       "name": "Run tests",
       "program": "${workspaceRoot}/node_modules/truffle/build/cli.bundled.js",
       "runtimeExecutable": "/Users/Administrator/.nvm/versions/node/v9.10.1/bin/node",
-      "args": ["test"],
+      "args": ["test test/index/*"],
       "cwd": "${workspaceRoot}"
       // "outFiles": ["${workspaceRoot}/test/feeCharger/*"]
     }
