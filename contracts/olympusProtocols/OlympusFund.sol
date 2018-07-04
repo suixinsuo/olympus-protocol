@@ -252,6 +252,11 @@ contract OlympusFund is FundInterface, Derivative {
         maxTransfers = _maxTransfers;
     }
 
+    function totalWithdrawPending() external view returns(uint) {
+        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        return withdrawProvider.getTotalWithdrawAmount() ;
+    }
+
     function withdraw() external returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
