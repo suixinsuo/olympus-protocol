@@ -52,10 +52,10 @@ contract("Olympus Index", accounts => {
         async () =>
           await OlympusIndex.new(
             indexData.name,
-            indexData.decimals,
             indexData.symbol,
             indexData.description,
             indexData.category,
+            indexData.decimals,
             tokens.slice(0, indexData.tokensLenght),
             []
           ),
@@ -69,10 +69,10 @@ contract("Olympus Index", accounts => {
     tokens = await mockKyber.supportedTokens();
     index = await OlympusIndex.new(
       indexData.name,
-      indexData.decimals,
       indexData.symbol,
       indexData.description,
       indexData.category,
+      indexData.decimals,
       tokens.slice(0, indexData.tokensLenght),
       indexData.weights
     );
