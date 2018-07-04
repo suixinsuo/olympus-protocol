@@ -48,7 +48,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         ) external returns(bool success){
             _token.approve(address(exchangeProvider), _amount);
           return exchangeProvider.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
-        }    
+        }
 
     function rebalance() public returns (bool success) {
         address[] memory tokensToSell;

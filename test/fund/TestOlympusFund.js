@@ -61,7 +61,7 @@ contract("Fund", accounts => {
     riskControl = await RiskControl.deployed();
     percentageFee = await PercentageFee.deployed();
 
-    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.decimals);
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
 
     calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
@@ -132,6 +132,7 @@ contract("Fund", accounts => {
       assert.equal(await fund.name(), fundData.name);
       assert.equal(await fund.description(), fundData.description);
       assert.equal(await fund.symbol(), fundData.symbol);
+      assert.equal(await fund.category(), fundData.category);
       assert.equal(await fund.version(), "1.0");
       assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
     }));
@@ -189,7 +190,7 @@ contract("Fund", accounts => {
       // Invest Not allowed
       await fund.enableWhitelist(WhitelistType.Investment);
       calc.assertReverts(
-        async () => await fund.invest({ value: web3.toWei(1, "ether"), from: investorA }),
+        async () => await fund.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
         "Is not allowed to invest"
       );
 
@@ -201,7 +202,7 @@ contract("Fund", accounts => {
       // Withdraw not allowed
       await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
       calc.assertReverts(
-        async () => await fund.requestWithdraw(toTokenWei(1), { from: investorA }),
+        async () => await fund.requestWithdraw(toTokenWei(0.2), { from: investorA }),
         "Is not allowed to request"
       );
 

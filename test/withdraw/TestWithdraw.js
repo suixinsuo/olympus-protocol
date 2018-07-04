@@ -65,7 +65,7 @@ contract("Withdraw", accounts => {
       const product1 = await MockWithdraw.new(instance.address);
 
       await product1.invest({ value: web3.toWei(1, "ether"), from: investorA });
-      await product1.requestWithdraw(toToken(1), { from: investorA });
+      await product1.requestWithdraw(toTokenWei(1), { from: investorA });
       await product1.withdraw();
 
       assert.equal((await product1.balanceOf(investorA)).toNumber(), 0, "B has withdraw");
