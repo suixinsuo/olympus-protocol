@@ -112,6 +112,14 @@ contract OlympusIndex is IndexInterface, Derivative {
     function getTokens() public view returns (address[] _tokens, uint[] _weights) {
         return (tokens, weights);
     }
+    // Return tokens and amounts
+    function getTokensAmounts() external view returns(address[], uint[]) {
+        uint[] memory _amounts = new uint[](tokens.length);
+        for (uint i = 0; i < tokens.length; i++) {
+            _amounts[i] = ERC20Extended(tokens[i]).balanceOf(address(this));
+        }
+        return (tokens, _amounts);
+    }
 
     function changeStatus(DerivativeStatus _status) public returns(bool) {
         require(_status != DerivativeStatus.New && status != DerivativeStatus.New && _status != DerivativeStatus.Closed);
@@ -320,6 +328,30 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- REBALANCE -----------------------------
+
+    function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns(bool) {
+
+      ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+
+      if(getETHBalance() == 0) {
+        reimburse();
+        return true;
+      }
+
+      uint[] memory _amounts = new uint[](tokens.length);
+      uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
+      ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
+      uint ethBalance = getETHBalance();
+      for(uint8 i = 0; i < tokens.length; i++) {
+        _amounts[i] = ethBalance * weights[i] / 100;
+        _tokensErc20[i] = ERC20Extended(tokens[i]);
+      }
+
+      OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+      require(exchange.buyTokens.value(ethBalance)(_tokensErc20, _amounts, _rates, address(this), '', 0x0));
+      reimburse();
+      return true;
+    }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool success) {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
