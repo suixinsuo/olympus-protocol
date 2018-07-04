@@ -3,8 +3,9 @@ pragma solidity 0.4.24;
 
 import "../../interfaces/ChargeableInterface.sol";
 import "../../interfaces/DerivativeInterface.sol";
+import "../../components/base/FeeCharger.sol";
 
-contract PercentageFee is ChargeableInterface {
+contract PercentageFee is ChargeableInterface, FeeCharger {
 
     mapping(address => mapping(address => uint)) fees; // owner => contract => fee value
 
@@ -30,6 +31,7 @@ contract PercentageFee is ChargeableInterface {
     }
 
     function calculateFee(address /*_caller*/,  uint _amount)  external returns(uint) {
+        require(payFee(0));
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         if(fees[derivative.owner()][msg.sender] == 0) {
             return 0;

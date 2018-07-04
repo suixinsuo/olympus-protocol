@@ -51,8 +51,8 @@ test:
  script:
     - npm test
 
-deploy:
- stage: deploy
- tags: [aireach]
- script:
-   - npm run deploy
+# deploy:
+#  stage: deploy
+#  tags: [aireach]
+#  script:
+#    - npm run deploy
