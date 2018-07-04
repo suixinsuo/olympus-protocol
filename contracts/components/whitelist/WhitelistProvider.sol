@@ -1,43 +1,33 @@
 pragma solidity ^0.4.17;
 
-contract WhitelistProvider {}
-// import "../permission/PermissionProviderInterface.sol";
-// import "./WhitelistProviderInterface.sol";
+import "../../interfaces/WhitelistInterface.sol";
 
-// contract WhitelistProvider is WhitelistProviderInterface{
+contract WhitelistProvider is WhitelistInterface {
 
-//     PermissionProviderInterface internal permissionProvider;
+    string public name = "Whitelist Provider";
+    string public description = "Provides whitelist based information";
+    string public category="Whitelist";
+    string public version="1.0";
 
-//     mapping (address=>bool) whitelistAddresses;
-//     bool public enabled;
+    function enable(uint8 _key) external {
+        enabled[msg.sender][_key] = true;
+    }
 
-//     constructor (address _permissionProvider) public {
-//         permissionProvider = PermissionProviderInterface(_permissionProvider);
-//     }
+    function disable(uint8 _key) external {
+        enabled[msg.sender][_key] = false;
+    }
 
-//     modifier onlyWhitelistOwner() {
-//         require(permissionProvider.has(msg.sender, permissionProvider.ROLE_WHITELIST_OWNER()));
-//         _;
-//     }
+    function setAllowed(address[] accounts, uint8 _key,  bool allowed) external returns(bool){
 
-//     function enable() public onlyWhitelistOwner {
-//         enabled = true;
-//     }
+        for(uint i = 0; i < accounts.length; i++){
+            require(accounts[i] != 0x0);
+            whitelist[msg.sender][_key][accounts[i]] = allowed;
+        }
+        return true;
+    }
 
-//     function disable() public onlyWhitelistOwner {
-//         enabled = false;
-//     }
+    function isAllowed(uint8 _key, address account) external view returns(bool){
+        return enabled[msg.sender][_key] ? whitelist[msg.sender][_key][account] : true;
+    }
+}
 
-//     function setAllowed(address[] accounts, bool isAllowed) public onlyWhitelistOwner returns(bool){
-
-//         for(uint i = 0; i < accounts.length; i++){
-//             require(accounts[i] != 0x0);
-//             whitelistAddresses[accounts[i]] = isAllowed;
-//         }
-//         return true;
-//     }
-
-//     function isAllowed(address account) external view returns(bool){
-//         return enabled ? whitelistAddresses[account] : true;
-//     }
-// }
