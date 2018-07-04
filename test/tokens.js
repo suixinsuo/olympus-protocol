@@ -5889,36 +5889,20 @@ console.log(
           isActive: true,
           activatedAt: "2017-12-19T18:07:27.189Z"
         },
-        reserves: {
-          594bb7e468a95e00203b048d: {
-      contractAddress: "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c",
-      currencySymbol: "BNT",
-      ratio: 500000,
+      },
+      status: "published",
+      stage: "traded",
+      createdAt: "2017-12-17T19:10:18.121Z",
+      isDeleted: false,
+      primaryCommunityId: "5a36c10c80e8200001fa1f27",
       numDecimalDigits: 18,
-      balance: "8005940819275350454306"
+      name: "Aigang Relay",
+      primaryCommunityImageName: "b9031960-e8a7-11e7-9b5e-179c6e04aa7c.png",
+      isDiscoverable: true,
+      lowerCaseSymbol: "aixbnt",
+      lowerCaseCode: "aixbnt",
+      order: 36
     },
-    5a1327c9c92a1700011c7baf: {
-      contractAddress: "0x1063ce524265d5a3a624f4914acd573dd89ce988",
-      currencySymbol: "AIX",
-      ratio: 500000,
-      numDecimalDigits: 18,
-      balance: "298445704836576822291779"
-    }
-}
-},
-    status: "published",
-    stage: "traded",
-    createdAt: "2017-12-17T19:10:18.121Z",
-    isDeleted: false,
-    primaryCommunityId: "5a36c10c80e8200001fa1f27",
-    numDecimalDigits: 18,
-    name: "Aigang Relay",
-    primaryCommunityImageName: "b9031960-e8a7-11e7-9b5e-179c6e04aa7c.png",
-    isDiscoverable: true,
-    lowerCaseSymbol: "aixbnt",
-    lowerCaseCode: "aixbnt",
-    order: 36
-},
     {
       _id: "5a1327c9c92a1700011c7baf",
       symbol: "AIX",
@@ -5965,35 +5949,35 @@ console.log(
           activatedAt: "2018-01-03T00:21:36.391Z"
         },
         reserves: {
-          594bb7e468a95e00203b048d: {
-      contractAddress: "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c",
-      currencySymbol: "BNT",
-      ratio: 500000,
+          '594bb7e468a95e00203b048d': {
+            contractAddress: "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c",
+            currencySymbol: "BNT",
+            ratio: 500000,
+            numDecimalDigits: 18,
+            balance: "8202703452750197354619"
+          },
+          '5a37e92fed8a500001de70da': {
+            contractAddress: "0x39bb259f66e1c59d5abef88375979b4d20d98022",
+            currencySymbol: "WAX",
+            ratio: 500000,
+            numDecimalDigits: 8,
+            balance: "15949041465652"
+          }
+        }
+      },
+      status: "published",
+      stage: "traded",
+      createdAt: "2017-12-18T16:24:19.126Z",
+      isDeleted: false,
+      primaryCommunityId: "5a37eba893d1f500018b06d2",
       numDecimalDigits: 18,
-      balance: "8202703452750197354619"
+      name: "Wax Relay",
+      primaryCommunityImageName: "25ec2580-f3b6-11e7-bc6b-87a36d827eff.png",
+      isDiscoverable: true,
+      lowerCaseSymbol: "waxbnt",
+      lowerCaseCode: "waxbnt",
+      order: 34
     },
-    5a37e92fed8a500001de70da: {
-      contractAddress: "0x39bb259f66e1c59d5abef88375979b4d20d98022",
-      currencySymbol: "WAX",
-      ratio: 500000,
-      numDecimalDigits: 8,
-      balance: "15949041465652"
-    }
-}
-},
-    status: "published",
-    stage: "traded",
-    createdAt: "2017-12-18T16:24:19.126Z",
-    isDeleted: false,
-    primaryCommunityId: "5a37eba893d1f500018b06d2",
-    numDecimalDigits: 18,
-    name: "Wax Relay",
-    primaryCommunityImageName: "25ec2580-f3b6-11e7-bc6b-87a36d827eff.png",
-    isDiscoverable: true,
-    lowerCaseSymbol: "waxbnt",
-    lowerCaseCode: "waxbnt",
-    order: 34
-},
     {
       _id: "5a37e92fed8a500001de70da",
       symbol: "WAX",
