@@ -21,6 +21,11 @@ contract ExchangeProvider is OlympusExchangeInterface {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
     }
 
+    modifier checkAllowance(ERC20Extended _token, uint _amount) {
+        require(_token.allowance(msg.sender, address(this)) >= _amount, "Not enough tokens approved");
+        _;
+    }
+
     function setExchangeAdapterManager(address _exchangeManager) external onlyOwner {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
     }
@@ -52,7 +57,7 @@ contract ExchangeProvider is OlympusExchangeInterface {
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
-        ) external returns(bool success) {
+        ) checkAllowance(_token, _amount) external returns(bool success) {
 
         OlympusExchangeAdapterInterface adapter;
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, false) : _exchangeId;
@@ -60,7 +65,6 @@ contract ExchangeProvider is OlympusExchangeInterface {
             revert("No suitable exchange found");
         }
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
-        require(_token.allowance(msg.sender, address(this)) >= _amount, "Not enough tokens approved");
 
         _token.transferFrom(msg.sender, address(adapter), _amount);
 
