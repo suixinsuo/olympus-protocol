@@ -230,7 +230,7 @@ contract("Olympus Index", accounts => {
       // Invest Not allowed
       await index.enableWhitelist(WhitelistType.Investment);
       calc.assertReverts(
-        async () => await index.invest({ value: web3.toWei(1, "ether"), from: investorA }),
+        async () => await index.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
         "Is not allowed to invest"
       );
 
@@ -242,7 +242,7 @@ contract("Olympus Index", accounts => {
       // Withdraw not allowed
       await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
       calc.assertReverts(
-        async () => await index.requestWithdraw(toTokenWei(1), { from: investorA }),
+        async () => await index.requestWithdraw(toTokenWei(0.2), { from: investorA }),
         "Is not allowed to request"
       );
 
