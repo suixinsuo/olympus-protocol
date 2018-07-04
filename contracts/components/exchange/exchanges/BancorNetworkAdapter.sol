@@ -30,6 +30,12 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         _;
     }
 
+    modifier checkTokenBalance(ERC20Extended _token, uint _amount) {
+        // Tokens needs to be transferred to here before this function is called
+        require(_token.balanceOf(address(this)) >= _amount, "Balance of token is not sufficient in adapter");
+        _;
+    }
+
     constructor (address _exchangeAdapterManager, address[] _tokenAddresses,
     BancorConverterInterface[] _converterAddresses, address[] _relayAddresses)
     checkArrayLengths(_tokenAddresses, _converterAddresses, _relayAddresses) public {
@@ -135,10 +141,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
-    ) checkTokenSupported(_token) external returns(bool success) {
-        // Tokens needs to be transferred to here before this function is called
-        require(_token.balanceOf(address(this)) >= _amount, "Balance of token is not sufficient in adapter");
-
+    ) checkTokenSupported(_token) checkTokenBalance(_token, _amount) external returns(bool success) {
         ERC20Extended[] memory path = getPath(_token, false);
 
         BancorConverterInterface bancorConverter = tokenToConverter[_token];
