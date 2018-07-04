@@ -1,10 +1,10 @@
 pragma solidity 0.4.24;
 
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
+import "../../interfaces/implementations/OlympusExchangeAdapterManagerInterface.sol";
 
 
-contract ExchangeAdapterManager is Ownable {
+contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
 
     mapping(bytes32 => OlympusExchangeAdapterInterface) public exchangeAdapters;
     bytes32[] public exchanges;
