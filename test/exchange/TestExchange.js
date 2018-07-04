@@ -37,13 +37,7 @@ contract("ExchangeProvider", accounts => {
       ExchangeProvider.deployed()
     ])
       .spread(
-        async (
-          _mockKyberNetwork,
-          _kyberNetworkAdapter,
-          _exchangeAdapterManager,
-          _mockToken,
-          _exchangeProvider
-        ) => {
+        async (_mockKyberNetwork, _kyberNetworkAdapter, _exchangeAdapterManager, _mockToken, _exchangeProvider) => {
           assert.ok(_mockKyberNetwork, "MockKyberNetwork contract is not deployed.");
           assert.ok(_kyberNetworkAdapter, "KyberNetworkExchange contract is not deployed.");
           assert.ok(_exchangeAdapterManager, "ExchangeAdapterManager contract is not deployed.");
@@ -72,10 +66,7 @@ contract("ExchangeProvider", accounts => {
     });
 
     const afterBalance = await erc20Token.balanceOf(deposit);
-    assert.equal(
-      new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(),
-      afterBalance.toNumber()
-    );
+    assert.equal(new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(), afterBalance.toNumber());
   });
 
   it("OlympusExchange should be able to buy multiple tokens.", async () => {
@@ -138,7 +129,6 @@ contract("ExchangeProvider", accounts => {
 
       // send all it has to the mockFund so it can sell below.
       await erc20Token.transfer(mockFund.address, actualBalance);
-      console.log(await erc20Token.balanceOf(mockFund.address));
     }
 
     const beforeBalance = await web3.eth.getBalance(mockFund.address);
@@ -150,9 +140,7 @@ contract("ExchangeProvider", accounts => {
         1
       )
     );
-    assert.ok(
-      new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber() > 0
-    );
+    assert.ok(new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber() > 0);
   });
 
   it("Should be able to check availability for a token", async () => {
