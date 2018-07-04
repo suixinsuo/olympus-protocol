@@ -4,15 +4,17 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../interfaces/RebalanceInterface.sol";
 import "../../interfaces/IndexInterface.sol";
 import "../../interfaces/PriceProviderInterface.sol";
+import "../../components/base/FeeCharger.sol";
 
 
-contract RebalanceProvider is Ownable, RebalanceInterface {
+contract RebalanceProvider is FeeCharger, RebalanceInterface {
     PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
     uint private rebalanceDeltaPercentage = 30; // 0.3%
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+
     constructor(PriceProviderInterface _priceProvider) public {
         priceProvider = _priceProvider;
     }
@@ -45,8 +47,9 @@ contract RebalanceProvider is Ownable, RebalanceInterface {
         }
     }
 
-    function rebalanceGetTokensToSellAndBuy() external view returns
+    function rebalanceGetTokensToSellAndBuy() external returns
     (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues) {
+        require(payFee(0));
         uint totalIndexValue = getTotalIndexValue();
         uint i;
         address[] memory indexTokenAddresses;
