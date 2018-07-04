@@ -56,8 +56,8 @@ contract MockIndex is IndexInterface, MockDerivative {
     function changeStatus(DerivativeStatus _status) public returns(bool) {
         require(status != DerivativeStatus.Closed);
 
-        if (_status == DerivativeStatus.Active || 
-            _status == DerivativeStatus.Paused || 
+        if (_status == DerivativeStatus.Active ||
+            _status == DerivativeStatus.Paused ||
             _status == DerivativeStatus.Closed) {
 
             status = _status;
