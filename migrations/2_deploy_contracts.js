@@ -50,6 +50,8 @@ function deployExchange(deployer, network) {
   }).then(() => {
     if (network === 'development') {
       return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18);
+    } else if (network === 'mainnet') {
+      return deployer.deploy(BancorNetworkAdapter, ExchangeAdapterManager.address);
     }
   }).then(async () => {
     let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
