@@ -10,6 +10,7 @@ const Promise = require("bluebird");
 const ethToken = "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 const expectedRate = web3.toBigNumber("1000" + "000000000000000000");
 const expectedRateToSell = web3.toBigNumber("1000000000000000");
+const calc = require("../utils/calc");
 
 contract("FeeCharger", accounts => {
   let mockFund;
@@ -17,6 +18,7 @@ contract("FeeCharger", accounts => {
   let risk;
   let exchange;
   let tokens;
+  const depositMOTAccount = accounts[1];
 
   before("MockFeeChargerFund should be able to deploy.", async () => {
     return await Promise.all([
@@ -40,34 +42,33 @@ contract("FeeCharger", accounts => {
       await mockFund.initialize();
 
       const balance = (await mockMOT.balanceOf(accounts[0])).toNumber();
-      // console.log("balance:", balance.toNumber());
       // send MOT in to mockFund.
       await mockMOT.transfer(mockFund.address, balance / 2, { from: accounts[0] });
 
       assert.equal(balance / 2, (await mockMOT.balanceOf(mockFund.address)).toNumber());
-      assert.equal(0, (await mockMOT.balanceOf(accounts[1])).toNumber());
+      assert.equal(0, (await mockMOT.balanceOf(depositMOTAccount)).toNumber());
 
       // send ETHs into mockFund.
-      if ((await web3.eth.getBalance(mockFund.address)) < 2 ** (10 ** 18))
+      let ethBalance = await calc.ethBalance(mockFund.address);
+      if (ethBalance < 2) {
         await mockFund.send(web3.toWei(2, "ether"));
-      assert.isAtLeast(
-        await web3.eth.getBalance(mockFund.address),
-        2 * 10 ** 18,
-        "MockFund should have 2 eths"
-      );
+        ethBalance = await calc.ethBalance(mockFund.address);
+      }
+
+      assert.isAtLeast(ethBalance, 2, "MockFund should have 2 eths");
     });
   });
 
-  it("should be able to call from accounts[1] when there is no MOT available becasue fee is zero.", async () => {
+  it("should be able to call from depositMOTAccount when there is no MOT available becasue fee is zero.", async () => {
     let result;
     // per call.
-    assert.equal(0, (await mockMOT.balanceOf(accounts[1])).toNumber());
+    assert.equal(0, (await mockMOT.balanceOf(depositMOTAccount)).toNumber());
     assert.equal(0, (await risk.feeAmount()).toNumber());
     assert.equal(0, (await exchange.feePercentage()).toNumber());
 
     try {
-      result = await mockFund.hasRisk(accounts[0], accounts[1], mockMOT.address, 0, 0, {
-        from: accounts[1]
+      result = await mockFund.hasRisk(accounts[0], depositMOTAccount, mockMOT.address, 0, 0, {
+        from: depositMOTAccount
       });
       assert.ok(result, "should be able to call without MOT.");
     } catch (e) {
@@ -76,14 +77,10 @@ contract("FeeCharger", accounts => {
     }
 
     // per tx
-    assert.isAtLeast(
-      await web3.eth.getBalance(mockFund.address),
-      2 * 10 ** 18,
-      "MockFund should have 2 eths"
-    );
+    assert.isAtLeast(await calc.ethBalance(mockFund.address), 2, "MockFund should have 2 eths");
     try {
       result = await mockFund.buyToken(tokens[0], 10 ** 18, expectedRate, {
-        from: accounts[1],
+        from: depositMOTAccount,
         value: 10 ** 18
       });
       assert.ok(result, "should be able to call without MOT.");
@@ -108,17 +105,17 @@ contract("FeeCharger", accounts => {
     result = await exchange.adjustFeePercentage(100);
     assert.ok(result);
 
-    result = await risk.setWalletId(accounts[1]);
+    result = await risk.setWalletId(depositMOTAccount);
     assert.ok(result);
 
-    result = await exchange.setWalletId(accounts[1]);
+    result = await exchange.setWalletId(depositMOTAccount);
     assert.ok(result);
   });
 
-  it("should not be able to call from accounts[1] when there is no MOT available", async () => {
+  it("should not be able to call from depositMOTAccount when there is no MOT available", async () => {
     let result;
 
-    assert.equal(0, (await mockMOT.balanceOf(accounts[1])).toNumber());
+    assert.equal(0, (await mockMOT.balanceOf(depositMOTAccount)).toNumber());
 
     // risk
     assert.isAbove(
@@ -128,8 +125,8 @@ contract("FeeCharger", accounts => {
     );
 
     try {
-      result = await mockFund.hasRisk(accounts[0], accounts[1], mockMOT.address, 0, 0, {
-        from: accounts[1]
+      result = await mockFund.hasRisk(accounts[0], depositMOTAccount, mockMOT.address, 0, 0, {
+        from: depositMOTAccount
       });
       assert.ok(false, "should not be able to call without MOT.");
     } catch (e) {
@@ -145,7 +142,7 @@ contract("FeeCharger", accounts => {
 
     try {
       result = await mockFund.buyToken(tokens[0], 1000, expectedRate, {
-        from: accounts[1]
+        from: depositMOTAccount
       });
       assert.ok(false, "should not be able to call without MOT.");
     } catch (e) {
@@ -153,8 +150,8 @@ contract("FeeCharger", accounts => {
     }
   });
 
-  it("should charge MOT fee per call and send to accounts[1]", async () => {
-    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+  it("should charge MOT fee per call and send to depositMOTAccount", async () => {
+    let account1Balance = (await mockMOT.balanceOf(depositMOTAccount)).toNumber();
     assert.isAbove(
       (await mockMOT.balanceOf(accounts[0])).toNumber(),
       0,
@@ -164,24 +161,26 @@ contract("FeeCharger", accounts => {
     // risk
     assert.isAbove(feeAmount, 0, "fee amount should be greater than zero");
 
-    // approve first.
     const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
     assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
 
     let result;
     try {
-      result = await mockFund.hasRisk(accounts[0], accounts[1], mockMOT.address, 0, 0);
+      result = await mockFund.hasRisk(accounts[0], depositMOTAccount, mockMOT.address, 0, 0);
       assert.ok(result, "should be able to call from accounts[0]");
-      // accounts[1] should have MOT.
-      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), feeAmount + account1Balance);
+      // depositMOTAccount should have MOT.
+      assert.equal(
+        (await mockMOT.balanceOf(depositMOTAccount)).toNumber(),
+        feeAmount + account1Balance
+      );
     } catch (e) {
       console.warn(e);
       assert.ok(false, "should not revert");
     }
   });
 
-  it("should charge MOT fee per tx and send to accounts[1]// buy token", async () => {
-    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+  it("should charge MOT fee per tx and send to depositMOTAccount// buy token", async () => {
+    let account1Balance = (await mockMOT.balanceOf(depositMOTAccount)).toNumber();
     assert.isAbove(
       (await mockMOT.balanceOf(accounts[0])).toNumber(),
       0,
@@ -196,7 +195,6 @@ contract("FeeCharger", accounts => {
     assert.isAbove(feePercentage, 0);
     assert.isAbove(feeAmount, 0, "fee amout should be greater than zero.");
 
-    // approve first.
     const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
     assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
 
@@ -206,16 +204,19 @@ contract("FeeCharger", accounts => {
         value: amount
       });
       assert.ok(result, "should be able to call by tx");
-      // accounts[1] should have MOT.
-      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), feeAmount + account1Balance);
+      // depositMOTAccount should have MOT.
+      assert.equal(
+        (await mockMOT.balanceOf(depositMOTAccount)).toNumber(),
+        feeAmount + account1Balance
+      );
     } catch (e) {
       console.warn(e);
       assert.ok(false, "should not revert");
     }
   });
 
-  it("should charge MOT fee per tx and send to accounts[1]// buy tokens", async () => {
-    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+  it("should charge MOT fee per tx and send to depositMOTAccount// buy tokens", async () => {
+    let account1Balance = (await mockMOT.balanceOf(depositMOTAccount)).toNumber();
     assert.isAbove(
       (await mockMOT.balanceOf(accounts[0])).toNumber(),
       0,
@@ -230,7 +231,6 @@ contract("FeeCharger", accounts => {
     assert.isAbove(feePercentage, 0);
     assert.isAbove(feeAmount, 0, "fee amout should be greater than zero.");
 
-    // approve first.
     const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
     assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
 
@@ -245,16 +245,19 @@ contract("FeeCharger", accounts => {
         }
       );
       assert.ok(result, "should be able to call by tx");
-      // accounts[1] should have MOT.
-      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), feeAmount + account1Balance);
+      // depositMOTAccount should have MOT.
+      assert.equal(
+        (await mockMOT.balanceOf(depositMOTAccount)).toNumber(),
+        feeAmount + account1Balance
+      );
     } catch (e) {
       console.warn(e);
       assert.ok(false, "should not revert");
     }
   });
 
-  it("should charge MOT fee per tx and send to accounts[1]// sell token", async () => {
-    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+  it("should charge MOT fee per tx and send to depositMOTAccount// sell token", async () => {
+    let account1Balance = (await mockMOT.balanceOf(depositMOTAccount)).toNumber();
     assert.isAbove(
       (await mockMOT.balanceOf(accounts[0])).toNumber(),
       0,
@@ -270,7 +273,6 @@ contract("FeeCharger", accounts => {
     assert.isAbove(feePercentage, 0);
     assert.isAbove(feeAmount, 0, "fee amout should be greater than zero.");
 
-    // approve first.
     const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
     assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
 
@@ -278,16 +280,19 @@ contract("FeeCharger", accounts => {
     try {
       result = await mockFund.sellToken(tokens[0], amount, expectedRateToSell);
       assert.ok(result, "should be able to call by tx");
-      // accounts[1] should have MOT.
-      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), account1Balance + feeAmount);
+      // depositMOTAccount should have MOT.
+      assert.equal(
+        (await mockMOT.balanceOf(depositMOTAccount)).toNumber(),
+        account1Balance + feeAmount
+      );
     } catch (e) {
       console.warn(e);
       assert.ok(false, "should not revert");
     }
   });
 
-  it("should charge MOT fee per tx and send to accounts[1]// sell tokens", async () => {
-    let account1Balance = (await mockMOT.balanceOf(accounts[1])).toNumber();
+  it("should charge MOT fee per tx and send to depositMOTAccount// sell tokens", async () => {
+    let account1Balance = (await mockMOT.balanceOf(depositMOTAccount)).toNumber();
     assert.isAbove(
       (await mockMOT.balanceOf(accounts[0])).toNumber(),
       0,
@@ -303,7 +308,6 @@ contract("FeeCharger", accounts => {
     assert.isAbove(feePercentage, 0);
     assert.isAbove(feeAmount, 0, "fee amout should be greater than zero.");
 
-    // approve first.
     const fundMOTBalance = (await mockMOT.balanceOf(mockFund.address)).toNumber();
     assert.isAbove(fundMOTBalance, feeAmount, "MOT balance is more than fee amount.");
 
@@ -315,8 +319,11 @@ contract("FeeCharger", accounts => {
         [expectedRateToSell, expectedRateToSell]
       );
       assert.ok(result, "should be able to call by tx");
-      // accounts[1] should have MOT.
-      assert.equal((await mockMOT.balanceOf(accounts[1])).toNumber(), account1Balance + feeAmount);
+      // depositMOTAccount should have MOT.
+      assert.equal(
+        (await mockMOT.balanceOf(depositMOTAccount)).toNumber(),
+        account1Balance + feeAmount
+      );
     } catch (e) {
       console.warn(e);
       assert.ok(false, "should not revert");
