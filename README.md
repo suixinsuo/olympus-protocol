@@ -11,7 +11,7 @@
 ## Test
 `npm run test` will test all the suits.
 
-`truffle test --suite=Mockfund ./test/fund/TestMockUpFund.js` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
+`truffle test --suite=Mockfund ./test/fund/*` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
 The suit option will limit the number of deployment required for the concrete test file.
 
 ## Kovan

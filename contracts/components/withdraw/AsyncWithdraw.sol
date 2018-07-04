@@ -2,11 +2,10 @@ pragma solidity 0.4.24;
 
 import "../../interfaces/WithdrawInterface.sol";
 import "../../interfaces/DerivativeInterface.sol";
-import "../base/ComponentContainer.sol";
 import "../../interfaces/WithdrawInterface.sol";
 
 
-contract AsyncWithdraw is ComponentContainer, WithdrawInterface {
+contract AsyncWithdraw is  WithdrawInterface {
 
     string public name = "AsyncWithdraw";
     string public description = "Withdraw one by one";

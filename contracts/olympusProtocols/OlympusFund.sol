@@ -228,7 +228,7 @@ contract OlympusFund is FundInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function witdrawFee(uint amount) external onlyOwner returns(bool) {
+    function withdrawFee(uint amount) external onlyOwner returns(bool) {
         require(accumulatedFee >= amount);
         msg.sender.transfer(amount);
         accumulatedFee -= amount;
@@ -250,6 +250,11 @@ contract OlympusFund is FundInterface, Derivative {
 
     function setMaxTransfers(uint _maxTransfers) external onlyOwner {
         maxTransfers = _maxTransfers;
+    }
+
+    function totalWithdrawPending() external view returns(uint) {
+        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        return withdrawProvider.getTotalWithdrawAmount() ;
     }
 
     function withdraw() external returns(bool) {
@@ -335,7 +340,7 @@ contract OlympusFund is FundInterface, Derivative {
         for (uint8 i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
-            ( _sellRates[i], ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
+            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
             _tokensToSell[i].approve(exchange,  _amounts[i]);
 
         }
