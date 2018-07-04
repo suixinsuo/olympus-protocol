@@ -14,10 +14,15 @@ contract MockIndex is IndexInterface, MockDerivative {
     event Invest(address _invester, uint _ethAmount, uint _rate, uint _mintAmount);
 
     modifier checkLength(ERC20[] _tokens, uint[] _weights) {
-        require(_tokens.length == _weights.length);
+      require(_tokens.length == _weights.length);
         _;
     }
-    constructor (string _name, uint _decimals, string _description, string _category, ERC20[] _tokens, uint[] _weights) checkLength(_tokens, _weights) public {
+
+    constructor (
+      string _name, uint _decimals, string _description,
+      string _category, ERC20[] _tokens, uint[] _weights)
+      checkLength(_tokens, _weights) public {
+
         name = _name;
         totalSupply = 0;
         decimals = _decimals;
@@ -25,6 +30,7 @@ contract MockIndex is IndexInterface, MockDerivative {
         category = _category;
         status = DerivativeStatus.Active;
         version = "1.0";
+        symbol = "MIT"; // MockIndexToken
         fundType = DerivativeType.Index;
         isRebalance = false;
 
@@ -36,7 +42,7 @@ contract MockIndex is IndexInterface, MockDerivative {
 
     // One time call
     function initialize(address _market, address /*_exchange*/, address /*_withdraw*/, address /*_risk*/, address /*_whitelist*/) onlyOwner external {
-        // require(status == DerivativeStatus.New);
+        require(status == DerivativeStatus.New);
         MarketplaceInterface(_market).registerProduct();
         status = DerivativeStatus.Active;
     }

@@ -19,12 +19,9 @@ const args = require('../scripts/libs/args')
 let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
-let MockIndex = artifacts.require("MockIndex");
-
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
-// let MockFund = artifacts.require("MockFund");
-let OlympusFund = artifacts.require('OlympusFund');
+
 
 let devTokens;
 function deployMarketplace(deployer, network) {
@@ -88,31 +85,8 @@ async function deployReimbursable(deployer, network) {
 
 async function deployOlympusFund(deployer, network) {
   const args = args.parseArgs();
-
-  if (network === 'kovan') {
-    // Not tested
-    if (args.name && args.symbol) {
-      await deployer.deploy(OlympusFund, args.name, args.symbol, 'Created by automatic deployment', 18);
-      const fund = OlympusFund.deployed;
-      await fund.initialize(
-        0xfe818847198201ef8d800809d40f0c504f7d9a8c, // Market
-        0x304730f75cf4c92596fc61cc239a649febc0e36e, // Exchange
-        0x035b67efd86462356d104e52b6975f7d2bfe198c, // Withdraw
-        0x1, // Risk
-        0x1111111111111111111111111111111111111111, // whitelist
-        0x5b81830a3399f29d1c2567c7d09376503b607058, // Reimbursable
-        0x4dc61e1e74eec68e32538cf2ef5509e17e0fc2bc, // Managment fee
-        1000 // 1%
-      );
-    }
-    else {
-      console.error('Required name and symbol as parametter');
-    }
-    return;
-  }
   await deployer.deploy([
     AsyncWithdraw,
-    SimpleWithdraw, // Exchannge Provider
     RiskControl,
     MarketplaceProvider,
     PercentageFee,
@@ -120,6 +94,23 @@ async function deployOlympusFund(deployer, network) {
     WhitelistProvider,
   ]);
   await deployExchange(deployer, network);
+}
+
+
+async function deployOlympusFund(deployer, network) {
+  const args = args.parseArgs();
+
+
+  await deployer.deploy([
+    AsyncWithdraw,
+    RiskControl,
+    MarketplaceProvider,
+    PercentageFee,
+    Reimbursable,
+    WhitelistProvider,
+  ]);
+  await deployExchange(deployer, network);
+  await deployer.deploy(RebalanceProvider, ExchangeProvider.address);
 }
 
 // Running all the suits

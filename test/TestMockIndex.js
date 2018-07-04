@@ -7,8 +7,6 @@ const MarketplaceProvider = artifacts.require("Marketplace");
 const MockIndex = artifacts.require("MockIndex");
 const SimpleERC20Token = artifacts.require("SimpleERC20Token");
 
-
-const Promise = require('bluebird');
 let mockIndexData = {
   name: 'test_name',
   decimals: 18,
