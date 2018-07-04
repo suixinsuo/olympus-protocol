@@ -38,6 +38,21 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
 
+    // If whitelist is disabled, that will become onlyOwner
+    modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
+        require(
+            msg.sender == owner ||
+            WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender)
+        );
+        _;
+    }
+
+    // If whitelist is disabled, anyone can do this
+    modifier whitelisted(WhitelistKeys _key) {
+        require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
+        _;
+    }
+
     constructor (
       string _name,
       string _symbol,
@@ -329,19 +344,6 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- WHITELIST -----------------------------
-    // If whitelist is disabled, that will become onlyOwner
-    modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
-        require(
-            msg.sender == owner ||
-            WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender)
-        );
-        _;
-    }
-    // If whitelist is disabled, anyone can do this
-    modifier whitelisted(WhitelistKeys _key) {
-        require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
-        _;
-    }
 
     function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
         WhitelistInterface(getComponentByName(WHITELIST)).enable(uint8(_key));
