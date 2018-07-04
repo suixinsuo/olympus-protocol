@@ -1,26 +1,24 @@
-const log = require('../utils/log');
+const log = require("../utils/log");
 const PercentageFee = artifacts.require("PercentageFee");
 const MockFeeClient = artifacts.require("MockFeeClient");
 
-
 const FEE = 0.1; // 10%
-const toToken = (amount) => {
+const toTokenWei = amount => {
   return amount * 10 ** 18;
-}
+};
 
-contract('Fee', (accounts) => {
+contract("Fee", accounts => {
   const investorA = accounts[1];
 
-  it("Shall be able execute Simple fee", async () => log.catch(async () => {
-    const fee = await PercentageFee.new();
-    const client = await MockFeeClient.new(fee.address);
+  it("Shall be able execute Simple fee", async () =>
+    log.catch(async () => {
+      const fee = await PercentageFee.new();
+      const client = await MockFeeClient.new(fee.address);
 
-    await client.setFee((await client.feeDenominator()).toNumber() * FEE);
+      await client.setFee((await client.feeDenominator()).toNumber() * FEE);
 
-    await client.invest({ value: web3.toWei(1, 'ether'), from: investorA });
-    // Fee has been applied
-    assert.equal((await client.balanceOf(investorA)).toNumber(), toToken(0.9));
-
-  }))
-
+      await client.invest({ value: web3.toWei(1, "ether"), from: investorA });
+      // Fee has been applied
+      assert.equal((await client.balanceOf(investorA)).toNumber(), toTokenWei(0.9));
+    }));
 });

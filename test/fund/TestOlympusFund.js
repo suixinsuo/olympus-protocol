@@ -31,7 +31,7 @@ const fundData = {
   ethDeposit: 0.5 // ETH
 };
 
-const toToken = amount => {
+const toTokenWei = amount => {
   return amount * 10 ** fundData.decimals;
 };
 
@@ -110,7 +110,7 @@ contract("Fund", accounts => {
       assert.equal(myProducts[0], fund.address);
     }));
 
-  it("Fund shall be able deploy", async () =>
+  it("Fund shall be able to deploy", async () =>
     log.catch(async () => {
       assert.equal(await fund.name(), fundData.name);
       assert.equal(await fund.description(), fundData.description);
@@ -132,8 +132,8 @@ contract("Fund", accounts => {
       // Price is the same, as no Token value has changed
       assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
-      assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1));
-      assert.equal((await fund.balanceOf(investorB)).toNumber(), toToken(1));
+      assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1));
+      assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1));
     }));
 
   it("Shall be able to request and withdraw", async () =>
@@ -141,27 +141,27 @@ contract("Fund", accounts => {
       let tx;
       await fund.setMaxTransfers(1); // For testing
 
-      assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1), "A has invested");
-      assert.equal((await fund.balanceOf(investorB)).toNumber(), toToken(1), "B has invested");
+      assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1), "A has invested");
+      assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), "B has invested");
 
       // Request
-      await fund.requestWithdraw(toToken(1), { from: investorA });
-      await fund.requestWithdraw(toToken(1), { from: investorB });
+      await fund.requestWithdraw(toTokenWei(1), { from: investorA });
+      await fund.requestWithdraw(toTokenWei(1), { from: investorB });
 
       // Withdraw max transfers is set to 1
       tx = await fund.withdraw();
       assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
       assert.equal(await fund.withdrawInProgress(), true, " Withdraw has not finished");
-      assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdraw");
-      assert.equal((await fund.balanceOf(investorB)).toNumber(), toToken(1), " B has no withdraw");
+      assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
+      assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
 
       // Second withdraw succeeds
       tx = await fund.withdraw();
       assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
 
       assert.equal(await fund.withdrawInProgress(), false, " Withdraw has finished");
-      assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdraw");
+      assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
       await fund.setMaxTransfers(10); // Restore
     }));
@@ -184,21 +184,21 @@ contract("Fund", accounts => {
       // Withdraw not allowed
       await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
       calc.assertReverts(
-        async () => await fund.requestWithdraw(toToken(1), { from: investorA }),
+        async () => await fund.requestWithdraw(toTokenWei(1), { from: investorA }),
         "Is not allowed to request"
       );
 
       // Request allowed
       await fund.setAllowed([investorA, investorB], WhitelistType.Investment, true);
-      await fund.requestWithdraw(toToken(1), { from: investorA });
-      await fund.requestWithdraw(toToken(1), { from: investorB });
+      await fund.requestWithdraw(toTokenWei(1), { from: investorA });
+      await fund.requestWithdraw(toTokenWei(1), { from: investorB });
 
       tx = await fund.withdraw();
       assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
       assert.equal(await fund.withdrawInProgress(), false, " Withdraw has finished");
-      assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdraw");
-      assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, " B has withdraw");
+      assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
+      assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, " B has withdrawn");
 
       // Reset permissions and disable, so anyone could invest again
       await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
@@ -245,7 +245,7 @@ contract("Fund", accounts => {
       fee = (await fund.accumulatedFee()).toNumber();
       assert(calc.inRange(fee, web3.toWei(expectedFee, "ether"), web3.toWei(0.1, "ether")), "Owner got fee");
 
-      assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1.8), "A has invested with fee");
+      assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
 
       // Withdraw
       const ownerBalanceInital = await calc.ethBalance(accounts[0]);
@@ -340,7 +340,7 @@ contract("Fund", accounts => {
       // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
       const initialBalance = (await fund.getETHBalance()).toNumber();
       assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
-      assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1.8), "A has invested with fee");
+      assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
       const investorABefore = await calc.ethBalance(investorA);
 
       const rates = await Promise.all(
@@ -358,12 +358,12 @@ contract("Fund", accounts => {
       assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "We sold all into tokens");
 
       // Request
-      await fund.requestWithdraw(toToken(1.8), { from: investorA });
+      await fund.requestWithdraw(toTokenWei(1.8), { from: investorA });
       tx = await fund.withdraw();
 
       // Investor has recover all his eth sepp9jgt tokens
       const investorAAfter = await calc.ethBalance(investorA);
-      assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(0), "Investor redeemed all the founds");
+      assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(0), "Investor redeemed all the funds");
       assert.equal(
         calc.roundTo(investorABefore + 1.8, 2),
         calc.roundTo(investorAAfter, 2),
@@ -399,7 +399,7 @@ contract("Fund", accounts => {
       await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
       const initialBalance = (await fund.getETHBalance()).toNumber();
       assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
-      assert.equal((await fund.balanceOf(investorC)).toNumber(), toToken(1.8), "C has invested with fee");
+      assert.equal((await fund.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C has invested with fee");
 
       const rates = await Promise.all(
         tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
