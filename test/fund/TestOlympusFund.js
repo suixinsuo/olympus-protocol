@@ -7,6 +7,7 @@ const RiskControl = artifacts.require("../../contracts/components/RiskControl.so
 const Marketplace = artifacts.require("../../contracts/Marketplace.sol");
 const PercentageFee = artifacts.require("../../contracts/components/fee/PercentageFee.sol");
 const Reimbursable = artifacts.require("../../contracts/components/fee/Reimbursable.sol");
+const MockToken = artifacts.require("MockToken");
 const Whitelist = artifacts.require("WhitelistProvider");
 
 // Buy and sell tokens
@@ -40,19 +41,35 @@ contract("Fund", accounts => {
   let market;
   let mockKyber;
   let tokens;
+  let mockMOT;
+  let exchange;
+  let asyncWithdraw;
+  let riskControl;
+  let percentageFee;
+
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
 
   it("Create a fund", async () => {
+    mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
     tokens = await mockKyber.supportedTokens();
+    exchange = await ExchangeProvider.deployed();
+    asyncWithdraw = await AsyncWithdraw.deployed();
+    riskControl = await RiskControl.deployed();
+    percentageFee = await PercentageFee.deployed();
+
     fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
 
     calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
-    assert.equal((await fund.status()).toNumber(), DerivativeStatus.New, "Must be still new");
+
+    await exchange.setMotAddress(mockMOT.address);
+    await asyncWithdraw.setMotAddress(mockMOT.address);
+    await riskControl.setMotAddress(mockMOT.address);
+    await percentageFee.setMotAddress(mockMOT.address);
 
     await fund.initialize(
       Marketplace.address,
@@ -115,6 +132,7 @@ contract("Fund", accounts => {
       assert.equal(await fund.name(), fundData.name);
       assert.equal(await fund.description(), fundData.description);
       assert.equal(await fund.symbol(), fundData.symbol);
+      assert.equal(await fund.category(), fundData.category);
       assert.equal(await fund.version(), "1.0");
       assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
     }));
@@ -172,7 +190,7 @@ contract("Fund", accounts => {
       // Invest Not allowed
       await fund.enableWhitelist(WhitelistType.Investment);
       calc.assertReverts(
-        async () => await fund.invest({ value: web3.toWei(1, "ether"), from: investorA }),
+        async () => await fund.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
         "Is not allowed to invest"
       );
 
@@ -184,7 +202,7 @@ contract("Fund", accounts => {
       // Withdraw not allowed
       await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
       calc.assertReverts(
-        async () => await fund.requestWithdraw(toTokenWei(1), { from: investorA }),
+        async () => await fund.requestWithdraw(toTokenWei(0.2), { from: investorA }),
         "Is not allowed to request"
       );
 

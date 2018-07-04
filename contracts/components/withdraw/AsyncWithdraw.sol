@@ -3,9 +3,9 @@ pragma solidity 0.4.24;
 import "../../interfaces/WithdrawInterface.sol";
 import "../../interfaces/DerivativeInterface.sol";
 import "../../interfaces/WithdrawInterface.sol";
+import "../../components/base/FeeCharger.sol";
 
-
-contract AsyncWithdraw is  WithdrawInterface {
+contract AsyncWithdraw is FeeCharger, WithdrawInterface {
 
     string public name = "AsyncWithdraw";
     string public description = "Withdraw one by one";
