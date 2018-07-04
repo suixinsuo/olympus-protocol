@@ -7,6 +7,7 @@ const RiskControl = artifacts.require("RiskControl");
 const Marketplace = artifacts.require("Marketplace");
 const Whitelist = artifacts.require("WhitelistProvider");
 const Withdraw = artifacts.require("AsyncWithdraw");
+const MockToken = artifacts.require("MockToken");
 
 const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
@@ -41,6 +42,13 @@ contract("Olympus Index", accounts => {
   let index;
   let market;
   let mockKyber;
+  let mockMOT;
+  let exchange;
+  let asyncWithdraw;
+  let riskControl;
+  let percentageFee;
+  let rebalance;
+
   let tokens;
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -67,6 +75,13 @@ contract("Olympus Index", accounts => {
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
     tokens = await mockKyber.supportedTokens();
+    mockMOT = await MockToken.deployed();
+    exchange = await ExchangeProvider.deployed();
+    asyncWithdraw = await Withdraw.deployed();
+    riskControl = await RiskControl.deployed();
+    percentageFee = await PercentageFee.deployed();
+    rebalance = await Rebalance.deployed();
+
     index = await OlympusIndex.new(
       indexData.name,
       indexData.symbol,
@@ -76,10 +91,17 @@ contract("Olympus Index", accounts => {
       tokens.slice(0, indexData.tokensLenght),
       indexData.weights
     );
+
     assert.equal((await index.status()).toNumber(), 0); // new
 
     calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
+
+    await exchange.setMotAddress(mockMOT.address);
+    await asyncWithdraw.setMotAddress(mockMOT.address);
+    await riskControl.setMotAddress(mockMOT.address);
+    await percentageFee.setMotAddress(mockMOT.address);
+    await rebalance.setMotAddress(mockMOT.address);
 
     await index.initialize(
       Marketplace.address,

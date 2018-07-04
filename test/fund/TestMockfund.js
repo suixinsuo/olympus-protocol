@@ -2,6 +2,7 @@ const log = require("../utils/log");
 const calc = require("../utils/calc");
 
 const Fund = artifacts.require("MockFund");
+const MockToken = artifacts.require("MockToken");
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
@@ -22,13 +23,19 @@ contract("Mock Fund", accounts => {
   let fund;
   let mockKyber;
   let tokens;
+  let exchange;
   const investorA = accounts[1];
   const investorB = accounts[2];
 
   before("Mock Fund Test", async () => {
     mockKyber = await MockKyberNetwork.deployed();
+    mockMOT = await MockToken.deployed();
+    exchange = await ExchangeProvider.deployed();
+    await exchange.setMotAddress(mockMOT.address);
+
     tokens = await mockKyber.supportedTokens();
-    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, ExchangeProvider.address);
+
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, exchange.address);
   });
 
   it("Fund shall be able deploy", async () =>
@@ -124,11 +131,7 @@ contract("Mock Fund", accounts => {
         await fund.changeStatus(DerivativeStatus.New);
         assert(false, "Shall not be able to change to New");
       } catch (e) {
-        assert.equal(
-          (await fund.status()).toNumber(),
-          DerivativeStatus.Closed,
-          " Cant change to new, shall keep being previous"
-        );
+        assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Cant change to new");
       }
     }));
 });

@@ -5,20 +5,22 @@ import "../../interfaces/implementations/OlympusExchangeAdapterManagerInterface.
 import "../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../../libs/utils.sol";
+import "../../components/base/FeeCharger.sol";
 
-
-contract ExchangeProvider is OlympusExchangeInterface {
+contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     using SafeMath for uint256;
     string public name = "OlympusExchangeProvider";
     string public description =
     "Exchange provider of Olympus Labs, which additionally supports buy\and sellTokens for multiple tokens at the same time";
     string public category = "exchange";
     string public version = "v1.0";
+    ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     OlympusExchangeAdapterManagerInterface private exchangeAdapterManager;
 
     constructor(address _exchangeManager) public {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
+        feeMode = FeeMode.ByTransactionAmount;
     }
 
     modifier checkAllowance(ERC20Extended _token, uint _amount) {
@@ -37,11 +39,15 @@ contract ExchangeProvider is OlympusExchangeInterface {
         ) external payable returns(bool success) {
 
         require(msg.value == _amount);
+
         OlympusExchangeAdapterInterface adapter;
+        // solhint-disable-next-line
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, true) : _exchangeId;
         if(exchangeId == 0){
             revert("No suitable exchange found");
         }
+
+        require(payFee(msg.value * getMotPrice(exchangeId) / 10 ** 18));
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         require(
             adapter.buyToken.value(msg.value)(
@@ -64,6 +70,11 @@ contract ExchangeProvider is OlympusExchangeInterface {
         if(exchangeId == 0){
             revert("No suitable exchange found");
         }
+
+        uint tokenPrice;
+        (tokenPrice,) = exchangeAdapterManager.getPrice(_token, ETH, _amount, exchangeId);
+        require(payFee(tokenPrice  * _amount * getMotPrice(exchangeId) / 10 ** _token.decimals() / 10 ** 18));
+
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
 
         _token.transferFrom(msg.sender, address(adapter), _amount);
@@ -78,12 +89,17 @@ contract ExchangeProvider is OlympusExchangeInterface {
         return true;
     }
 
+    function getMotPrice(bytes32 _exchangeId) private view returns (uint price) {
+        (price,) = exchangeAdapterManager.getPrice(ETH, MOT, msg.value, _exchangeId);
+    }
+
     function buyTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external payable returns(bool success) {
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
+        require(payFee(msg.value * getMotPrice(_exchangeId) / 10 ** 18));
         uint totalValue;
         uint i;
         for(i = 0; i < _amounts.length; i++ ) {
@@ -116,12 +132,18 @@ contract ExchangeProvider is OlympusExchangeInterface {
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         OlympusExchangeAdapterInterface adapter;
 
+        uint[] memory prices = new uint[](3); // 0 tokenPrice, 1 MOT price, 3 totalValueInMOT
         for (uint i = 0; i < _tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == bytes32("") ?
             exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], false) : _exchangeId;
             if(exchangeId == 0){
                 revert("No suitable exchange found");
             }
+
+            (prices[0],) = exchangeAdapterManager.getPrice(_tokens[i], ETH, _amounts[i], exchangeId);
+            (prices[1],) = exchangeAdapterManager.getPrice(ETH, MOT, prices[0] * _amounts[i], exchangeId);
+            prices[2] += prices[0] * _amounts[i] * prices[1] / 10 ** _tokens[i].decimals() / 10 ** 18;
+
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             require(_tokens[i].allowance(msg.sender, address(this)) >= _amounts[i], "Not enough tokens approved");
             _tokens[i].transferFrom(msg.sender, address(adapter), _amounts[i]);
@@ -133,6 +155,9 @@ contract ExchangeProvider is OlympusExchangeInterface {
                     _depositAddress)
             );
         }
+
+        require(payFee(prices[2]));
+
         return true;
     }
 
