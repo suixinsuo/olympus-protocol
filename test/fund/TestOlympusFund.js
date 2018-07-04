@@ -24,6 +24,7 @@ const WhitelistType = { Investment: 0, Maintenance: 1 };
 const fundData = {
   name: "OlympusFund",
   symbol: "MOF",
+  category: "Tests",
   description: "Sample of real fund",
   decimals: 18,
   managmentFee: 0.1,
@@ -32,10 +33,6 @@ const fundData = {
 
 const toToken = amount => {
   return amount * 10 ** fundData.decimals;
-};
-
-const rates = async (from, to, balance) => {
-  return mockKyber.getExpectedRate(from, to, balance);
 };
 
 contract("Fund", accounts => {
@@ -51,7 +48,7 @@ contract("Fund", accounts => {
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
     tokens = await mockKyber.supportedTokens();
-    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.decimals);
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
 
     calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
@@ -245,7 +242,7 @@ contract("Fund", accounts => {
       await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
 
       const expectedFee = 0.5 + 0.2 - 0.01; // Base Fee + Fee from investments - commision of withdraw
-      let fee = (await fund.accumulatedFee()).toNumber();
+      fee = (await fund.accumulatedFee()).toNumber();
       assert(calc.inRange(fee, web3.toWei(expectedFee, "ether"), web3.toWei(0.1, "ether")), "Owner got fee");
 
       assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1.8), "A has invested with fee");
@@ -307,15 +304,17 @@ contract("Fund", accounts => {
       assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0.8, "ether"), "ETH balance reduced");
     }));
 
-  it("Shall be able to sell  tokens", async () =>
+  it("Shall be able to sell tokens", async () =>
     log.catch(async () => {
       // From the preivus test we got 1.8 ETH
       const initialBalance = (await fund.getETHBalance()).toNumber();
 
       assert.equal(initialBalance, web3.toWei(0.8, "ether"), "This test must start with 1.8 eth");
       let fundTokensAndBalance = await fund.getTokens();
-      const balance = fundTokensAndBalance.map(tokenBalance => tokenBalance[1]);
-      const sellRates = await Promise.all(tokens.map(async token => await rates(token, ethToken, balance)));
+      const balances = fundTokensAndBalance.map(tokenBalance => tokenBalance[1]);
+      const sellRates = await Promise.all(
+        tokens.map(async (token, index) => await mockKyber.getExpectedRate(token, ethToken, balances[index]))
+      );
       // We sell all
       await fund.sellTokens("", fundTokensAndBalance[0], fundTokensAndBalance[1], sellRates.map(rate => rate[0]));
 
@@ -339,11 +338,8 @@ contract("Fund", accounts => {
   it("Shall be able to sell tokens to get enough eth for withdraw", async () =>
     log.catch(async () => {
       // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
-      assert.equal(
-        (await fund.getETHBalance()).toNumber(),
-        web3.toWei(1.8, "ether"),
-        "This test must start with 1.8 eth"
-      );
+      const initialBalance = (await fund.getETHBalance()).toNumber();
+      assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
       assert.equal((await fund.balanceOf(investorA)).toNumber(), toToken(1.8), "A has invested with fee");
       const investorABefore = await calc.ethBalance(investorA);
 

@@ -43,11 +43,13 @@ contract OlympusFund is FundInterface, Derivative {
       string _name,
       string _symbol,
       string _description,
+      string _category,
       uint _decimals
      ) public {
 
         name = _name;
         symbol = _symbol;
+        category = _category;
         description = _description;
         version = "1.0";
         decimals = _decimals;

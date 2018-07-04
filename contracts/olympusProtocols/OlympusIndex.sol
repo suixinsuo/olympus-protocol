@@ -39,8 +39,12 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public maxTransfers = 10;
 
     constructor (
-      string _name, uint _decimals, string _symbol,
-      string _description, string _category, address[] _tokens,
+      string _name,
+      string _symbol,
+      string _description,
+      string _category,
+      uint _decimals,
+      address[] _tokens,
       uint[] _weights)
       checkLength(_tokens, _weights) public {
         name = _name;
