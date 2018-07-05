@@ -35,8 +35,9 @@ Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
 
 # Deployed addresses
 
-Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb
-WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8
+Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb<br/>
+WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8<br/>
+PercentageFee 0x69f90f1bfde0939c41c5d01bfdc9a88fe252bd64<br/>
 
 ## Mainnet
 
