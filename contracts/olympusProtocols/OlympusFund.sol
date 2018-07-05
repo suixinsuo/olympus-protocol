@@ -250,8 +250,8 @@ contract OlympusFund is FundInterface, Derivative {
 
     function withdrawFee(uint amount) external onlyOwner returns(bool) {
         require(accumulatedFee >= amount);
-        msg.sender.transfer(amount);
         accumulatedFee -= amount;
+        msg.sender.transfer(amount);
         return true;
     }
 
