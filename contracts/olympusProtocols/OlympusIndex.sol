@@ -370,7 +370,30 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool success) {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
-        // CODE HERE
+        RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
+        OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        address[] memory tokensToSell;
+        uint[] memory amountsToSell;
+        address[] memory tokensToBuy;
+        uint[] memory amountsToBuy;
+        uint8 i;
+        uint ETHBalanceBefore = address(this).balance;
+
+        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
+        // Sell Tokens
+        for (i = 0; i < tokensToSell.length; i++) {
+            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), "", 0x0));
+        }
+
+        // Buy Tokens
+        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
+        for (i = 0; i < tokensToBuy.length; i++) {
+            require(exchangeProvider.buyToken.value(amountsToBuy[i])(
+              ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), "", 0x0)
+            );
+        }
+
         reimburse();
         return true;
     }
