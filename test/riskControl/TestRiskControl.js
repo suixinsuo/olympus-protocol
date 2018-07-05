@@ -17,6 +17,7 @@ contract("RiskControl", accounts => {
     let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
     await riskControl.setMotAddress(mockMot.address);
     let instance = await MockRiskControl.new(riskControl.address);
+    await instance.initialize();
     let result = await instance.hasRisk.call(
       accounts[0],
       accounts[1],
