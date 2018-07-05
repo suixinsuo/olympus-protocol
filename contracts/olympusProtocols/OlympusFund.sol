@@ -9,7 +9,7 @@ import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../interfaces/WhitelistInterface.sol";
 import "../libs/ERC20Extended.sol";
-
+import "../interfaces/FeeChargerInterface.sol";
 
 
 contract OlympusFund is FundInterface, Derivative {
@@ -93,6 +93,9 @@ contract OlympusFund is FundInterface, Derivative {
         setComponent(WHITELIST, _whitelist);
         setComponent(FEE, _feeProvider);
         setComponent(REIMBURSABLE, _reimbursable);
+
+        // approve component for charging fees.
+        approveComponents();
 
         MarketplaceInterface(_market).registerProduct();
         ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
@@ -386,4 +389,25 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
+    // Set component from outside the chain
+    function setComponentExternal(string name, address provider) external onlyOwner returns(bool) {
+        super.setComponent(name, provider);
+        approveComponent(name);
+        return true;
+    }    
+
+    function approveComponents() private {
+        approveComponent(EXCHANGE);
+        approveComponent(WITHDRAW);
+        approveComponent(RISK);
+        approveComponent(WHITELIST);
+        approveComponent(FEE);
+        approveComponent(REIMBURSABLE);
+    }
+
+    function approveComponent(string _name) private {
+        address componentAddress = getComponentByName(_name);
+        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);        
+        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 2 ** 256 - 1);
+    }
 }
