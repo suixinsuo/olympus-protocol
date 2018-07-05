@@ -10,7 +10,7 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
-
+import "../interfaces/FeeChargerInterface.sol";
 
 
 contract OlympusIndex is IndexInterface, Derivative {
@@ -106,6 +106,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         setComponent(REIMBURSABLE, _reimbursable);
         setComponent(WITHDRAW, _withdraw);
 
+        // approve component for charging fees.
+        approveComponents();
 
         MarketplaceInterface(_market).registerProduct();
         ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
@@ -359,5 +361,32 @@ contract OlympusIndex is IndexInterface, Derivative {
         WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts,uint8(_key), allowed);
         return true;
     }
+
+  // Set component from outside the chain
+    function setComponentExternal(string name, address provider) external onlyOwner returns(bool) {
+        super.setComponent(name, provider);
+
+        if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
+            approveComponent(name);
+        }        
+
+        return true;
+    }    
+
+    function approveComponents() private {
+        approveComponent(EXCHANGE);
+        approveComponent(WITHDRAW);
+        approveComponent(RISK);
+        approveComponent(WHITELIST);
+        approveComponent(FEE);
+        approveComponent(REIMBURSABLE);
+        approveComponent(REBALANCE);
+    }
+
+    function approveComponent(string _name) private {
+        address componentAddress = getComponentByName(_name);
+        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);        
+        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 2 ** 256 - 1);
+    }    
 
 }

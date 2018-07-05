@@ -392,7 +392,11 @@ contract OlympusFund is FundInterface, Derivative {
     // Set component from outside the chain
     function setComponentExternal(string name, address provider) external onlyOwner returns(bool) {
         super.setComponent(name, provider);
-        approveComponent(name);
+
+        if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
+            approveComponent(name);
+        }
+
         return true;
     }    
 
