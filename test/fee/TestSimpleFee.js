@@ -18,6 +18,7 @@ contract("Fee", accounts => {
       await fee.setMotAddress(mockMot.address);
 
       const client = await MockFeeClient.new(fee.address);
+      await client.initialize();
       await client.setFee((await client.feeDenominator()).toNumber() * FEE);
       await client.invest({ value: web3.toWei(1, "ether"), from: investorA });
       // Fee has been applied
