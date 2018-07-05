@@ -38,6 +38,10 @@ const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
 };
 
+const expectedTokenAmount = (balance, rates, tokenIndex) => {
+  // Balance ETH * (weight)%  * tokenRate / ETH  ==> Expected tokenAmount
+  return (balance * (indexData.weights[tokenIndex] / 100) * rates[0][tokenIndex].toNumber()) / 10 ** 18;
+};
 contract("Olympus Index", accounts => {
   let index;
   let market;
@@ -188,6 +192,18 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1));
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1));
+  });
+
+  it("Rebalance works with no tokens", async () => {
+    let tx;
+    tx = await index.rebalance();
+    assert.ok(tx);
+    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
+
+    assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
+    assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
+    const tokenAmounts = await index.getTokensAmounts();
+    tokenAmounts[1].forEach(amount => assert.equal(amount, 0, "Amount is 0"));
   });
 
   it("Shall be able to request and withdraw", async () => {
@@ -343,9 +359,7 @@ contract("Olympus Index", accounts => {
     );
 
     tokensAndAmounts[1].forEach((amount, index) => {
-      // ETH * % * rate
-      const expectedAmount =
-        (initialIndexBalance * (indexData.weights[index] / 100) * rates[0][index].toNumber()) / 10 ** 18;
+      const expectedAmount = expectedTokenAmount(initialIndexBalance, rates, index);
       assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
     });
   });
@@ -370,14 +384,46 @@ contract("Olympus Index", accounts => {
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
   });
 
-  it.skip("Shall be able to rebalance", async () => {
-    // INVEST
-    // BUY TOKENS
-    // BUY TOKENS ACCOUNT 0
-    // TRANSFER TOKENS FROM ACCOUNT 0 to INDEX
-    // EXECUTE REBALANCE
-    // CHECK IS WEIGHTS ARE BEEN FOLLOW
-    // PRICE WILL CHANGE THAT WILL MODIFY ETH RECIEVED IN LAST TEST
+  it("Shall be able to rebalance", async () => {
+    let tx;
+    let tokenAmounts;
+    // Invest and get initial data
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    const initialIndexBalance = (await index.getETHBalance()).toNumber();
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const extraAmount = +web3.toWei(1, "ether");
+    // Buy tokens and sent to index, forcing increase his total assets value
+    tx = await index.buyTokens();
+    assert.ok(tx);
+
+    assert.equal((await index.getETHBalance()).toNumber(), 0, "ETH used to buy"); // All ETH has been sald
+    const initialAssetsValue = +(await index.getAssetsValue()).toNumber();
+
+    exchange.buyToken(tokens[0], extraAmount, 0, index.address, 0x0, "", {
+      value: extraAmount
+    });
+    const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
+    assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
+    // Execute Rebalance
+    tx = await index.rebalance();
+    assert.ok(tx);
+    // Reblacance keep the amounts as per the wieghts
+    tokenAmounts = await index.getTokensAmounts();
+    tokenAmounts[1].forEach((amount, index) => {
+      const expectedAmount = expectedTokenAmount(initialIndexBalance + extraAmount, rates, index);
+      assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
+    });
+    // Price is updated because we force the total assets value increase while not the supply
+    const price = (await index.getPrice()).toNumber();
+    const supply = (await index.totalSupply()).toNumber();
+    const priceInRange = calc.inRange(
+      price,
+      (initialAssetsValue + extraAmount) / supply,
+      web3.toWei(0.0000001, "ether")
+    );
+    assert.ok(priceInRange, "Price updated");
   });
 
   it("Shall be able to change the status", async () => {
@@ -401,8 +447,13 @@ contract("Olympus Index", accounts => {
   it("Shall be able to close a index", async () => {
     await index.invest({ value: web3.toWei(2, "ether"), from: investorC });
     const initialBalance = (await index.getETHBalance()).toNumber();
-    assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
-    assert.equal((await index.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C has invested with fee");
+    const price = (await index.getPrice()).toNumber();
+    const priceInRange = calc.inRange(
+      (await index.balanceOf(investorC)).toNumber(),
+      web3.toWei(toTokenWei(1.8) / price, "ether"),
+      web3.toWei(0.001, "ether")
+    );
+    assert.ok(priceInRange, "C has invested with fee");
 
     // TODO REBALANCE
 
@@ -414,8 +465,8 @@ contract("Olympus Index", accounts => {
       let balance = await erc20.balanceOf(index.address);
       assert.equal(balance.toNumber(), 0, "Tokens are sold");
     }
-
-    assert.equal((await index.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance returned");
+    assert.equal((await index.getAssetsValue()).toNumber(), 0, "Assets value is 0");
+    assert.isAbove((await index.getETHBalance()).toNumber(), 0, "ETH balance returned");
     calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Shall keep close");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Shall keep being closed");
   });
