@@ -17,6 +17,7 @@ contract("Whitelist", accounts => {
 
     mock = await MockWhitelist.new(whitelistProvider.address);
     balanceCategory = (await mock.CATEGORY_BALANCE()).toNumber();
+    await mock.initialize();
   });
 
   it("Shall be able enable and disable", async () =>
