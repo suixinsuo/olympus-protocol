@@ -58,6 +58,8 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
 
 
     function withdraw(address _investor) external returns(uint eth, uint tokens) {
+        require(payFee(0));
+
         require(contracts[msg.sender].withdrawRequestLock); // Only withdraw after lock
         // Jump the already withdrawed
         if(contracts[msg.sender].withdrawPending[_investor] == false) {return(0,0);}

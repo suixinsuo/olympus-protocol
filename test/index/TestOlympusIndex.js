@@ -48,7 +48,7 @@ contract("Olympus Index", accounts => {
   let riskControl;
   let percentageFee;
   let rebalance;
-
+  let whitelist;
   let tokens;
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -81,6 +81,7 @@ contract("Olympus Index", accounts => {
     riskControl = await RiskControl.deployed();
     percentageFee = await PercentageFee.deployed();
     rebalance = await Rebalance.deployed();
+    whitelist = await Whitelist.deployed();
 
     index = await OlympusIndex.new(
       indexData.name,
@@ -102,6 +103,7 @@ contract("Olympus Index", accounts => {
     await riskControl.setMotAddress(mockMOT.address);
     await percentageFee.setMotAddress(mockMOT.address);
     await rebalance.setMotAddress(mockMOT.address);
+    await whitelist.setMotAddress(mockMOT.address);
 
     await index.initialize(
       Marketplace.address,
