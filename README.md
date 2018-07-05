@@ -33,11 +33,16 @@ WhitelistProvider 0x28cf0233492d60f931d8285018c57182d42d4c9a
 
 Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
 
-# Deployed addresses
+# Deployed addresses (Mainnet July, 2018)
 
-Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb<br/>
-WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8<br/>
-PercentageFee 0x69f90f1bfde0939c41c5d01bfdc9a88fe252bd64<br/>
+- Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb
+- WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8
+- PercentageFee 0x69f90f1bfde0939c41c5d01bfdc9a88fe252bd64
+- ExchangeAdapterManager: 0x6d1e9ca4d69a6e036a180f1fbe9ee4e65753dd5b
+- KyberNetworkAdapter: 0xB083b81faAd24BEB82Bb30E48dC452902Cc4d4fB
+- ExchangeProvider: 0xc15a8b8B19b2A989F4C7ea0b93d240245E8874a0
+- RebalanceProvider: 0x5cF1c596bCF3899acA2F4A26A4160b7885e0fEF1
+- Reimbursable: 0x8a4fa41a9767123924ab08c44d81d2b86c1c6567
 
 ## Mainnet
 
