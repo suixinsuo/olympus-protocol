@@ -27,7 +27,7 @@ Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
 AsyncWithdraw 0x186ddb35f59231d972869a6de3334eae410f26a2 // 0x035b67efd86462356d104e52b6975f7d2bfe198c
 Reimbursable 0x5b81830a3399f29d1c2567c7d09376503b607058
 PercentageFee 0x4dc61e1e74eec68e32538cf2ef5509e17e0fc2bc
-Whitelist 0x0f9a12f38233dac6a1f394bd57a69840138b5abd
+WhitelistProvider 0x28cf0233492d60f931d8285018c57182d42d4c9a
 
 ## Sample Fund
 
@@ -35,7 +35,9 @@ Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
 
 # Deployed addresses
 
-Market place 0x0e59555df877ac4e634d42f196906c16fe540beb
+Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb<br/>
+WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8<br/>
+PercentageFee 0x69f90f1bfde0939c41c5d01bfdc9a88fe252bd64<br/>
 
 ## Mainnet
 
