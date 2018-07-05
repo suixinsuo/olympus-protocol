@@ -29,6 +29,8 @@ PercentageFee 0x4dc61e1e74eec68e32538cf2ef5509e17e0fc2bc
 Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
 
 # Deployed addresses
+Market place 0x0e59555df877ac4e634d42f196906c16fe540beb
+
 
 ## Mainnet
 ### v1.0.0-review-pending
