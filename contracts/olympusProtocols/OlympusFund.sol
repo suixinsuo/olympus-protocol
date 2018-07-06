@@ -8,7 +8,7 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../interfaces/WhitelistInterface.sol";
-import "../libs/ERC20Extended.sol";
+import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 
 
@@ -157,7 +157,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         for(uint i = 0; i < tokens.length; i++) {
-            _tokens[i].approve(exchange, _amounts[i]);
+            ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
         require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
         updateTokens(_tokens);
@@ -364,7 +364,7 @@ contract OlympusFund is FundInterface, Derivative {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
-            _tokensToSell[i].approve(exchange,  _amounts[i]);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange,  _amounts[i]);
 
         }
 
@@ -398,7 +398,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
 
         return true;
-    }    
+    }
 
     function approveComponents() private {
         approveComponent(EXCHANGE);
@@ -411,7 +411,7 @@ contract OlympusFund is FundInterface, Derivative {
 
     function approveComponent(string _name) private {
         address componentAddress = getComponentByName(_name);
-        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);        
-        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 2 ** 256 - 1);
+        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 0);
+        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 2 ** 256 - 1);
     }
 }

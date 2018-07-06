@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../libs/ERC20NoReturn.sol";
 import "../../interfaces/implementations/OlympusExchangeAdapterManagerInterface.sol";
 import "../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../interfaces/implementations/OlympusExchangeInterface.sol";
@@ -77,7 +78,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
 
-        _token.transferFrom(msg.sender, address(adapter), _amount);
+        ERC20NoReturn(_token).transferFrom(msg.sender, address(adapter), _amount);
 
         require(
             adapter.sellToken(
@@ -146,7 +147,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             require(_tokens[i].allowance(msg.sender, address(this)) >= _amounts[i], "Not enough tokens approved");
-            _tokens[i].transferFrom(msg.sender, address(adapter), _amounts[i]);
+            ERC20NoReturn(_tokens[i]).transferFrom(msg.sender, address(adapter), _amounts[i]);
             require(
                 adapter.sellToken(
                     _tokens[i],

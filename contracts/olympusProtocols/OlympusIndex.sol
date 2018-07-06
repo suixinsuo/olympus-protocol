@@ -10,6 +10,7 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
+import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 
 
@@ -336,38 +337,38 @@ contract OlympusIndex is IndexInterface, Derivative {
         for (uint8 i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
-            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
-            _tokensToSell[i].approve(exchange,  _amounts[i]);
+            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange,  _amounts[i]);
 
         }
 
-        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
+        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
     }
 
     // ----------------------------- REBALANCE -----------------------------
 
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns(bool) {
 
-      ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
 
-      if(getETHBalance() == 0) {
+        if(getETHBalance() == 0) {
+            reimburse();
+            return true;
+        }
+
+        uint[] memory _amounts = new uint[](tokens.length);
+        uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
+        ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
+        uint ethBalance = getETHBalance();
+        for(uint8 i = 0; i < tokens.length; i++) {
+            _amounts[i] = ethBalance * weights[i] / 100;
+            _tokensErc20[i] = ERC20Extended(tokens[i]);
+        }
+
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        require(exchange.buyTokens.value(ethBalance)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
         reimburse();
         return true;
-      }
-
-      uint[] memory _amounts = new uint[](tokens.length);
-      uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
-      ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
-      uint ethBalance = getETHBalance();
-      for(uint8 i = 0; i < tokens.length; i++) {
-        _amounts[i] = ethBalance * weights[i] / 100;
-        _tokensErc20[i] = ERC20Extended(tokens[i]);
-      }
-
-      OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-      require(exchange.buyTokens.value(ethBalance)(_tokensErc20, _amounts, _rates, address(this), '', 0x0));
-      reimburse();
-      return true;
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool success) {
@@ -400,10 +401,10 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
             approveComponent(name);
-        }        
+        }
 
         return true;
-    }    
+    }
 
     function approveComponents() private {
         approveComponent(EXCHANGE);
@@ -417,8 +418,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function approveComponent(string _name) private {
         address componentAddress = getComponentByName(_name);
-        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);        
-        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 2 ** 256 - 1);
-    }    
+        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 0);
+        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 2 ** 256 - 1);
+    }
 
 }
