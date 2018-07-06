@@ -3,14 +3,21 @@ pragma solidity 0.4.24;
 
 import "../../contracts/components/mocks/MockDerivative.sol";
 import "../../contracts/components/withdraw/AsyncWithdraw.sol";
+import "../../contracts/interfaces/FeeChargerInterface.sol";
 
-contract MockWithdrawClient is MockDerivative  {
+
+contract MockWithdrawClient is MockDerivative {
     uint maxTransfers = 1;
     AsyncWithdraw asyncWithdraw;
 
     constructor (address _asyncWithdraw) public {
         asyncWithdraw = AsyncWithdraw(_asyncWithdraw);
         balances[address(this)] = 10**25;
+    }
+
+    function initialize() public {
+        FeeChargerInterface(address(asyncWithdraw)).MOT().approve(address(asyncWithdraw), 0);
+        FeeChargerInterface(address(asyncWithdraw)).MOT().approve(address(asyncWithdraw), 2 ** 256 - 1);
     }
 
     function requestWithdraw(uint amount) external {

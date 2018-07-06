@@ -1,5 +1,5 @@
 var HDWalletProvider = require("truffle-hdwallet-provider");
-var prompt = require('prompt-sync')();
+var prompt = require("prompt-sync")();
 
 var mnemonics = {};
 
@@ -13,18 +13,18 @@ module.exports = {
       // gas: 7600000
     },
     kovan: {
-      provider: function () {
-        mnemonics.kovan = process.env.MNEMONICS || mnemonics.kovan || prompt('network kovan mnemonic: ');
+      provider: function() {
+        mnemonics.kovan = process.env.MNEMONICS || mnemonics.kovan || prompt("network kovan mnemonic: ");
         return new HDWalletProvider(mnemonics.kovan, "https://kovan.infura.io/qajYHKaGssZt5WrdfzGP");
       },
-      gasPrice: 1000000000,
+      gasPrice: 2000000000,
       before_timeout: 200000,
       test_timeout: 300000,
       network_id: 42
     },
     mainnet: {
-      provider: function () {
-        mnemonics.mainnet = process.env.MNEMONICS || mnemonics.mainnet || prompt('network mainnet mnemonic: ');
+      provider: function() {
+        mnemonics.mainnet = process.env.MNEMONICS || mnemonics.mainnet || prompt("network mainnet mnemonic: ");
         return new HDWalletProvider(mnemonics.mainnet, "https://mainnet.infura.io/qajYHKaGssZt5WrdfzGP");
       },
       gasPrice: 1000000000,
@@ -39,4 +39,4 @@ module.exports = {
     //   gasPrice: 2
     // }
   }
-}
+};

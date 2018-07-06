@@ -4,7 +4,7 @@ const MockFeeClient = artifacts.require("MockFeeClient");
 const MockToken = artifacts.require("MockToken");
 
 const FEE = 0.1; // 10%
-const toToken = amount => {
+const toTokenWei = amount => {
   return amount * 10 ** 18;
 };
 
@@ -18,9 +18,10 @@ contract("Fee", accounts => {
       await fee.setMotAddress(mockMot.address);
 
       const client = await MockFeeClient.new(fee.address);
+      await client.initialize();
       await client.setFee((await client.feeDenominator()).toNumber() * FEE);
       await client.invest({ value: web3.toWei(1, "ether"), from: investorA });
       // Fee has been applied
-      assert.equal((await client.balanceOf(investorA)).toNumber(), toToken(0.9));
+      assert.equal((await client.balanceOf(investorA)).toNumber(), toTokenWei(0.9));
     }));
 });
