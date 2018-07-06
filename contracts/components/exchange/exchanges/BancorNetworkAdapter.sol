@@ -30,12 +30,6 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         _;
     }
 
-    modifier checkTokenBalance(ERC20Extended _token, uint _amount) {
-        // Tokens needs to be transferred to here before this function is called
-        require(_token.balanceOf(address(this)) >= _amount, "Balance of token is not sufficient in adapter");
-        _;
-    }
-
     constructor (address _exchangeAdapterManager, address[] _tokenAddresses,
     BancorConverterInterface[] _converterAddresses, address[] _relayAddresses)
     checkArrayLengths(_tokenAddresses, _converterAddresses, _relayAddresses) public {
@@ -75,28 +69,37 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         uint rate;
         BancorConverterInterface targetTokenConverter = tokenToConverter[address(targetToken)];
 
-        if(isBuying){
-            // Get amount of BNT for amount ETH
-            uint ETHToBNTRate = BNTConverter.getReturn(bancorETHToken, bancorToken, _amount);
-            // Get amount of tokens for the amount of BNT for amount ETH
-            rate = targetTokenConverter.getReturn(bancorToken, targetToken, ETHToBNTRate);
-            // Convert rate to 1ETH to token or token to 1 ETH
-            rate = ((rate * 10**18) / _amount);
+        uint ETHToBNTRate = BNTConverter.getReturn(bancorETHToken, bancorToken, _amount);
+
+
+        // Bancor is a special case, it's their token
+        if (targetToken == bancorToken){
+            if(isBuying) {
+                rate = ((ETHToBNTRate * 10**18) / _amount);
+            } else {
+                rate = BNTConverter.getReturn(bancorToken, bancorETHToken, _amount);
+                rate = ((rate * 10**_sourceAddress.decimals()) / _amount);
+            }
         } else {
-            uint targetTokenToBNTRate = targetTokenConverter.getReturn(targetToken, bancorToken, 10**targetToken.decimals());
-            rate = BNTConverter.getReturn(bancorToken, bancorETHToken, targetTokenToBNTRate);
-            // Convert rate to 1ETH to token or token to 1 ETH
-            rate = ((rate * 10**_sourceAddress.decimals()) / _amount);
+            if(isBuying){
+                // Get amount of tokens for the amount of BNT for amount ETH
+                rate = targetTokenConverter.getReturn(bancorToken, targetToken, ETHToBNTRate);
+                // Convert rate to 1ETH to token or token to 1 ETH
+                rate = ((rate * 10**18) / _amount);
+            } else {
+                uint targetTokenToBNTRate = targetTokenConverter.getReturn(targetToken, bancorToken, 10**targetToken.decimals());
+                rate = BNTConverter.getReturn(bancorToken, bancorETHToken, targetTokenToBNTRate);
+                // Convert rate to 1ETH to token or token to 1 ETH
+                rate = ((rate * 10**_sourceAddress.decimals()) / _amount);
+            }
         }
-
-
 
         // TODO slippage?
         return (rate,0);
     }
 
     // https://support.bancor.network/hc/en-us/articles/360000878832-How-to-use-the-quickConvert-function
-    function getPath(ERC20Extended _token, bool isBuying) public view returns(ERC20Extended[] tokenPath) {
+    function getPath(ERC20Extended _token, bool isBuying) public view returns(ERC20Extended[] tokenPath, uint resultPathLength) {
         BancorConverterInterface bancorConverter = tokenToConverter[_token];
         uint pathLength;
         ERC20Extended[] memory path;
@@ -110,7 +113,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
             for (uint i = 0; i < pathLength; i++) {
                 path[i] = bancorConverter.quickBuyPath(i);
             }
-            return path;
+            return (path, pathLength);
         }
 
         // When selling, we need to make the path ourselves
@@ -124,7 +127,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
                 path[0] = _token;
                 path[1] = _token;
                 path[2] = bancorETHToken;
-                return path;
+                return (path, 3);
             }
             // It's a Bancor smart token, handle it accordingly
             path = new ERC20Extended[](5);
@@ -133,25 +136,27 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
             path[2] = bancorToken;
             path[3] = bancorToken;
             path[4] = bancorETHToken;
-            return path;
+            return (path, 5);
         }
 
         // It's a relay token, handle it accordingly
-        path = new ERC20Extended[](7);
+        path = new ERC20Extended[](5);
         path[0] = _token;                              // ERC20 Token to sell
         path[1] = ERC20Extended(relayAddress);         // Relay address (automatically converted to converter address)
-        path[2] = ERC20Extended(relayAddress);         // Relay address (used as "to" token)
-        path[3] = ERC20Extended(relayAddress);         // Relay address (used as "from" token)
-        path[4] = bancorToken;                         // BNT Smart token address, as converter
-        path[5] = bancorToken;                         // BNT Smart token address, as "to" and "from" token
-        path[6] = bancorETHToken;                      // The Bancor ETH token, this will signal we want our return in ETH
+        path[2] = bancorToken;                         // BNT Smart token address, as converter
+        path[3] = bancorToken;                         // BNT Smart token address, as "to" and "from" token
+        path[4] = bancorETHToken;                      // The Bancor ETH token, this will signal we want our return in ETH
 
-        return path;
+        return (path, 5);
     }
 
     // In contrast to Kyber, Bancor uses a minimum return for the complete trade, instead of a minimum rate for 1 ETH (for buying) or token (when selling)
     function convertMinimumRateToMinimumReturn(ERC20Extended _token, uint _minimumRate, uint _amount, bool isBuying)
     private view returns(uint minimumReturn) {
+        if(_minimumRate == 0){
+            return 1;
+        }
+
         if(isBuying){
             return (_amount * 10**18) / _minimumRate;
         }
@@ -163,8 +168,17 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
-    ) checkTokenSupported(_token) checkTokenBalance(_token, _amount) external returns(bool success) {
-        ERC20Extended[] memory path = getPath(_token, false);
+    ) checkTokenSupported(_token) external returns(bool success) {
+        require(_token.balanceOf(address(this)) >= _amount, "Balance of token is not sufficient in adapter");
+        ERC20Extended[] memory internalPath;
+        ERC20Extended[] memory path;
+        uint pathLength;
+        (internalPath,pathLength) = getPath(_token, false);
+
+        path = new ERC20Extended[](pathLength);
+        for(uint i = 0; i < pathLength; i++) {
+            path[i] = internalPath[i];
+        }
 
         BancorConverterInterface bancorConverter = tokenToConverter[_token];
 
@@ -182,12 +196,17 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         address _depositAddress
     ) checkTokenSupported(_token) external payable returns(bool success){
         require(msg.value == _amount, "Amount of Ether sent is not the same as the amount parameter");
-        ERC20Extended[] memory path = getPath(_token, true);
-
-        BancorConverterInterface BNTConverter = tokenToConverter[address(bancorToken)];
+        ERC20Extended[] memory internalPath;
+        ERC20Extended[] memory path;
+        uint pathLength;
+        (internalPath,pathLength) = getPath(_token, true);
+        path = new ERC20Extended[](pathLength);
+        for(uint i = 0; i < pathLength; i++) {
+            path[i] = internalPath[i];
+        }
 
         uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, true);
-        uint returnedAmountOfTokens = BNTConverter.quickConvert.value(_amount)(path,_amount,minimumReturn);
+        uint returnedAmountOfTokens = tokenToConverter[address(bancorToken)].quickConvert.value(_amount)(path,_amount,minimumReturn);
         require(returnedAmountOfTokens > 0, "BancorConverter did not return any tokens");
         require(_token.transfer(_depositAddress, returnedAmountOfTokens), "Token transfer failure");
         return true;
