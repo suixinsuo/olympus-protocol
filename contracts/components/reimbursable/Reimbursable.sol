@@ -2,8 +2,10 @@ pragma solidity 0.4.24;
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../interfaces/ReimbursableInterface.sol";
+import "../../components/base/FeeCharger.sol";
 
-contract Reimbursable is  ReimbursableInterface {
+
+contract Reimbursable is FeeCharger, ReimbursableInterface {
 
     string public name = "Reiumbursable";
     string public description = "Calculate gas not used in order to pay back to the sender";

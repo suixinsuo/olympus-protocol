@@ -49,11 +49,11 @@ contract MockFeeChargerFund is MockDerivative  {
     function sellTokens(ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) external returns(bool success) {
         for(uint i = 0; i < _tokens.length; i ++){
             _tokens[i].approve(address(exchange), 0);
-            _tokens[i].approve(address(exchange), _amounts[i]);  
-        }      
+            _tokens[i].approve(address(exchange), _amounts[i]);
+        }
         return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), bytes32(0), 0x0);
-    }      
+    }
 
-    event LogNumber(string _text, uint _number);   
+    event LogNumber(string _text, uint _number);
 }
 

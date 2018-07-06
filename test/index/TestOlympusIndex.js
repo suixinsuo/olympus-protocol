@@ -53,6 +53,7 @@ contract("Olympus Index", accounts => {
   let percentageFee;
   let rebalance;
   let whitelist;
+  let reimbursable;
   let tokens;
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -84,6 +85,7 @@ contract("Olympus Index", accounts => {
     percentageFee = await PercentageFee.deployed();
     rebalance = await Rebalance.deployed();
     whitelist = await Whitelist.deployed();
+    reimbursable = await Reimbursable.deployed();
 
     index = await OlympusIndex.new(
       indexData.name,
@@ -106,6 +108,7 @@ contract("Olympus Index", accounts => {
     await percentageFee.setMotAddress(mockMOT.address);
     await rebalance.setMotAddress(mockMOT.address);
     await whitelist.setMotAddress(mockMOT.address);
+    await reimbursable.setMotAddress(mockMOT.address);
 
     await index.initialize(
       Marketplace.address,
@@ -242,18 +245,6 @@ contract("Olympus Index", accounts => {
     calc.assertReverts(
       async () => await index.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
       "Is not allowed to invest"
-    );
-  });
-
-  it("Can register in the new marketplace ", async () => {
-    // Cant register without changing of market provider
-    calc.assertReverts(async () => await index.registerInNewMarketplace(), "Shall not register");
-
-    // Withdraw not allowed
-    await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
-    calc.assertReverts(
-      async () => await index.requestWithdraw(toTokenWei(0.2), { from: investorA }),
-      "Is not allowed to request"
     );
 
     // invest allowed
@@ -469,5 +460,19 @@ contract("Olympus Index", accounts => {
     assert.isAbove((await index.getETHBalance()).toNumber(), 0, "ETH balance returned");
     calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Shall keep close");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Shall keep being closed");
+  });
+
+  it("Investor cant invest but can withdraw after close", async () => {
+    assert.equal((await index.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C starting balance");
+
+    // Investor cant invest can withdraw
+    calc.assertReverts(
+      async () => await index.invest({ value: web3.toWei(1, "ether"), from: investorA }),
+      "Cant invest after close"
+    );
+    // Request
+    await index.requestWithdraw(toTokenWei(1.8), { from: investorC });
+    await index.withdraw();
+    assert.equal((await index.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
   });
 });
