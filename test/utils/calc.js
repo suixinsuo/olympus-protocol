@@ -17,9 +17,10 @@ module.exports = {
   assertReverts: async (call, message) => {
     try {
       await call();
-      assert(false, message);
+      assert(false, "Failed: " + message);
     } catch (e) {
       if (!e.message.includes("revert")) {
+        assert(false, e.message);
         throw e; // Error is not caused by revert but for another reason
       }
       assert(true, message);

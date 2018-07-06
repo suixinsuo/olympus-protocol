@@ -398,7 +398,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
 
         return true;
-    }    
+    }
 
     function approveComponents() private {
         approveComponent(EXCHANGE);
@@ -411,7 +411,7 @@ contract OlympusFund is FundInterface, Derivative {
 
     function approveComponent(string _name) private {
         address componentAddress = getComponentByName(_name);
-        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);        
+        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);
         FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 2 ** 256 - 1);
     }
 }
