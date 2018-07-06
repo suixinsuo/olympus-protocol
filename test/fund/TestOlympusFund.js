@@ -225,10 +225,13 @@ contract("Fund", accounts => {
     const bot = accounts[4];
     let tx;
 
+    // Only owner is allowed
+    await calc.assertReverts(async () => await fund.withdraw({ from: bot }), "Is not allowed to withdraw (only owner)");
+
     // Withdraw allowed
     await fund.enableWhitelist(WhitelistType.Maintenance);
 
-    // Only owner is allowed
+    // // Not whitelisted
     await calc.assertReverts(async () => await fund.withdraw({ from: bot }), "Is not allowed to withdraw (only owner)");
 
     await fund.setAllowed([bot], WhitelistType.Maintenance, true);
