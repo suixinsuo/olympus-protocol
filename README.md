@@ -49,6 +49,8 @@ Sample index 0x9d592ed27aed57cb16d9bdc2eb8add7c44495550
 - AsyncWithdraw: 0x89f55ec0cd96b8ac29ed8c9a6300228fc8fa2f42
 - RiskControl 0x3f9cd1a739c3a9d279f0cb51c9e384cce17a018c
 
+* Olympus Fund: 0xb83894Ea21781f947D8DbF1cA102117DCDDf0d05
+
 ## Mainnet
 
 ### v1.0.0-review-pending
