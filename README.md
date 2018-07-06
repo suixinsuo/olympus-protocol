@@ -46,6 +46,8 @@ Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
 - AsyncWithdraw: 0x89f55ec0cd96b8ac29ed8c9a6300228fc8fa2f42
 - RiskControl 0x3f9cd1a739c3a9d279f0cb51c9e384cce17a018c
 
+* Olympus Fund: 0xb83894Ea21781f947D8DbF1cA102117DCDDf0d05
+
 ## Mainnet
 
 ### v1.0.0-review-pending
