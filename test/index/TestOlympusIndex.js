@@ -14,15 +14,14 @@ const Reimbursable = artifacts.require("Reimbursable");
 
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
-const MockKyberNetwork = artifacts.require(
-  "../contracts/components/exchange/exchanges/MockKyberNetwork"
-);
+const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
 
 const ethToken = "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
-let DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
-let DerivativeType = { Index: 0, index: 1 };
+const DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
+const DerivativeType = { Index: 0, index: 1 };
+const WhitelistType = { Investment: 0, Maintenance: 1 };
 
 const indexData = {
   name: "OlympusIndex",
@@ -35,7 +34,7 @@ const indexData = {
   weights: [50, 50],
   tokensLenght: 2
 };
-const toToken = amount => {
+const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
 };
 
@@ -49,28 +48,29 @@ contract("Olympus Index", accounts => {
   let riskControl;
   let percentageFee;
   let rebalance;
-
+  let whitelist;
+  let reimbursable;
   let tokens;
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
 
-  it("Required same tokens than weights on create", async () => {
-    try {
-      await OlympusIndex.new(
-        indexData.name,
-        indexData.decimals,
-        indexData.symbol,
-        indexData.description,
-        indexData.category,
-        tokens.slice(0, indexData.tokensLenght),
-        []
-      );
-      assert(false, "Shall revert");
-    } catch (e) {
-      assert(true, "Shall revert");
-    }
-  });
+  it("Required same tokens as weights on create", async () =>
+    log.catch(async () =>
+      calc.assertReverts(
+        async () =>
+          await OlympusIndex.new(
+            indexData.name,
+            indexData.symbol,
+            indexData.description,
+            indexData.category,
+            indexData.decimals,
+            tokens.slice(0, indexData.tokensLenght),
+            []
+          ),
+        "Shall revert"
+      )
+    ));
 
   it("Create a index", async () => {
     market = await Marketplace.deployed();
@@ -82,31 +82,31 @@ contract("Olympus Index", accounts => {
     riskControl = await RiskControl.deployed();
     percentageFee = await PercentageFee.deployed();
     rebalance = await Rebalance.deployed();
+    whitelist = await Whitelist.deployed();
+    reimbursable = await Reimbursable.deployed();
 
     index = await OlympusIndex.new(
       indexData.name,
-      indexData.decimals,
       indexData.symbol,
       indexData.description,
       indexData.category,
+      indexData.decimals,
       tokens.slice(0, indexData.tokensLenght),
       indexData.weights
     );
 
     assert.equal((await index.status()).toNumber(), 0); // new
 
-    try {
-      await index.changeStatus(DerivativeStatus.Active);
-      assert(false, "Shall not be able to from New to other status");
-    } catch (e) {
-      assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
-    }
+    calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");
+    assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
     await riskControl.setMotAddress(mockMOT.address);
     await percentageFee.setMotAddress(mockMOT.address);
     await rebalance.setMotAddress(mockMOT.address);
+    await whitelist.setMotAddress(mockMOT.address);
+    await reimbursable.setMotAddress(mockMOT.address);
 
     await index.initialize(
       Marketplace.address,
@@ -131,7 +131,7 @@ contract("Olympus Index", accounts => {
   });
 
   it("Cant call initialize twice ", async () => {
-    try {
+    calc.assertReverts(async () => {
       await index.initialize(
         Marketplace.address,
         ExchangeProvider.address,
@@ -144,20 +144,13 @@ contract("Olympus Index", accounts => {
         0,
         { value: web3.toWei(indexData.ethDeposit, "ether") }
       );
-      assert(false, "Shall revert");
-    } catch (e) {
-      assert(true, "Shall revert");
-    }
+    }, "Shall revert");
   });
 
-  it("Can change market provider and register in the new marketplace ", async () => {
+  it("Can register in the new marketplace ", async () => {
     // Cant register without changing of market provider
-    try {
-      await index.registerInNewMarketplace();
-      assert(false, "Shall not register");
-    } catch (e) {
-      assert(true, "Shall not register");
-    }
+    calc.assertReverts(async () => await index.registerInNewMarketplace(), "Shall not register");
+
     // Set new market place
     const newMarket = await Marketplace.new();
     await index.setComponentExternal(await index.MARKET(), newMarket.address);
@@ -170,7 +163,7 @@ contract("Olympus Index", accounts => {
     assert.equal(myProducts[0], index.address);
   });
 
-  it("Index shall be able deploy", async () => {
+  it("Index shall be able to deploy", async () => {
     assert.equal(await index.name(), indexData.name);
     assert.equal(await index.description(), indexData.description);
     assert.equal(await index.category(), indexData.category);
@@ -194,89 +187,131 @@ contract("Olympus Index", accounts => {
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
     await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
 
-    assert.equal(
-      (await index.totalSupply()).toNumber(),
-      web3.toWei(2, "ether"),
-      "Supply is updated"
-    );
+    assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     // Price is the same, as no Token value has changed
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
-    assert.equal((await index.balanceOf(investorA)).toNumber(), toToken(1));
-    assert.equal((await index.balanceOf(investorB)).toNumber(), toToken(1));
+    assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1));
+    assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1));
   });
 
   it("Shall be able to request and withdraw", async () => {
     let tx;
     await index.setMaxTransfers(1); // For testing
 
-    assert.equal((await index.balanceOf(investorA)).toNumber(), toToken(1), "A has invested");
-    assert.equal((await index.balanceOf(investorB)).toNumber(), toToken(1), "B has invested");
+    assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1), "A has invested");
+    assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), "B has invested");
 
     // Request
-    await index.requestWithdraw(toToken(1), { from: investorA });
-    await index.requestWithdraw(toToken(1), { from: investorB });
+    await index.requestWithdraw(toTokenWei(1), { from: investorA });
+    await index.requestWithdraw(toTokenWei(1), { from: investorB });
 
     // Withdraw max transfers is set to 1
     tx = await index.withdraw();
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
     assert.equal(await index.withdrawInProgress(), true, " Withdraw has not finished");
-    assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdraw");
-    assert.equal((await index.balanceOf(investorB)).toNumber(), toToken(1), " B has no withdraw");
+    assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
+    assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
 
     // Second withdraw succeeds
     tx = await index.withdraw();
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
 
     assert.equal(await index.withdrawInProgress(), false, " Withdraw has finished");
-    assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdraw");
+    assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
     await index.setMaxTransfers(10); // Restore
+  });
+
+  it("Shall be able to invest and request with whitelist enabled", async () => {
+    let tx;
+    // Invest Not allowed
+    await index.enableWhitelist(WhitelistType.Investment);
+    calc.assertReverts(
+      async () => await index.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
+      "Is not allowed to invest"
+    );
+
+    // invest allowed
+    await index.setAllowed([investorA, investorB], WhitelistType.Investment, true);
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
+
+    // Withdraw not allowed
+    await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
+    calc.assertReverts(
+      async () => await index.requestWithdraw(toTokenWei(0.2), { from: investorA }),
+      "Is not allowed to request"
+    );
+
+    // Request allowed
+    await index.setAllowed([investorA, investorB], WhitelistType.Investment, true);
+    await index.requestWithdraw(toTokenWei(1), { from: investorA });
+    await index.requestWithdraw(toTokenWei(1), { from: investorB });
+
+    tx = await index.withdraw();
+    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
+
+    assert.equal(await index.withdrawInProgress(), false, " Withdraw has finished");
+    assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
+    assert.equal((await index.balanceOf(investorB)).toNumber(), 0, " B has withdrawn");
+
+    // Reset permissions and disable, so anyone could invest again
+    await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
+    await index.disableWhitelist(WhitelistType.Investment);
+  });
+
+  // In this scenario, there are not request, but is enought to check the modifier
+  it("Shall be able to execute mainetnance operations while whitelisted", async () => {
+    const bot = accounts[4];
+    let tx;
+    // Only owner is allowed
+    calc.assertReverts(async () => await index.withdraw({ form: bot }), "Is not allowed to withdraw (only owner)");
+    calc.assertReverts(async () => await index.rebalance({ form: bot }), "Is not allowed to rebalance (only owner)");
+
+    // Withdraw allowed
+    await index.enableWhitelist(WhitelistType.Maintenance);
+
+    await index.setAllowed([bot], WhitelistType.Maintenance, true);
+    tx = await index.withdraw({ form: bot });
+    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Bot got Reimbursed");
+
+    tx = await index.rebalance({ form: bot });
+    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Bot got Reimbursed");
+
+    // Permissions removed
+    await index.setAllowed([bot], WhitelistType.Maintenance, false);
+    calc.assertReverts(async () => await index.withdraw({ form: bot }), "Is not allowed to withdraw");
+    calc.assertReverts(async () => await index.rebalance({ form: bot }), "Is not allowed to rebalance");
+
+    //Reset
+    await index.disableWhitelist(WhitelistType.Maintenance);
   });
 
   it("Manager shall be able to collect a from investment and withdraw it", async () => {
     // Set fee
     const denominator = (await (await PercentageFee.deployed()).DENOMINATOR()).toNumber();
     await index.setManagementFee(indexData.managmentFee * denominator);
-    assert.equal(
-      (await index.getManagementFee()).toNumber(),
-      indexData.managmentFee * denominator,
-      "Fee is set correctly"
-    );
+    const managmentFee = (await index.getManagementFee()).toNumber();
+    assert.equal(managmentFee, indexData.managmentFee * denominator, "Fee is set correctly");
     // Invest two times (two different logics for first time and others)
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
 
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
 
     const expectedFee = 0.5 + 0.2 - 0.01; // Base Fee + Fee from investments - commision of withdraw
-    assert(
-      calc.inRange(
-        (await index.accumulatedFee()).toNumber(),
-        web3.toWei(expectedFee, "ether"),
-        web3.toWei(0.1, "ether")
-      ),
-      "Owner got fee"
-    );
+    let fee = (await index.accumulatedFee()).toNumber();
+    assert(calc.inRange(fee, web3.toWei(expectedFee, "ether"), web3.toWei(0.1, "ether")), "Owner got fee");
 
-    assert.equal(
-      (await index.balanceOf(investorA)).toNumber(),
-      toToken(1.8),
-      "A has invested with fee"
-    );
+    assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
 
     // Withdraw
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
     await index.withdrawFee(web3.toWei(0.2, "ether"));
+    fee = (await index.accumulatedFee()).toNumber();
 
-    assert(
-      calc.inRange(
-        (await index.accumulatedFee()).toNumber(),
-        web3.toWei(expectedFee - 0.2, "ether"),
-        web3.toWei(0.1, "ether")
-      ),
-      "Owner pending fee"
-    );
+    assert(calc.inRange(fee, web3.toWei(expectedFee - 0.2, "ether"), web3.toWei(0.1, "ether")), "Owner pending fee");
 
     const ownerBalanceAfter = await calc.ethBalance(accounts[0]);
 
@@ -289,96 +324,55 @@ contract("Olympus Index", accounts => {
 
   it.skip("Shall be able to rebalance", async () => {
     // From the preivus test we got 1.8 ETH
-    assert.equal(
-      (await index.getETHBalance()).toNumber(),
-      web3.toWei(1.8, "ether"),
-      "This test must start with 1.8 eth"
-    );
+    const initialIndexBalance = (await index.getETHBalance()).toNumber();
+    assert.equal(initialIndexBalance, web3.toWei(1.8, "ether"), "Must start with 1.8 eth");
   });
 
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
-    assert.equal(
-      (await index.getETHBalance()).toNumber(),
-      web3.toWei(1.8, "ether"),
-      "This test must start with 1.8 eth"
-    );
-    assert.equal(
-      (await index.balanceOf(investorA)).toNumber(),
-      toToken(1.8),
-      "A has invested with fee"
-    );
+    const initialIndexBalance = (await index.getETHBalance()).toNumber();
+    assert.equal(initialIndexBalance, web3.toWei(1.8, "ether"), "Must start with 1.8 eth");
+    assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
     const investorABefore = await calc.ethBalance(investorA);
 
     // TODO REBALANCE
 
     // Request
-    await index.requestWithdraw(toToken(1.8), { from: investorA });
+    await index.requestWithdraw(toTokenWei(1.8), { from: investorA });
     tx = await index.withdraw();
 
     // Investor has recover all his eth sepp9jgt tokens
     const investorAAfter = await calc.ethBalance(investorA);
-    assert.equal(
-      (await index.balanceOf(investorA)).toNumber(),
-      toToken(0),
-      "Investor redeemed all the founds"
-    );
-    assert.equal(
-      calc.roundTo(investorABefore + 1.8, 2),
-      calc.roundTo(investorAAfter, 2),
-      "Investor A received ether"
-    );
+    assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(0), "Redeemed all");
+    assert.equal(calc.roundTo(investorABefore + 1.8, 2), calc.roundTo(investorAAfter, 2), "Investor A received ether");
 
     // Price is constant
-    assert.equal(
-      (await index.getPrice()).toNumber(),
-      web3.toWei(1, "ether"),
-      "Price keeps constant after buy tokens"
-    );
+    assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
   });
 
   it("Shall be able to change the status", async () => {
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Active, "Status Is active");
+
     await index.changeStatus(DerivativeStatus.Paused);
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Paused, " Status is paused");
+
     await index.changeStatus(DerivativeStatus.Active);
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Active, "Status Is active");
-    try {
-      await index.changeStatus(DerivativeStatus.New);
-      assert(false, "Shall not be able to change to New");
-    } catch (e) {
-      assert.equal(
-        (await index.status()).toNumber(),
-        DerivativeStatus.Active,
-        " Cant change to new, shall keep being previous"
-      );
-    }
 
-    try {
-      await index.changeStatus(DerivativeStatus.Closed);
-      assert(false, "Shall not be able to change to Close");
-    } catch (e) {
-      assert.equal(
-        (await index.status()).toNumber(),
-        DerivativeStatus.Active,
-        " Cant change to close, shall keep being previous"
-      );
-    }
+    calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.New), "Shall not change to New");
+
+    assert.equal((await index.status()).toNumber(), DerivativeStatus.Active, "Cant change to new");
+
+    calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Closed), "Cant change to close");
+
+    assert.equal((await index.status()).toNumber(), DerivativeStatus.Active, "Cant change to close");
   });
 
   it("Shall be able to close a index", async () => {
     await index.invest({ value: web3.toWei(2, "ether"), from: investorC });
-
-    assert.equal(
-      (await index.getETHBalance()).toNumber(),
-      web3.toWei(1.8, "ether"),
-      "This test must start with 1.8 eth"
-    );
-    assert.equal(
-      (await index.balanceOf(investorC)).toNumber(),
-      toToken(1.8),
-      "C has invested with fee"
-    );
+    const initialBalance = (await index.getETHBalance()).toNumber();
+    assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
+    assert.equal((await index.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C has invested with fee");
 
     // TODO REBALANCE
 
@@ -391,21 +385,8 @@ contract("Olympus Index", accounts => {
       assert.equal(balance.toNumber(), 0, "Tokens are sold");
     }
 
-    assert.equal(
-      (await index.getETHBalance()).toNumber(),
-      web3.toWei(1.8, "ether"),
-      "ETH balance returned"
-    );
-
-    try {
-      await index.changeStatus(DerivativeStatus.Active);
-      assert(false, "Shall not be able to change from close");
-    } catch (e) {
-      assert.equal(
-        (await index.status()).toNumber(),
-        DerivativeStatus.Closed,
-        " Cant change to active, shall keep being closed"
-      );
-    }
+    assert.equal((await index.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance returned");
+    calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Shall keep close");
+    assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Shall keep being closed");
   });
 });

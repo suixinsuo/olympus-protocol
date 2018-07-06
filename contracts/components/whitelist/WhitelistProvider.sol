@@ -1,8 +1,9 @@
 pragma solidity ^0.4.17;
 
 import "../../interfaces/WhitelistInterface.sol";
+import "../../components/base/FeeCharger.sol";
 
-contract WhitelistProvider is WhitelistInterface {
+contract WhitelistProvider is WhitelistInterface, FeeCharger {
 
     string public name = "Whitelist Provider";
     string public description = "Provides whitelist based information";
@@ -18,8 +19,9 @@ contract WhitelistProvider is WhitelistInterface {
     }
 
     function setAllowed(address[] accounts, uint8 _key,  bool allowed) external returns(bool){
+        require(payFee(0));
 
-        for(uint i = 0; i < accounts.length; i++){
+        for(uint i = 0; i < accounts.length; i++) {
             require(accounts[i] != 0x0);
             whitelist[msg.sender][_key][accounts[i]] = allowed;
         }

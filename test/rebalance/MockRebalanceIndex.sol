@@ -6,6 +6,7 @@ import "../../contracts/interfaces/implementations/OlympusExchangeInterface.sol"
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../contracts/interfaces/MarketplaceInterface.sol";
 import "../../contracts/interfaces/RebalanceInterface.sol";
+import "../../contracts/interfaces/FeeChargerInterface.sol";
 
 contract MockRebalanceIndex is IndexInterface, MockDerivative {
     using SafeMath for uint256;
@@ -30,6 +31,13 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         supportRebalance = true;
     }
 
+    function initialize() public {
+        FeeChargerInterface(address(rebalanceProvider)).MOT().approve(address(rebalanceProvider), 0);
+        FeeChargerInterface(address(rebalanceProvider)).MOT().approve(address(rebalanceProvider), 2 ** 256 - 1);
+        FeeChargerInterface(address(exchangeProvider)).MOT().approve(address(exchangeProvider), 0);
+        FeeChargerInterface(address(exchangeProvider)).MOT().approve(address(exchangeProvider), 2 ** 256 - 1);
+    }
+
     function () public payable {
 
     }
@@ -48,7 +56,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         ) external returns(bool success){
             _token.approve(address(exchangeProvider), _amount);
           return exchangeProvider.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
-        }    
+        }
 
     function rebalance() public returns (bool success) {
         address[] memory tokensToSell;

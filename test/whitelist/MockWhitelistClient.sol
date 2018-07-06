@@ -2,6 +2,9 @@ pragma solidity 0.4.24;
 
 import "../../contracts/components/mocks/MockDerivative.sol";
 import "../../contracts/interfaces/WhitelistInterface.sol";
+import "../../contracts/interfaces/FeeChargerInterface.sol";
+
+import "../../contracts/interfaces/FeeChargerInterface.sol";
 
 contract MockWhitelistClient is MockDerivative {
 
@@ -18,6 +21,11 @@ contract MockWhitelistClient is MockDerivative {
 
     constructor (WhitelistInterface _whitelistProvider) public {
         whitelistProvider = _whitelistProvider;
+    }
+
+    function initialize() public {
+        FeeChargerInterface(address(whitelistProvider)).MOT().approve(address(whitelistProvider), 0);
+        FeeChargerInterface(address(whitelistProvider)).MOT().approve(address(whitelistProvider), 2 ** 256 - 1);
     }
 
     function enableWhitelist() external onlyOwner returns(bool) {
