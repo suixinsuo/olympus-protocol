@@ -157,6 +157,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         for(uint i = 0; i < tokens.length; i++) {
+            _tokens[i].approve(exchange, 0);
             _tokens[i].approve(exchange, _amounts[i]);
         }
         require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
@@ -363,8 +364,9 @@ contract OlympusFund is FundInterface, Derivative {
         for (uint8 i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
-            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
-            _tokensToSell[i].approve(exchange,  _amounts[i]);
+            (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
+            _tokensToSell[i].approve(exchange, 0);
+            _tokensToSell[i].approve(exchange, _amounts[i]);
 
         }
 
