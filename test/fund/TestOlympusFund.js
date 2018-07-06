@@ -47,7 +47,7 @@ contract("Fund", accounts => {
   let riskControl;
   let percentageFee;
   let whitelist;
-
+  let reimbursable;
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
@@ -62,6 +62,7 @@ contract("Fund", accounts => {
     riskControl = await RiskControl.deployed();
     percentageFee = await PercentageFee.deployed();
     whitelist = await Whitelist.deployed();
+    reimbursable = await Reimbursable.deployed();
 
     fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
@@ -73,6 +74,7 @@ contract("Fund", accounts => {
     await riskControl.setMotAddress(mockMOT.address);
     await percentageFee.setMotAddress(mockMOT.address);
     await whitelist.setMotAddress(mockMOT.address);
+    await reimbursable.setMotAddress(mockMOT.address);
 
     await fund.initialize(
       Marketplace.address,
@@ -398,7 +400,6 @@ contract("Fund", accounts => {
   it("Shall be able to close a fund", async () => {
     await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
     const initialBalance = (await fund.getETHBalance()).toNumber();
-    assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     assert.equal((await fund.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C has invested with fee");
 
     const rates = await Promise.all(
@@ -420,5 +421,19 @@ contract("Fund", accounts => {
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance returned");
     calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Shall not be  close");
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Cant change to active ");
+  });
+
+  it("Investor cant invest but can withdraw after close", async () => {
+    assert.equal((await fund.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C starting balance");
+
+    // Investor cant invest can withdraw
+    calc.assertReverts(
+      async () => await fund.invest({ value: web3.toWei(1, "ether"), from: investorA }),
+      "Cant invest after close"
+    );
+    // Request
+    await fund.requestWithdraw(toTokenWei(1.8), { from: investorC });
+    await fund.withdraw();
+    assert.equal((await fund.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
   });
 });
