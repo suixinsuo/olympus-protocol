@@ -243,6 +243,7 @@ contract("Olympus Index", accounts => {
 
   it("Shall be able to invest and request with whitelist enabled", async () => {
     let tx;
+
     // Invest Not allowed
     await index.enableWhitelist(WhitelistType.Investment);
     await calc.assertReverts(
@@ -284,18 +285,16 @@ contract("Olympus Index", accounts => {
     const bot = accounts[4];
     let tx;
 
+    // Only owner is allowed
+    await calc.assertReverts(async () => await index.withdraw({ from: bot }), "Whitdraw (only owner)");
+    await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Whitdraw (only owner)");
+
     // Withdraw allowed
     await index.enableWhitelist(WhitelistType.Maintenance);
 
     // Only owner is allowed
-    await calc.assertReverts(
-      async () => await index.withdraw({ from: bot }),
-      "Is not allowed to withdraw (only owner)"
-    );
-    await calc.assertReverts(
-      async () => await index.rebalance({ from: bot }),
-      "Is not allowed to rebalance (only owner)"
-    );
+    await calc.assertReverts(async () => await index.withdraw({ from: bot }), "Withdraw (not  whitelisted)");
+    await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Withdraw  not whitelisted");
 
     await index.setAllowed([bot], WhitelistType.Maintenance, true);
     tx = await index.withdraw({ from: bot });
