@@ -131,43 +131,30 @@ function deployOnDev(deployer, num) {
 
 function deployOnKovan(deployer, num) {
   return deployer
-    .then(() => deployer.deploy([MarketplaceProvider, AsyncWithdraw, RiskControl, DummyDerivative]))
+    .then(() =>
+      deployer.deploy([
+        MarketplaceProvider,
+        AsyncWithdraw,
+        RiskControl,
+        SimpleWithdraw,
+        PercentageFee,
+        Reimbursable,
+        WhitelistProvider,
+        [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
+      ])
+    )
     .then(() => deployExchange(deployer, "kovan"))
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
-    .then(() => {
-      return deployer.deploy(
-        MockRebalanceIndex,
-        ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a", "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"],
-        [50, 50],
-        RebalanceProvider.address,
-        ExchangeProvider.address
-      );
-    });
+    .then(() =>
+      deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
+    );
 }
 
 function deployOnMainnet(deployer) {
-  //   let kyberNetwork = '0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e';
-  //   let permissionProviderAddress = '0x402d3bf5d448871810a3ec8a33fb6cc804f9b26e';
-  //   let coreAddress = '0xd332692cf20cbc3aa39abf2f2a69437f22e5beb9';
-  //   let preDepositETH = 0.1;
-  //   let deploy = deployer.then(() => {
-  //     return deployer.deploy(ExchangeAdapterManager, permissionProviderAddress);
-  //   }).then(() => {
-  //     return deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address, permissionProviderAddress);
-  //   }).then(() => {
-  //     return deployer.deploy(KyberNetworkExchange, kyberNetwork, ExchangeAdapterManager.address, ExchangeProvider.address, permissionProviderAddress);
-  //   }).then(async () => {
-  //     let kyberExchangeInstance = await KyberNetworkExchange.deployed();
-  //     let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
-  //     let exchangeProvider = await ExchangeProvider.deployed();
-  //     console.info(`adding kyberExchange ${kyberExchangeInstance.address}`);
-  //     let result = await exchangeAdapterManager.addExchange('kyber', kyberExchangeInstance.address);
-  //     console.info(`send ${preDepositETH} ether to kyberExchange`);
-  //     let r = await kyberExchangeInstance.send(web3.toWei(preDepositETH, "ether"));
-  //     console.info('exchange provider set core');
-  //     await exchangeProvider.setCore(coreAddress);
-  //   })
-  //   return deploy;
+  let deploy = deployer.then(() => {
+    return deployer.deploy(MarketplaceProvider);
+  });
+  return deploy;
 }
 
 module.exports = function(deployer, network) {

@@ -98,7 +98,6 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     // https://support.bancor.network/hc/en-us/articles/360000878832-How-to-use-the-quickConvert-function
     function getPath(ERC20Extended _token, bool isBuying) public view returns(ERC20Extended[] tokenPath) {
         BancorConverterInterface bancorConverter = tokenToConverter[_token];
-        ERC20Extended relayAddress = ERC20Extended(tokenToRelay[_token]);
         uint pathLength;
         ERC20Extended[] memory path;
 
@@ -115,14 +114,37 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         }
 
         // When selling, we need to make the path ourselves
+
+        address relayAddress = tokenToRelay[_token];
+
+        if(relayAddress == 0x0){
+            // Bancor is a special case, it's their token
+            if(_token == bancorToken){
+                path = new ERC20Extended[](3);
+                path[0] = _token;
+                path[1] = _token;
+                path[2] = bancorETHToken;
+                return path;
+            }
+            // It's a Bancor smart token, handle it accordingly
+            path = new ERC20Extended[](5);
+            path[0] = _token;
+            path[1] = _token;
+            path[2] = bancorToken;
+            path[3] = bancorToken;
+            path[4] = bancorETHToken;
+            return path;
+        }
+
+        // It's a relay token, handle it accordingly
         path = new ERC20Extended[](7);
-        path[0] = _token;               // ERC20 Token to sell
-        path[1] = relayAddress;         // Relay address (automatically converted to converter address)
-        path[2] = relayAddress;         // Relay address (used as "to" token)
-        path[3] = relayAddress;         // Relay address (used as "from" token)
-        path[4] = bancorToken;          // BNT Smart token address, as converter
-        path[5] = bancorToken;          // BNT Smart token address, as "to" and "from" token
-        path[6] = bancorETHToken;       // The Bancor ETH token, this will signal we want our return in ETH
+        path[0] = _token;                              // ERC20 Token to sell
+        path[1] = ERC20Extended(relayAddress);         // Relay address (automatically converted to converter address)
+        path[2] = ERC20Extended(relayAddress);         // Relay address (used as "to" token)
+        path[3] = ERC20Extended(relayAddress);         // Relay address (used as "from" token)
+        path[4] = bancorToken;                         // BNT Smart token address, as converter
+        path[5] = bancorToken;                         // BNT Smart token address, as "to" and "from" token
+        path[6] = bancorETHToken;                      // The Bancor ETH token, this will signal we want our return in ETH
 
         return path;
     }
