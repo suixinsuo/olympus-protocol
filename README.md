@@ -30,9 +30,11 @@ PercentageFee 0x5b81830a3399f29d1c2567c7d09376503b607058
 WhitelistProvider 0x28cf0233492d60f931d8285018c57182d42d4c9a
 Rebalance Provider 0xa2377b970ded7e214ac486667a6d0d482d246fa3
 RISK (DUMMY) 0x8d4c349bc823cb08e103aebe9e6a5c5f6b80dec6
+
 ## Sample Fund
 
 Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
+Sample index 0x9d592ed27aed57cb16d9bdc2eb8add7c44495550
 
 # Deployed addresses (Mainnet July, 2018)
 
