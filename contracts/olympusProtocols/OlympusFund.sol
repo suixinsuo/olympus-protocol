@@ -41,11 +41,12 @@ contract OlympusFund is FundInterface, Derivative {
 
     // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
-        require(
-            msg.sender == owner ||
-            WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender)
-        );
-        _;
+      WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
+      require(
+          msg.sender == owner ||
+          (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed(uint8(_key), msg.sender) )
+      );
+      _;
     }
 
     // If whitelist is disabled, anyone can do this
