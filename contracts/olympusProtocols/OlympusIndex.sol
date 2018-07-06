@@ -130,7 +130,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return (tokens, weights);
     }
     // Return tokens and amounts
-    function getTokensAmounts() external view returns(address[], uint[]) {
+    function getTokensAndAmounts() external view returns(address[], uint[]) {
         uint[] memory _amounts = new uint[](tokens.length);
         for (uint i = 0; i < tokens.length; i++) {
             _amounts[i] = ERC20Extended(tokens[i]).balanceOf(address(this));
@@ -337,6 +337,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
+            _tokensToSell[i].approve(exchange,  0);
             _tokensToSell[i].approve(exchange,  _amounts[i]);
 
         }
@@ -423,10 +424,10 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
             approveComponent(name);
-        }        
+        }
 
         return true;
-    }    
+    }
 
     function approveComponents() private {
         approveComponent(EXCHANGE);
@@ -440,8 +441,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function approveComponent(string _name) private {
         address componentAddress = getComponentByName(_name);
-        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);        
+        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);
         FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 2 ** 256 - 1);
-    }    
+    }
 
 }

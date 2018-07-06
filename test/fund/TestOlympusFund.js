@@ -102,7 +102,6 @@ contract("Fund", accounts => {
       await fund.initialize(
         Marketplace.address,
         ExchangeProvider.address,
-        Rebalance.address,
         Withdraw.address,
         RiskControl.address,
         Whitelist.address,

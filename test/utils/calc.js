@@ -19,8 +19,8 @@ module.exports = {
       await call();
       assert(false, message);
     } catch (e) {
-      if (e.message.includes("revert") < 0) {
-        throw new Error(e); // Error is not caused by revert but for another reason
+      if (!e.message.includes("revert")) {
+        throw e; // Error is not caused by revert but for another reason
       }
       assert(true, message);
     }

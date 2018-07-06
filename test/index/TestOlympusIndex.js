@@ -205,7 +205,7 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
-    const tokenAmounts = await index.getTokensAmounts();
+    const tokenAmounts = await index.getTokensAndAmounts();
     tokenAmounts[1].forEach(amount => assert.equal(amount, 0, "Amount is 0"));
   });
 
@@ -343,7 +343,7 @@ contract("Olympus Index", accounts => {
 
     await index.buyTokens();
     // Check amounts are correct
-    const tokensAndAmounts = await index.getTokensAmounts();
+    const tokensAndAmounts = await index.getTokensAndAmounts();
 
     const rates = await Promise.all(
       tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
@@ -401,7 +401,7 @@ contract("Olympus Index", accounts => {
     tx = await index.rebalance();
     assert.ok(tx);
     // Reblacance keep the amounts as per the wieghts
-    tokenAmounts = await index.getTokensAmounts();
+    tokenAmounts = await index.getTokensAndAmounts();
     tokenAmounts[1].forEach((amount, index) => {
       const expectedAmount = expectedTokenAmount(initialIndexBalance + extraAmount, rates, index);
       assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
@@ -463,7 +463,7 @@ contract("Olympus Index", accounts => {
   });
 
   it("Investor cant invest but can withdraw after close", async () => {
-    assert.equal((await index.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C starting balance");
+    assert.isAbove((await fund.balanceOf(investorC)).toNumber(), 0, "C starting balance");
 
     // Investor cant invest can withdraw
     calc.assertReverts(
