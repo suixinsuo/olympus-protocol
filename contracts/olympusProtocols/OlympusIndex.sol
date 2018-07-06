@@ -41,9 +41,10 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
+        WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
         require(
-            msg.sender == owner ||
-            WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender)
+          msg.sender == owner ||
+          (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed(uint8(_key), msg.sender) )
         );
         _;
     }
