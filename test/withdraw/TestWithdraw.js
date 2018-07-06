@@ -24,6 +24,7 @@ contract("Withdraw", accounts => {
     const initialEthB = web3.fromWei(await web3.eth.getBalance(investorB).toNumber(), "ether");
 
     const product1 = await MockWithdraw.new(asyncWithdraw.address);
+    await product1.initialize();
 
     // The investor send eth
     await product1.invest({ value: web3.toWei(1, "ether"), from: investorA });
@@ -61,6 +62,7 @@ contract("Withdraw", accounts => {
     await instance.setMotAddress(mockMot.address);
 
     const product1 = await MockWithdraw.new(instance.address);
+    await product1.initialize();
 
     await product1.invest({ value: web3.toWei(1, "ether"), from: investorA });
     await product1.requestWithdraw(toTokenWei(1), { from: investorA });

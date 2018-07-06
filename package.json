@@ -8,13 +8,14 @@
   "scripts": {
     "build": "truffle compile  --network development",
     "test": "./node_modules/.bin/run-with-testrpc --port 8545  --network development 'truffle test'",
+    "testKovan": "./node_modules/.bin/run-with-testrpc --port 8545  --network kovan 'truffle test'",
     "testCoverage": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test --network coverage' ",
     "deploy": "./node_modules/.bin/run-with-testrpc --port 8545  --network development 'truffle migrate --reset' ",
     "deploytestnet": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network kovan' ",
     "linting": "#solhint 'contracts/**/*.sol'",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "version": "truffle version",
-    "build-contracts": "sol-merger \"./contracts/*.sol\" ./build"
+    "build-contracts": "./node_modules/.bin/sol-merger \"./contracts/*/*/*.sol\" ./build"
   },
   "repository": {
     "type": "git",

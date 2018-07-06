@@ -3,6 +3,7 @@ pragma solidity 0.4.24;
 
 import "../../contracts/components/mocks/MockDerivative.sol";
 import "../../contracts/interfaces/implementations/OlympusExchangeInterface.sol";
+import "../../contracts/interfaces/FeeChargerInterface.sol";
 
 
 contract MockExchangeFund is MockDerivative {
@@ -12,6 +13,10 @@ contract MockExchangeFund is MockDerivative {
         exchange = _exchange;
     }
 
+ function initialize() public {
+      FeeChargerInterface(address(exchange)).MOT().approve(address(exchange), 0);
+      FeeChargerInterface(address(exchange)).MOT().approve(address(exchange), 2 ** 256 - 1);
+    }
    function supportsTradingPair(address _srcAddress, address _destAddress, bytes32 _exchangeId)
         external view returns(bool supported){
           return exchange.supportsTradingPair(_srcAddress, _destAddress, _exchangeId);
@@ -49,8 +54,8 @@ contract MockExchangeFund is MockDerivative {
         ) external returns(bool success){
             for (uint i=0; i< _tokens.length; i++) {
                 _tokens[i].approve(address(exchange), _amounts[i]);
-            }            
+            }
             return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), _exchangeId, _partnerId);
-        }      
+        }
 }
 

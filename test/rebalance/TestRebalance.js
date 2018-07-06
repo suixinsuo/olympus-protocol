@@ -61,6 +61,7 @@ contract("MockRebalanceIndex", accounts => {
         const afterBalance = await erc20Token.balanceOf(_mockRebalanceIndex.address);
 
         erc20Token.transfer(mockRebalanceIndex.address, afterBalance);
+        await mockRebalanceIndex.initialize();
       }
     );
   });

@@ -49,7 +49,8 @@ contract("ExchangeProvider", accounts => {
         }
       )
       .then(async provider => {
-        return (mockFund = await MockExchangeFund.new(provider.address));
+        mockFund = await MockExchangeFund.new(provider.address);
+        return await mockFund.initialize();
       });
   });
 
