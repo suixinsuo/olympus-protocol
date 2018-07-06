@@ -35,6 +35,7 @@ contract MockExchangeFund is MockDerivative {
         (
         ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
         ) external returns(bool success){
+            _token.approve(address(exchange), 0);
             _token.approve(address(exchange), _amount);
           return exchange.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
         }
@@ -53,6 +54,7 @@ contract MockExchangeFund is MockDerivative {
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates, bytes32 _exchangeId, address _partnerId
         ) external returns(bool success){
             for (uint i=0; i< _tokens.length; i++) {
+                _tokens[i].approve(address(exchange), 0);
                 _tokens[i].approve(address(exchange), _amounts[i]);
             }
             return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), _exchangeId, _partnerId);

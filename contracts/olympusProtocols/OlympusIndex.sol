@@ -385,6 +385,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
         // Sell Tokens
         for (i = 0; i < tokensToSell.length; i++) {
+            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
             require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), "", 0x0));
         }

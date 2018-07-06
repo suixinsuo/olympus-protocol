@@ -54,6 +54,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         (
         ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
         ) external returns(bool success){
+            _token.approve(address(exchangeProvider), 0);
             _token.approve(address(exchangeProvider), _amount);
           return exchangeProvider.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
         }
@@ -67,6 +68,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         uint ETHBalanceBefore = address(this).balance;
         (tokensToSell,amountsToSell,tokensToBuy,amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
         for (i = 0; i < tokensToSell.length; i++) {
+            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
             require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]),amountsToSell[i],0,address(this),"",0x0));
         }
