@@ -131,7 +131,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return (tokens, weights);
     }
     // Return tokens and amounts
-    function getTokensAmounts() external view returns(address[], uint[]) {
+    function getTokensAndAmounts() external view returns(address[], uint[]) {
         uint[] memory _amounts = new uint[](tokens.length);
         for (uint i = 0; i < tokens.length; i++) {
             _amounts[i] = ERC20Extended(tokens[i]).balanceOf(address(this));
@@ -338,6 +338,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange,  0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange,  _amounts[i]);
 
         }
@@ -373,7 +374,31 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool success) {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
-        // CODE HERE
+        RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
+        OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        address[] memory tokensToSell;
+        uint[] memory amountsToSell;
+        address[] memory tokensToBuy;
+        uint[] memory amountsToBuy;
+        uint8 i;
+        uint ETHBalanceBefore = address(this).balance;
+
+        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
+        // Sell Tokens
+        for (i = 0; i < tokensToSell.length; i++) {
+            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
+            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), "", 0x0));
+        }
+
+        // Buy Tokens
+        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
+        for (i = 0; i < tokensToBuy.length; i++) {
+            require(
+                exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), "", 0x0)
+            );
+        }
+
         reimburse();
         return true;
     }

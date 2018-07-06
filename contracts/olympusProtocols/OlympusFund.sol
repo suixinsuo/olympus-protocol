@@ -157,6 +157,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         for(uint i = 0; i < tokens.length; i++) {
+            ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
         require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
@@ -364,6 +365,7 @@ contract OlympusFund is FundInterface, Derivative {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange,  0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange,  _amounts[i]);
 
         }
