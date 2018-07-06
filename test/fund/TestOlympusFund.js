@@ -48,7 +48,6 @@ contract("Fund", accounts => {
   let percentageFee;
   let whitelist;
   let reimbursable;
-  ;
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
@@ -68,7 +67,7 @@ contract("Fund", accounts => {
     fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
 
-    calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
+    await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
@@ -99,12 +98,11 @@ contract("Fund", accounts => {
   });
 
   it("Cant call initialize twice ", async () => {
-    calc.assertReverts(async () => {
+    await calc.assertReverts(async () => {
       await fund.initialize(
         Marketplace.address,
         ExchangeProvider.address,
-        Rebalance.address,
-        Withdraw.address,
+        AsyncWithdraw.address,
         RiskControl.address,
         Whitelist.address,
         Reimbursable.address,
@@ -117,7 +115,7 @@ contract("Fund", accounts => {
 
   it("Can change market provider and register in the new marketplace ", async () => {
     // Cant register without changing of market provider
-    calc.assertReverts(async () => await fund.registerInNewMarketplace(), "Shall not register");
+    await calc.assertReverts(async () => await fund.registerInNewMarketplace(), "Shall not register");
 
     // Set new market place
     const newMarket = await Marketplace.new();
@@ -189,11 +187,10 @@ contract("Fund", accounts => {
     let tx;
     // Invest Not allowed
     await fund.enableWhitelist(WhitelistType.Investment);
-    calc.assertReverts(
+    await calc.assertReverts(
       async () => await fund.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
       "Is not allowed to invest"
     );
-
     // invest allowed
     await fund.setAllowed([investorA, investorB], WhitelistType.Investment, true);
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
@@ -201,7 +198,7 @@ contract("Fund", accounts => {
 
     // Withdraw not allowed
     await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
-    calc.assertReverts(
+    await calc.assertReverts(
       async () => await fund.requestWithdraw(toTokenWei(0.2), { from: investorA }),
       "Is not allowed to request"
     );
@@ -227,19 +224,20 @@ contract("Fund", accounts => {
   it("Shall be able to execute withdraw while whitelisted", async () => {
     const bot = accounts[4];
     let tx;
-    // Only owner is allowed
-    calc.assertReverts(async () => await fund.withdraw({ form: bot }), "Is not allowed to withdraw (only owner)");
 
     // Withdraw allowed
     await fund.enableWhitelist(WhitelistType.Maintenance);
 
+    // Only owner is allowed
+    await calc.assertReverts(async () => await fund.withdraw({ from: bot }), "Is not allowed to withdraw (only owner)");
+
     await fund.setAllowed([bot], WhitelistType.Maintenance, true);
-    tx = await fund.withdraw({ form: bot });
+    tx = await fund.withdraw({ from: bot });
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Bot got Reimbursed");
 
     // Permissions removed
     await fund.setAllowed([bot], WhitelistType.Maintenance, false);
-    calc.assertReverts(async () => await fund.withdraw({ form: bot }), "Is not allowed to withdraw");
+    await calc.assertReverts(async () => await fund.withdraw({ from: bot }), "Is not allowed to withdraw");
 
     //Reset
     await fund.disableWhitelist(WhitelistType.Maintenance);
@@ -254,7 +252,6 @@ contract("Fund", accounts => {
     assert.equal(fee, fundData.managmentFee * denominator, "Fee is set correctly");
     // Invest two times (two different logics for first time and others)
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
-
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
 
     const expectedFee = 0.5 + 0.2 - 0.01; // Base Fee + Fee from investments - commision of withdraw
@@ -278,13 +275,17 @@ contract("Fund", accounts => {
     );
   });
 
-  it("Buy  tokens fails if ether required is not enough", async () => {
+  it("Buy tokens fails if ether required is not enough", async () => {
     const balance = (await fund.getETHBalance()).toNumber();
 
     assert.equal(balance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     const amounts = [web3.toWei(1, "ether"), web3.toWei(1, "ether")];
 
-    calc.assertReverts(
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+
+    await calc.assertReverts(
       async () => await fund.buyTokens(0x0, tokens, amounts, rates.map(rate => rate[0])),
       "reverte if fund balance is not enough"
     );
@@ -391,17 +392,22 @@ contract("Fund", accounts => {
     await fund.changeStatus(DerivativeStatus.Active);
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, "Status Is active");
 
-    calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.New), "Shall not be able to change to New");
+    await calc.assertReverts(
+      async () => await fund.changeStatus(DerivativeStatus.New),
+      "Shall not be able to change to New"
+    );
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, " Cant change to new");
 
-    calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Closed), "Shall not  change to Close");
+    await calc.assertReverts(
+      async () => await fund.changeStatus(DerivativeStatus.Closed),
+      "Shall not  change to Close"
+    );
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, " Cant change to close");
   });
 
   it("Shall be able to close a fund", async () => {
     await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
     const initialBalance = (await fund.getETHBalance()).toNumber();
-    assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     assert.equal((await fund.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C has invested with fee");
 
     const rates = await Promise.all(
@@ -421,7 +427,21 @@ contract("Fund", accounts => {
     assert.equal(fundTokensAndBalance[1][1].toNumber(), 0, "token amount == 0");
 
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance returned");
-    calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Shall not be  close");
+    await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Shall not be  close");
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Cant change to active ");
+  });
+
+  it("Investor cant invest but can withdraw after close", async () => {
+    assert.equal((await fund.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C starting balance");
+
+    // Investor cant invest can withdraw
+    await calc.assertReverts(
+      async () => await fund.invest({ value: web3.toWei(1, "ether"), from: investorA }),
+      "Cant invest after close"
+    );
+    // Request
+    await fund.requestWithdraw(toTokenWei(1.8), { from: investorC });
+    await fund.withdraw();
+    assert.equal((await fund.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
   });
 });

@@ -19,16 +19,17 @@ The suit option will limit the number of deployment required for the concrete te
 
 Exchange component:
 
-- KyberNetworkAdapter 0x8b29ce28b9555b02c99a38affb05d5203674e587
-- ExchangeAdapterManager 0xb6842dce3e9e00a8e21aaa599c9c2b1c0647ca8a
-- ExchangeProvider 0x8bb45686512085d56df444ca35954bff3f4a5862
+- KyberNetworkAdapter 0xbe316eb85a5a17f726d8d374525ca3ac02455971
+- ExchangeAdapterManager 0x4f523cbbe0676655378c1b6aa13dc5d3900842a8
+- ExchangeProvider 0x62a696992d853a2bfff829904601d84b756a98bb
 
 Marketplace 0xfe818847198201ef8d800809d40f0c504f7d9a8c
 AsyncWithdraw 0x186ddb35f59231d972869a6de3334eae410f26a2 // 0x035b67efd86462356d104e52b6975f7d2bfe198c
 Reimbursable 0x5b81830a3399f29d1c2567c7d09376503b607058
-PercentageFee 0x4dc61e1e74eec68e32538cf2ef5509e17e0fc2bc
+PercentageFee 0x5b81830a3399f29d1c2567c7d09376503b607058
 WhitelistProvider 0x28cf0233492d60f931d8285018c57182d42d4c9a
-
+Rebalance Provider 0xa2377b970ded7e214ac486667a6d0d482d246fa3
+RISK (DUMMY) 0x8d4c349bc823cb08e103aebe9e6a5c5f6b80dec6
 ## Sample Fund
 
 Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
