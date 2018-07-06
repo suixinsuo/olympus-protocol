@@ -56,20 +56,18 @@ contract("Olympus Index", accounts => {
   const investorC = accounts[3];
 
   it("Required same tokens as weights on create", async () =>
-    log.catch(async () =>
-      calc.assertReverts(
-        async () =>
-          await OlympusIndex.new(
-            indexData.name,
-            indexData.symbol,
-            indexData.description,
-            indexData.category,
-            indexData.decimals,
-            tokens.slice(0, indexData.tokensLenght),
-            []
-          ),
-        "Shall revert"
-      )
+    calc.assertReverts(
+      async () =>
+        await OlympusIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          tokens.slice(0, indexData.tokensLenght),
+          []
+        ),
+      "Shall revert"
     ));
 
   it("Create a index", async () => {
@@ -322,32 +320,55 @@ contract("Olympus Index", accounts => {
     );
   });
 
-  it.skip("Shall be able to rebalance", async () => {
+  it("Shall be able to buy tokens with eth", async () => {
     // From the preivus test we got 1.8 ETH
     const initialIndexBalance = (await index.getETHBalance()).toNumber();
     assert.equal(initialIndexBalance, web3.toWei(1.8, "ether"), "Must start with 1.8 eth");
+
+    await index.buyTokens();
+    // Check amounts are correct
+    const tokensAndAmounts = await index.getTokensAmounts();
+
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+
+    tokensAndAmounts[1].forEach((amount, index) => {
+      // ETH * % * rate
+      const expectedAmount =
+        (initialIndexBalance * (indexData.weights[index] / 100) * rates[0][index].toNumber()) / 10 ** 18;
+      assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
+    });
   });
 
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
-    const initialIndexBalance = (await index.getETHBalance()).toNumber();
+    const initialIndexBalance = (await index.getAssetsValue()).toNumber();
     assert.equal(initialIndexBalance, web3.toWei(1.8, "ether"), "Must start with 1.8 eth");
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
     const investorABefore = await calc.ethBalance(investorA);
-
-    // TODO REBALANCE
 
     // Request
     await index.requestWithdraw(toTokenWei(1.8), { from: investorA });
     tx = await index.withdraw();
 
-    // Investor has recover all his eth sepp9jgt tokens
+    // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(0), "Redeemed all");
     assert.equal(calc.roundTo(investorABefore + 1.8, 2), calc.roundTo(investorAAfter, 2), "Investor A received ether");
 
     // Price is constant
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
+  });
+
+  it.skip("Shall be able to rebalance", async () => {
+    // INVEST
+    // BUY TOKENS
+    // BUY TOKENS ACCOUNT 0
+    // TRANSFER TOKENS FROM ACCOUNT 0 to INDEX
+    // EXECUTE REBALANCE
+    // CHECK IS WEIGHTS ARE BEEN FOLLOW
+    // PRICE WILL CHANGE THAT WILL MODIFY ETH RECIEVED IN LAST TEST
   });
 
   it("Shall be able to change the status", async () => {
@@ -388,5 +409,19 @@ contract("Olympus Index", accounts => {
     assert.equal((await index.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance returned");
     calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Shall keep close");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Shall keep being closed");
+  });
+
+  it("Investor cant invest but can withdraw after close", async () => {
+    assert.equal((await index.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C starting balance");
+
+    // Investor cant invest can withdraw
+    calc.assertReverts(
+      async () => await index.invest({ value: web3.toWei(1, "ether"), from: investorA }),
+      "Cant invest after close"
+    );
+    // Request
+    await index.requestWithdraw(toTokenWei(1.8), { from: investorC });
+    await index.withdraw();
+    assert.equal((await index.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
   });
 });
