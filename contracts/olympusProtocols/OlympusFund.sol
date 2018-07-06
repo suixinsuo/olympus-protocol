@@ -364,13 +364,13 @@ contract OlympusFund is FundInterface, Derivative {
         for (uint8 i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
-            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
+            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange,  0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange,  _amounts[i]);
 
         }
 
-        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
+        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
         updateTokens(_tokensToSell);
     }
 
