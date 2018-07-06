@@ -3,7 +3,9 @@ pragma solidity 0.4.24;
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../interfaces/implementations/BancorConverterInterface.sol";
+import "../../../libs/ERC20NoReturn.sol";
 import "../../../libs/ERC20Extended.sol";
+
 
 contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     using SafeMath for uint256;
@@ -182,8 +184,8 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
 
         BancorConverterInterface bancorConverter = tokenToConverter[_token];
 
-        _token.approve(address(bancorConverter), 0);
-        _token.approve(address(bancorConverter), _amount);
+        ERC20NoReturn(_token).approve(address(bancorConverter), 0);
+        ERC20NoReturn(_token).approve(address(bancorConverter), _amount);
         uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, false);
         uint returnedAmountOfETH = bancorConverter.quickConvert(path,_amount,minimumReturn);
         require(returnedAmountOfETH > 0, "BancorConverter did not return any ETH");
@@ -208,7 +210,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, true);
         uint returnedAmountOfTokens = tokenToConverter[address(bancorToken)].quickConvert.value(_amount)(path,_amount,minimumReturn);
         require(returnedAmountOfTokens > 0, "BancorConverter did not return any tokens");
-        require(_token.transfer(_depositAddress, returnedAmountOfTokens), "Token transfer failure");
+        ERC20NoReturn(_token).transfer(_depositAddress, returnedAmountOfTokens);
         return true;
     }
 
