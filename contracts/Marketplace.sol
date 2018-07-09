@@ -5,6 +5,13 @@ import "./interfaces/DerivativeInterface.sol";
 
 
 contract Marketplace is MarketplaceInterface {
+
+    string public name = "ProductList";
+    string public description ="List of derivatives";
+    string public category = "Lists";
+    string public version = "v1.0";
+    
+
     address[] public products;
     mapping(address => address[]) public productMappings;
 
