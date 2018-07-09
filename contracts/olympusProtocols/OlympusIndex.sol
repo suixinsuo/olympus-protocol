@@ -11,6 +11,7 @@ import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
 import "../interfaces/FeeChargerInterface.sol";
+import "../interfaces/RiskControlInterface.sol";
 
 
 contract OlympusIndex is IndexInterface, Derivative {
@@ -30,6 +31,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     event ChangeStatus(DerivativeStatus status);
     event Invested(address user, uint amount);
     event Reimbursed(uint amount);
+    event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
+
     // event UpdateToken(address _token, uint amount); On Rebalance
 
     uint public constant DENOMINATOR = 100000;
@@ -51,6 +54,11 @@ contract OlympusIndex is IndexInterface, Derivative {
     // If whitelist is disabled, anyone can do this
     modifier whitelisted(WhitelistKeys _key) {
         require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
+        _;
+    }
+
+     modifier withoutRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) {
+         require(!hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate));
         _;
     }
 
@@ -158,7 +166,10 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // ----------------------------- DERIVATIVE -----------------------------
 
-    function invest() public payable whitelisted(WhitelistKeys.Investment) returns(bool) {
+    function invest() public payable
+     whitelisted(WhitelistKeys.Investment)
+     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+     returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
          // Current value is already added in the balance, reduce it
@@ -244,7 +255,10 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- WITHDRAW -----------------------------
-    function requestWithdraw(uint amount) external whitelisted(WhitelistKeys.Investment) {
+    function requestWithdraw(uint amount) external
+     whitelisted(WhitelistKeys.Investment)
+     withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
+    {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -333,16 +347,15 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint[] memory _amounts = new uint[](  _tokensToSell.length);
         uint[] memory _sellRates = new uint[]( _tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-
+ 
         for (uint8 i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
             _tokensToSell[i].approve(exchange,  0);
             _tokensToSell[i].approve(exchange,  _amounts[i]);
-
+            // require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i] , 0));
         }
-
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
     }
 
@@ -351,6 +364,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns(bool) {
 
       ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+      OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
       if(getETHBalance() == 0) {
         reimburse();
@@ -361,12 +375,15 @@ contract OlympusIndex is IndexInterface, Derivative {
       uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
       ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
       uint ethBalance = getETHBalance();
+
       for(uint8 i = 0; i < tokens.length; i++) {
         _amounts[i] = ethBalance * weights[i] / 100;
         _tokensErc20[i] = ERC20Extended(tokens[i]);
+       (, _rates[i] ) = exchange.getPrice(ETH,  _tokensErc20[i],  _amounts[i], "");
+
+        // require(!hasRisk(address(this), exchange, ETH, _amounts[i], _rates[i]));
       }
 
-      OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
       require(exchange.buyTokens.value(ethBalance)(_tokensErc20, _amounts, _rates, address(this), '', 0x0));
       reimburse();
       return true;
@@ -376,6 +393,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+ 
         address[] memory tokensToSell;
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
@@ -388,12 +406,14 @@ contract OlympusIndex is IndexInterface, Derivative {
         for (i = 0; i < tokensToSell.length; i++) {
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+            require(!hasRisk(address(this), address(exchangeProvider), address(tokensToSell[i]) , amountsToBuy[i], 0));
             require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), "", 0x0));
         }
 
         // Buy Tokens
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
         for (i = 0; i < tokensToBuy.length; i++) {
+            require(!hasRisk(address(this), address(exchangeProvider), ETH, amountsToBuy[i], 0));
             require(exchangeProvider.buyToken.value(amountsToBuy[i])(
               ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), "", 0x0)
             );
@@ -445,6 +465,13 @@ contract OlympusIndex is IndexInterface, Derivative {
         address componentAddress = getComponentByName(_name);
         FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);
         FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 2 ** 256 - 1);
+    }
+
+    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
+        RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
+        bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
+        emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
+        return risk;
     }
 
 }
