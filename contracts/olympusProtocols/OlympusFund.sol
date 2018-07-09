@@ -152,8 +152,8 @@ contract OlympusFund is FundInterface, Derivative {
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
-          totalEthRequired += _amounts[i];
           require(!hasRisk(address(this), exchange, ETH, _amounts[i], _minimumRates[i]));
+          totalEthRequired += _amounts[i];
         }
         require(getETHBalance() >= totalEthRequired);
 
@@ -377,7 +377,7 @@ contract OlympusFund is FundInterface, Derivative {
         return _tokensWithAmount;
     }
 
-    function getETHFromTokens(uint _tokenPercentage ) internal {
+    function getETHFromTokens(uint _tokenPercentage ) public onlyOwner {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](  _tokensToSell.length);
         uint[] memory _sellRates = new uint[]( _tokensToSell.length);
