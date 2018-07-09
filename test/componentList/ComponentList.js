@@ -84,17 +84,29 @@ contract("ComponetList", accounts => {
     let component = await list.getLatestComponent("reiumbrsable");
     let versions = (await list.getComponentVersions("reiumbrsable")).map(bytes32ToString);
     assert.deepEqual(versions, ["V1"]);
-    assert.equal(MockComponent(component).version(), await mockComponentV1.version(), "version 1 should be the same");
+    assert.equal(
+      await MockComponent.at(component).version(),
+      await mockComponentV1.version(),
+      "version 1 should be the same"
+    );
 
+    await list.setComponent("reiumbrsable", mockComponentV2.address, { from: accounts[0] });
     versions = (await list.getComponentVersions("reiumbrsable")).map(bytes32ToString);
     assert.deepEqual(versions, ["V1", "V2"]);
-    await list.setComponent("reiumbrsable", mockComponentV2.address, { from: accounts[0] });
     component = await list.getLatestComponent("reiumbrsable");
-    assert.equal(MockComponent(component).version(), await mockComponentV2.version(), "version 2 should be the same");
+    assert.equal(
+      await MockComponent.at(component).version(),
+      await mockComponentV2.version(),
+      "version 2 should be the same"
+    );
 
     await list.setComponent("reiumbrsable", mockComponentV1.address, { from: accounts[0] });
     component = await list.getLatestComponent("reiumbrsable");
-    assert.equal(MockComponent(component).version(), await mockComponentV1.version(), "takes the lastest version");
+    assert.equal(
+      await MockComponent.at(component).version(),
+      await mockComponentV1.version(),
+      "should take the lastest version"
+    );
     versions = (await list.getComponentVersions("reiumbrsable")).map(bytes32ToString);
     assert.deepEqual(versions, ["V2", "V1"]);
   });
