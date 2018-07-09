@@ -19,9 +19,9 @@ The suit option will limit the number of deployment required for the concrete te
 
 Exchange component:
 
-- KyberNetworkAdapter 0x8b29ce28b9555b02c99a38affb05d5203674e587
-- ExchangeAdapterManager 0xb6842dce3e9e00a8e21aaa599c9c2b1c0647ca8a
-- ExchangeProvider 0x4228a41e0de8cf2507b328f60e38b3c386b53c43
+- KyberNetworkAdapter 0xbe316eb85a5a17f726d8d374525ca3ac02455971
+- ExchangeAdapterManager 0x4f523cbbe0676655378c1b6aa13dc5d3900842a8
+- ExchangeProvider 0x62a696992d853a2bfff829904601d84b756a98bb
 
 Marketplace 0x164f5a00fd9ab15bc72f31d8425b56555b0cadc9
 AsyncWithdraw 0x86803060cdc0ca9b7164049ba2723a260db9379d
@@ -30,6 +30,7 @@ PercentageFee 0x4bf290ab1fda484f1d072eda1f498f3cea405fb5
 WhitelistProvider 0x882bce30542494c11407b3ec061b48d520f18cdb
 Rebalance Provider 0x516b0bc733e5f270f40c6bc6a36ae4be2d1f58d1
 RISK (DUMMY) 0x693e4d57597b089f2280b49f2d95ea5debecd0a9
+ 
 
 ## Sample Fund
 
@@ -48,6 +49,8 @@ Sample index 0x9d592ed27aed57cb16d9bdc2eb8add7c44495550
 - Reimbursable: 0xA3e9722EC79240C9A6Bd8e048040Be0aD04CB83B
 - AsyncWithdraw: 0x89f55ec0cd96b8ac29ed8c9a6300228fc8fa2f42
 - RiskControl 0x3f9cd1a739c3a9d279f0cb51c9e384cce17a018c
+
+* Olympus Fund: 0xb83894Ea21781f947D8DbF1cA102117DCDDf0d05
 
 ## Mainnet
 
