@@ -15,16 +15,16 @@ contract ComponentList is ComponentListInterface, Ownable {
         ComponentInterface c = ComponentInterface(_componentAddress);
         components[_name][c.version()] = _componentAddress;
         bool included = false;
-        uint index = 0;
+        uint indexToRemove = 0;
         for (uint i = 0; i < componentVersions[_name].length; i++) {
             if (keccak256(abi.encodePacked(componentVersions[_name][i])) == keccak256(abi.encodePacked(c.version()))) {
                 included = true;
-                index = i;
+                indexToRemove = i;
                 break;
             }
         }
         if (included) {
-            remove(_name, index);
+            remove(_name, indexToRemove);
         }
 
         componentVersions[_name].push(c.version());
