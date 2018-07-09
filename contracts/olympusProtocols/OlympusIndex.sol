@@ -10,6 +10,7 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
+import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 import "../interfaces/RiskControlInterface.sol";
 
@@ -351,42 +352,42 @@ contract OlympusIndex is IndexInterface, Derivative {
         for (uint8 i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
-            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], "");
+            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             _tokensToSell[i].approve(exchange,  0);
             _tokensToSell[i].approve(exchange,  _amounts[i]);
             // require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i] , 0));
         }
-        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), "", 0x0));
+        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
+ 
     }
 
     // ----------------------------- REBALANCE -----------------------------
 
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns(bool) {
 
-      ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
-      OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+ 
 
-      if(getETHBalance() == 0) {
+        if(getETHBalance() == 0) {
+            reimburse();
+            return true;
+        }   
+        uint[] memory _amounts = new uint[](tokens.length);
+        uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
+        ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
+        uint ethBalance = getETHBalance();
+
+        for(uint8 i = 0; i < tokens.length; i++) {
+            _amounts[i] = ethBalance * weights[i] / 100;
+            _tokensErc20[i] = ERC20Extended(tokens[i]);
+            (, _rates[i] ) = exchange.getPrice(ETH,  _tokensErc20[i],  _amounts[i], 0x0);
+            // require(!hasRisk(address(this), exchange, ETH, _amounts[i], _rates[i]));
+        }
+
+        require(exchange.buyTokens.value(ethBalance)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
         reimburse();
         return true;
-      }
-
-      uint[] memory _amounts = new uint[](tokens.length);
-      uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
-      ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
-      uint ethBalance = getETHBalance();
-
-      for(uint8 i = 0; i < tokens.length; i++) {
-        _amounts[i] = ethBalance * weights[i] / 100;
-        _tokensErc20[i] = ERC20Extended(tokens[i]);
-       (, _rates[i] ) = exchange.getPrice(ETH,  _tokensErc20[i],  _amounts[i], "");
-
-        // require(!hasRisk(address(this), exchange, ETH, _amounts[i], _rates[i]));
-      }
-
-      require(exchange.buyTokens.value(ethBalance)(_tokensErc20, _amounts, _rates, address(this), '', 0x0));
-      reimburse();
-      return true;
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool success) {
@@ -406,16 +407,19 @@ contract OlympusIndex is IndexInterface, Derivative {
         for (i = 0; i < tokensToSell.length; i++) {
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+            
             require(!hasRisk(address(this), address(exchangeProvider), address(tokensToSell[i]) , amountsToBuy[i], 0));
-            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), "", 0x0));
+            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
+  
         }
 
         // Buy Tokens
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
         for (i = 0; i < tokensToBuy.length; i++) {
+
             require(!hasRisk(address(this), address(exchangeProvider), ETH, amountsToBuy[i], 0));
-            require(exchangeProvider.buyToken.value(amountsToBuy[i])(
-              ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), "", 0x0)
+            require(
+                exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
             );
         }
 
@@ -463,8 +467,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function approveComponent(string _name) private {
         address componentAddress = getComponentByName(_name);
-        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 0);
-        FeeChargerInterface(componentAddress).MOT().approve(componentAddress, 2 ** 256 - 1);
+        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 0);
+        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 2 ** 256 - 1);
     }
 
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
