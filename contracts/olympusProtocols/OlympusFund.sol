@@ -2,6 +2,7 @@ pragma solidity 0.4.24;
 
 import "../Derivative.sol";
 import "../interfaces/FundInterface.sol";
+import "../interfaces/ComponentListInterface.sol";
 import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
@@ -16,6 +17,8 @@ contract OlympusFund is FundInterface, Derivative {
 
     uint public constant DENOMINATOR = 100000;
     uint public constant INITIAL_VALUE =  10**18;
+
+    ComponentListInterface private componentList;
 
     string public constant MARKET = "MarketProvider";
     string public constant EXCHANGE = "ExchangeProvider";
@@ -75,17 +78,19 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(
-        address _market,
-        address _exchange,
-        address _withdraw,
-        address _risk,
-        address _whitelist,
-        address _reimbursable,
-        address _feeProvider,
-        uint _initialFundFee) onlyOwner external payable  {
+    function initialize(address _list, uint _initialFundFee) onlyOwner external payable {
+        require(_list != 0x0);
         require(status == DerivativeStatus.New);
-        require (msg.value > 0); // Require some balance for internal opeations as reimbursable
+        require(msg.value > 0); // Require some balance for internal opeations as reimbursable
+
+        componentList = ComponentListInterface(_list);
+        _market = componentList.getLatestComponent(MARKET);
+        _exchange = componentList.getLatestComponent(EXCHANGE);
+        _withdraw = componentList.getLatestComponent(WITHDRAW);
+        _risk = componentList.getLatestComponent(RISK);
+        _whitelist = componentList.getLatestComponent(WHITELIST);
+        _feeProvider = componentList.getLatestComponent(FEE);
+        _reimbursable = componentList.getLatestComponent(REIMBURSABLE);
 
         setComponent(MARKET, _market);
         setComponent(EXCHANGE, _exchange);
@@ -392,17 +397,6 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
-    // Set component from outside the chain
-    function setComponentExternal(string name, address provider) external onlyOwner returns(bool) {
-        super.setComponent(name, provider);
-
-        if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
-            approveComponent(name);
-        }
-
-        return true;
-    }
-
     function approveComponents() private {
         approveComponent(EXCHANGE);
         approveComponent(WITHDRAW);
@@ -410,6 +404,23 @@ contract OlympusFund is FundInterface, Derivative {
         approveComponent(WHITELIST);
         approveComponent(FEE);
         approveComponent(REIMBURSABLE);
+    }
+
+    function getComponent(string _name) private returns (address) {
+        // still latest.
+        if (super.getComponentByName(_name) == componentList.getLatestComponent(_name)) {
+            return super.getComponentByName(_name);
+        } 
+
+        // changed.
+        super.setComponent(_name, componentList.getLatestComponent(_name));
+        // approve if it's not Marketplace.
+        if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
+            approveComponent(name);
+        }  
+
+        // return latest address.
+        return componentList.getLatestComponent(_name);
     }
 
     function approveComponent(string _name) private {
