@@ -185,12 +185,15 @@ contract("Olympus Index", accounts => {
   });
 
   it("Index shall allow investment", async () => {
+    let tx;
     // With 0 supply price is 1 eth
     assert.equal((await index.totalSupply()).toNumber(), 0, "Starting supply is 0");
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
-    await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
-    await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
+    tx = await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
+    tx = await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     // Price is the same, as no Token value has changed
@@ -220,8 +223,10 @@ contract("Olympus Index", accounts => {
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), "B has invested");
 
     // Request
-    await index.requestWithdraw(toTokenWei(1), { from: investorA });
-    await index.requestWithdraw(toTokenWei(1), { from: investorB });
+    tx = await index.requestWithdraw(toTokenWei(1), { from: investorA });
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
+    tx = await index.requestWithdraw(toTokenWei(1), { from: investorB });
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     // Withdraw max transfers is set to 1
     tx = await index.withdraw();
@@ -409,6 +414,8 @@ contract("Olympus Index", accounts => {
     // Execute Rebalance
     tx = await index.rebalance();
     assert.ok(tx);
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
+
     // Reblacance keep the amounts as per the wieghts
     tokenAmounts = await index.getTokensAndAmounts();
     tokenAmounts[1].forEach((amount, index) => {

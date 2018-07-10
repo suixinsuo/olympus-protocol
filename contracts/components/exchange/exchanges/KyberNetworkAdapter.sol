@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../../interfaces/implementations/KyberNetworkInterface.sol";
 import "../../../interfaces/implementations/OlympusExchangeAdapterInterface.sol";
 import "../../../libs/ERC20Extended.sol";
 import "../../../libs/ERC20NoReturn.sol";

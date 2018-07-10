@@ -6,6 +6,7 @@ import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
+import "../interfaces/RiskControlInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../interfaces/WhitelistInterface.sol";
 import "../libs/ERC20NoReturn.sol";
@@ -23,6 +24,7 @@ contract OlympusFund is FundInterface, Derivative {
     event Reimbursed(uint amount);
     event UpdateToken(address _token, uint amount);
     event ChangeStatus(DerivativeStatus status);
+    event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
@@ -41,9 +43,15 @@ contract OlympusFund is FundInterface, Derivative {
       _;
     }
 
+
     // If whitelist is disabled, anyone can do this
     modifier whitelisted(WhitelistKeys _key) {
         require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
+        _;
+    }
+
+    modifier withoutRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) {
+        require(!hasRisk(_sender,_receiver,_tokenAddress, _amount, _rate));
         _;
     }
 
@@ -128,9 +136,12 @@ contract OlympusFund is FundInterface, Derivative {
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwner returns(bool) {
 
-        // Check we have the ethAmount required
+         // Check we have the ethAmount required
         uint totalEthRequired = 0;
-        for (uint i = 0; i < _amounts.length; i++) {totalEthRequired += _amounts[i];}
+        for (uint i = 0; i < _amounts.length; i++) {
+          require(!hasRisk(address(this), exchange, ETH, _amounts[i], _minimumRates[i]));
+          totalEthRequired += _amounts[i];
+        }
         require(getETHBalance() >= totalEthRequired);
 
 
@@ -144,17 +155,24 @@ contract OlympusFund is FundInterface, Derivative {
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates) public onlyOwner returns (bool) {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+
         for(uint i = 0; i < tokens.length; i++) {
+            require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
+
         require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
         updateTokens(_tokens);
         return true;
     }
      // ----------------------------- DERIVATIVE -----------------------------
 
-    function invest() public payable whitelisted(WhitelistKeys.Investment) returns(bool) {
+    function invest() public
+    payable
+    whitelisted(WhitelistKeys.Investment)
+    withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+      returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
          // Current value is already added in the balance, reduce it
@@ -256,7 +274,10 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     // ----------------------------- WITHDRAW -----------------------------
-    function requestWithdraw(uint amount) whitelisted(WhitelistKeys.Investment) external {
+    function requestWithdraw(uint amount)
+        whitelisted(WhitelistKeys.Investment)
+        withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
+         external {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -343,25 +364,25 @@ contract OlympusFund is FundInterface, Derivative {
         return _tokensWithAmount;
     }
 
-    function getETHFromTokens(uint _tokenPercentage ) internal {
+    function getETHFromTokens(uint _tokenPercentage ) public onlyOwner {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](  _tokensToSell.length);
         uint[] memory _sellRates = new uint[]( _tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-        for (uint8 i = 0; i < _tokensToSell.length; i++) {
+        for (uint i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
-            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
-            ERC20NoReturn(_tokensToSell[i]).approve(exchange,  0);
-            ERC20NoReturn(_tokensToSell[i]).approve(exchange,  _amounts[i]);
+            (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
+            // require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i], _sellRates[i]));
+            _tokensToSell[i].approve(exchange, 0);
+            _tokensToSell[i].approve(exchange, _amounts[i]);
 
         }
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
         updateTokens(_tokensToSell);
     }
-
     // ----------------------------- WHITELIST -----------------------------
 
     function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
@@ -396,5 +417,12 @@ contract OlympusFund is FundInterface, Derivative {
         updateComponent(WHITELIST);
         updateComponent(FEE);
         updateComponent(REIMBURSABLE);        
+    }
+
+    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
+        RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
+        bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
+        emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
+        return risk;
     }
 }

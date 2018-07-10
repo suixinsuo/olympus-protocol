@@ -10,6 +10,12 @@ import "../../components/base/FeeCharger.sol";
 contract RebalanceProvider is FeeCharger, RebalanceInterface {
     PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
 
+
+    string public name = "Rebalance";
+    string public description ="Help to rebalance quantity of tokens depending of the weight assigned in the derivative";
+    string public category = "Rebalance";
+    string public version = "v1.0";
+
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
     uint private rebalanceDeltaPercentage = 30; // 0.3%
 
