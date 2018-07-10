@@ -348,17 +348,17 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint[] memory _amounts = new uint[](  _tokensToSell.length);
         uint[] memory _sellRates = new uint[]( _tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
- 
+
         for (uint8 i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
+            // require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i] , 0));
             _tokensToSell[i].approve(exchange,  0);
             _tokensToSell[i].approve(exchange,  _amounts[i]);
-            // require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i] , 0));
         }
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
- 
+
     }
 
     // ----------------------------- REBALANCE -----------------------------
@@ -367,12 +367,12 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
- 
+
 
         if(getETHBalance() == 0) {
             reimburse();
             return true;
-        }   
+        }
         uint[] memory _amounts = new uint[](tokens.length);
         uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
         ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
@@ -394,7 +394,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
- 
+
         address[] memory tokensToSell;
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
@@ -405,12 +405,11 @@ contract OlympusIndex is IndexInterface, Derivative {
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
         // Sell Tokens
         for (i = 0; i < tokensToSell.length; i++) {
+            require(!hasRisk(address(this), address(exchangeProvider), address(tokensToSell[i]) , amountsToBuy[i], 0));
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
-            
-            require(!hasRisk(address(this), address(exchangeProvider), address(tokensToSell[i]) , amountsToBuy[i], 0));
             require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
-  
+
         }
 
         // Buy Tokens

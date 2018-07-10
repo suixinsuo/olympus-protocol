@@ -168,11 +168,11 @@ contract OlympusFund is FundInterface, Derivative {
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates) public onlyOwner returns (bool) {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
- 
+
         for(uint i = 0; i < tokens.length; i++) {
+            require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
-            require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
         }
 
         require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
@@ -382,15 +382,15 @@ contract OlympusFund is FundInterface, Derivative {
         uint[] memory _amounts = new uint[](  _tokensToSell.length);
         uint[] memory _sellRates = new uint[]( _tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
- 
+
         for (uint i = 0; i < _tokensToSell.length; i++) {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
+            // require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i], _sellRates[i]));
             _tokensToSell[i].approve(exchange, 0);
             _tokensToSell[i].approve(exchange, _amounts[i]);
-            // require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i], _sellRates[i]));
- 
+
         }
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
