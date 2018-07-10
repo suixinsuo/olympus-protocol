@@ -2,12 +2,12 @@ pragma solidity 0.4.24;
 
 import "./interfaces/DerivativeInterface.sol";
 import "./components/base/ComponentContainer.sol";
-import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "zeppelin-solidity/contracts/token/ERC20/Pausable.sol";
 import "./libs/ERC20Extended.sol";
 
 
 // Abstract class that implements the common functions to all our derivatives
-contract Derivative is DerivativeInterface, ComponentContainer, StandardToken {
+contract Derivative is DerivativeInterface, ComponentContainer, Pausable {
 
     ERC20Extended internal constant ETH = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
