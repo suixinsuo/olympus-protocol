@@ -21,12 +21,11 @@ contract FeeCharger is Ownable, FeeChargerInterface {
         ByCalls
     }
 
-    modifier feePayable(uint _amount) {
-        uint fee = calculateFee(_amount);
-        if(fee > 0) {
+    modifier feePayable(uint _fee) {
+        if(_fee > 0) {
             // take money directly from the sender.
-            require(MOT.balanceOf(msg.sender) >= fee);
-            require(MOT.allowance(msg.sender, address(this)) >= fee);
+            require(MOT.balanceOf(msg.sender) >= _fee);
+            require(MOT.allowance(msg.sender, address(this)) >= _fee);
         }
         _;
     }
