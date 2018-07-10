@@ -167,7 +167,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
      // ----------------------------- DERIVATIVE -----------------------------
 
-    function invest() public payable whitelisted(WhitelistKeys.Investment) returns(bool) {
+    function invest() public payable whitelisted(WhitelistKeys.Investment) whenNotPaused returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
          // Current value is already added in the balance, reduce it
@@ -253,7 +253,7 @@ contract OlympusFund is FundInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function withdrawFee(uint amount) external onlyOwner returns(bool) {
+    function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
         require(accumulatedFee >= amount);
         accumulatedFee -= amount;
         msg.sender.transfer(amount);
@@ -269,7 +269,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     // ----------------------------- WITHDRAW -----------------------------
-    function requestWithdraw(uint amount) whitelisted(WhitelistKeys.Investment) external {
+    function requestWithdraw(uint amount) whitelisted(WhitelistKeys.Investment) external whenNotPaused {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -282,7 +282,7 @@ contract OlympusFund is FundInterface, Derivative {
         return withdrawProvider.getTotalWithdrawAmount();
     }
 
-    function withdraw() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) external returns(bool) {
+    function withdraw() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused external returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
