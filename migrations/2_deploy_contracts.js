@@ -126,7 +126,7 @@ function deployOnDev(deployer, num) {
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
     .then(() =>
       deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
-    );
+  );
 }
 
 function deployOnKovan(deployer, num) {
@@ -145,9 +145,9 @@ function deployOnKovan(deployer, num) {
     )
     .then(() => deployExchange(deployer, "kovan"))
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
-    .then(() =>
-      deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
-    );
+  .then(() =>
+    deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
+  );
 }
 
 function deployOnMainnet(deployer) {
