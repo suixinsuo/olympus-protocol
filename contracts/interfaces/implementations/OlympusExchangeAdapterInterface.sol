@@ -2,7 +2,6 @@ pragma solidity 0.4.24;
 
 import "../../libs/utils.sol";
 import "../ExchangeInterface.sol";
-import "./KyberNetworkInterface.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
