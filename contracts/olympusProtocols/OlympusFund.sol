@@ -2,7 +2,6 @@ pragma solidity 0.4.24;
 
 import "../Derivative.sol";
 import "../interfaces/FundInterface.sol";
-import "../interfaces/ComponentListInterface.sol";
 import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
@@ -17,16 +16,6 @@ contract OlympusFund is FundInterface, Derivative {
 
     uint public constant DENOMINATOR = 100000;
     uint public constant INITIAL_VALUE =  10**18;
-
-    ComponentListInterface private componentList;
-
-    string public constant MARKET = "MarketProvider";
-    string public constant EXCHANGE = "ExchangeProvider";
-    string public constant WITHDRAW = "WithdrawProvider";
-    string public constant RISK = "RiskProvider";
-    string public constant WHITELIST = "WhitelistProvider";
-    string public constant FEE = "FeeProvider";
-    string public constant REIMBURSABLE = "Reimbursable";
 
     enum WhitelistKeys { Investment, Maintenance }
 
@@ -83,28 +72,21 @@ contract OlympusFund is FundInterface, Derivative {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
-        componentList = ComponentListInterface(_list);
-        _market = componentList.getLatestComponent(MARKET);
-        _exchange = componentList.getLatestComponent(EXCHANGE);
-        _withdraw = componentList.getLatestComponent(WITHDRAW);
-        _risk = componentList.getLatestComponent(RISK);
-        _whitelist = componentList.getLatestComponent(WHITELIST);
-        _feeProvider = componentList.getLatestComponent(FEE);
-        _reimbursable = componentList.getLatestComponent(REIMBURSABLE);
+        super.initialize(_list);
 
-        setComponent(MARKET, _market);
-        setComponent(EXCHANGE, _exchange);
-        setComponent(WITHDRAW, _withdraw);
-        setComponent(RISK, _risk);
-        setComponent(WHITELIST, _whitelist);
-        setComponent(FEE, _feeProvider);
-        setComponent(REIMBURSABLE, _reimbursable);
+        setComponent(MARKET, componentList.getLatestComponent(MARKET));
+        setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
+        setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
+        setComponent(RISK, componentList.getLatestComponent(RISK));
+        setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
+        setComponent(FEE, componentList.getLatestComponent(FEE));
+        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
 
         // approve component for charging fees.
         approveComponents();
 
-        MarketplaceInterface(_market).registerProduct();
-        ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
+        MarketplaceInterface(componentList.getLatestComponent(MARKET)).registerProduct();
+        ChargeableInterface(componentList.getLatestComponent(FEE)).setFeePercentage(_initialFundFee);
         status = DerivativeStatus.Active;
         emit ChangeStatus(status);
 
@@ -406,26 +388,13 @@ contract OlympusFund is FundInterface, Derivative {
         approveComponent(REIMBURSABLE);
     }
 
-    function getComponent(string _name) private returns (address) {
-        // still latest.
-        if (super.getComponentByName(_name) == componentList.getLatestComponent(_name)) {
-            return super.getComponentByName(_name);
-        } 
-
-        // changed.
-        super.setComponent(_name, componentList.getLatestComponent(_name));
-        // approve if it's not Marketplace.
-        if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
-            approveComponent(name);
-        }  
-
-        // return latest address.
-        return componentList.getLatestComponent(_name);
-    }
-
-    function approveComponent(string _name) private {
-        address componentAddress = getComponentByName(_name);
-        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 0);
-        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 2 ** 256 - 1);
+    function updateAllComponents() public onlyOwner {
+        updateComponent(MARKET);
+        updateComponent(EXCHANGE);
+        updateComponent(WITHDRAW);
+        updateComponent(RISK);
+        updateComponent(WHITELIST);
+        updateComponent(FEE);
+        updateComponent(REIMBURSABLE);        
     }
 }
