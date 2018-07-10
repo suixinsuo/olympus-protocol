@@ -353,7 +353,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
-            // require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i] , 0));
+            require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i] , 0));
             _tokensToSell[i].approve(exchange,  0);
             _tokensToSell[i].approve(exchange,  _amounts[i]);
         }
