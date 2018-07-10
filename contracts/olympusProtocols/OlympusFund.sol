@@ -75,12 +75,12 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _list, uint _initialFundFee) onlyOwner external payable {
-        require(_list != 0x0);
+    function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable {
+        require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
-        super.initialize(_list);
+        super.initialize(_componentList);
 
         setComponent(MARKET, componentList.getLatestComponent(MARKET));
         setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
@@ -416,7 +416,7 @@ contract OlympusFund is FundInterface, Derivative {
         updateComponent(RISK);
         updateComponent(WHITELIST);
         updateComponent(FEE);
-        updateComponent(REIMBURSABLE);        
+        updateComponent(REIMBURSABLE);
     }
 
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
