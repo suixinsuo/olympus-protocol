@@ -2,13 +2,14 @@ const log = require("../utils/log");
 const calc = require("../utils/calc");
 
 const Fund = artifacts.require("OlympusFund");
-const AsyncWithdraw = artifacts.require("../../contracts/components/widrwaw/AsyncWithdraw.sol");
-const RiskControl = artifacts.require("../../contracts/components/RiskControl.sol");
-const Marketplace = artifacts.require("../../contracts/Marketplace.sol");
-const PercentageFee = artifacts.require("../../contracts/components/fee/PercentageFee.sol");
-const Reimbursable = artifacts.require("../../contracts/components/fee/Reimbursable.sol");
+const AsyncWithdraw = artifacts.require("components/widrwaw/AsyncWithdraw");
+const RiskControl = artifacts.require("components/RiskControl");
+const Marketplace = artifacts.require("Marketplace");
+const PercentageFee = artifacts.require("PercentageFee");
+const Reimbursable = artifacts.require("Reimbursable");
 const MockToken = artifacts.require("MockToken");
 const Whitelist = artifacts.require("WhitelistProvider");
+const ComponentList = artifacts.require("ComponentList");
 
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
@@ -48,11 +49,12 @@ contract("Fund", accounts => {
   let percentageFee;
   let whitelist;
   let reimbursable;
+  let componentList;
+
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
-
-  it("Create a fund", async () => {
+  before("Set Component list", async () => {
     mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
@@ -63,11 +65,7 @@ contract("Fund", accounts => {
     percentageFee = await PercentageFee.deployed();
     whitelist = await Whitelist.deployed();
     reimbursable = await Reimbursable.deployed();
-
-    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
-    assert.equal((await fund.status()).toNumber(), 0); // new
-
-    await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
+    componentList = await ComponentList.deployed();
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
@@ -75,18 +73,23 @@ contract("Fund", accounts => {
     await percentageFee.setMotAddress(mockMOT.address);
     await whitelist.setMotAddress(mockMOT.address);
     await reimbursable.setMotAddress(mockMOT.address);
+  });
 
-    await fund.initialize(
-      Marketplace.address,
-      ExchangeProvider.address,
-      AsyncWithdraw.address,
-      RiskControl.address,
-      Whitelist.address,
-      Reimbursable.address,
-      PercentageFee.address,
-      0,
-      { value: web3.toWei(fundData.ethDeposit, "ether") }
-    );
+  it("Create a fund", async () => {
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
+    assert.equal((await fund.status()).toNumber(), 0); // new
+
+    componentList.setComponent(await fund.MARKET(), market.address);
+    componentList.setComponent(await fund.EXCHANGE(), exchange.address);
+    componentList.setComponent(await fund.WITHDRAW(), asyncWithdraw.address);
+    componentList.setComponent(await fund.RISK(), riskControl.address);
+    componentList.setComponent(await fund.FEE(), percentageFee.address);
+    componentList.setComponent(await fund.WHITELIST(), whitelist.address);
+    componentList.setComponent(await fund.REIMBURSABLE(), reimbursable.address);
+
+    await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
+
+    await fund.initialize(componentList.address, 0, { value: web3.toWei(fundData.ethDeposit, "ether") });
     const myProducts = await market.getOwnProducts();
 
     assert.equal(myProducts.length, 1);
@@ -99,18 +102,22 @@ contract("Fund", accounts => {
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await fund.initialize(
-        Marketplace.address,
-        ExchangeProvider.address,
-        AsyncWithdraw.address,
-        RiskControl.address,
-        Whitelist.address,
-        Reimbursable.address,
-        PercentageFee.address,
-        0,
-        { value: web3.toWei(fundData.ethDeposit, "ether") }
-      );
+      await fund.initialize(componentList.address, 0, { value: web3.toWei(fundData.ethDeposit, "ether") });
     }, "Shall revert");
+  });
+
+  it("Update component shall approve MOT ", async () => {
+    // Set new market place
+    const newRisk = await RiskControl.new();
+    await newRisk.setMotAddress(mockMOT.address);
+
+    await componentList.setComponent(await fund.RISK(), newRisk.address);
+    await fund.updateAllComponents();
+    assert.equal(await fund.getComponentByName(await fund.RISK()), newRisk.address);
+
+    // Check we allowance
+    const allowance = await mockMOT.allowance(fund.address, newRisk.address);
+    assert.isAbove(allowance, 10 ** 32, 0, "MOT is approved for new component");
   });
 
   it("Can change market provider and register in the new marketplace ", async () => {
@@ -119,7 +126,8 @@ contract("Fund", accounts => {
 
     // Set new market place
     const newMarket = await Marketplace.new();
-    await fund.setComponentExternal(await fund.MARKET(), newMarket.address);
+    await componentList.setComponent(await fund.MARKET(), newMarket.address);
+    await fund.updateAllComponents();
     assert.equal(await fund.getComponentByName(await fund.MARKET()), newMarket.address);
 
     // Check we have register
@@ -144,11 +152,10 @@ contract("Fund", accounts => {
     assert.equal((await fund.totalSupply()).toNumber(), 0, "Starting supply is 0");
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
-    tx =  await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
     assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
     tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
     assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
- 
 
     assert.equal((await fund.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     // Price is the same, as no Token value has changed
@@ -170,7 +177,6 @@ contract("Fund", accounts => {
     assert.ok(calc.getEvent(tx, "RiskEvent"), "Withdraw uses risk provider");
     tx = await fund.requestWithdraw(toTokenWei(1), { from: investorB });
     assert.ok(calc.getEvent(tx, "RiskEvent"), "Withdraw uses risk provider");
-
 
     // Withdraw max transfers is set to 1
     tx = await fund.withdraw();

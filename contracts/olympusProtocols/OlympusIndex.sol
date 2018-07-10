@@ -85,12 +85,12 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _list, uint _initialFundFee) onlyOwner external payable {
+    function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
-        require(_list != 0x0);
+        require(_componentList != 0x0);
 
-        super.initialize(_list);
+        super.initialize(_componentList);
 
         setComponent(MARKET, componentList.getLatestComponent(MARKET));
         setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
@@ -98,7 +98,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         setComponent(RISK, componentList.getLatestComponent(RISK));
         setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
         setComponent(FEE, componentList.getLatestComponent(FEE));
-        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));        
+        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
         setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
 
         // approve component for charging fees.
@@ -379,7 +379,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-
         address[] memory tokensToSell;
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
@@ -457,8 +456,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         updateComponent(WHITELIST);
         updateComponent(FEE);
         approveComponent(REBALANCE);
-        updateComponent(REIMBURSABLE);        
-    }    
+        updateComponent(REIMBURSABLE);
+    }
 
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
         RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
