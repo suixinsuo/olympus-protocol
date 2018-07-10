@@ -21,6 +21,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, StandardToken {
     string public constant WHITELIST = "WhitelistProvider";
     string public constant FEE = "FeeProvider";
     string public constant REIMBURSABLE = "Reimbursable";    
+    string public constant REBALANCE = "RebalanceProvider";    
 
     function initialize (address _componentList) internal {
         require(_componentList != 0x0);
