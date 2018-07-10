@@ -139,12 +139,16 @@ contract("Fund", accounts => {
   });
 
   it("Fund shall allow investment", async () => {
+    let tx;
     // With 0 supply price is 1 eth
     assert.equal((await fund.totalSupply()).toNumber(), 0, "Starting supply is 0");
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
+    tx =  await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
+    tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
+ 
 
     assert.equal((await fund.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     // Price is the same, as no Token value has changed
@@ -162,8 +166,11 @@ contract("Fund", accounts => {
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), "B has invested");
 
     // Request
-    await fund.requestWithdraw(toTokenWei(1), { from: investorA });
-    await fund.requestWithdraw(toTokenWei(1), { from: investorB });
+    tx = await fund.requestWithdraw(toTokenWei(1), { from: investorA });
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Withdraw uses risk provider");
+    tx = await fund.requestWithdraw(toTokenWei(1), { from: investorB });
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Withdraw uses risk provider");
+
 
     // Withdraw max transfers is set to 1
     tx = await fund.withdraw();
@@ -304,7 +311,9 @@ contract("Fund", accounts => {
     );
     const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
 
-    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    let tx;
+    tx = await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     const fundTokensAndBalance = await fund.getTokens();
     for (let i = 0; i < tokens.length; i++) {
@@ -323,6 +332,7 @@ contract("Fund", accounts => {
   });
 
   it("Shall be able to sell tokens", async () => {
+    let tx;
     // From the preivus test we got 1.8 ETH
     const initialBalance = (await fund.getETHBalance()).toNumber();
 
@@ -333,7 +343,8 @@ contract("Fund", accounts => {
       tokens.map(async (token, index) => await mockKyber.getExpectedRate(token, ethToken, balances[index]))
     );
     // We sell all
-    await fund.sellTokens("", fundTokensAndBalance[0], fundTokensAndBalance[1], sellRates.map(rate => rate[0]));
+    tx = await fund.sellTokens("", fundTokensAndBalance[0], fundTokensAndBalance[1], sellRates.map(rate => rate[0]));
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     fundTokensAndBalance = await fund.getTokens();
 
@@ -377,7 +388,7 @@ contract("Fund", accounts => {
     await fund.requestWithdraw(toTokenWei(1.8), { from: investorA });
     tx = await fund.withdraw();
 
-    // Investor has recover all his eth sepp9jgt tokens
+    // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(0), "Investor redeemed all the funds");
     assert.equal(calc.roundTo(investorABefore + 1.8, 2), calc.roundTo(investorAAfter, 2), "Investor A received ether");
