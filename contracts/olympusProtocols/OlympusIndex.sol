@@ -17,15 +17,6 @@ import "../interfaces/FeeChargerInterface.sol";
 contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
-    string public constant MARKET = "MarketProvider";
-    string public constant EXCHANGE = "ExchangeProvider";
-    string public constant REBALANCE = "WithdrawRebalance";
-    string public constant RISK = "RiskProvider";
-    string public constant WHITELIST = "WhitelistProvider";
-    string public constant FEE = "FeeProvider";
-    string public constant REIMBURSABLE = "Reimbursable";
-    string public constant WITHDRAW = "WithdrawProvider";
-
     enum WhitelistKeys { Investment, Maintenance }
 
     event ChangeStatus(DerivativeStatus status);
