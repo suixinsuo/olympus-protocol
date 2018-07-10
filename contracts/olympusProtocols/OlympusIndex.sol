@@ -86,33 +86,27 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(
-        address _market,
-        address _exchange,
-        address _rebalance,
-        address _withdraw,
-        address _risk,
-        address _whitelist,
-        address _reimbursable,
-        address _feeProvider,
-        uint _initialFundFee) onlyOwner external payable  {
+    function initialize(address _list, uint _initialFundFee) onlyOwner external payable {
         require(status == DerivativeStatus.New);
-        require (msg.value > 0); // Require some balance for internal opeations as reimbursable
+        require(msg.value > 0); // Require some balance for internal opeations as reimbursable
+        require(_list != 0x0);
 
-        setComponent(MARKET, _market);
-        setComponent(EXCHANGE, _exchange);
-        setComponent(REBALANCE, _rebalance);
-        setComponent(RISK, _risk);
-        setComponent(WHITELIST, _whitelist);
-        setComponent(FEE, _feeProvider);
-        setComponent(REIMBURSABLE, _reimbursable);
-        setComponent(WITHDRAW, _withdraw);
+        super.initialize(_list);
+
+        setComponent(MARKET, componentList.getLatestComponent(MARKET));
+        setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
+        setComponent(REBALANCE, componentList.getLatestComponent(REBALANCE));
+        setComponent(RISK, componentList.getLatestComponent(RISK));
+        setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
+        setComponent(FEE, componentList.getLatestComponent(FEE));
+        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));        
+        setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
 
         // approve component for charging fees.
         approveComponents();
 
-        MarketplaceInterface(_market).registerProduct();
-        ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
+        MarketplaceInterface(componentList.getLatestComponent(MARKET)).registerProduct();
+        ChargeableInterface(componentList.getLatestComponent(FEE)).setFeePercentage(_initialFundFee);
 
         status = DerivativeStatus.Active;
 
@@ -442,10 +436,15 @@ contract OlympusIndex is IndexInterface, Derivative {
         approveComponent(REBALANCE);
     }
 
-    function approveComponent(string _name) private {
-        address componentAddress = getComponentByName(_name);
-        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 0);
-        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 2 ** 256 - 1);
-    }
 
+    function updateAllComponents() public onlyOwner {
+        updateComponent(MARKET);
+        updateComponent(EXCHANGE);
+        updateComponent(WITHDRAW);
+        updateComponent(RISK);
+        updateComponent(WHITELIST);
+        updateComponent(FEE);
+        approveComponent(REBALANCE);
+        updateComponent(REIMBURSABLE);        
+    }    
 }
