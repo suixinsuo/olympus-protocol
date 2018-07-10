@@ -382,7 +382,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             _amounts[i] = ethBalance * weights[i] / 100;
             _tokensErc20[i] = ERC20Extended(tokens[i]);
             (, _rates[i] ) = exchange.getPrice(ETH,  _tokensErc20[i],  _amounts[i], 0x0);
-            // require(!hasRisk(address(this), exchange, ETH, _amounts[i], _rates[i]));
+            require(!hasRisk(address(this), exchange, ETH, _amounts[i], _rates[i]));
         }
 
         require(exchange.buyTokens.value(ethBalance)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
