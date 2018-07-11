@@ -110,7 +110,7 @@ contract("Olympus Index", accounts => {
       indexData.decimals,
       tokens.slice(0, indexData.tokensLenght),
       indexData.weights,
-      { gas: 9000000 } // At the moment require 6.7M
+      { gas: 7500000 } // At the moment require 6.7M
     );
 
     componentList.setComponent(await index.MARKET(), market.address);
