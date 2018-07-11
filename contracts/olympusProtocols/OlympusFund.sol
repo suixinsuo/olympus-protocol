@@ -182,9 +182,10 @@ contract OlympusFund is FundInterface, Derivative {
      // ----------------------------- DERIVATIVE -----------------------------
 
     function invest() public
-    payable
-    whitelisted(WhitelistKeys.Investment)
-    withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+        payable
+        whitelisted(WhitelistKeys.Investment)
+        withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+        whenNotPaused
       returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
@@ -271,7 +272,7 @@ contract OlympusFund is FundInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function withdrawFee(uint amount) external onlyOwner returns(bool) {
+    function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
         require(accumulatedFee >= amount);
         accumulatedFee -= amount;
         msg.sender.transfer(amount);
@@ -288,9 +289,10 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- WITHDRAW -----------------------------
     function requestWithdraw(uint amount)
+        whenNotPaused
         whitelisted(WhitelistKeys.Investment)
         withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-         external {
+        external {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -303,7 +305,7 @@ contract OlympusFund is FundInterface, Derivative {
         return withdrawProvider.getTotalWithdrawAmount();
     }
 
-    function withdraw() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) external returns(bool) {
+    function withdraw() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused external returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
