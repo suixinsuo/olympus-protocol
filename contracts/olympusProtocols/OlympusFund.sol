@@ -319,14 +319,15 @@ contract OlympusFund is FundInterface, Derivative {
         uint tokens;
 
         if (!withdrawProvider.isInProgress()) {
+            // Sell tokens before start to withdraw
+            uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
+            if(_totalETHToReturn > getETHBalance()) {
+                uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+                getETHFromTokens(_tokenPercentToSell);
+            }
             withdrawProvider.start();
         }
-        uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
-
-        if(_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-            getETHFromTokens(_tokenPercentToSell);
-        }
+       
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
 
@@ -388,8 +389,8 @@ contract OlympusFund is FundInterface, Derivative {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i], _sellRates[i]));
-            _tokensToSell[i].approve(exchange, 0);
-            _tokensToSell[i].approve(exchange, _amounts[i]);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
 
         }
 
