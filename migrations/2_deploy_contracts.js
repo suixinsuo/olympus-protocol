@@ -14,6 +14,7 @@ let Reimbursable = artifacts.require("Reimbursable");
 
 let DummyDerivative = artifacts.require("MockDerivative");
 let PercentageFee = artifacts.require("PercentageFee");
+let ComponentList = artifacts.require("ComponentList");
 
 const args = require("../scripts/libs/args");
 let RiskControl = artifacts.require("RiskControl");
@@ -87,7 +88,8 @@ async function deployOlympusFund(deployer, network) {
     MarketplaceProvider,
     PercentageFee,
     Reimbursable,
-    WhitelistProvider
+    WhitelistProvider,
+    ComponentList
   ]);
   await deployExchange(deployer, network);
 }
@@ -101,7 +103,8 @@ async function deployOlympusIndex(deployer, network) {
     MarketplaceProvider,
     PercentageFee,
     Reimbursable,
-    WhitelistProvider
+    WhitelistProvider,
+    ComponentList
   ]);
   await deployExchange(deployer, network);
   await deployer.deploy(RebalanceProvider, ExchangeProvider.address);
@@ -119,6 +122,7 @@ function deployOnDev(deployer, num) {
         PercentageFee,
         Reimbursable,
         WhitelistProvider,
+        ComponentList,
         [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
       ])
     )
@@ -126,7 +130,7 @@ function deployOnDev(deployer, num) {
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
     .then(() =>
       deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
-  );
+    );
 }
 
 function deployOnKovan(deployer, num) {
@@ -140,14 +144,15 @@ function deployOnKovan(deployer, num) {
         PercentageFee,
         Reimbursable,
         WhitelistProvider,
+        ComponentList,
         [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
       ])
     )
     .then(() => deployExchange(deployer, "kovan"))
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
-  .then(() =>
-    deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
-  );
+    .then(() =>
+      deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
+    );
 }
 
 function deployOnMainnet(deployer) {

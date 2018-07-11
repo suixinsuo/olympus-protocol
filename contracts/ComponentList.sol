@@ -16,6 +16,7 @@ contract ComponentList is ComponentListInterface, Ownable {
         components[_name][c.version()] = _componentAddress;
         bool included = false;
         uint indexToRemove = 0;
+        // Remove the duplicate versions form the version arrays
         for (uint i = 0; i < componentVersions[_name].length; i++) {
             if (keccak256(abi.encodePacked(componentVersions[_name][i])) == keccak256(abi.encodePacked(c.version()))) {
                 included = true;
@@ -50,7 +51,7 @@ contract ComponentList is ComponentListInterface, Ownable {
 
         return results;
     }
-    
+
     function remove(string _name, uint _index) private returns(string[]) {
         string[] storage array = componentVersions[_name];
         if (_index >= array.length) return;
