@@ -48,7 +48,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             revert("No suitable exchange found");
         }
 
-        require(payFee(msg.value * getMotPrice(exchangeId) / 10 ** 18));
+        require(payFee(msg.value * getMotPrice() / 10 ** 18));
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         require(
             adapter.buyToken.value(msg.value)(
@@ -74,7 +74,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
         uint tokenPrice;
         (tokenPrice,) = exchangeAdapterManager.getPrice(_token, ETH, _amount, exchangeId);
-        require(payFee(tokenPrice  * _amount * getMotPrice(exchangeId) / 10 ** _token.decimals() / 10 ** 18));
+        require(payFee(tokenPrice  * _amount * getMotPrice() / 10 ** _token.decimals() / 10 ** 18));
 
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
 
@@ -90,8 +90,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         return true;
     }
 
-    function getMotPrice(bytes32 _exchangeId) private view returns (uint price) {
-        (price,) = exchangeAdapterManager.getPrice(ETH, MOT, msg.value, _exchangeId);
+    function getMotPrice() private view returns (uint price) {
+        (price,) = exchangeAdapterManager.getPrice(ETH, MOT, 10**18, 0x0);
     }
 
     function buyTokens
@@ -100,7 +100,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
         ) external payable returns(bool success) {
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
-        require(payFee(msg.value * getMotPrice(_exchangeId) / 10 ** 18));
+        require(payFee(msg.value * getMotPrice() / 10 ** 18));
         uint totalValue;
         uint i;
         for(i = 0; i < _amounts.length; i++ ) {
@@ -142,7 +142,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             }
 
             (prices[0],) = exchangeAdapterManager.getPrice(_tokens[i], ETH, _amounts[i], exchangeId);
-            (prices[1],) = exchangeAdapterManager.getPrice(ETH, MOT, prices[0] * _amounts[i], exchangeId);
+            prices[1] = getMotPrice();
             prices[2] += prices[0] * _amounts[i] * prices[1] / 10 ** _tokens[i].decimals() / 10 ** 18;
 
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
