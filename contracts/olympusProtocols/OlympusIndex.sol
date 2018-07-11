@@ -168,6 +168,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // ----------------------------- DERIVATIVE -----------------------------
 
     function invest() public payable
+     whenNotPaused
      whitelisted(WhitelistKeys.Investment)
      withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
      returns(bool) {
@@ -240,7 +241,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function withdrawFee(uint amount) external onlyOwner returns(bool) {
+    function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
         require(accumulatedFee >= amount);
         accumulatedFee -= amount;
         msg.sender.transfer(amount);
@@ -267,7 +268,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         maxTransfers = _maxTransfers;
     }
 
-    function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns(bool) {
+    function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
@@ -363,7 +364,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // ----------------------------- REBALANCE -----------------------------
 
-    function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns(bool) {
+    function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -390,7 +391,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
-    function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool success) {
+    function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
