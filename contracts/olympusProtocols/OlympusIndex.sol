@@ -264,6 +264,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function setMaxTransfers(uint _maxTransfers) external onlyOwner {
+        require(_maxTransfers > 0);
         maxTransfers = _maxTransfers;
     }
 
