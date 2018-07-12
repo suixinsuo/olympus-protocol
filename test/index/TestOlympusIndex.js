@@ -96,7 +96,8 @@ contract("Olympus Index", accounts => {
           indexData.category,
           indexData.decimals,
           tokens.slice(0, indexData.tokensLenght),
-          []
+          [],
+          { from: accounts[0], gas: 7e6 }
         ),
       "Shall revert"
     ));
