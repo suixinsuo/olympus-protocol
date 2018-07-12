@@ -8,6 +8,7 @@ const Marketplace = artifacts.require("Marketplace");
 const Whitelist = artifacts.require("WhitelistProvider");
 const Withdraw = artifacts.require("AsyncWithdraw");
 const MockToken = artifacts.require("MockToken");
+const ComponentList = artifacts.require("ComponentList");
 
 const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
@@ -55,6 +56,8 @@ contract("Olympus Index", accounts => {
   let whitelist;
   let reimbursable;
   let tokens;
+  let componentList;
+
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
@@ -62,6 +65,25 @@ contract("Olympus Index", accounts => {
   before("Initalize tokens", async () => {
     mockKyber = await MockKyberNetwork.deployed();
     tokens = await mockKyber.supportedTokens();
+
+    market = await Marketplace.deployed();
+    mockMOT = await MockToken.deployed();
+    exchange = await ExchangeProvider.deployed();
+    asyncWithdraw = await Withdraw.deployed();
+    riskControl = await RiskControl.deployed();
+    percentageFee = await PercentageFee.deployed();
+    rebalance = await Rebalance.deployed();
+    whitelist = await Whitelist.deployed();
+    reimbursable = await Reimbursable.deployed();
+    componentList = await ComponentList.deployed();
+
+    await exchange.setMotAddress(mockMOT.address);
+    await asyncWithdraw.setMotAddress(mockMOT.address);
+    await riskControl.setMotAddress(mockMOT.address);
+    await percentageFee.setMotAddress(mockMOT.address);
+    await rebalance.setMotAddress(mockMOT.address);
+    await whitelist.setMotAddress(mockMOT.address);
+    await reimbursable.setMotAddress(mockMOT.address);
   });
 
   it("Required same tokens as weights on create", async () =>
@@ -80,16 +102,6 @@ contract("Olympus Index", accounts => {
     ));
 
   it("Create a index", async () => {
-    market = await Marketplace.deployed();
-    mockMOT = await MockToken.deployed();
-    exchange = await ExchangeProvider.deployed();
-    asyncWithdraw = await Withdraw.deployed();
-    riskControl = await RiskControl.deployed();
-    percentageFee = await PercentageFee.deployed();
-    rebalance = await Rebalance.deployed();
-    whitelist = await Whitelist.deployed();
-    reimbursable = await Reimbursable.deployed();
-
     index = await OlympusIndex.new(
       indexData.name,
       indexData.symbol,
@@ -97,34 +109,26 @@ contract("Olympus Index", accounts => {
       indexData.category,
       indexData.decimals,
       tokens.slice(0, indexData.tokensLenght),
-      indexData.weights
+      indexData.weights,
+      { gas: 7500000 } // At the moment require 6.7M
     );
+
+    componentList.setComponent(await index.MARKET(), market.address);
+    componentList.setComponent(await index.EXCHANGE(), exchange.address);
+    componentList.setComponent(await index.WITHDRAW(), asyncWithdraw.address);
+    componentList.setComponent(await index.RISK(), riskControl.address);
+    componentList.setComponent(await index.FEE(), percentageFee.address);
+    componentList.setComponent(await index.WHITELIST(), whitelist.address);
+    componentList.setComponent(await index.WHITELIST(), whitelist.address);
+    componentList.setComponent(await index.REIMBURSABLE(), reimbursable.address);
+    componentList.setComponent(await index.REBALANCE(), rebalance.address);
 
     assert.equal((await index.status()).toNumber(), 0); // new
 
     await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
 
-    await exchange.setMotAddress(mockMOT.address);
-    await asyncWithdraw.setMotAddress(mockMOT.address);
-    await riskControl.setMotAddress(mockMOT.address);
-    await percentageFee.setMotAddress(mockMOT.address);
-    await rebalance.setMotAddress(mockMOT.address);
-    await whitelist.setMotAddress(mockMOT.address);
-    await reimbursable.setMotAddress(mockMOT.address);
-
-    await index.initialize(
-      Marketplace.address,
-      ExchangeProvider.address,
-      Rebalance.address,
-      Withdraw.address,
-      RiskControl.address,
-      Whitelist.address,
-      Reimbursable.address,
-      PercentageFee.address,
-      0,
-      { value: web3.toWei(indexData.ethDeposit, "ether") }
-    );
+    await index.initialize(componentList.address, 0, { value: web3.toWei(indexData.ethDeposit, "ether") });
     const myProducts = await market.getOwnProducts();
 
     assert.equal(myProducts.length, 1);
@@ -137,19 +141,22 @@ contract("Olympus Index", accounts => {
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await index.initialize(
-        Marketplace.address,
-        ExchangeProvider.address,
-        Rebalance.address,
-        Withdraw.address,
-        RiskControl.address,
-        Whitelist.address,
-        Reimbursable.address,
-        PercentageFee.address,
-        0,
-        { value: web3.toWei(indexData.ethDeposit, "ether") }
-      );
+      await index.initialize(componentList.address, 0, { value: web3.toWei(indexData.ethDeposit, "ether") });
     }, "Shall revert");
+  });
+
+  it("Update component shall approve MOT ", async () => {
+    // Set new market place
+    const newRisk = await RiskControl.new();
+    await newRisk.setMotAddress(mockMOT.address);
+
+    await componentList.setComponent(await index.RISK(), newRisk.address);
+    await index.updateAllComponents();
+    assert.equal(await index.getComponentByName(await index.RISK()), newRisk.address);
+
+    // Check we allowance
+    const allowance = await mockMOT.allowance(index.address, newRisk.address);
+    assert.isAbove(allowance, 10 ** 32, 0, "MOT is approved for new component");
   });
 
   it("Can register in the new marketplace ", async () => {
@@ -158,7 +165,8 @@ contract("Olympus Index", accounts => {
 
     // Set new market place
     const newMarket = await Marketplace.new();
-    await index.setComponentExternal(await index.MARKET(), newMarket.address);
+    await componentList.setComponent(await index.MARKET(), newMarket.address);
+    await index.updateAllComponents();
     assert.equal(await index.getComponentByName(await index.MARKET()), newMarket.address);
 
     // Check we have register
