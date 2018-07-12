@@ -10,7 +10,7 @@ contract Marketplace is MarketplaceInterface {
     string public description ="List of derivatives";
     string public category = "Lists";
     string public version = "v1.0";
-    
+
 
     address[] public products;
     mapping(address => address[]) public productMappings;
