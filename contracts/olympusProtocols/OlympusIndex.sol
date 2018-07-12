@@ -133,7 +133,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return (tokens, _amounts);
     }
 
-    function changeStatus(DerivativeStatus _status) public returns(bool) {
+    function changeStatus(DerivativeStatus _status) public onlyOwner returns(bool) {
         require(_status != DerivativeStatus.New && status != DerivativeStatus.New && _status != DerivativeStatus.Closed);
         require(status != DerivativeStatus.Closed && _status != DerivativeStatus.Closed);
 
@@ -429,17 +429,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
-  // Set component from outside the chain
-    function setComponentExternal(string name, address provider) external onlyOwner returns(bool) {
-        super.setComponent(name, provider);
-
-        if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
-            approveComponent(name);
-        }
-
-        return true;
-    }
-
     function approveComponents() private {
         approveComponent(EXCHANGE);
         approveComponent(WITHDRAW);
@@ -457,7 +446,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         updateComponent(RISK);
         updateComponent(WHITELIST);
         updateComponent(FEE);
-        approveComponent(REBALANCE);
+        updateComponent(REBALANCE);
         updateComponent(REIMBURSABLE);
     }
 
