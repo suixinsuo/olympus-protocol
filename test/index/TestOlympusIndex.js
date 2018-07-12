@@ -96,8 +96,7 @@ contract("Olympus Index", accounts => {
           indexData.category,
           indexData.decimals,
           tokens.slice(0, indexData.tokensLenght),
-          [],
-          { from: accounts[0], gas: 7e6 }
+          []
         ),
       "Shall revert"
     ));
@@ -111,7 +110,7 @@ contract("Olympus Index", accounts => {
       indexData.decimals,
       tokens.slice(0, indexData.tokensLenght),
       indexData.weights,
-      { gas: 7500000 } // At the moment require 6.7M
+      { gas: 8e6 } // At the moment require 6.7M
     );
 
     componentList.setComponent(await index.MARKET(), market.address);
