@@ -17,18 +17,19 @@ The suit option will limit the number of deployment required for the concrete te
 
 ## Kovan
 
-Exchange component:
-
+Exchange subcomponent:
 - KyberNetworkAdapter 0x05e4c2c5b4bb9541274b1b2289297132b86fc965
 - ExchangeAdapterManager 0x15de419089c7b95e9ec94b88b6119837edddda59
-- ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a
-- Marketplace 0x164f5a00fd9ab15bc72f31d8425b56555b0cadc9
-- AsyncWithdraw 0x86803060cdc0ca9b7164049ba2723a260db9379d
-- Reimbursable 0x6906fb529730abd728f2844197e0735b8befd541
-- PercentageFee 0x4bf290ab1fda484f1d072eda1f498f3cea405fb5
-- WhitelistProvider 0x882bce30542494c11407b3ec061b48d520f18cdb
-- Rebalance Provider 0x516b0bc733e5f270f40c6bc6a36ae4be2d1f58d1
-- RISK (DUMMY) 0x693e4d57597b089f2280b49f2d95ea5debecd0a9
+
+- ComponentList 0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678 
+    - ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a XX
+    - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23 
+    - AsyncWithdraw 0xb1335ecb9996d27b4dc55c61e351645a3dd48ab3 XX
+    - Reimbursable 0x6906fb529730abd728f2844197e0735b8befd541 XX
+    - PercentageFee 0x4bf290ab1fda484f1d072eda1f498f3cea405fb5 XX
+    - WhitelistProvider 0x882bce30542494c11407b3ec061b48d520f18cdb XX
+    - Rebalance Provider 0x516b0bc733e5f270f40c6bc6a36ae4be2d1f58d1 XX
+    - RISK (DUMMY) 0x693e4d57597b089f2280b49f2d95ea5debecd0a9 X X
 
 
 ## Sample Fund

@@ -413,7 +413,7 @@ contract OlympusFund is FundInterface, Derivative {
         approveComponent(REIMBURSABLE);
     }
 
-    function updateAllComponents() public onlyOwner {
+    function updateAllComponents() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) {
         updateComponent(MARKET);
         updateComponent(EXCHANGE);
         updateComponent(WITHDRAW);
