@@ -22,4 +22,8 @@ contract DerivativeInterface is ERC20Extended, Ownable, ComponentContainerInterf
     function invest() public payable returns(bool success);
     function changeStatus(DerivativeStatus _status) public returns(bool);
     function getPrice() public view returns(uint);
+
+    function initialize (address _componentList) internal;
+    function updateComponent(string _name) public returns (address);
+    function approveComponent(string _name) internal;
 }

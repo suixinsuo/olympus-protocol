@@ -18,14 +18,6 @@ contract OlympusFund is FundInterface, Derivative {
     uint public constant DENOMINATOR = 100000;
     uint public constant INITIAL_VALUE =  10**18;
 
-    string public constant MARKET = "MarketProvider";
-    string public constant EXCHANGE = "ExchangeProvider";
-    string public constant WITHDRAW = "WithdrawProvider";
-    string public constant RISK = "RiskProvider";
-    string public constant WHITELIST = "WhitelistProvider";
-    string public constant FEE = "FeeProvider";
-    string public constant REIMBURSABLE = "Reimbursable";
-
     enum WhitelistKeys { Investment, Maintenance }
 
     event Invested(address user, uint amount);
@@ -83,31 +75,26 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(
-        address _market,
-        address _exchange,
-        address _withdraw,
-        address _risk,
-        address _whitelist,
-        address _reimbursable,
-        address _feeProvider,
-        uint _initialFundFee) onlyOwner external payable  {
+    function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable {
+        require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
-        require (msg.value > 0); // Require some balance for internal opeations as reimbursable
+        require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
-        setComponent(MARKET, _market);
-        setComponent(EXCHANGE, _exchange);
-        setComponent(WITHDRAW, _withdraw);
-        setComponent(RISK, _risk);
-        setComponent(WHITELIST, _whitelist);
-        setComponent(FEE, _feeProvider);
-        setComponent(REIMBURSABLE, _reimbursable);
+        super.initialize(_componentList);
+
+        setComponent(MARKET, componentList.getLatestComponent(MARKET));
+        setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
+        setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
+        setComponent(RISK, componentList.getLatestComponent(RISK));
+        setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
+        setComponent(FEE, componentList.getLatestComponent(FEE));
+        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
 
         // approve component for charging fees.
         approveComponents();
 
-        MarketplaceInterface(_market).registerProduct();
-        ChargeableInterface(_feeProvider).setFeePercentage(_initialFundFee);
+        MarketplaceInterface(componentList.getLatestComponent(MARKET)).registerProduct();
+        ChargeableInterface(componentList.getLatestComponent(FEE)).setFeePercentage(_initialFundFee);
         status = DerivativeStatus.Active;
         emit ChangeStatus(status);
 
@@ -182,9 +169,10 @@ contract OlympusFund is FundInterface, Derivative {
      // ----------------------------- DERIVATIVE -----------------------------
 
     function invest() public
-    payable
-    whitelisted(WhitelistKeys.Investment)
-    withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+        payable
+        whitelisted(WhitelistKeys.Investment)
+        withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+        whenNotPaused
       returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
@@ -271,7 +259,7 @@ contract OlympusFund is FundInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function withdrawFee(uint amount) external onlyOwner returns(bool) {
+    function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
         require(accumulatedFee >= amount);
         accumulatedFee -= amount;
         msg.sender.transfer(amount);
@@ -288,9 +276,10 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- WITHDRAW -----------------------------
     function requestWithdraw(uint amount)
+        whenNotPaused
         whitelisted(WhitelistKeys.Investment)
         withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-         external {
+        external {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -304,7 +293,7 @@ contract OlympusFund is FundInterface, Derivative {
         return withdrawProvider.getTotalWithdrawAmount();
     }
 
-    function withdraw() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) external returns(bool) {
+    function withdraw() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused external returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
@@ -415,17 +404,6 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
-    // Set component from outside the chain
-    function setComponentExternal(string name, address provider) external onlyOwner returns(bool) {
-        super.setComponent(name, provider);
-
-        if (keccak256(abi.encodePacked(name)) != keccak256(abi.encodePacked(MARKET))) {
-            approveComponent(name);
-        }
-
-        return true;
-    }
-
     function approveComponents() private {
         approveComponent(EXCHANGE);
         approveComponent(WITHDRAW);
@@ -435,10 +413,14 @@ contract OlympusFund is FundInterface, Derivative {
         approveComponent(REIMBURSABLE);
     }
 
-    function approveComponent(string _name) private {
-        address componentAddress = getComponentByName(_name);
-        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 0);
-        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 2 ** 256 - 1);
+    function updateAllComponents() public onlyOwner {
+        updateComponent(MARKET);
+        updateComponent(EXCHANGE);
+        updateComponent(WITHDRAW);
+        updateComponent(RISK);
+        updateComponent(WHITELIST);
+        updateComponent(FEE);
+        updateComponent(REIMBURSABLE);
     }
 
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
