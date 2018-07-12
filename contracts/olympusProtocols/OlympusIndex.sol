@@ -450,7 +450,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         approveComponent(REBALANCE);
     }
 
-    function updateAllComponents() public onlyOwner {
+    function updateAllComponents() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) {
         updateComponent(MARKET);
         updateComponent(EXCHANGE);
         updateComponent(WITHDRAW);
