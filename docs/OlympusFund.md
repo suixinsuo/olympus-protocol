@@ -78,7 +78,7 @@ web3.eth.contract(abi).new(
           return console.error(err);
         }
         if (newFund && newFund.address) {
-          // now the index is deployed, do whatever you need to do.
+          // now the fund is deployed, do whatever you need to do.
           console.log(newFund.address)
         }
       }));
