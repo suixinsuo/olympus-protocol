@@ -135,7 +135,7 @@ productList.getAllProducts((err, derivativeList) => {
 });
 ```
 
-From a derivative we can get the next list of usefull information:
+From a derivative we can get the next list of useful information:
 
 - name: string
 - owner: address
