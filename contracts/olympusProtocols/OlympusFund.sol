@@ -117,7 +117,7 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- FUND INTERFACE -----------------------------
 
-    function updateTokens(ERC20Extended[] _updatedTokens) internal returns(bool success) {
+    function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {
         ERC20 _tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
             _tokenAddress = _updatedTokens[i];
@@ -284,6 +284,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function setMaxTransfers(uint _maxTransfers) external onlyOwner {
+        require(_maxTransfers > 0);
         maxTransfers = _maxTransfers;
     }
 
@@ -308,14 +309,15 @@ contract OlympusFund is FundInterface, Derivative {
         uint tokens;
 
         if (!withdrawProvider.isInProgress()) {
+            // Sell tokens before start to withdraw
+            uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
+            if(_totalETHToReturn > getETHBalance()) {
+                uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+                getETHFromTokens(_tokenPercentToSell);
+            }
             withdrawProvider.start();
         }
-        uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
 
-        if(_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-            getETHFromTokens(_tokenPercentToSell);
-        }
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
 
@@ -340,7 +342,7 @@ contract OlympusFund is FundInterface, Derivative {
         return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
     }
 
-    function reimburse() internal {
+    function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
         accumulatedFee -= reimbursedAmount;
         emit Reimbursed(reimbursedAmount);
@@ -377,8 +379,8 @@ contract OlympusFund is FundInterface, Derivative {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i], _sellRates[i]));
-            _tokensToSell[i].approve(exchange, 0);
-            _tokensToSell[i].approve(exchange, _amounts[i]);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
 
         }
 
@@ -411,7 +413,7 @@ contract OlympusFund is FundInterface, Derivative {
         approveComponent(REIMBURSABLE);
     }
 
-    function updateAllComponents() public onlyOwner {
+    function updateAllComponents() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) {
         updateComponent(MARKET);
         updateComponent(EXCHANGE);
         updateComponent(WITHDRAW);
