@@ -125,7 +125,7 @@ contract.initialize(_componentList, _initialFundFee, (err) => {
 ```
 
 ### abi
-> get [abi](http://www.olympus.io/olympusProtocols/index/abi)
+> you can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) and bytcode from our API
 
 ### bytecode
-> get [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode)
+> you can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) and bytcode from our API
