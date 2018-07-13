@@ -69,7 +69,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         contracts[msg.sender].totalWithdrawAmount -= tokens;
         contracts[msg.sender].amountPerUser[_investor] = 0;
 
-        // If he doesnt have this amount, the request will be completed but no ETH will be returned
+        // If he doesn't have this amount, the request will be closed and no ETH will be returned
         if(tokens > derivative.balanceOf(_investor)) {
             emit Withdrawed(_investor, 0, 0);
             return( 0, 0);
