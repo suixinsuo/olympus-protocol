@@ -102,7 +102,7 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 > Initialize the Index then you can find it from olympus marketplace and you can invest it.(component list will provide the updated providers of the component, and that using them will charge MOT, so is required to transfer some MOT to your fund)
 
 #### &emsp;Parameters
-> _componentList: address of olympus componentlist </br>
+> _componentList: address of olympus componentlist (please refer this to xxxxx) </br>
   _initialFundFee: management fee of index
   value: the initial balance of the index
 
