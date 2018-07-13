@@ -63,6 +63,9 @@ contract MockWithdrawClient is MockDerivative {
         return true;
     }
 
+    function totalWithdrawPending() external view returns(uint) {
+        return asyncWithdraw.getTotalWithdrawAmount();
+    }
 
 
 }
