@@ -4,7 +4,7 @@
 
 This documentation is to describe component Product List.
 
-Product List provides a list of available derivatives that has been published into it, allowing the derivatives owner to keep track of his own products
+Product List provides a list of available derivatives that has been published into it, allowing the derivative owners to keep track of their own products.
 and making them available to other people.
 
 ### Interface
@@ -14,39 +14,12 @@ and making them available to other people.
     mapping(address => address[]) public productMappings;
 
     function getAllProducts() external view returns (address[] allProducts);
-    function registerProduct() external returns(bool success);
     function getOwnProducts() external view returns (address[] addresses);
 
     event Registered(address product, address owner);
 ```
 
-The interface list allow us to see the product list and the product by owner arrays. As well as provide the functionality for providing
-to the client the capability of registering and retrieving the full array of own products or all products.
-
-### Register Product
-
-```javascript
-    function registerProduct() external returns(bool success);
-```
-
-Only derivatives can register themself, this function is to be called inside the derivative, and not by the javascript client. Register product
-will add your product in the list and will map this product with the owner of the derivative (using the Ownable interface that derivatives are implementing).
-
-This function is eventually been call on the initialize phase of the derivative.
-
-##### Returns
-
-Will return true or revert.
-Products can be registered twice, in case of a second attempt of registering it will revert the function.
-In case of a successful transaction using register, the registered event will be fire with the address of the product and the creator.
-
-### Example code
-
-This function is not to be called from javascript, but from solidity
-
-```solidity
-        MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
-```
+The interface list allows us to see the all products registered and the product list by owner.
 
 ### Get Own Products
 
@@ -54,11 +27,11 @@ This function is not to be called from javascript, but from solidity
     function getOwnProducts() external view returns (address[] addresses);
 ```
 
-Get own products will return the list of derivatives published by the address who is calling the function.
+Get own products will retrieve derivatives in the product list which belong to the caller.
 
 ##### Returns
 
-A array with the addresses of the derivatives published, empty array if the caller hasn't publish any address.
+An array with the addresses of the derivatives published, empty array if the caller hasn't published any address.
 
 #### Example code
 
@@ -66,11 +39,11 @@ A array with the addresses of the derivatives published, empty array if the call
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
-const address = "0x....";
-const abi = [];
-const contract = web3.eth.contract(abi).at(address);
+const productListAdress = "0x....";
+const productListAbi = [];
+const productList = web3.eth.contract(productListAbi).at(productListAdress);
 
-contract.getOwnProducts((err, results) => {
+productList.getOwnProducts((err, results) => {
   if (err) {
     return console.error(err);
   }
@@ -85,15 +58,11 @@ contract.getOwnProducts((err, results) => {
     function getAllProducts() external view returns (address[] allProducts);
 ```
 
-Get a list of all products published in this product list.
+Get all products published in this product list.
 
 ##### Returns
 
-A array of addresses accordingly
-
-### Registered Event
-
-Registered event will fire each time new product gets registered (NOTE: products can register themself once per market place).
+An array of product addresses
 
 #### Example code
 
@@ -101,11 +70,78 @@ Registered event will fire each time new product gets registered (NOTE: products
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
-const address = "0x....";
-const abi = [];
-const contract = web3.eth.contract(abi).at(address);
+const productListAdress = "0x....";
+const productListAbi = [];
+const productList = web3.eth.contract(productListAbi).at(productListAdress);
 
-contract.events.Registered({}, function(error, event) {
-  console.log(event);
+productList.getAllProducts((err, results) => {
+  if (err) {
+    return console.error(err);
+  }
+  // use the template ABI to connect to the addresses and get detailed information.
+  console.log(results);
 });
 ```
+
+## Get information of the products from the address
+
+Once we get the product addresses we can hit the derivative contract in order to retrieve information.
+In this example we will retreive common information that belong to all derivative implementations,
+like name and description.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+
+const productListAdress = "0x....";
+const productListAbi = [];
+const productList = web3.eth.contract(productListAbi).at(productListAdress);
+
+const derivativeAbi = [];
+let derivativeContract;
+const derivatives = {}; // Hasmap address => object
+
+productList.getAllProducts((err, derivativeList) => {
+  if (err) {
+    return console.error(err);
+  }
+  // use the template ABI to connect to the addresses and get detailed information.
+  derivativeList.forEach(derivativeAddress => {
+      derivativeContract = web3.eth.contract(derivativeAbi).at(derivativeAddress);
+
+      derivativeContract.name((err, name) => {
+        if (err) {
+          return console.error(err);
+        }
+        derivatives[derivativeAddress].name = name;
+      });
+
+      derivativeContract.description((err, description) => {
+        if (err) {
+          return console.error(err);
+        }
+        derivatives[derivativeAddress].description = description;
+      });
+
+      derivativeContract.totalSupply((err, totalSupply) => {
+        if (err) {
+          return console.error(err);
+        }
+        derivatives[derivativeAddress].totalSupply = totalSupply.toNumber();
+      });
+
+    });
+  });
+});
+```
+
+From a derivative we can get the next list of usefull information:
+
+- name: string
+- owner: address
+- description: string
+- status: BigNumber (0: new, 1: active, 2:pause, 3: closed)
+- fundType: number (0: fund, 1: index)
+- totalSupply: BigNumber Total of derivative tokens delivered
+- getPrice: BigNumber
+- tokens: Array<address>, list of addresses of the tokens that are in the derivative.
