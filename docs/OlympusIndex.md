@@ -17,10 +17,10 @@ constructor (
 ```
 #### &emsp;Parameters
 > _name: Index name</br>
-  _symbol: Index symbol</br>
+  _symbol: Index symbol (The derivative is ERC20 compatible, so it follow the rules of ERC20. For example: the symbol length can be any, but it's better to keep in from 2 - 5)</br>
   _description: Index description</br>
   _category: Index category</br>
-  _decimals: Index decimals</br>
+  _decimals: Index decimals (normally it should be 18)</br>
   _tokens: The token addresses that the index can buy, sell and rebalance</br>
   _wights: the weights of token</br>
 
@@ -82,12 +82,13 @@ web3.eth.contract(abi).new(
         gas: gasLimit,
         gasPrice: gasPrice,
       },
-      (err: Error, newContract: any) => {
+      (err: Error, newIndex: any) => {
         if (err) {
           return console.error(err);
         }
-        if (newContract.address) {
-          console.log(newContract.address)
+        if (newIndex && newIndex.address) {
+          // now the index is deployed, do whatever you need to do.
+          console.log(newIndex.address)
         }
       }));
 ```
@@ -98,7 +99,7 @@ web3.eth.contract(abi).new(
 function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable;
 ```
 #### &emsp;Description
-> Initialize the Index then you can find it from olympus marketplace and you can invest it.
+> Initialize the Index then you can find it from olympus marketplace and you can invest it.(component list will provide the updated providers of the component, and that using them will charge MOT, so is required to transfer some MOT to your fund)
 
 #### &emsp;Parameters
 > _componentList: address of olympus componentlist </br>

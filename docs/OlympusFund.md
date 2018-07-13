@@ -15,10 +15,10 @@ constructor(
 ```
 #### &emsp;Parameters
 > _name: Fund name</br>
-  _symbol: Fund symbol</br>
+  _symbol: Fund symbol (The derivative is ERC20 compatible, so it follow the rules of ERC20. For example: the symbol length can be any, but it's better to keep in from 2 - 5)</br>
   _description: Fund description</br>
   _category: Fund category</br>
-  _decimals: Fund decimals</br>
+  _decimals: Fund decimals (normally it should be 18)</br>
 
 #### &emsp;Example code
 ```javascript
@@ -77,7 +77,8 @@ web3.eth.contract(abi).new(
         if (err) {
           return console.error(err);
         }
-        if (newFund.address) {
+        if (newFund && newFund.address) {
+          // now the index is deployed, do whatever you need to do.
           console.log(newFund.address)
         }
       }));
