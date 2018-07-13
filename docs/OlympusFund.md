@@ -1,7 +1,7 @@
 # Fund
 
 ### Introduction
-A fund is a source of money that is allocated for a specific purpose. A fund can be established for any purpose whatsoever, whether it is a city government setting aside money to build a new civic center, a college setting aside money to award a scholarship, or an insurance company setting aside money to pay its customers’ claims.
+TODO: Definition of a Fund
 
 ### Constructor
 ```javascript
@@ -90,7 +90,7 @@ web3.eth.contract(abi).new(
 function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable;
 ```
 #### &emsp;Description
-> Initialize the Fund then you can find it from olympus marketplace and you can invest it.
+> Initialize the Fund then you can find it from olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So is required to transfer some MOT to your Fund)
 
 #### &emsp;Parameters
 > _componentList: address of olympus componentlist </br>
