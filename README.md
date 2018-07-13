@@ -30,13 +30,11 @@ Exchange component:
 - Rebalance Provider 0x516b0bc733e5f270f40c6bc6a36ae4be2d1f58d1
 - RISK (DUMMY) 0x693e4d57597b089f2280b49f2d95ea5debecd0a9
 
+# Deployed addresses (Mainnet 13 July, 2018)
 
-## Sample Fund
+- ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
 
-Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
-Sample index 0x9d592ed27aed57cb16d9bdc2eb8add7c44495550
-
-# Deployed addresses (Mainnet July, 2018)
+# Deployed addresses (Mainnet 7 July, 2018) - Deprecated
 
 - Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb
 - WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8
