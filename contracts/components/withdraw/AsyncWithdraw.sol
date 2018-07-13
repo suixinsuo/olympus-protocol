@@ -14,13 +14,12 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     struct ContractInfo {
         uint price;
         address[]  userRequests;
-        mapping (address => bool)  withdrawPending;
         mapping (address => uint)  amountPerUser;
         uint totalWithdrawAmount;
         bool withdrawRequestLock;
     }
 
-    mapping(address => ContractInfo ) contracts;
+    mapping(address => ContractInfo ) public contracts;
 
 
     function getUserRequests() external view returns(address[]) {
@@ -48,7 +47,6 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
             contracts[msg.sender].userRequests.push(_investor);
         }
         contracts[msg.sender].amountPerUser[_investor] += _amount;
-        contracts[msg.sender].withdrawPending[_investor] = true;
         contracts[msg.sender].totalWithdrawAmount += _amount;
 
         emit WithdrawRequest(_investor, contracts[msg.sender].amountPerUser[_investor]);
@@ -62,7 +60,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
 
         require(contracts[msg.sender].withdrawRequestLock); // Only withdraw after lock
         // Jump the already withdrawed
-        if(contracts[msg.sender].withdrawPending[_investor] == false) {return(0,0);}
+        if(contracts[msg.sender].amountPerUser[_investor] == 0) {return(0,0);}
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         tokens = contracts[msg.sender].amountPerUser[_investor];
@@ -70,7 +68,6 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
 
         contracts[msg.sender].totalWithdrawAmount -= tokens;
         contracts[msg.sender].amountPerUser[_investor] = 0;
-        contracts[msg.sender].withdrawPending[_investor] = false;
 
         emit Withdrawed(_investor, tokens, eth);
         return( eth, tokens);
@@ -101,11 +98,17 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         withdrawRequestLock = contracts[msg.sender].withdrawRequestLock;
     }
 
+
     /// Out of interface
-    function getWithdrawBalance(address product) external view returns(uint){
-        return contracts[product].amountPerUser[msg.sender];
+    function getWithdrawBalance(address _contract) external view returns(uint){
+        return contracts[_contract].amountPerUser[msg.sender];
     }
-    function getTotalWithdrawAmount(address product) external view returns(uint){
-        return contracts[product].totalWithdrawAmount;
+
+    function getUserWithdrawBalance(address _contract, address _investor) external view returns(uint) {
+        return contracts[_contract].amountPerUser[_investor];
+    }
+
+    function getTotalWithdrawAmount(address _contract) external view returns(uint){
+        return contracts[_contract].totalWithdrawAmount;
     }
 }
