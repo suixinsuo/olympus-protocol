@@ -38,8 +38,7 @@ Exchange subcomponent:
 
 - KyberNetworkAdapter 0x05e4c2c5b4bb9541274b1b2289297132b86fc965
 - ExchangeAdapterManager 0x15de419089c7b95e9ec94b88b6119837edddda59
-  0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678
-
+ 
 - ComponentList 0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678
   - ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a
   - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23
