@@ -196,7 +196,7 @@ contract("Fund", accounts => {
     await fund.setMaxTransfers(10); // Restore
   });
 
-  it("Shall be able to invest and request with whitelist enabled", async () => {
+  it("Shall be able to invest with whitelist enabled", async () => {
     let tx;
     // Invest Not allowed
     await fund.enableWhitelist(WhitelistType.Investment);
@@ -209,14 +209,7 @@ contract("Fund", accounts => {
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
 
-    // Withdraw not allowed
-    await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
-    await calc.assertReverts(
-      async () => await fund.requestWithdraw(toTokenWei(0.2), { from: investorA }),
-      "Is not allowed to request"
-    );
-
-    // Request allowed
+    // Request always allowed
     await fund.setAllowed([investorA, investorB], WhitelistType.Investment, true);
     await fund.requestWithdraw(toTokenWei(1), { from: investorA });
     await fund.requestWithdraw(toTokenWei(1), { from: investorB });

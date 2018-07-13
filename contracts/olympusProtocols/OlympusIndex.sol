@@ -247,8 +247,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // ----------------------------- WITHDRAW -----------------------------
     function requestWithdraw(uint amount) external
-     whitelisted(WhitelistKeys.Investment)
-     withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
+      whenNotPaused
+      withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
     {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
