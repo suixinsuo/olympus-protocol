@@ -72,7 +72,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const derivative = web3.eth.contract(_DERIVATIVE_ABI).at(_DERIVATIVE_ADDRESS_);
 const amountInWei = 1 * 10 ** 18; // Change 18 for the decimals of your contract
 
-contract.requestWithdraw(amountInWei, (err, results) => {
+derivative.requestWithdraw(amountInWei, (err, results) => {
   if (err) {
     return console.error(err);
   }
@@ -134,12 +134,12 @@ const derivative = web3.eth.contract(_DERIVATIVE_ABI).at(_DERIVATIVE_ADDRESS_);
 withdraw(); // Will be called recursively until is finished.
 
 funtion withdraw() {
-  contract.withdraw((err, results) => {
+  derivative.withdraw((err, results) => {
   if (err) {
     return console.error(err);
   }
   // check if we are still in progress
-  contract.withdrawInProgress(amountInWei, (err, inProgress) => {
+  derivative.withdrawInProgress(amountInWei, (err, inProgress) => {
     if(inProgress) {
       withdraw();
     }
@@ -176,7 +176,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
 const derivative = web3.eth.contract(_DERIVATIVE_ABI).at(_DERIVATIVE_ADDRESS_);
 
-contract.withdrawInProgress(amountInWei, (err, inProgress) => {
+derivative.withdrawInProgress(amountInWei, (err, inProgress) => {
   if (err) {
     return console.error(err);
   }
@@ -211,7 +211,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
 const derivative = web3.eth.contract(_DERIVATIVE_ABI).at(_DERIVATIVE_ADDRESS_);
 
-contract.totalWithdrawPending((err, tokenAmount) => {
+derivative.totalWithdrawPending((err, tokenAmount) => {
   if (err) {
     return console.error(err);
   }
@@ -247,14 +247,14 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
 const derivative = web3.eth.contract(_DERIVATIVE_ABI).at(_DERIVATIVE_ADDRESS_);
 // Check maxtransfers value
-contract.maxTransfers(8, (err, _maxTransfers) => {
+derivative.maxTransfers(8, (err, _maxTransfers) => {
   if (err) {
     return console.error(err);
   }
   console.log("Max transfers " + _maxTransfers.toNumber());
 });
 const maxTransfers = 8; // Set maxtranfers to 8
-contract.setMaxTransfers(8, (err, tokenAmount) => {
+derivative.setMaxTransfers(8, (err, tokenAmount) => {
   if (err) {
     return console.error(err);
   }
