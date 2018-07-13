@@ -19,22 +19,29 @@ contract("MockRebalanceIndex", accounts => {
   before(async () => {
     return await Promise.all([
       ExchangeProvider.deployed(),
-      RebalanceProvider.deployed(),
-      MockRebalanceIndex.deployed(),
       MockKyberNetwork.deployed(),
       ExchangeAdapterManager.deployed(),
       KyberNetworkAdapter.deployed(),
-      MockToken.deployed()
+      MockToken.deployed(),
+      RebalanceProvider.deployed()
     ]).spread(
       async (
         _exchangeProvider,
-        _rebalanceProvider,
-        _mockRebalanceIndex,
         _mockKyberNetwork,
         _exchangeAdapterManager,
         _kyberNetworkAdapter,
-        _mockToken
+        _mockToken,
+        _rebalanceProvider
       ) => {
+        tokens = await _mockKyberNetwork.supportedTokens();
+
+        _mockRebalanceIndex = await MockRebalanceIndex.new(
+          tokens,
+          [50, 50],
+          RebalanceProvider.address,
+          ExchangeProvider.address
+        );
+
         assert.ok(_mockKyberNetwork, "MockKyberNetwork contract is not deployed.");
         assert.ok(_mockRebalanceIndex, "MockRebalanceIndex contract is not deployed.");
         assert.ok(_rebalanceProvider, "RebalanceProvider contract is not deployed.");
@@ -43,7 +50,6 @@ contract("MockRebalanceIndex", accounts => {
         assert.ok(_kyberNetworkAdapter, "KyberNetworkExchange contract is not deployed.");
         assert.ok(_mockToken, "MockToken contract is not deployed.");
 
-        tokens = await _mockKyberNetwork.supportedTokens();
         exchangeProvider = _exchangeProvider;
         rebalanceProvider = _rebalanceProvider;
         mockRebalanceIndex = _mockRebalanceIndex;
