@@ -254,7 +254,7 @@ contract("Olympus Index", accounts => {
     await index.setMaxTransfers(10); // Restore
   });
 
-  it("Shall be able to invest and request with whitelist enabled", async () => {
+  it("Shall be able to invest whitelist enabled", async () => {
     let tx;
 
     // Invest Not allowed
@@ -269,14 +269,7 @@ contract("Olympus Index", accounts => {
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
     await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
 
-    // Withdraw not allowed
-    await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
-    await calc.assertReverts(
-      async () => await index.requestWithdraw(toTokenWei(0.2), { from: investorA }),
-      "Is not allowed to request"
-    );
-
-    // Request allowed
+    // Request is always allowed
     await index.setAllowed([investorA, investorB], WhitelistType.Investment, true);
     await index.requestWithdraw(toTokenWei(1), { from: investorA });
     await index.requestWithdraw(toTokenWei(1), { from: investorB });

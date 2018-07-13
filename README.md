@@ -28,8 +28,6 @@ The suit option will limit the number of deployment required for the concrete te
 - PercentageFee: 0xCdA0E5ED6bD8313BBD7B1c52c5108c45314897Ef
 - WhitelistProvider: 0xab5853728d776ca34521767211796d106dd19caf
 
-
-
 ## Kovan
 
 Exchange subcomponent:
@@ -37,7 +35,7 @@ Exchange subcomponent:
 - KyberNetworkAdapter 0x05e4c2c5b4bb9541274b1b2289297132b86fc965
 - ExchangeAdapterManager 0x15de419089c7b95e9ec94b88b6119837edddda59
 
-- ComponentList 0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678
+- ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
   - ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a
   - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23
   - AsyncWithdraw 0xb1335ecb9996d27b4dc55c61e351645a3dd48ab3
@@ -47,12 +45,7 @@ Exchange subcomponent:
   - Rebalance Provider 0xa2d8a19896787028ec0b28a66f537e16e01f0c4f
   - RISK (DUMMY) 0x3b021c90fd2f5ff847a1d363532531bd496ddb9d
 
-## Sample Fund
-
-Abel 0x9b3456f18885327b9293673ac107ec9ed96fb463
-Sample index 0x9d592ed27aed57cb16d9bdc2eb8add7c44495550
-
-# Deployed addresses (Mainnet July, 2018)
+# Deployed addresses (Mainnet 7 July, 2018) - Deprecated
 
 - Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb
 - WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8
