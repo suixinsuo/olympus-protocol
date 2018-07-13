@@ -254,6 +254,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function setMaxTransfers(uint _maxTransfers) external onlyOwner {
+        require(_maxTransfers > 0);
         maxTransfers = _maxTransfers;
     }
 
@@ -305,7 +306,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
     }
 
-    function reimburse() internal {
+    function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
         accumulatedFee -= reimbursedAmount;
         emit Reimbursed(reimbursedAmount);
@@ -333,7 +334,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return _tokensWithAmount;
     }
 
-    function getETHFromTokens(uint _tokenPercentage ) internal {
+    function getETHFromTokens(uint _tokenPercentage ) private {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](  _tokensToSell.length);
         uint[] memory _sellRates = new uint[]( _tokensToSell.length);
@@ -451,7 +452,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         updateComponent(REBALANCE);
         updateComponent(REIMBURSABLE);
     }
-
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
         RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
         bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
