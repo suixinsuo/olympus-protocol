@@ -18,16 +18,20 @@ The suit option will limit the number of deployment required for the concrete te
 # Deployed addresses (Mainnet 13 ,July, 2018)
 - OlympusIndex: 0x3f8a7f9ccd72f8b81c02c4cd3cfdfa30f1be5463
 
-- ExchangeAdapterManager: 0x9a555f092dd910ac6ddedac20307ab5bf8cc26b5
-- KyberAdapter: 0x5e2e0267fbea3840a0c32c40e3542d356cd37520
-- ExchangeProvider: 0x7e6e2a2a7a8b19254d18cda26d5756496ea6c791
-- RebalanceProvider:0x6c720df0dbb4f202ca531866a452ea6330aceff4
-- Marketplace 0xfb63fd5949de05090c45d881f61b7aefbccdb9b8
-- AsyncWithdraw: 0xa35d0010f6bfde3d32230f188d801248b2da7b16
-- RiskControl: 0x15da4c79d95dbf352703a427b5ec76efdeaa19ac
-- Reimbursable: 0x12c3aa88a66c0b7de8a81052e6da467ee66b2517
-- PercentageFee: 0xCdA0E5ED6bD8313BBD7B1c52c5108c45314897Ef
-- WhitelistProvider: 0xab5853728d776ca34521767211796d106dd19caf
+- ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
+
+  - ExchangeAdapterManager: 0x9a555f092dd910ac6ddedac20307ab5bf8cc26b5
+  - KyberAdapter: 0x5e2e0267fbea3840a0c32c40e3542d356cd37520
+  - ExchangeProvider: 0x7e6e2a2a7a8b19254d18cda26d5756496ea6c791
+  - RebalanceProvider:0x6c720df0dbb4f202ca531866a452ea6330aceff4
+  - Marketplace 0xfb63fd5949de05090c45d881f61b7aefbccdb9b8
+  - AsyncWithdraw: 0xa35d0010f6bfde3d32230f188d801248b2da7b16
+  - RiskControl: 0x15da4c79d95dbf352703a427b5ec76efdeaa19ac
+  - Reimbursable: 0x12c3aa88a66c0b7de8a81052e6da467ee66b2517
+  - PercentageFee: 0xCdA0E5ED6bD8313BBD7B1c52c5108c45314897Ef
+  - WhitelistProvider: 0xab5853728d776ca34521767211796d106dd19caf
+
+- Olympus Fund 0x420e509a64e5ed5e5b18dd87f13bc40592eaad82
 
 ## Kovan
 
@@ -35,8 +39,8 @@ Exchange subcomponent:
 
 - KyberNetworkAdapter 0x05e4c2c5b4bb9541274b1b2289297132b86fc965
 - ExchangeAdapterManager 0x15de419089c7b95e9ec94b88b6119837edddda59
-
-- ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
+ 
+- ComponentList 0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678
   - ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a
   - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23
   - AsyncWithdraw 0xb1335ecb9996d27b4dc55c61e351645a3dd48ab3
