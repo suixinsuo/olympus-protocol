@@ -232,9 +232,9 @@ contract("Olympus Index", accounts => {
 
     // Request
     tx = await index.requestWithdraw(toTokenWei(1), { from: investorA });
-    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Request withdraw uses risk provider");
     tx = await index.requestWithdraw(toTokenWei(1), { from: investorB });
-    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
+    assert.ok(calc.getEvent(tx, "RiskEvent"), "Request withdraw uses risk provider");
 
     // Withdraw max transfers is set to 1
     tx = await index.withdraw();
@@ -422,7 +422,6 @@ contract("Olympus Index", accounts => {
     // Execute Rebalance
     tx = await index.rebalance();
     assert.ok(tx);
-    assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     // Reblacance keep the amounts as per the wieghts
     tokenAmounts = await index.getTokensAndAmounts();
