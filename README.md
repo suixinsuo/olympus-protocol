@@ -34,8 +34,9 @@ Exchange subcomponent:
 
 - KyberNetworkAdapter 0x05e4c2c5b4bb9541274b1b2289297132b86fc965
 - ExchangeAdapterManager 0x15de419089c7b95e9ec94b88b6119837edddda59
+  0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678
 
-- ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
+- ComponentList 0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678
   - ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a
   - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23
   - AsyncWithdraw 0xb1335ecb9996d27b4dc55c61e351645a3dd48ab3
@@ -47,16 +48,17 @@ Exchange subcomponent:
 
 # Deployed addresses (Mainnet 7 July, 2018) - Deprecated
 
-- Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb
-- WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8
-- PercentageFee 0x69f90f1bfde0939c41c5d01bfdc9a88fe252bd64
-- ExchangeAdapterManager: 0x6d1e9ca4d69a6e036a180f1fbe9ee4e65753dd5b
-- KyberNetworkAdapter: 0xB083b81faAd24BEB82Bb30E48dC452902Cc4d4fB
-- ExchangeProvider: 0xc15a8b8B19b2A989F4C7ea0b93d240245E8874a0
-- RebalanceProvider: 0x5cF1c596bCF3899acA2F4A26A4160b7885e0fEF1
-- Reimbursable: 0xA3e9722EC79240C9A6Bd8e048040Be0aD04CB83B
-- AsyncWithdraw: 0x89f55ec0cd96b8ac29ed8c9a6300228fc8fa2f42
-- RiskControl 0x3f9cd1a739c3a9d279f0cb51c9e384cce17a018c
+- ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
+  - Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb
+  - WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8
+  - PercentageFee 0x69f90f1bfde0939c41c5d01bfdc9a88fe252bd64
+  - ExchangeAdapterManager: 0x6d1e9ca4d69a6e036a180f1fbe9ee4e65753dd5b
+  - KyberNetworkAdapter: 0xB083b81faAd24BEB82Bb30E48dC452902Cc4d4fB
+  - ExchangeProvider: 0xc15a8b8B19b2A989F4C7ea0b93d240245E8874a0
+  - RebalanceProvider: 0x5cF1c596bCF3899acA2F4A26A4160b7885e0fEF1
+  - Reimbursable: 0xA3e9722EC79240C9A6Bd8e048040Be0aD04CB83B
+  - AsyncWithdraw: 0x89f55ec0cd96b8ac29ed8c9a6300228fc8fa2f42
+  - RiskControl 0x3f9cd1a739c3a9d279f0cb51c9e384cce17a018c
 
 * Olympus Fund: 0xb83894Ea21781f947D8DbF1cA102117DCDDf0d05
 
