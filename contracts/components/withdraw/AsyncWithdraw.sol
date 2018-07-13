@@ -63,12 +63,19 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         if(contracts[msg.sender].amountPerUser[_investor] == 0) {return(0,0);}
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
+
         tokens = contracts[msg.sender].amountPerUser[_investor];
-        eth = (tokens * contracts[msg.sender].price) / 10 ** derivative.decimals();
 
         contracts[msg.sender].totalWithdrawAmount -= tokens;
         contracts[msg.sender].amountPerUser[_investor] = 0;
 
+        // If he doesnt have this amount, the request will be completed but no ETH will be returned
+        if(tokens > derivative.balanceOf(_investor)) {
+            emit Withdrawed(_investor, 0, 0);
+            return( 0, 0);
+        }
+
+        eth = (tokens * contracts[msg.sender].price) / 10 ** derivative.decimals();
         emit Withdrawed(_investor, tokens, eth);
         return( eth, tokens);
     }
