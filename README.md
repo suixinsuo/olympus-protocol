@@ -18,6 +18,7 @@ The suit option will limit the number of deployment required for the concrete te
 # Deployed addresses (Mainnet 13 ,July, 2018)
 
 - ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
+
   - ExchangeAdapterManager: 0x9a555f092dd910ac6ddedac20307ab5bf8cc26b5
   - KyberAdapter: 0x5e2e0267fbea3840a0c32c40e3542d356cd37520
   - ExchangeProvider: 0x7e6e2a2a7a8b19254d18cda26d5756496ea6c791
@@ -28,6 +29,8 @@ The suit option will limit the number of deployment required for the concrete te
   - Reimbursable: 0x12c3aa88a66c0b7de8a81052e6da467ee66b2517
   - PercentageFee: 0xCdA0E5ED6bD8313BBD7B1c52c5108c45314897Ef
   - WhitelistProvider: 0xab5853728d776ca34521767211796d106dd19caf
+
+- Olympus Fund 0x420e509a64e5ed5e5b18dd87f13bc40592eaad82
 
 ## Kovan
 
