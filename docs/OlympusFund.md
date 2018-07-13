@@ -35,8 +35,8 @@ const decimals = 18;
 // get gas price
 const gasPrice 
 web3.eth.getGasPrice((err, price)=>{
-  if(err){
-    console.error(err);
+  if (err) {
+    return console.error(err);
   }
   gasPrice = price;
 })
@@ -54,8 +54,8 @@ const data = web3.eth.contract(abi).new.getData({
     }
 })
 web3.eth.estimateGas(data,(err,gas)=>{
-  if(err){
-    console.error(err);
+  if (err) {
+   return console.error(err);
   }
   gasLimit = gas;
 })
@@ -75,8 +75,7 @@ web3.eth.contract(abi).new(
       },
       (err: Error, newFund: any) => {
         if (err) {
-          console.error(err);
-          return;
+          return console.error(err);
         }
         if (newFund.address) {
           console.log(newFund.address)
