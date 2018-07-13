@@ -15,21 +15,37 @@
 `truffle test --suite=Mockfund ./test/fund/*` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
 The suit option will limit the number of deployment required for the concrete test file.
 
+# Deployed addresses (Mainnet 13 ,July, 2018)
+
+- ExchangeAdapterManager: 0x9a555f092dd910ac6ddedac20307ab5bf8cc26b5
+- KyberAdapter: 0x5e2e0267fbea3840a0c32c40e3542d356cd37520
+- ExchangeProvider: 0x7e6e2a2a7a8b19254d18cda26d5756496ea6c791
+- RebalanceProvider:0x6c720df0dbb4f202ca531866a452ea6330aceff4
+- Marketplace 0xfb63fd5949de05090c45d881f61b7aefbccdb9b8
+- AsyncWithdraw: 0xa35d0010f6bfde3d32230f188d801248b2da7b16
+- RiskControl: 0x15da4c79d95dbf352703a427b5ec76efdeaa19ac
+- Reimbursable: 0x12c3aa88a66c0b7de8a81052e6da467ee66b2517
+- PercentageFee: 0xCdA0E5ED6bD8313BBD7B1c52c5108c45314897Ef
+- WhitelistProvider: 0xab5853728d776ca34521767211796d106dd19caf
+
+
+
 ## Kovan
 
-Exchange component:
+Exchange subcomponent:
 
 - KyberNetworkAdapter 0x05e4c2c5b4bb9541274b1b2289297132b86fc965
 - ExchangeAdapterManager 0x15de419089c7b95e9ec94b88b6119837edddda59
-- ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a
-- Marketplace 0x164f5a00fd9ab15bc72f31d8425b56555b0cadc9
-- AsyncWithdraw 0x86803060cdc0ca9b7164049ba2723a260db9379d
-- Reimbursable 0x6906fb529730abd728f2844197e0735b8befd541
-- PercentageFee 0x4bf290ab1fda484f1d072eda1f498f3cea405fb5
-- WhitelistProvider 0x882bce30542494c11407b3ec061b48d520f18cdb
-- Rebalance Provider 0x516b0bc733e5f270f40c6bc6a36ae4be2d1f58d1
-- RISK (DUMMY) 0x693e4d57597b089f2280b49f2d95ea5debecd0a9
 
+- ComponentList 0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678
+  - ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a
+  - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23
+  - AsyncWithdraw 0xb1335ecb9996d27b4dc55c61e351645a3dd48ab3
+  - Reimbursable 0xf28e13b85db2b63158a41d4555b434811f87081d
+  - PercentageFee 0xe2b21fb3d2e917e8e89ea0af89366aabf9bf8bd4
+  - WhitelistProvider 0xb4159f78a40f4631f31f9e873afa1cfd038610f7
+  - Rebalance Provider 0xa2d8a19896787028ec0b28a66f537e16e01f0c4f
+  - RISK (DUMMY) 0x3b021c90fd2f5ff847a1d363532531bd496ddb9d
 
 ## Sample Fund
 
