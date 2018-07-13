@@ -117,7 +117,7 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- FUND INTERFACE -----------------------------
 
-    function updateTokens(ERC20Extended[] _updatedTokens) internal returns(bool success) {
+    function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {
         ERC20 _tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
             _tokenAddress = _updatedTokens[i];
@@ -317,7 +317,7 @@ contract OlympusFund is FundInterface, Derivative {
             }
             withdrawProvider.start();
         }
-       
+
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
 
@@ -342,7 +342,7 @@ contract OlympusFund is FundInterface, Derivative {
         return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
     }
 
-    function reimburse() internal {
+    function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
         accumulatedFee -= reimbursedAmount;
         emit Reimbursed(reimbursedAmount);
