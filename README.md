@@ -17,16 +17,17 @@ The suit option will limit the number of deployment required for the concrete te
 
 # Deployed addresses (Mainnet 13 ,July, 2018)
 
-- ExchangeAdapterManager: 0x9a555f092dd910ac6ddedac20307ab5bf8cc26b5
-- KyberAdapter: 0x5e2e0267fbea3840a0c32c40e3542d356cd37520
-- ExchangeProvider: 0x7e6e2a2a7a8b19254d18cda26d5756496ea6c791
-- RebalanceProvider:0x6c720df0dbb4f202ca531866a452ea6330aceff4
-- Marketplace 0xfb63fd5949de05090c45d881f61b7aefbccdb9b8
-- AsyncWithdraw: 0xa35d0010f6bfde3d32230f188d801248b2da7b16
-- RiskControl: 0x15da4c79d95dbf352703a427b5ec76efdeaa19ac
-- Reimbursable: 0x12c3aa88a66c0b7de8a81052e6da467ee66b2517
-- PercentageFee: 0xCdA0E5ED6bD8313BBD7B1c52c5108c45314897Ef
-- WhitelistProvider: 0xab5853728d776ca34521767211796d106dd19caf
+- ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
+  - ExchangeAdapterManager: 0x9a555f092dd910ac6ddedac20307ab5bf8cc26b5
+  - KyberAdapter: 0x5e2e0267fbea3840a0c32c40e3542d356cd37520
+  - ExchangeProvider: 0x7e6e2a2a7a8b19254d18cda26d5756496ea6c791
+  - RebalanceProvider:0x6c720df0dbb4f202ca531866a452ea6330aceff4
+  - Marketplace 0xfb63fd5949de05090c45d881f61b7aefbccdb9b8
+  - AsyncWithdraw: 0xa35d0010f6bfde3d32230f188d801248b2da7b16
+  - RiskControl: 0x15da4c79d95dbf352703a427b5ec76efdeaa19ac
+  - Reimbursable: 0x12c3aa88a66c0b7de8a81052e6da467ee66b2517
+  - PercentageFee: 0xCdA0E5ED6bD8313BBD7B1c52c5108c45314897Ef
+  - WhitelistProvider: 0xab5853728d776ca34521767211796d106dd19caf
 
 ## Kovan
 
@@ -48,17 +49,16 @@ Exchange subcomponent:
 
 # Deployed addresses (Mainnet 7 July, 2018) - Deprecated
 
-- ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
-  - Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb
-  - WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8
-  - PercentageFee 0x69f90f1bfde0939c41c5d01bfdc9a88fe252bd64
-  - ExchangeAdapterManager: 0x6d1e9ca4d69a6e036a180f1fbe9ee4e65753dd5b
-  - KyberNetworkAdapter: 0xB083b81faAd24BEB82Bb30E48dC452902Cc4d4fB
-  - ExchangeProvider: 0xc15a8b8B19b2A989F4C7ea0b93d240245E8874a0
-  - RebalanceProvider: 0x5cF1c596bCF3899acA2F4A26A4160b7885e0fEF1
-  - Reimbursable: 0xA3e9722EC79240C9A6Bd8e048040Be0aD04CB83B
-  - AsyncWithdraw: 0x89f55ec0cd96b8ac29ed8c9a6300228fc8fa2f42
-  - RiskControl 0x3f9cd1a739c3a9d279f0cb51c9e384cce17a018c
+- Marketplace 0x0e59555df877ac4e634d42f196906c16fe540beb
+- WhiteListProvider 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8
+- PercentageFee 0x69f90f1bfde0939c41c5d01bfdc9a88fe252bd64
+- ExchangeAdapterManager: 0x6d1e9ca4d69a6e036a180f1fbe9ee4e65753dd5b
+- KyberNetworkAdapter: 0xB083b81faAd24BEB82Bb30E48dC452902Cc4d4fB
+- ExchangeProvider: 0xc15a8b8B19b2A989F4C7ea0b93d240245E8874a0
+- RebalanceProvider: 0x5cF1c596bCF3899acA2F4A26A4160b7885e0fEF1
+- Reimbursable: 0xA3e9722EC79240C9A6Bd8e048040Be0aD04CB83B
+- AsyncWithdraw: 0x89f55ec0cd96b8ac29ed8c9a6300228fc8fa2f42
+- RiskControl 0x3f9cd1a739c3a9d279f0cb51c9e384cce17a018c
 
 * Olympus Fund: 0xb83894Ea21781f947D8DbF1cA102117DCDDf0d05
 
