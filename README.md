@@ -16,6 +16,7 @@
 The suit option will limit the number of deployment required for the concrete test file.
 
 # Deployed addresses (Mainnet 13 ,July, 2018)
+- OlympusIndex: 0x3f8a7f9ccd72f8b81c02c4cd3cfdfa30f1be5463
 
 - ExchangeAdapterManager: 0x9a555f092dd910ac6ddedac20307ab5bf8cc26b5
 - KyberAdapter: 0x5e2e0267fbea3840a0c32c40e3542d356cd37520
