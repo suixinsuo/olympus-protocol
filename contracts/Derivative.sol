@@ -27,7 +27,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     string public constant REBALANCE = "RebalanceProvider";
     string public constant LOCKER = "LockerProvider";
 
-    enum WhitelistKeys { Investment, Maintenance }
+    enum WhitelistKeys { Investment, Maintenance, Admin }
 
     event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
 
