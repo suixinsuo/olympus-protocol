@@ -115,7 +115,7 @@ For any revert, check the special scenarios section.
 - Gas Estimation:To the web3 estimation in order to not run out of gas you shall add a margin to web3 estimation not to get out of gas.
 
 - No ETH: In the scenario that the derivative is not holding ETH, all of the fund's ETH has been invested in different tokens, in the first transaction withdraw
-  will calculate how much ETH is required to fulfil the withdraw and sell enough token amounts to get this quantity (without breaking the token proportion). The withdraw transaction will, for this reason, require more than double the gas of the other transactions
+  will calculate how much ETH is required to fulfil the withdraw and sell enough token amounts to get this quantity (without breaking the token proportion). The withdraw transaction will, for this reason, require more than double the gas of the other transactinpmons
 
 #### Example code
 
