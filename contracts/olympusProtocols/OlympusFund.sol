@@ -18,13 +18,10 @@ contract OlympusFund is FundInterface, Derivative {
     uint public constant DENOMINATOR = 100000;
     uint public constant INITIAL_VALUE =  10**18;
 
-    enum WhitelistKeys { Investment, Maintenance }
-
     event Invested(address user, uint amount);
     event Reimbursed(uint amount);
     event UpdateToken(address _token, uint amount);
     event ChangeStatus(DerivativeStatus status);
-    event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
@@ -33,27 +30,7 @@ contract OlympusFund is FundInterface, Derivative {
     uint public maxTransfers = 10;
     uint public accumulatedFee = 0;
 
-    // If whitelist is disabled, that will become onlyOwner
-    modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
-      WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
-      require(
-          msg.sender == owner ||
-          (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed(uint8(_key), msg.sender) )
-      );
-      _;
-    }
 
-
-    // If whitelist is disabled, anyone can do this
-    modifier whitelisted(WhitelistKeys _key) {
-        require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
-        _;
-    }
-
-    modifier withoutRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) {
-        require(!hasRisk(_sender,_receiver,_tokenAddress, _amount, _rate));
-        _;
-    }
 
     constructor(
       string _name,
@@ -422,10 +399,5 @@ contract OlympusFund is FundInterface, Derivative {
         updateComponent(REIMBURSABLE);
     }
 
-    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
-        RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
-        bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
-        emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
-        return risk;
-    }
+
 }
