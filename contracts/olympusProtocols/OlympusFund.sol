@@ -111,25 +111,26 @@ contract OlympusFund is FundInterface, Derivative {
 
 
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
-         public onlyOwner returns(bool) {
+         public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
 
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
-          require(!hasRisk(address(this), exchange, ETH, _amounts[i], _minimumRates[i]));
+          require(!hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]));
           totalEthRequired += _amounts[i];
         }
         require(getETHBalance() >= totalEthRequired);
 
-
-        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-        require(exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0));
+        require(OlympusExchangeInterface(getComponentByName(EXCHANGE))
+          .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
+        );
         updateTokens(_tokens);
         return true;
 
     }
 
-    function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates) public onlyOwner returns (bool) {
+    function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
+      public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
