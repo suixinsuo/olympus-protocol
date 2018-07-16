@@ -23,7 +23,6 @@ let WhitelistProvider = artifacts.require("WhitelistProvider");
 let MockToken = artifacts.require("MockToken");
 
 let RebalanceProvider = artifacts.require("RebalanceProvider");
-let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
 
 let StepProvider = artifacts.require("StepProvider");
 let MockStepContract = artifacts.require("MockStepContract");
@@ -153,10 +152,7 @@ function deployOnKovan(deployer, num) {
       ])
     )
     .then(() => deployExchange(deployer, "kovan"))
-    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
-    .then(() =>
-      deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
-    );
+    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
 }
 
 function deployOnMainnet(deployer) {
