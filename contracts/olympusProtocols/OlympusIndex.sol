@@ -9,7 +9,6 @@ import "../interfaces/WhitelistInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
-import "../interfaces/StepInterface.sol";
 import "../libs/ERC20Extended.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
@@ -31,7 +30,6 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint[] public weights;
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
-    StepInterface public sp = StepInterface(0x0);
 
     // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
@@ -393,40 +391,26 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
         uint[] memory amountsToBuy;
-        uint i;
+        uint8 i;
         uint ETHBalanceBefore = address(this).balance;
 
-        uint currentFunctionStep = sp.initializeOrContinue("rebalance", 10);
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
         // Sell Tokens
-        if(sp.getStatus("rebalance") == 1){
-            for (i = currentFunctionStep; i < tokensToSell.length; i++) {
-                if(sp.nextStep("rebalance") == true){
-                    return false;
-                }
-                ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
-                ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
-                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
-            }
-            sp.updateStatus("rebalance");
-            currentFunctionStep = 0;
-        }
+        for (i = 0; i < tokensToSell.length; i++) {
+            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
+            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
 
+        }
 
         // Buy Tokens
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
-        if(sp.getStatus("rebalance") == 2){
-            for (i = currentFunctionStep; i < tokensToBuy.length; i++) {
-                if(sp.nextStep("rebalance") == true){
-                    return false;
-                }
-                require(
-                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
-                );
-            }
+        for (i = 0; i < tokensToBuy.length; i++) {
+            require(
+                exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
+            );
         }
 
-        sp.finalize("rebalance");
         reimburse();
         return true;
     }
