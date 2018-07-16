@@ -9,12 +9,11 @@ import "../interfaces/WhitelistInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
+import "../interfaces/StepInterface.sol";
 import "../libs/ERC20Extended.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 import "../interfaces/RiskControlInterface.sol";
-
-import "./StepProvider.sol";
 
 
 contract OlympusIndex is IndexInterface, Derivative {
@@ -32,7 +31,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint[] public weights;
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
-    StepProvider public sp = 0x0;
+    StepInterface public sp = StepInterface(0x0);
 
     // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
@@ -394,15 +393,15 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
         uint[] memory amountsToBuy;
-        uint8 i;
+        uint i;
         uint ETHBalanceBefore = address(this).balance;
 
-        uint currentFunctionStep = sp.initialize("rebalance", 10);
+        uint currentFunctionStep = sp.initializeOrContinue("rebalance", 10);
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
         // Sell Tokens
         if(sp.getStatus("rebalance") == 1){
             for (i = currentFunctionStep; i < tokensToSell.length; i++) {
-                if(sp.nextStep() == true){
+                if(sp.nextStep("rebalance") == true){
                     return false;
                 }
                 ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
@@ -418,7 +417,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
         if(sp.getStatus("rebalance") == 2){
             for (i = currentFunctionStep; i < tokensToBuy.length; i++) {
-                if(sp.nextStep() == true){
+                if(sp.nextStep("rebalance") == true){
                     return false;
                 }
                 require(
