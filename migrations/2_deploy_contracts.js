@@ -22,6 +22,7 @@ let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockToken = artifacts.require("MockToken");
 
+let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 
 let StepProvider = artifacts.require("StepProvider");
