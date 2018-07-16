@@ -56,6 +56,26 @@ contract("Withdraw", accounts => {
     assert.equal(Math.round(initialEthB), Math.round(initialEthB), "B  recover ETH");
   });
 
+  it("Test request withdraw and transfer tokens before withdraw executes", async () => {
+    const product1 = await MockWithdraw.new(asyncWithdraw.address);
+    await product1.initialize();
+
+    await product1.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    await product1.requestWithdraw(toTokenWei(1), { from: investorA });
+    // Now we try to fool, and send our derivative tokens to another account
+    await product1.transfer(investorB, toTokenWei(0.5), { from: investorA });
+
+    await product1.withdraw(); // Will not withdraw, but skip the transaction
+
+    const tokenBalanceA = (await product1.balanceOf(investorA)).toNumber();
+    const tokenBalanceB = (await product1.balanceOf(investorB)).toNumber();
+
+    assert.equal(tokenBalanceA, toTokenWei(0.5), "A has no withdraw nothing");
+    assert.equal(tokenBalanceB, toTokenWei(0.5), "B has A tokens");
+    assert.isFalse(await product1.withdrawInProgress(), "Withdraw has finished");
+    assert.equal(await product1.totalWithdrawPending(), 0, "Withdraw has finished");
+  });
+
   it("Most simple implementation of withdraw", async () => {
     let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
     const instance = await SimpleWithdraw.deployed();

@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../interfaces/RebalanceInterface.sol";
 import "../../interfaces/IndexInterface.sol";
 import "../../interfaces/PriceProviderInterface.sol";
@@ -8,8 +9,9 @@ import "../../components/base/FeeCharger.sol";
 
 
 contract RebalanceProvider is FeeCharger, RebalanceInterface {
-    PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
+   using SafeMath for uint256;
 
+    PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
 
     string public name = "Rebalance";
     string public description ="Help to rebalance quantity of tokens depending of the weight assigned in the derivative";
@@ -17,7 +19,6 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
     string public version = "v1.0";
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
-    uint private rebalanceDeltaPercentage = 30; // 0.3%
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
@@ -30,7 +31,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         return true;
     }
 
-    function getArrayLengths(uint totalIndexValue, address[] indexTokenAddresses, uint[] indexTokenWeights)
+    function getArrayLengths(uint rebalanceDeltaPercentage, uint totalIndexValue, address[] indexTokenAddresses, uint[] indexTokenWeights)
     private view returns(uint sellCounter, uint buyCounter, uint issueCounter){
         uint i;
         for(i = 0; i < indexTokenAddresses.length; i++) {
@@ -53,17 +54,17 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         }
     }
 
-    function rebalanceGetTokensToSellAndBuy() external returns
+    function rebalanceGetTokensToSellAndBuy(uint _rebalanceDeltaPercentage) external returns
     (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues) {
         require(payFee(0));
-        uint totalIndexValue = getTotalIndexValue();
+
         uint i;
         address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
         uint[] memory arrayLengths = new uint[](3);
         (indexTokenAddresses, indexTokenWeights) = IndexInterface(msg.sender).getTokens();
         uint[] memory buySellCounters = new uint[](2);
-        (arrayLengths[0], arrayLengths[1], arrayLengths[2]) = getArrayLengths(totalIndexValue, indexTokenAddresses, indexTokenWeights);
+        (arrayLengths[0], arrayLengths[1], arrayLengths[2]) = getArrayLengths(_rebalanceDeltaPercentage, getTotalIndexValue(), indexTokenAddresses, indexTokenWeights);
         _tokensToSell = new address[](arrayLengths[0]);
         _amountsToSell = new uint[](arrayLengths[0]);
         _tokensToBuy = new address[](arrayLengths[1]);
@@ -79,16 +80,16 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
                 _tokensWithPriceIssues[i] = indexTokenAddresses[i];
             }
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)); //
-            uint shouldHaveAmountOfTokensInETH = (totalIndexValue * indexTokenWeights[i]) / 100;
+            uint shouldHaveAmountOfTokensInETH = (getTotalIndexValue() * indexTokenWeights[i]) / 100;
             uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH * ETHTokenPrice) / 10**18;
 
             // minus delta
-            if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+            if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * _rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
                 _tokensToSell[buySellCounters[1]] = indexTokenAddresses[i];
                 _amountsToSell[buySellCounters[1]] = currentTokenBalance - shouldHaveAmountOfTokens;
                 buySellCounters[1]++;
             // minus delta
-            } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+            } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * _rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
                 _tokensToBuy[buySellCounters[0]] = indexTokenAddresses[i];
                 _amountsToBuy[buySellCounters[0]] = (shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice);
                 buySellCounters[0]++;
