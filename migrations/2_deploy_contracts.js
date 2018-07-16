@@ -22,7 +22,11 @@ let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockToken = artifacts.require("MockToken");
 
+let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
 let RebalanceProvider = artifacts.require("RebalanceProvider");
+
+let StepProvider = artifacts.require("StepProvider");
+let MockStepContract = artifacts.require("MockStepContract");
 
 let devTokens;
 function deployMarketplace(deployer, network) {
@@ -122,11 +126,15 @@ function deployOnDev(deployer, num) {
         Reimbursable,
         WhitelistProvider,
         ComponentList,
+        StepProvider,
         [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
       ])
     )
     .then(() => deployExchange(deployer, "development"))
-    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
+    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
+    .then(() =>
+      deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
+    ).then(() => deployer.deploy(MockStepContract, StepProvider.address));
 }
 
 function deployOnKovan(deployer, num) {
@@ -155,7 +163,7 @@ function deployOnMainnet(deployer) {
   return deploy;
 }
 
-module.exports = function(deployer, network) {
+module.exports = function (deployer, network) {
   let flags = args.parseArgs();
 
   if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {
