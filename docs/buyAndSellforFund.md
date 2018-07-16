@@ -2,11 +2,11 @@
 
 ### Introduction
 
-In the fund, the fund owner will use the ether of the investors to buy different tokens spreading the risk. He can decided which ones to buy
+In the fund, the fund owner will use the ether of the investors to buy different tokens spreading the risk. He can decide which ones to shall be buyed
 and which ones need to be sold. The Olympus Fund proposes really simple interface to allow the investor to buy and sell different tokens in
 a single transaction.
 
-Initialize a fund already created with the newxt code.
+Initialize a fund already created with the newt code.
 
 ```javascript
 const Web3 = require("web3");
@@ -55,7 +55,7 @@ From the basic interface we extend:
 
 GetTokens will return the list of tokens and the amount.
 
-WARNING! getTokens function has different behaviour in the index, while getTokens() provides the list of tokens and heights, and getTokensWithAmounts() provides
+WARNING! `getTokens()` function has different behaviour in the index, while `getTokens()` provides the list of tokens and heights, and `getTokensWithAmounts()` provides
 the tokens and amounts.
 
 ### Get Tokens
@@ -74,11 +74,11 @@ WARNING! When a token is completely sold, still will be return in the addresses 
 ##### Returns
 
 First array with the addresses of the tokens of the fund,
-Secoond array with the amount of the tokens of the fund.
+Second array with the amount of the tokens of the fund.
 
 #### Example code
 
-We can call getTokens after a successfull buy or sell operation refreshing the client side.
+We can call `getTokens()` after a successfull buy or sell operation refreshing the client side.
 
 ```javascript
 fund.getTokens((err, results) => {
@@ -100,7 +100,7 @@ fund.getTokens((err, results) => {
         public returns(bool);
 ```
 
-We can buy tokens using this function. The tokens are bought with the balance of the index, which you can query using `getETHBalance()` function.
+We can buy tokens using this function. The tokens are bought with the balance of the fund, which you can query using `getETHBalance()` function.
 You can specify the exchangeId of the provider, but in most scenarios leaving at `0x0` allowing our component to chose the best provider for you.
 The list of tokens and the list of amounts must be of the same size, bieng the amounts the value of ETH that you want to spend in each
 token. Be aware that the total of amounts has to be less or the same that the balance available on the fund (provided by `getETHBalance()`).
@@ -108,7 +108,7 @@ token. Be aware that the total of amounts has to be less or the same that the ba
 ##### Params
 
 ​_exchangeId: We can specify the exchange ID available in the OlympusExchange component that we want to use, if we want to stick to a concrete exchange.
-In a normal scenario, set as `0x0` by default, lending OlympusExchange to chose the best option for you.
+In a normal scenario, set as `0x0` by default, allowing OlympusExchange to chose the best option for you.
 \_tokens: List of token addresses that want to be purchased.
 \_amounts: The amounts in ETH that you want to invest in the purchase of each token.
 \_rates: Rate of how many token you can buy with one ETH. Use `0` if you want to buy at any rate.
@@ -117,10 +117,10 @@ In a normal scenario, set as `0x0` by default, lending OlympusExchange to chose 
 
 1.  If any of your tokens is not exchangable by price provider, will revert.
 2.  If you dont have enough MOT in the fund for paying the fee will revert.
-3.  If the amounts array is different size of tokens address, or the amounts total is higher than thet ETH avialable balance of the fund.
-4.  If any of the transactions is considered as risky by our risk provider, then will rivert.
+3.  If the amounts array is different size of tokens array, or the amounts total is higher than thet ETH avialable balance of the fund, it will surerly revert.
+4.  If any of the transactions is considered as risky by our risk provider, then it will also revert.
 5.  If the exchange provider can not match a rate equal or better that the one requested, will revert.
-6.  Only the owner can call this functions, otherwise will revert.
+6.  Only the owner can call this functions, otherwise, will revert.
 
 ##### Returns
 
@@ -184,7 +184,7 @@ Be aware that the total of amounts has to be less or the same that the balance a
 ##### Params
 
 \​_exchangeId: We can specify the exchange ID available in the OlympusExchange component that we want to use, if we want to stick to a concrete exchange.
-In a normal scenario, set as `0x0` by default, lending OlympusExchange to chose the best option for you.
+In a normal scenario, set as `0x0` by default, allowing OlympusExchange to chose the best option for you.
 \_tokens: List of token addresses that want to be purchased.
 \_amounts: The amounts in the token unit that you want to sell.
 \_rates: Rate of how many token you can buy with one ETH. Use `0` if you want to buy at any rate.
@@ -194,9 +194,9 @@ In a normal scenario, set as `0x0` by default, lending OlympusExchange to chose 
 1.  If any of your tokens is not exchangable by price provider, will revert.
 2.  If you dont have enough MOT in the fund for paying the fee will revert.
 3.  If the amounts array is different size of tokens address, or the amounts total is higher than thet ETH avialable balance of the fund.
-4.  If any of the transactions is considered as risky by our risk provider, then will rivert.
+4.  If any of the transactions is considered as risky by our risk provider, then will revert.
 5.  If the exchange provider can not match a rate equal or better that the one requested, will revert.
-6.  Only the owner can call this functions, otherwise will revert.
+6.  Only the owner can call this functions, otherwise, will revert.
 
 ##### Returns
 
