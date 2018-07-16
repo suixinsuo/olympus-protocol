@@ -16,7 +16,7 @@ contract StepProvider is StepInterface {
         return currentFunctionStepIndex[msg.sender][_category];
     }
 
-    function getStatus(bytes32 _category) external returns (uint status) {
+    function getStatus(bytes32 _category) external view returns (uint status) {
         return stepStatus[msg.sender][_category];
     }
 
@@ -26,7 +26,7 @@ contract StepProvider is StepInterface {
         return true;
     }
 
-    function nextStep(bytes32 _category) external returns (bool shouldReturn) {
+    function goNextStep(bytes32 _category) external returns (bool shouldReturn) {
         currentCallStepIndex[msg.sender][_category]++;
         currentFunctionStepIndex[msg.sender][_category]++;
         if(currentCallStepIndex[msg.sender][_category] > stepAmount[msg.sender][_category]){
