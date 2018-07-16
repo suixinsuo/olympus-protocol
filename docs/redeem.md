@@ -2,13 +2,13 @@
 
 ### Introduction
 
-Redeem (aka, withdraw in the code) is the action that completes the loop of investment in the derivative. The investors will invest ETH in exchange of the derivative
-token, and once the derivative owner has handle it to make the price rise, the investor will be ready to redeem his tokens and get his ETH back with benefits (hopefully).
+Redeem (aka, withdraw in the code) is the action that completes the loop of investment in the derivative. The investors will invest ETH in exchange for the derivative
+token, and once the derivative owner has handled it to make the price rise, the investor will be ready to redeem his tokens and get his ETH back with benefits (hopefully).
 
-Redeem is separated in two different parts:
+Redeem is separated into two different parts:
 
 - First, the users will request redeem
-- Second the fund will redeem all the users at the same time.
+- Second, the fund will redeem all the users at the same time.
 
 ```javascript
  function requestWithdraw(uint amount)
@@ -30,7 +30,7 @@ uint maxTransfers public;
 
 In order to avoid gas consumption, withdraw strategy implemented is asynchronous, in other words, will not return the ETH immediately after a request, but
 will wait for several of them and return the ETH for all the requests at once. Also withdraw is asynchronous, the contract would not be able to handle the amount of gas required to redeem 100 requests at the same time.
-so it it will be redeeming in batches (10 by default). Let's see in detail how that works
+so it will be redeeming in batches (10 by default). Let's see in detail how that works
 
 ### Request Withdraw
 
@@ -43,15 +43,15 @@ so it it will be redeeming in batches (10 by default). Let's see in detail how t
 
 An investor will request to withdraw part of his invested amount. He can withdraw more than his total balance of the token.
 
-For example, an investor with 1e18 tokens of the derivative, can request 1 time with 1e18, or request two times with 5e17, with the same result.
-However if he tries to request 2e18, transaction will revert, or for three times redeem 5e17, the last transaction will revert.
+For example, an investor with 1e18 tokens of the derivative can request 1 time with 1e18, or request two times with 5e17, with the same result.
+However, if he tries to request 2e18, the transaction will revert, or for three times redeem 5e17, the last transaction will revert.
 
 Request withdraw contains the next modifiers:
 
-- whenNotPaused: In case of emergency, such as an security issue, the owner can decide to pause the derivative, preventing bad actors from abusing the fund.
+- whenNotPaused: In case of emergency, such as a security issue, the owner can decide to pause the derivative, preventing bad actors from abusing the fund.
   When the fund is paused, the transactions will revert
 - withoutRisk: Without risk will use the risk provider to check special conditions on the transaction, if the transaction is
-  considered to have risk, this will fail. You can check in the risk controller which conditions could fail.
+  considered to have a risk, this will fail. You can check in the Risk controller which conditions could fail.
 
 ##### Parameters
 
@@ -59,7 +59,7 @@ Request withdraw contains the next modifiers:
 
 ##### Returns
 
-True if succeed. Revert if failed.
+True if successful. Revert if failed.
 
 #### Example code
 
@@ -88,14 +88,14 @@ derivative.requestWithdraw(amountInWei, (err, results) => {
   external returns(bool);
 ```
 
-Withdraw will allow the owner to complete the redemption of tokens of his investors. Withdraw will handle the request in batches of 10(10 is the default value, this can be changed by calling the setMaxTransfers function). Only for the first time withdraw gets executed, withdraw will run a start frunction fixing some values of the derivative (the price, for example) that will keep constant for the rest executions.
-Then, withdraw will calculate how much ETH correspond to each investor according to the derivative token redeemed, until he finish the withdraw or the maximum of transfers has been reached.
+Withdraw will allow the owner to complete the redemption of tokens of his investors. Withdraw will handle the request in batches of 10(10 is the default value, this can be changed by calling the setMaxTransfers function). Only for the first time withdraw gets executed, withdraw will run a start function fixing some values of the derivative (the price, for example) that will keep constant for the rest executions.
+Then, withdraw will calculate how much ETH correspond to each investor according to the derivative token redeemed, until he finishes the withdraw or the maximum of transfers has been reached.
 
 The function in the transaction will return true if the withdraw process is finished, or false if it is still pending. We can also check this by calling the withdrawInProgress function. If the withdraw process is in progress, the withdraw function needs to keep being called until it returns true.
 
 Modifiers:
 
-- onlyOwnerOrWhitelisted:Can only be done by the either the owner or a whitelisted address in the maintenance category. [Key=1] (for example 1 every 2 days)
+- onlyOwnerOrWhitelisted: Can only be done by either the owner or a whitelisted address in the maintenance category. [Key=1] (for example 1 every 2 days)
 - whenNotPaused: This modifier will allow our system to automatically call the withdraw function (e.g. once per day)
 
 ##### Parameters
@@ -104,7 +104,7 @@ No parameters required
 
 ##### Returns
 
-True if all the withdraw requests have been fulfilled.
+True if all the withdrawal requests have been fulfilled.
 False if there are any withdraw requests pending.
 For any revert, check the special scenarios section.
 
@@ -112,10 +112,10 @@ For any revert, check the special scenarios section.
 
 - Reimbursable: At the end of the transaction, the sender of this transaction will be reimbursed for the used gas from the accumulated fee of the fund manager. If any reimbursable function reverts, check if the accumulated fee is enough to cover reimbursing the caller.
 
-- Gas Estimation:To the web3 estimation in order to not run out of gas you shall add a margin to web3 estimation not to get out of gas.
+- Gas Estimation: To the web3 estimation in order to not run out of gas you shall add a margin to web3 estimation not to get out of gas.
 
 - No ETH: In the scenario that the derivative is not holding ETH, all of the fund's ETH has been invested in different tokens, in the first transaction withdraw
-  will calculate how much ETH is required to fulfil the withdraw and sell enough token amounts to get this quantity (without breaking the token proportion). The withdraw transaction will, for this reason, require more than double the gas of the other transactinpmons
+  will calculate how much ETH is required to fulfill the withdraw and sell enough token amounts to get this quantity (without breaking the token proportion). The withdraw transaction will, for this reason, require more than double the gas of the other transactions
 
 #### Example code
 
@@ -159,8 +159,8 @@ No parameters.
 
 ##### Returns
 
-True if is still in progress.
-In this case we must keep calling until in progress returns false.
+True when is still in progress.
+In this case, we must keep calling until in progress returns false.
 False if all request has been redeemed.
 
 #### Example code
@@ -196,7 +196,7 @@ No parameters.
 
 ##### Returns
 
-Total amount to redeem. BigNumber. The result is in wei.
+Total amount to redeem. BigNumber. The result is in Wei.
 
 #### Example code
 
@@ -223,7 +223,7 @@ derivative.totalWithdrawPending((err, tokenAmount) => {
   uint maxTransfers public.
 ```
 
-This function will determine the batch size for the withdraw function. By default the value is 10.
+This function will determine the batch size for the withdraw function. By default, the value is 10.
 Max transfers attribute will retrieve the current max transfers value
 
 ##### Parameters
