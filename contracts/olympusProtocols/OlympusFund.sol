@@ -18,13 +18,10 @@ contract OlympusFund is FundInterface, Derivative {
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
 
-    enum WhitelistKeys { Investment, Maintenance }
-
     event Invested(address user, uint amount);
     event Reimbursed(uint amount);
     event UpdateToken(address _token, uint amount);
     event ChangeStatus(DerivativeStatus status);
-    event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
 
     mapping(address => uint) investors;
     mapping(address => uint) amounts;
@@ -33,27 +30,7 @@ contract OlympusFund is FundInterface, Derivative {
     uint public maxTransfers = 10;
     uint public accumulatedFee = 0;
 
-    // If whitelist is disabled, that will become onlyOwner
-    modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
-      WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
-      require(
-          msg.sender == owner ||
-          (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed(uint8(_key), msg.sender) )
-      );
-      _;
-    }
 
-
-    // If whitelist is disabled, anyone can do this
-    modifier whitelisted(WhitelistKeys _key) {
-        require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
-        _;
-    }
-
-    modifier withoutRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) {
-        require(!hasRisk(_sender,_receiver,_tokenAddress, _amount, _rate));
-        _;
-    }
 
     constructor(
       string _name,
@@ -134,25 +111,26 @@ contract OlympusFund is FundInterface, Derivative {
 
 
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
-         public onlyOwner returns(bool) {
+         public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
 
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
-          require(!hasRisk(address(this), exchange, ETH, _amounts[i], _minimumRates[i]));
+          require(!hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]));
           totalEthRequired += _amounts[i];
         }
         require(getETHBalance() >= totalEthRequired);
 
-
-        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-        require(exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0));
+        require(OlympusExchangeInterface(getComponentByName(EXCHANGE))
+          .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
+        );
         updateTokens(_tokens);
         return true;
 
     }
 
-    function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates) public onlyOwner returns (bool) {
+    function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
+      public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
@@ -422,10 +400,5 @@ contract OlympusFund is FundInterface, Derivative {
         updateComponent(REIMBURSABLE);
     }
 
-    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
-        RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
-        bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
-        emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
-        return risk;
-    }
+
 }
