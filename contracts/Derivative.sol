@@ -25,6 +25,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     string public constant FEE = "FeeProvider";
     string public constant REIMBURSABLE = "Reimbursable";
     string public constant REBALANCE = "RebalanceProvider";
+    string public constant STEP = "StepProvider";
     string public constant LOCKER = "LockerProvider";
 
     enum WhitelistKeys { Investment, Maintenance, Admin }
@@ -33,12 +34,12 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
 
   // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
-      WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
-      require(
-          msg.sender == owner ||
-          (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed( uint8(_key), msg.sender) )
-      );
-      _;
+        WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
+        require(
+            msg.sender == owner ||
+            (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed( uint8(_key), msg.sender) )
+        );
+        _;
     }
 
     // If whitelist is disabled, anyone can do this
