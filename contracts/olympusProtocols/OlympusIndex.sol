@@ -25,11 +25,12 @@ contract OlympusIndex is IndexInterface, Derivative {
     event Reimbursed(uint amount);
     event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
 
-    uint public constant DENOMINATOR = 100000;
+    uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
     uint[] public weights;
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
+    uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
 
     // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
@@ -89,11 +90,13 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable {
+    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage) onlyOwner external payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
         require(_componentList != 0x0);
+        require(_rebalanceDeltaPercentage <= DENOMINATOR);
 
+        rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super.initialize(_componentList);
 
         setComponent(MARKET, componentList.getLatestComponent(MARKET));
@@ -394,7 +397,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint8 i;
         uint ETHBalanceBefore = address(this).balance;
 
-        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
+        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
         for (i = 0; i < tokensToSell.length; i++) {
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);

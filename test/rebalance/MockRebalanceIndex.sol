@@ -66,7 +66,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         uint[] memory amountsToBuy;
         uint i;
         uint ETHBalanceBefore = address(this).balance;
-        (tokensToSell,amountsToSell,tokensToBuy,amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
+        (tokensToSell,amountsToSell,tokensToBuy,amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(30);
         for (i = 0; i < tokensToSell.length; i++) {
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
