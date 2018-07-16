@@ -15,7 +15,7 @@ import "../interfaces/FeeChargerInterface.sol";
 
 contract OlympusFund is FundInterface, Derivative {
 
-    uint public constant DENOMINATOR = 100000;
+    uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
 
     enum WhitelistKeys { Investment, Maintenance }
