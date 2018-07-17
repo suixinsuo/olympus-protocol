@@ -13,7 +13,6 @@ let Locker = artifacts.require("Locker");
 let SimpleWithdraw = artifacts.require("SimpleWithdraw");
 let Reimbursable = artifacts.require("Reimbursable");
 
-let DummyDerivative = artifacts.require("MockDerivative");
 let PercentageFee = artifacts.require("PercentageFee");
 let ComponentList = artifacts.require("ComponentList");
 
@@ -22,10 +21,12 @@ let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockToken = artifacts.require("MockToken");
-
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 
+let StepProvider = artifacts.require("StepProvider");
+
 let devTokens;
+
 function deployMarketplace(deployer, network) {
   deployer.deploy([MarketplaceProvider]);
 }
@@ -117,6 +118,15 @@ function deployOnDev(deployer, num) {
   return deployer
     .then(() =>
       deployer.deploy([
+        MarketplaceProvider,
+        AsyncWithdraw,
+        RiskControl,
+        SimpleWithdraw,
+        PercentageFee,
+        Reimbursable,
+        WhitelistProvider,
+        ComponentList,
+        StepProvider,
         [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
       ])
     )
@@ -160,7 +170,7 @@ function deployOnMainnet(deployer) {
   return deploy;
 }
 
-module.exports = function (deployer, network) {
+module.exports = function(deployer, network) {
   let flags = args.parseArgs();
 
   if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {

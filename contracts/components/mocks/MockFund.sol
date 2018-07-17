@@ -19,9 +19,9 @@ contract MockFund is FundInterface, Derivative {
     event Invested(address user, uint amount);
 
 
-    string public constant EXCHANGE = "Exchange";
+    bytes32 public constant EXCHANGE = "Exchange";
     uint public constant INITIAL_VALUE =  10**18;
-    uint public constant DENOMINATOR = 100000;
+    uint public constant DENOMINATOR = 10000;
 
     constructor(
       string _name,

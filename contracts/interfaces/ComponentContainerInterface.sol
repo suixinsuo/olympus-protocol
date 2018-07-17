@@ -2,11 +2,13 @@ pragma solidity 0.4.24;
 
 
 contract ComponentContainerInterface {
-    mapping (string => address) components;
+    mapping (bytes32 => address) components;
 
-    event ComponentUpdated (string _name, address _componentAddress);
+    event ComponentUpdated (bytes32 _name, address _componentAddress);
 
-    function setComponent(string _name, address _providerAddress) internal returns (bool success);
-    function getComponentByName(string name) public view returns (address);
+    function setComponent(bytes32 _name, address _providerAddress) internal returns (bool success);
+    function setComponents(bytes32[] _names, address[] _providerAddresses) internal returns (bool success);
+    function getComponentByName(bytes32 name) public view returns (address);
+    function getComponents(bytes32[] _names) internal view returns (address[]);
 
 }

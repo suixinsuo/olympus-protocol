@@ -119,7 +119,7 @@ contract("Olympus Index", accounts => {
     componentList.setComponent(await index.MARKET(), market.address);
     componentList.setComponent(await index.EXCHANGE(), exchange.address);
     componentList.setComponent(await index.WITHDRAW(), asyncWithdraw.address);
-    componentList.setComponent(await index.LOCK(), locker.address);
+    componentList.setComponent(await index.LOCKER(), locker.address);
     componentList.setComponent(await index.RISK(), riskControl.address);
     componentList.setComponent(await index.FEE(), percentageFee.address);
     componentList.setComponent(await index.WHITELIST(), whitelist.address);
@@ -132,7 +132,7 @@ contract("Olympus Index", accounts => {
     await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
 
-    await calc.shouldSuccess(index.initialize(componentList.address, 0, 24, { value: web3.toWei(indexData.ethDeposit, "ether") }));
+    await index.initialize(componentList.address, 0, 30, 24, { value: web3.toWei(indexData.ethDeposit, "ether") });
     const myProducts = await market.getOwnProducts();
 
     assert.equal(myProducts.length, 1);
@@ -145,7 +145,7 @@ contract("Olympus Index", accounts => {
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await index.initialize(componentList.address, 0, 24, { value: web3.toWei(indexData.ethDeposit, "ether") });
+      await index.initialize(componentList.address, 0, 30, 24, { value: web3.toWei(indexData.ethDeposit, "ether") });
     }, "Shall revert");
   });
 

@@ -10,6 +10,7 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
+import "../libs/Converter.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 import "../interfaces/RiskControlInterface.sol";
@@ -19,48 +20,27 @@ import "../interfaces/LockerInterface.sol";
 contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
-    enum WhitelistKeys { Investment, Maintenance }
 
     event ChangeStatus(DerivativeStatus status);
     event Invested(address user, uint amount);
     event Reimbursed(uint amount);
-    event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
+    event RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
 
-    uint public constant DENOMINATOR = 100000;
+    uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
     uint[] public weights;
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
-
-    // If whitelist is disabled, that will become onlyOwner
-    modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
-        WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
-        require(
-            msg.sender == owner ||
-            (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed(uint8(_key), msg.sender) )
-        );
-        _;
-    }
-
-    // If whitelist is disabled, anyone can do this
-    modifier whitelisted(WhitelistKeys _key) {
-        require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
-        _;
-    }
-
-    modifier withoutRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) {
-        require(!hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate));
-        _;
-    }
+    uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
 
     modifier checkLength(address[] _tokens, uint[] _weights) {
         require(_tokens.length == _weights.length);
         _;
     }
 
-    modifier checkWeights(uint[] _weights){
+    modifier checkWeights(uint[] _weights) {
         uint totalWeight;
-        for(uint i = 0; i < _weights.length; i++){
+        for (uint i = 0; i < _weights.length; i++) {
             totalWeight += _weights[i];
         }
         require(totalWeight == 100);
@@ -75,7 +55,7 @@ contract OlympusIndex is IndexInterface, Derivative {
       uint _decimals,
       address[] _tokens,
       uint[] _weights)
-      checkLength(_tokens, _weights) checkWeights(_weights) public {
+      public checkLength(_tokens, _weights) checkWeights(_weights) {
         name = _name;
         symbol = _symbol;
         totalSupply_ = 0;
@@ -90,22 +70,26 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceHours) onlyOwner external payable {
+    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceHours) 
+    external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
         require(_componentList != 0x0);
+        require(_rebalanceDeltaPercentage <= DENOMINATOR);
 
+        rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super.initialize(_componentList);
+        bytes32[9] memory names = [MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER];
+        bytes32[] memory nameParameters = new bytes32[](names.length);
 
-        setComponent(MARKET, componentList.getLatestComponent(MARKET));
-        setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
-        setComponent(REBALANCE, componentList.getLatestComponent(REBALANCE));
-        setComponent(RISK, componentList.getLatestComponent(RISK));
-        setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
-        setComponent(FEE, componentList.getLatestComponent(FEE));
-        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
-        setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
-        setComponent(LOCK, componentList.getLatestComponent(LOCK));
+        for (uint i = 0; i < names.length; i++) {
+            nameParameters[i] = names[i];
+        }
+        setComponents(
+            nameParameters,
+            componentList.getLatestComponents(nameParameters)
+        );
+
         // approve component for charging fees.
         approveComponents();
 
@@ -388,7 +372,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
-        LockerInterface(getComponentByName(LOCK)).checkLock(REBALANCE);
+        // LockerInterface(getComponentByName(LOCK)).checkLock(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -399,7 +383,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint8 i;
         uint ETHBalanceBefore = address(this).balance;
 
-        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy();
+        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
         for (i = 0; i < tokensToSell.length; i++) {
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
@@ -457,10 +441,5 @@ contract OlympusIndex is IndexInterface, Derivative {
         updateComponent(REBALANCE);
         updateComponent(REIMBURSABLE);
     }
-    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
-        RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
-        bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
-        emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
-        return risk;
-    }
+
 }
