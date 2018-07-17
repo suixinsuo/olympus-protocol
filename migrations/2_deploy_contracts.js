@@ -37,6 +37,10 @@ function deployWithdraw(deployer, network) {
 function deployWhitelist(deployer, network) {
   deployer.deploy([WhitelistProvider]);
 }
+function deployStep(deployer, network) {
+  const MockStepContract = artifacts.require("MockStepContract");
+  deployer.deploy([StepProvider, MockStepContract]);
+}
 
 function deployExchange(deployer, network) {
   let kyberNetwork = KyberConfig[network];
