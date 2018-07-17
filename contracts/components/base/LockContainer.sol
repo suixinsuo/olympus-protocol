@@ -11,16 +11,16 @@ contract Locker is ComponentInterface, LockerInterface  {
     string public category = "Category";
     string public version = "1.0";
 
-    mapping(address => mapping(string => uint)) hoursInterval;
-    mapping(address => mapping(string => uint)) time;
+    mapping(address => mapping(bytes32 => uint)) hoursInterval;
+    mapping(address => mapping(bytes32 => uint)) time;
 
 
-    function checkLock(string _timerName) external {
+    function checkLock(bytes32 _timerName) external {
         require(now >= time[msg.sender][_timerName] + (hoursInterval[msg.sender][_timerName] * 60 * 60));
         time[msg.sender][_timerName] = now;
     }
 
-    function setTimer(string _timerName, uint _hours) external {
+    function setTimer(bytes32 _timerName, uint _hours) external {
         hoursInterval[msg.sender][_timerName] = _hours;
     }
 
