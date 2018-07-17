@@ -95,7 +95,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(getComponentByName(LOCK)).setTimer(REBALANCE, _rebalanceHours);
+        LockerInterface(getComponentByName(LOCKER)).setTimer(REBALANCE, _rebalanceHours);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -103,8 +103,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function setTimer(string _timerName, uint _hours) external onlyOwner{
-        LockerInterface(getComponentByName(LOCK)).setTimer( _timerName,  _hours);
+    function setTimer(bytes32 _timerName, uint _hours) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setTimer( _timerName,  _hours);
     }
     // Call after you have updated the MARKET provider, not required after initialize
     function registerInNewMarketplace() external onlyOwner returns(bool) {
@@ -372,7 +372,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
-        // LockerInterface(getComponentByName(LOCK)).checkLock(REBALANCE);
+        LockerInterface(getComponentByName(LOCKER)).checkLock(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
