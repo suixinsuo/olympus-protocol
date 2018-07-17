@@ -14,7 +14,7 @@ contract PercentageFee is ChargeableInterface, FeeCharger {
         description = "Calculates the fee as percentage";
         category = "Fee";
         version = "1.0";
-        DENOMINATOR = 100000;
+        DENOMINATOR = 10000;
     }
 
     function setFeePercentage(uint _fee) external returns(bool success) {
