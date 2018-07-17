@@ -70,7 +70,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceBlocks) 
+    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceHours) 
     external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -95,7 +95,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceBlocks);
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceHours);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
