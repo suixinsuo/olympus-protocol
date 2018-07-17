@@ -361,7 +361,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
         uint ethBalance = getETHBalance();
         uint totalAmount = 0;
-        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens", 1);
+        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens", 10);
 
         for(uint i = 0; i < tokens.length; i++) {
             _amounts[i] = ethBalance * weights[i] / 100;
