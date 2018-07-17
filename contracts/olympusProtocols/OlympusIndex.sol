@@ -70,7 +70,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage) 
+    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage)
     external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -259,7 +259,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint tokens;
 
         if (!withdrawProvider.isInProgress()) {
-            withdrawProvider.start();
+            withdrawProvider.freeze();
         }
         uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
 
@@ -281,7 +281,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
 
         if(!withdrawProvider.isInProgress()) {
-            withdrawProvider.unlock();
+            withdrawProvider.finalize();
         }
         reimburse();
         return !withdrawProvider.isInProgress(); // True if completed
