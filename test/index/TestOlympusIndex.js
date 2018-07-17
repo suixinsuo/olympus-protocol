@@ -1,5 +1,12 @@
 const log = require("../utils/log");
 const calc = require("../utils/calc");
+const {
+  DerivativeProviders,
+  ethToken,
+  DerivativeStatus,
+  WhitelistType,
+  DerivativeType
+} = require("../utils/constants");
 
 const OlympusIndex = artifacts.require("OlympusIndex");
 const Rebalance = artifacts.require("RebalanceProvider");
@@ -10,6 +17,7 @@ const Withdraw = artifacts.require("AsyncWithdraw");
 const Locker = artifacts.require("Locker");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
+const StepProvider = artifacts.require("StepProvider");
 
 const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
@@ -18,12 +26,6 @@ const Reimbursable = artifacts.require("Reimbursable");
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
-
-const ethToken = "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
-
-const DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
-const DerivativeType = { Index: 0, index: 1 };
-const WhitelistType = { Investment: 0, Maintenance: 1 };
 
 const indexData = {
   name: "OlympusIndex",
@@ -59,6 +61,7 @@ contract("Olympus Index", accounts => {
   let reimbursable;
   let tokens;
   let componentList;
+  let stepProvider;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -79,6 +82,7 @@ contract("Olympus Index", accounts => {
     whitelist = await Whitelist.deployed();
     reimbursable = await Reimbursable.deployed();
     componentList = await ComponentList.deployed();
+    stepProvider = await StepProvider.deployed();
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
@@ -87,6 +91,17 @@ contract("Olympus Index", accounts => {
     await rebalance.setMotAddress(mockMOT.address);
     await whitelist.setMotAddress(mockMOT.address);
     await reimbursable.setMotAddress(mockMOT.address);
+
+    componentList.setComponent(DerivativeProviders.MARKET, market.address);
+    componentList.setComponent(DerivativeProviders.EXCHANGE, exchange.address);
+    componentList.setComponent(DerivativeProviders.WITHDRAW, asyncWithdraw.address);
+    componentList.setComponent(DerivativeProviders.LOCKER, locker.address);
+    componentList.setComponent(DerivativeProviders.RISK, riskControl.address);
+    componentList.setComponent(DerivativeProviders.FEE, percentageFee.address);
+    componentList.setComponent(DerivativeProviders.WHITELIST, whitelist.address);
+    componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
+    componentList.setComponent(DerivativeProviders.REBALANCE, rebalance.address);
+    componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
   });
 
   it("Required same tokens as weights on create", async () =>
@@ -115,17 +130,6 @@ contract("Olympus Index", accounts => {
       indexData.weights,
       { gas: 8e6 } // At the moment require 6.7M
     );
-
-    componentList.setComponent(await index.MARKET(), market.address);
-    componentList.setComponent(await index.EXCHANGE(), exchange.address);
-    componentList.setComponent(await index.WITHDRAW(), asyncWithdraw.address);
-    componentList.setComponent(await index.LOCKER(), locker.address);
-    componentList.setComponent(await index.RISK(), riskControl.address);
-    componentList.setComponent(await index.FEE(), percentageFee.address);
-    componentList.setComponent(await index.WHITELIST(), whitelist.address);
-    componentList.setComponent(await index.WHITELIST(), whitelist.address);
-    componentList.setComponent(await index.REIMBURSABLE(), reimbursable.address);
-    componentList.setComponent(await index.REBALANCE(), rebalance.address);
 
     assert.equal((await index.status()).toNumber(), 0); // new
 
@@ -244,7 +248,6 @@ contract("Olympus Index", accounts => {
     tx = await index.withdraw();
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
-    assert.equal(await index.withdrawInProgress(), true, " Withdraw has not finished");
     assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
 
@@ -252,7 +255,6 @@ contract("Olympus Index", accounts => {
     tx = await index.withdraw();
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
 
-    assert.equal(await index.withdrawInProgress(), false, " Withdraw has finished");
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
     await index.setMaxTransfers(10); // Restore
@@ -274,14 +276,12 @@ contract("Olympus Index", accounts => {
     await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
 
     // Request is always allowed
-    await index.setAllowed([investorA, investorB], WhitelistType.Investment, true);
     await index.requestWithdraw(toTokenWei(1), { from: investorA });
     await index.requestWithdraw(toTokenWei(1), { from: investorB });
 
     tx = await index.withdraw();
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
-    assert.equal(await index.withdrawInProgress(), false, " Withdraw has finished");
     assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, " B has withdrawn");
 
