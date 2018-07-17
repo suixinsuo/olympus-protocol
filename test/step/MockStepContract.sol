@@ -49,14 +49,17 @@ contract MockStepContract {
         bytes32 stepsCategory = "ourCategory";
         uint currentFunctionStep = stepProvider.initializeOrContinue(stepsCategory, stepAmount);
         uint i;
-        for (i = currentFunctionStep; i < 50; i++) {
+
+        for (i = currentFunctionStep; i < 50 && stepProvider.goNextStep(stepsCategory); i++) {
             someEasyVariable++;
-            if(stepProvider.goNextStep(stepsCategory) == true){
-                return false;
-            }
         }
 
-        stepProvider.finalize(stepsCategory);
-        return true;
+        if( i == 50) {
+           stepProvider.finalize(stepsCategory);
+           // Some extra logic
+           return true;
+        }
+
+        return false;
     }
 }

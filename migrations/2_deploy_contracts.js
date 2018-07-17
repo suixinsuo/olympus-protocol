@@ -95,7 +95,8 @@ async function deployOlympusFund(deployer, network) {
     PercentageFee,
     Reimbursable,
     WhitelistProvider,
-    ComponentList
+    ComponentList,
+    Steps
   ]);
   await deployExchange(deployer, network);
 }
@@ -111,7 +112,8 @@ async function deployOlympusIndex(deployer, network) {
     PercentageFee,
     Reimbursable,
     WhitelistProvider,
-    ComponentList
+    ComponentList,
+    Steps
   ]);
   await deployExchange(deployer, network);
   await deployer.deploy(RebalanceProvider, ExchangeProvider.address);
@@ -149,11 +151,7 @@ function deployOnDev(deployer, num) {
 
 function deployOnKovan(deployer, num) {
   return deployer
-    .then(() =>
-      deployer.deploy([
-        [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
-      ])
-    )
+    .then(() => deployer.deploy([[MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]]))
     .then(() => deployer.deploy(MarketplaceProvider))
     .then(() => deployer.deploy(AsyncWithdraw))
     .then(() => deployer.deploy(Locker))

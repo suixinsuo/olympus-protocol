@@ -80,14 +80,14 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         return( eth, tokens);
     }
 
-    function start() external {
+    function freeze() external {
         require(contracts[msg.sender].withdrawRequestLock == false);
         contracts[msg.sender].withdrawRequestLock = true;
         contracts[msg.sender].price = DerivativeInterface(msg.sender).getPrice();
         require(contracts[msg.sender].price > 0);
     }
 
-    function unlock() external {
+    function finalize() external {
         contracts[msg.sender].withdrawRequestLock = false;
         contracts[msg.sender].price = 0;
     }
