@@ -5,18 +5,15 @@ const MockStepContract = artifacts.require("MockStepContract");
 const Promise = require("bluebird");
 
 contract("MockStepContract", accounts => {
+  let mockStepContract;
+  let stepProvider;
   it("MockStepContract should be able to deploy.", async () => {
-    return await Promise.all([
-      MockStepContract.deployed(),
-      StepProvider.deployed()
-    ]).spread((mockStep, stepProvider) => {
-      assert.ok(mockStep, "MockStepContract contract is not deployed.");
-      assert.ok(stepProvider, "StepProvider contract is not deployed.");
-    });
+    stepProvider = await StepProvider.deployed();
+    assert.ok(stepProvider, "StepProvider contract is not deployed.");
+    mockStepContract = await MockStepContract.new(stepProvider.address);
   });
 
   it("MockStepContract should be able to execute a complex function in steps until finished", async () => {
-    let mockStepContract = await MockStepContract.deployed();
     let finished = false;
     while (finished == false) {
       finished = await mockStepContract.doMultipleSteps.call();
@@ -28,7 +25,6 @@ contract("MockStepContract", accounts => {
   });
 
   it("MockStepContract should be able to execute an easy function in steps until finished", async () => {
-    let mockStepContract = await MockStepContract.deployed();
     let finished = false;
     while (finished == false) {
       finished = await mockStepContract.doEasySteps.call();

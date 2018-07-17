@@ -12,7 +12,6 @@ let AsyncWithdraw = artifacts.require("AsyncWithdraw");
 let SimpleWithdraw = artifacts.require("SimpleWithdraw");
 let Reimbursable = artifacts.require("Reimbursable");
 
-let DummyDerivative = artifacts.require("MockDerivative");
 let PercentageFee = artifacts.require("PercentageFee");
 let ComponentList = artifacts.require("ComponentList");
 
@@ -21,14 +20,12 @@ let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockToken = artifacts.require("MockToken");
-
-let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 
 let StepProvider = artifacts.require("StepProvider");
-let MockStepContract = artifacts.require("MockStepContract");
 
 let devTokens;
+
 function deployMarketplace(deployer, network) {
   deployer.deploy([MarketplaceProvider]);
 }
@@ -131,10 +128,7 @@ function deployOnDev(deployer, num) {
       ])
     )
     .then(() => deployExchange(deployer, "development"))
-    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
-    .then(() =>
-      deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
-    ).then(() => deployer.deploy(MockStepContract, StepProvider.address));
+    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
 }
 
 function deployOnKovan(deployer, num) {
@@ -163,7 +157,7 @@ function deployOnMainnet(deployer) {
   return deploy;
 }
 
-module.exports = function (deployer, network) {
+module.exports = function(deployer, network) {
   let flags = args.parseArgs();
 
   if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {
