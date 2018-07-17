@@ -44,7 +44,7 @@ const expectedTokenAmount = (balance, rates, tokenIndex) => {
   // Balance ETH * (weight)%  * tokenRate / ETH  ==> Expected tokenAmount
   return (balance * (indexData.weights[tokenIndex] / 100) * rates[0][tokenIndex].toNumber()) / 10 ** 18;
 };
-contract("Olympus Index", accounts => {
+contract.only("Olympus Index", accounts => {
   let index;
   let market;
   let mockKyber;
@@ -104,7 +104,7 @@ contract("Olympus Index", accounts => {
       "Shall revert"
     ));
 
-  it("Create a index", async () => {
+  it.only("Create a index", async () => {
     index = await OlympusIndex.new(
       indexData.name,
       indexData.symbol,
@@ -119,7 +119,7 @@ contract("Olympus Index", accounts => {
     componentList.setComponent(await index.MARKET(), market.address);
     componentList.setComponent(await index.EXCHANGE(), exchange.address);
     componentList.setComponent(await index.WITHDRAW(), asyncWithdraw.address);
-    componentList.setComponent(await index.LOCK(), locker.address);
+    componentList.setComponent(await index.LOCKER(), locker.address);
     componentList.setComponent(await index.RISK(), riskControl.address);
     componentList.setComponent(await index.FEE(), percentageFee.address);
     componentList.setComponent(await index.WHITELIST(), whitelist.address);
