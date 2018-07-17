@@ -70,7 +70,12 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceHours) 
+    function initialize(
+        address _componentList,
+        uint _initialFundFee,
+        uint _rebalanceDeltaPercentage,
+        uint _rebalanceIntervalHours,
+        uint _buyTokensIntervalHours) 
     external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -95,7 +100,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceHours);
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceIntervalHours);
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHours("BuyTokens", _buyTokensIntervalHours);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -343,7 +349,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // ----------------------------- REBALANCE -----------------------------
 
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
-
+        LockerInterface(getComponentByName(LOCKER)).checkLockByHours("BuyTokens");
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
