@@ -4,7 +4,7 @@ import "../../contracts/components/mocks/MockDerivative.sol";
 
 contract MockMarketClient is MockDerivative {
 
-    string public constant MARKET = "Marketplace";
+    bytes32 public constant MARKET = "Marketplace";
 
     // Can change from market place
     function register(address marketplace) external onlyOwner returns(bool) {

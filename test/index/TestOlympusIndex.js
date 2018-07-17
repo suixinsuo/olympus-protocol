@@ -7,6 +7,7 @@ const RiskControl = artifacts.require("RiskControl");
 const Marketplace = artifacts.require("Marketplace");
 const Whitelist = artifacts.require("WhitelistProvider");
 const Withdraw = artifacts.require("AsyncWithdraw");
+const Locker = artifacts.require("Locker");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
 
@@ -50,6 +51,7 @@ contract("Olympus Index", accounts => {
   let mockMOT;
   let exchange;
   let asyncWithdraw;
+  let locker;
   let riskControl;
   let percentageFee;
   let rebalance;
@@ -70,6 +72,7 @@ contract("Olympus Index", accounts => {
     mockMOT = await MockToken.deployed();
     exchange = await ExchangeProvider.deployed();
     asyncWithdraw = await Withdraw.deployed();
+    locker = await Locker.deployed();
     riskControl = await RiskControl.deployed();
     percentageFee = await PercentageFee.deployed();
     rebalance = await Rebalance.deployed();
@@ -116,6 +119,7 @@ contract("Olympus Index", accounts => {
     componentList.setComponent(await index.MARKET(), market.address);
     componentList.setComponent(await index.EXCHANGE(), exchange.address);
     componentList.setComponent(await index.WITHDRAW(), asyncWithdraw.address);
+    componentList.setComponent(await index.LOCKER(), locker.address);
     componentList.setComponent(await index.RISK(), riskControl.address);
     componentList.setComponent(await index.FEE(), percentageFee.address);
     componentList.setComponent(await index.WHITELIST(), whitelist.address);
