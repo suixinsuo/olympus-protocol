@@ -15,6 +15,7 @@ import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 import "../interfaces/RiskControlInterface.sol";
 import "../interfaces/LockerInterface.sol";
+import "../interfaces/StepInterface.sol";
 
 
 contract OlympusIndex is IndexInterface, Derivative {
@@ -32,6 +33,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
+    StepInterface stepProvider = StepInterface(0x0);
 
     modifier checkLength(address[] _tokens, uint[] _weights) {
         require(_tokens.length == _weights.length);
@@ -79,7 +81,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super.initialize(_componentList);
-        bytes32[9] memory names = [MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER];
+        bytes32[10] memory names = [MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER,STEP];
         bytes32[] memory nameParameters = new bytes32[](names.length);
 
         for (uint i = 0; i < names.length; i++) {
@@ -96,6 +98,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceHours);
+        stepProvider = StepInterface(componentList.getLatestComponent(STEP));
+
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -357,15 +361,23 @@ contract OlympusIndex is IndexInterface, Derivative {
         ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
         uint ethBalance = getETHBalance();
         uint totalAmount = 0;
+        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens", 1);
 
-        for(uint8 i = 0; i < tokens.length; i++) {
+        for(uint i = 0; i < tokens.length; i++) {
             _amounts[i] = ethBalance * weights[i] / 100;
             _tokensErc20[i] = ERC20Extended(tokens[i]);
             (, _rates[i] ) = exchange.getPrice(ETH,  _tokensErc20[i],  _amounts[i], 0x0);
             totalAmount += _amounts[i];
         }
 
-        require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
+        for (i = currentFunctionStep; i < tokens.length; i++) {
+            require(exchange.buyToken.value(_amounts[i])(_tokensErc20[i], _amounts[i], _rates[i], address(this), 0x0, 0x0));
+            if(stepProvider.goNextStep("IndexBuyTokens")){
+                return false;
+            }
+        }
+
+        stepProvider.updateStatus("IndexBuyTokens");
 
         reimburse();
         return true;
@@ -439,7 +451,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         updateComponent(WHITELIST);
         updateComponent(FEE);
         updateComponent(REBALANCE);
-        updateComponent(REIMBURSABLE);
     }
 
 }

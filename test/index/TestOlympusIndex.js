@@ -10,7 +10,7 @@ const Withdraw = artifacts.require("AsyncWithdraw");
 const Locker = artifacts.require("Locker");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
-
+const  StepProvider = artifacts.require("StepProvider");
 const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
 
@@ -59,6 +59,7 @@ contract("Olympus Index", accounts => {
   let reimbursable;
   let tokens;
   let componentList;
+  let step;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -79,6 +80,7 @@ contract("Olympus Index", accounts => {
     whitelist = await Whitelist.deployed();
     reimbursable = await Reimbursable.deployed();
     componentList = await ComponentList.deployed();
+    step = await StepProvider.deployed();
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
@@ -123,10 +125,9 @@ contract("Olympus Index", accounts => {
     componentList.setComponent(await index.RISK(), riskControl.address);
     componentList.setComponent(await index.FEE(), percentageFee.address);
     componentList.setComponent(await index.WHITELIST(), whitelist.address);
-    componentList.setComponent(await index.WHITELIST(), whitelist.address);
     componentList.setComponent(await index.REIMBURSABLE(), reimbursable.address);
     componentList.setComponent(await index.REBALANCE(), rebalance.address);
-
+    componentList.setComponent(await index.STEP(), step.address);
     assert.equal((await index.status()).toNumber(), 0); // new
 
     await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");

@@ -3,6 +3,12 @@ pragma solidity 0.4.24;
 import "../../interfaces/StepInterface.sol";
 
 contract StepProvider is StepInterface {
+
+    string public name = "StepProvider";
+    string public description = "Allow a execution step by step";
+    string public category = "Steps";
+    string public version = "1.0";
+
     mapping (address => mapping(bytes32 => uint)) public stepAmount;
     mapping (address => mapping(bytes32 => uint)) public stepStatus;
     mapping (address => mapping(bytes32 => uint)) public currentCallStepIndex;
