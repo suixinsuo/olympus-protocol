@@ -13,6 +13,7 @@ import "../libs/ERC20Extended.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 import "../interfaces/RiskControlInterface.sol";
+import "../interfaces/LockerInterface.sol";
 
 
 contract OlympusIndex is IndexInterface, Derivative {
@@ -104,13 +105,13 @@ contract OlympusIndex is IndexInterface, Derivative {
         setComponent(FEE, componentList.getLatestComponent(FEE));
         setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
         setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
-
+        setComponent(LOCK, componentList.getLatestComponent(LOCK));
         // approve component for charging fees.
         approveComponents();
 
         MarketplaceInterface(componentList.getLatestComponent(MARKET)).registerProduct();
         ChargeableInterface(componentList.getLatestComponent(FEE)).setFeePercentage(_initialFundFee);
-
+        LockerInterface(componentList.getLatestComponent(LOCK)).setTimer(LOCK, 1);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -384,6 +385,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
+        LockerInterface(getComponentByName(LOCK)).checkLock(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));

@@ -9,6 +9,7 @@ let MockKyberNetwork = artifacts.require("MockKyberNetwork");
 
 let MarketplaceProvider = artifacts.require("Marketplace");
 let AsyncWithdraw = artifacts.require("AsyncWithdraw");
+let Locker = artifacts.require("Locker");
 let SimpleWithdraw = artifacts.require("SimpleWithdraw");
 let Reimbursable = artifacts.require("Reimbursable");
 
@@ -83,6 +84,7 @@ async function deployOlympusFund(deployer, network) {
   const args = args.parseArgs();
   await deployer.deploy([
     AsyncWithdraw,
+    Locker,
     RiskControl,
     MarketplaceProvider,
     PercentageFee,
@@ -98,6 +100,7 @@ async function deployOlympusIndex(deployer, network) {
 
   await deployer.deploy([
     AsyncWithdraw,
+    Locker,
     RiskControl,
     MarketplaceProvider,
     PercentageFee,
@@ -114,17 +117,18 @@ function deployOnDev(deployer, num) {
   return deployer
     .then(() =>
       deployer.deploy([
-        MarketplaceProvider,
-        AsyncWithdraw,
-        RiskControl,
-        SimpleWithdraw,
-        PercentageFee,
-        Reimbursable,
-        WhitelistProvider,
-        ComponentList,
         [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
       ])
     )
+    .then(() => deployer.deploy(MarketplaceProvider))
+    .then(() => deployer.deploy(AsyncWithdraw))
+    .then(() => deployer.deploy(Locker))
+    .then(() => deployer.deploy(RiskControl))
+    .then(() => deployer.deploy(SimpleWithdraw))
+    .then(() => deployer.deploy(PercentageFee))
+    .then(() => deployer.deploy(Reimbursable))
+    .then(() => deployer.deploy(WhitelistProvider))
+    .then(() => deployer.deploy(ComponentList))
     .then(() => deployExchange(deployer, "development"))
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
 }
@@ -133,17 +137,18 @@ function deployOnKovan(deployer, num) {
   return deployer
     .then(() =>
       deployer.deploy([
-        MarketplaceProvider,
-        AsyncWithdraw,
-        RiskControl,
-        SimpleWithdraw,
-        PercentageFee,
-        Reimbursable,
-        WhitelistProvider,
-        ComponentList,
         [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
       ])
     )
+    .then(() => deployer.deploy(MarketplaceProvider))
+    .then(() => deployer.deploy(AsyncWithdraw))
+    .then(() => deployer.deploy(Locker))
+    .then(() => deployer.deploy(RiskControl))
+    .then(() => deployer.deploy(SimpleWithdraw))
+    .then(() => deployer.deploy(PercentageFee))
+    .then(() => deployer.deploy(Reimbursable))
+    .then(() => deployer.deploy(WhitelistProvider))
+    .then(() => deployer.deploy(ComponentList))
     .then(() => deployExchange(deployer, "kovan"))
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
 }
@@ -155,7 +160,7 @@ function deployOnMainnet(deployer) {
   return deploy;
 }
 
-module.exports = function(deployer, network) {
+module.exports = function (deployer, network) {
   let flags = args.parseArgs();
 
   if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {
