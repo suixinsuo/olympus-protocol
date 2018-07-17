@@ -3,7 +3,7 @@
 ### Introduction
 
 Redeem (aka, withdraw in the code) is the action that completes the loop of investment in the derivative. The investors will invest ETH in exchange for the derivative
-token, and once the derivative owner has handled it to make the price rise, the investor will be ready to redeem his tokens and get his ETH back with benefits (hopefully).
+token, and once the derivative owner has handled it to make the price rise, the investor will be ready to redeem his tokens and get his ETH back.
 
 Redeem is separated into two different parts:
 
@@ -41,7 +41,7 @@ so it will be redeeming in batches (10 by default). Let's see in detail how that
         external;
 ```
 
-An investor will request to withdraw part of his invested amount. He can withdraw more than his total balance of the token.
+An investor will request to withdraw part of his invested amount. He can't withdraw more than his total balance of the token.
 
 For example, an investor with 1e18 tokens of the derivative can request 1 time with 1e18, or request two times with 5e17, with the same result.
 However, if he tries to request 2e18, the transaction will revert, or for three times redeem 5e17, the last transaction will revert.
@@ -89,7 +89,7 @@ derivative.requestWithdraw(amountInWei, (err, results) => {
 ```
 
 Withdraw will allow the owner to complete the redemption of tokens of his investors. Withdraw will handle the request in batches of 10(10 is the default value, this can be changed by calling the setMaxTransfers function). Only for the first time withdraw gets executed, withdraw will run a start function fixing some values of the derivative (the price, for example) that will keep constant for the rest executions.
-Then, withdraw will calculate how much ETH correspond to each investor according to the derivative token redeemed, until he finishes the withdraw or the maximum of transfers has been reached.
+Then, withdraw will calculate how many ETH corresponds to each investor according to the amount of derivative tokens redeemed, until he finishes the withdraw or the maximum of transfers has been reached.
 
 The function in the transaction will return true if the withdraw process is finished, or false if it is still pending. We can also check this by calling the withdrawInProgress function. If the withdraw process is in progress, the withdraw function needs to keep being called until it returns true.
 
@@ -104,7 +104,7 @@ No parameters required
 
 ##### Returns
 
-True if all the withdrawal requests have been fulfilled.
+True if all the withdraw requests have been fulfilled.
 False if there are any withdraw requests pending.
 For any revert, check the special scenarios section.
 
