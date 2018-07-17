@@ -8,10 +8,10 @@ import "./libs/Converter.sol";
 
 contract ComponentList is ComponentListInterface, Ownable {
 
-    mapping(string => mapping(string => address)) private components;
-    mapping(string => string[]) private componentVersions;
+    mapping(bytes32 => mapping(string => address)) private components;
+    mapping(bytes32 => string[]) private componentVersions;
 
-    function setComponent(string _name, address _componentAddress) public onlyOwner returns (bool) {
+    function setComponent(bytes32 _name, address _componentAddress) public onlyOwner returns (bool) {
         ComponentInterface c = ComponentInterface(_componentAddress);
         components[_name][c.version()] = _componentAddress;
         bool included = false;
@@ -35,15 +35,23 @@ contract ComponentList is ComponentListInterface, Ownable {
         return true;
     }
 
-    function getComponent(string _name, string _version) public view returns (address) {
+    function getComponent(bytes32 _name, string _version) public view returns (address) {
         return components[_name][_version];
     }
 
-    function getLatestComponent(string _name) public view returns(address) {
+    function getLatestComponent(bytes32 _name) public view returns(address) {
         return components[_name][componentVersions[_name][componentVersions[_name].length - 1]];
     }
 
-    function getComponentVersions(string _name) public view returns (bytes32[] results) {
+    function getLatestComponents(bytes32[] _names) public view returns(address[]) {
+        address[] memory addresses = new address[](_names.length);
+        for (uint i = 0; i < _names.length; i++) {
+            addresses[i] = components[_names[i]][componentVersions[_names[i]][componentVersions[_names[i]].length - 1]];
+        }
+        return addresses;
+    }    
+
+    function getComponentVersions(bytes32 _name) public view returns (bytes32[] results) {
         results = new bytes32[](componentVersions[_name].length);
         for (uint i = 0; i < componentVersions[_name].length; i++) {
             results[i] = Converter.stringToBytes32(componentVersions[_name][i]);
@@ -52,7 +60,7 @@ contract ComponentList is ComponentListInterface, Ownable {
         return results;
     }
 
-    function remove(string _name, uint _index) private returns(string[]) {
+    function remove(bytes32 _name, uint _index) private returns(string[]) {
         string[] storage array = componentVersions[_name];
         if (_index >= array.length) return;
 
