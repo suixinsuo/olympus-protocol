@@ -2,9 +2,7 @@
 
 ### Introduction
 
-In the fund, the fund owner will use the ether of the investors to buy different tokens spreading the risk. He can decide which ones to shall be bought
-and which ones need to be sold. The Olympus Fund proposes a really simple interface to allow the investor to buy and sell different tokens in
-a single transaction.
+The fund manager has more insights of the projects thus he knows better which to invest and when to buy/sell​ tokens. Olympus Fund provides a really simple way, so he could operate tokens massively.
 
 Initialize a fund already created with the new code.
 
@@ -17,7 +15,7 @@ const fundAbi = [];
 const fund = web3.eth.contract(fundAbi).at(fundAddress);
 ```
 
-Buy and Sell tokens uses our Exchange Provider which may have a small fee in MOT. Make sure the contract is holding MOT enough to pay this fee.
+Note: To be able to perform this action, it interacts with OlympusExchangeProvider, An additional fee may apply in MOT. Always make sure that the Fund itself has MOT in it.
 
 ```javascript
 const erc20ABI = [];
@@ -33,11 +31,11 @@ web3.eth.sendTransaction({ data, to: mot.address }, callback (err, results) => {
 });
 ```
 
-Sending MOT directly the fund will won't affect the price.
+Sending MOT directly the fund won't affect the price of the Fund.
 
 ### Interface
 
-That's the basic functions of the interfaces, that allow to buy and sell.
+Functions that allow​ the fund manager to operate buy/sell of the tokens using OlympusExchangeProvider.
 
 ```javascript
      function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _rates)
@@ -47,7 +45,7 @@ That's the basic functions of the interfaces, that allow to buy and sell.
         public returns(bool);
 ```
 
-From the basic interface we extend:
+There is also an extended function to retrieve the underlying tokens of the Fund.
 
 ```javascript
     function getTokens() external view returns(address[], uint[]);
@@ -55,7 +53,7 @@ From the basic interface we extend:
 
 GetTokens will return the list of tokens and the amount.
 
-WARNING! `getTokens()` function has different behaviour in the index, while `getTokens()` provides the list of tokens and heights, and `getTokensWithAmounts()` provides
+Note: `getTokens()` function has different behaviour in the index, while `getTokens()` provides the list of tokens and heights, and `getTokensWithAmounts()` provides
 the tokens and amounts.
 
 ### Get Tokens
@@ -64,12 +62,16 @@ the tokens and amounts.
     function getTokens() external view returns(address[], uint[]);
 ```
 
-Get tokens is a helper to get tokens and the amounts of the fund. This function is a short cat, we can always get the list of tokens and check
-the balance of the fund using `ERC20` function `balanceOf(fund.address)`.
+`getTokens()` helps to retrieve the underlying tokens and corresponding amounts which belong to a fund.
 
-Once a token has been bought or sold, the fund will automatically update his internal state and the result of this function.
+> You can also check the balance of a token, use ERC20(address).balanceOf(fund.address).
 
-WARNING! When a token is completely sold, still will be returned in the addresses array with the amount of 0.
+Note: It might be slightly different than the real balance of those tokens (due to airdrop or mistakenly sending, etc) in both
+of the cases.
+
+The Fund performs a recalculation automatically whenever a token is bought or sold to reflect the price change.
+
+Note: When a token is completely sold, still will be returned in the addresses array with the amount of 0.
 
 ##### Returns
 
@@ -78,7 +80,7 @@ Second array with the amount of the tokens of the fund.
 
 #### Example code
 
-We can call `getTokens()` after a successful buy or sell operation refreshing the client side.
+Call `getTokens()` right after a successful buying/selling​ to get the latest status.
 
 ```javascript
 fund.getTokens((err, results) => {
@@ -100,31 +102,35 @@ fund.getTokens((err, results) => {
         public returns(bool);
 ```
 
-We can buy tokens using this function. The tokens are bought with the balance of the fund, which you can query using `getETHBalance()` function.
-You can specify the exchange Id of the provider, but in most scenarios leaving at `0x0` allowing our component to choose the best provider for you.
+This function is used for the fund manager to buy tokens with the Ethers in the fund. #Refer to: getETHBalance.
+
 The list of tokens and the list of amounts must be of the same size, being the amounts the value of ETH that you want to spend in each
-token. Be aware that the total of amounts has to be less or the same that the balance available on the fund (provided by `getETHBalance()`).
+token.
+Be aware that the total of amounts has to be less or the same that the balance available on the fund (provided by `getETHBalance()`).
 
-##### Params
+##### Parameters
 
-​_exchangeId: We can specify the exchange ID available in the OlympusExchange component that we want to use if we want to stick to a concrete exchange.
+\​_exchangeId: Request OlympusExchangeProvider to use the specified exchange to trade, (Depending on the implementation, this might not be fulfilled). By default, the value should be 0x0 so the ExchangeProvider chooses it automatically.
 In a normal scenario, set as `0x0` by default, allowing OlympusExchange to chose the best option for you.
-\_tokens: List of token addresses that want to be purchased.
-\_amounts: The amounts in ETH that you want to invest in the purchase of each token.
+\_tokens: List of token addresses that will be purchased.
+\_amounts: The number of Ethers that will be used to buy tokens specified above. The unit is in Wei.
+Note: The length of this array should be the same as the number of tokens. And the total of values of this array should equal `msg.value`.
+Note: Be also aware that the total of amounts has to be less or the same that the balance available on the fund (provided by `getETHBalance()`).
 \_rates: Rate of how many tokens you can buy with one ETH. Use `0` if you want to buy at any rate.
+Note: The length of this array should be the same as the number of tokens.
 
 #### Special scenarios
 
-1.  If any of your tokens is not exchangeable by price provider, will revert.
-2.  If you don't have enough MOT in the fund for paying the fee will revert.
+1.  The function reverts if there are untradable (determined by OlympusExchangeProvider) tokens in the token list.
+2.  Additional fee might apply during the Exchange process. Make sure you have enough MOT in your fund.
 3.  If the amounts array is different size of tokens array, or the amounts total is higher than the ETH available balance of the fund, it will surely revert.
-4.  If any of the transactions are considered risky by our risk provider, then it will also revert.
-5.  If the exchange provider cannot match a rate equal to or better than the one requested, will revert.
-6.  Only the owner can call this functions, otherwise, will revert.
+4.  The function reverts if any of the transactions is considered​ risky by RiskControlProvider.
+5.  The function reverts if the ExchangeProvider can't trade within the specified rate after a period of time.
+6.  The function reverts if the caller is not permitted.
 
 ##### Returns
 
-True if successful.
+Boolean indicates whether the buying succeeds​.
 
 #### Example code
 
@@ -176,31 +182,29 @@ web3.eth.sendTransation({ data, to: fund.address }, (err, results) => {
 
 We can sell tokens using this function. The tokens are sold based in the amounts that the fund has (not the owner of the fund). You can query them
 using the previous function `getTokens()`.
-You can specify the exchange Id of the provider, but in most scenarios leaving at `0x0` allowing our component to choose the best provider for you.
-The list of tokens and the list of amounts must be of the same size, being the amounts the value on tokens unit (take into account
-different tokens can have different decimals).
-Be aware that the total of amounts has to be less or the same that the balance available on the fund (provided by `getTokens()`).
 
-##### Params
+##### Parameters
 
-\​_exchangeId: We can specify the exchange ID available in the OlympusExchange component that we want to use if we want to stick to a concrete exchange.
+\​_exchangeId: Request OlympusExchangeProvider to use the specified exchange to trade, (Depending on the implementation, this might not be fulfilled). By default, the value should be 0x0 so the ExchangeProvider chooses it automatically.
 In a normal scenario, set as `0x0` by default, allowing OlympusExchange to chose the best option for you.
-\_tokens: List of token addresses that want to be purchased.
-\_amounts: The amounts in the token unit that you want to sell.
+\_tokens: List of token addresses that will be purchased.
+\_amounts: : The number of Ethers that will be used to buy tokens specified above. The unit is in Wei.
+Note: The length of this array should be the same as the number of tokens. And the values of this array should less or the same that the balance available on the fund (provided by `getTokens()`).
 \_rates: Rate of how many tokens you can buy with one ETH. Use `0` if you want to buy at any rate.
+Note: The length of this array should be the same as the number of tokens.
 
 #### Special scenarios
 
-1.  If any of your tokens is not exchangeable by price provider, will revert.
-2.  If you don't have enough MOT in the fund for paying the fee will revert.
+1.  The function reverts if there are untradable (determined by OlympusExchangeProvider) tokens in the token list.
+2.  Additional fee might apply during the Exchange process. Make sure you have enough MOT in your fund.
 3.  If the amounts array is different size of tokens address, or the amounts total is higher than the ETH available balance of the fund.
-4.  If any of the transactions are considered risky by our risk provider, then it will revert.
-5.  If the exchange provider cannot match a rate equal to or better than the one requested, will revert.
-6.  Only the owner can call this functions, otherwise, will revert.
+4.  The function reverts if any of the transactions is considered​ risky by RiskControlProvider.
+5.  The function reverts if the ExchangeProvider can't trade within the specified rate after a period of time.
+6.  The function reverts if the caller is not permitted.
 
 ##### Returns
 
-True if successful.
+Boolean indicates whether the buying succeeds​.
 
 #### Example code
 

@@ -18,11 +18,7 @@ constructor(
 
 #### &emsp;Parameters
 
-> \_name: Fund name</br>
-> \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follow the rules of ERC20. For example: the symbol length can be any, but it's better to keep in from 2 - 5)</br>
-> \_description: Fund description</br>
-> \_category: Fund category</br>
-> \_decimals: Fund decimals (normally it should be 18)</br>
+> \_name: Fund name</br> > \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of ERC20. For example: the symbol length can be any, but it's better to keep in from 2 - 5)</br> > \_description: Fund description</br> > \_category: Fund category</br> > \_decimals: Fund decimals (normally it should be 18)</br>
 
 #### &emsp;Example code
 
@@ -98,13 +94,12 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 
 #### &emsp;Description
 
-> Initialize the Fund then you can find it from olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So is required to transfer some MOT to your Fund)
+> Initialize the fund that was created with specified configurations and will be registered in olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your Fund)
 
 #### &emsp;Parameters
 
-> \_componentList: address of olympus componentlist </br>
-> \_initialFundFee: management fee of fund
-> value: the initial balance of the fund
+> \_componentList: Address of olympus componentlist </br> > \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
+> value: The initial balance of the fund
 
 #### &emsp;Example code
 
