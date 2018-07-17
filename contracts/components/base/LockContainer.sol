@@ -16,8 +16,8 @@ contract Locker is ComponentInterface, LockerInterface  {
 
 
     function checkLock(string _timerName) external {
-        require(time[msg.sender][_timerName] >= now);
-        time[msg.sender][_timerName] = now + (hoursInterval[msg.sender][_timerName] * 60 * 60);
+        require(now >= time[msg.sender][_timerName] + (hoursInterval[msg.sender][_timerName] * 60 * 60));
+        time[msg.sender][_timerName] = now;
     }
 
     function setTimer(string _timerName, uint _hours) external {
