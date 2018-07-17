@@ -10,8 +10,11 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
+import "../libs/Converter.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
+import "../interfaces/RiskControlInterface.sol";
+import "../interfaces/LockerInterface.sol";
 
 
 contract OlympusIndex is IndexInterface, Derivative {
@@ -21,7 +24,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     event ChangeStatus(DerivativeStatus status);
     event Invested(address user, uint amount);
     event Reimbursed(uint amount);
-    event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
+    event RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
 
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
@@ -30,15 +33,14 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public maxTransfers = 10;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
 
-
     modifier checkLength(address[] _tokens, uint[] _weights) {
         require(_tokens.length == _weights.length);
         _;
     }
 
-    modifier checkWeights(uint[] _weights){
+    modifier checkWeights(uint[] _weights) {
         uint totalWeight;
-        for(uint i = 0; i < _weights.length; i++){
+        for (uint i = 0; i < _weights.length; i++) {
             totalWeight += _weights[i];
         }
         require(totalWeight == 100);
@@ -53,7 +55,7 @@ contract OlympusIndex is IndexInterface, Derivative {
       uint _decimals,
       address[] _tokens,
       uint[] _weights)
-      checkLength(_tokens, _weights) checkWeights(_weights) public {
+      public checkLength(_tokens, _weights) checkWeights(_weights) {
         name = _name;
         symbol = _symbol;
         totalSupply_ = 0;
@@ -68,7 +70,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage) onlyOwner external payable {
+    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage) 
+    external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
         require(_componentList != 0x0);
@@ -76,22 +79,23 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super.initialize(_componentList);
+        bytes32[9] memory names = [MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER];
+        bytes32[] memory nameParameters = new bytes32[](names.length);
 
-        setComponent(MARKET, componentList.getLatestComponent(MARKET));
-        setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
-        setComponent(REBALANCE, componentList.getLatestComponent(REBALANCE));
-        setComponent(RISK, componentList.getLatestComponent(RISK));
-        setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
-        setComponent(FEE, componentList.getLatestComponent(FEE));
-        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
-        setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
+        for (uint i = 0; i < names.length; i++) {
+            nameParameters[i] = names[i];
+        }
+        setComponents(
+            nameParameters,
+            componentList.getLatestComponents(nameParameters)
+        );
 
         // approve component for charging fees.
         approveComponents();
 
-        MarketplaceInterface(componentList.getLatestComponent(MARKET)).registerProduct();
-        ChargeableInterface(componentList.getLatestComponent(FEE)).setFeePercentage(_initialFundFee);
-
+        MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
+        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
+        // LockerInterface(getComponentByName(LOCK)).setTimer(LOCK, 1);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -365,6 +369,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
+        // LockerInterface(getComponentByName(LOCK)).checkLock(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
