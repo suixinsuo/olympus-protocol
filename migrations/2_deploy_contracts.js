@@ -121,8 +121,6 @@ function deployOnDev(deployer, num) {
   return deployer
     .then(() =>
       deployer.deploy([
-<<<<<<< HEAD
-=======
         MarketplaceProvider,
         AsyncWithdraw,
         RiskControl,
@@ -132,7 +130,6 @@ function deployOnDev(deployer, num) {
         WhitelistProvider,
         ComponentList,
         StepProvider,
->>>>>>> 4921bb0d33a669ca831f512430cc03e32e8a00fe
         [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
       ])
     )
