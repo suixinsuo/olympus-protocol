@@ -109,9 +109,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         // approve component for charging fees.
         approveComponents();
 
-        MarketplaceInterface(componentList.getLatestComponent(MARKET)).registerProduct();
-        ChargeableInterface(componentList.getLatestComponent(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(componentList.getLatestComponent(LOCK)).setTimer(LOCK, 1);
+        MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
+        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
+        LockerInterface(getComponentByName(LOCK)).setTimer(LOCK, 1);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);

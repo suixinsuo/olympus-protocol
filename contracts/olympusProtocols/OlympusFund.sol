@@ -93,8 +93,8 @@ contract OlympusFund is FundInterface, Derivative {
         // approve component for charging fees.
         approveComponents();
 
-        MarketplaceInterface(componentList.getLatestComponent(MARKET)).registerProduct();
-        ChargeableInterface(componentList.getLatestComponent(FEE)).setFeePercentage(_initialFundFee);
+        MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
+        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         status = DerivativeStatus.Active;
         emit ChangeStatus(status);
 
