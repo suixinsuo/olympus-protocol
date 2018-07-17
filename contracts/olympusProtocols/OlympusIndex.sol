@@ -33,8 +33,10 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
+    uint public rebalanceReceivedETHAmountFromSale;
     StepInterface public sp = StepInterface(0x0);
 
+    enum RebalancePhases { Initial, SellTokens, BuyTokens }
 
     modifier checkLength(address[] _tokens, uint[] _weights) {
         require(_tokens.length == _weights.length);
@@ -389,34 +391,38 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
-        if(sp.getStatus(category) == 1){
+        if(sp.getStatus(category) == uint(RebalancePhases.SellTokens)){
             for (i = currentFunctionStep; i < tokensToSell.length; i++) {
-                ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
-                ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+                ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), 0);
+                ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
                 require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
-                if(sp.nextStep(category) == true){
+                if(sp.goNextStep(category) == true){
+                    rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
                     return false;
                 }
             }
+            rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
             sp.updateStatus(category);
             currentFunctionStep = 0;
         }
 
 
         // Buy Tokens
-        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
-        if(sp.getStatus(category) == 2){
+        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale, amountsToBuy);
+        if(sp.getStatus(category) == uint(RebalancePhases.BuyTokens)){
             for (i = currentFunctionStep; i < tokensToBuy.length; i++) {
                 require(
                     exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
                 );
-                if(sp.nextStep(category) == true){
+                if(sp.goNextStep(category) == true){
                     return false;
                 }
             }
         }
 
         sp.finalize(category);
+        rebalanceProvider.finalizeRebalance();
+        rebalanceReceivedETHAmountFromSale = 0;
         reimburse();
         return true;
     }
