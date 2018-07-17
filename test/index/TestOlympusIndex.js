@@ -132,7 +132,7 @@ contract("Olympus Index", accounts => {
     await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
 
-    await index.initialize(componentList.address, 0, 30, { value: web3.toWei(indexData.ethDeposit, "ether") });
+    await index.initialize(componentList.address, 0, 30, 24, { value: web3.toWei(indexData.ethDeposit, "ether") });
     const myProducts = await market.getOwnProducts();
 
     assert.equal(myProducts.length, 1);
@@ -145,7 +145,7 @@ contract("Olympus Index", accounts => {
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await index.initialize(componentList.address, 0, 30, { value: web3.toWei(indexData.ethDeposit, "ether") });
+      await index.initialize(componentList.address, 0, 30, 24, { value: web3.toWei(indexData.ethDeposit, "ether") });
     }, "Shall revert");
   });
 
@@ -227,6 +227,12 @@ contract("Olympus Index", accounts => {
     tokenAmounts[1].forEach(amount => assert.equal(amount, 0, "Amount is 0"));
   });
 
+  it("Can't rebalance so frequently", async () => {
+    await calc.assertReverts(async () => await index.rebalance(), "Should be reverted")
+    // disable the lock
+    await index.setIntervalHours(await index.REBALANCE(), 0);
+  })
+
   it("Shall be able to request and withdraw", async () => {
     let tx;
     await index.setMaxTransfers(1); // For testing
@@ -307,10 +313,10 @@ contract("Olympus Index", accounts => {
     await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Withdraw  not whitelisted");
 
     await index.setAllowed([bot], WhitelistType.Maintenance, true);
-    tx = await index.withdraw({ from: bot });
+    tx = await calc.shouldSuccess(index.withdraw({ from: bot }), "It should be successful.");
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Bot got Reimbursed");
 
-    tx = await index.rebalance({ from: bot });
+    tx = await calc.shouldSuccess(index.rebalance({ from: bot }), "It should be successful.");
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Bot got Reimbursed");
 
     // Permissions removed
