@@ -451,6 +451,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         updateComponent(WHITELIST);
         updateComponent(FEE);
         updateComponent(REBALANCE);
+        updateComponent(REIMBURSABLE);
+
     }
 
 }
