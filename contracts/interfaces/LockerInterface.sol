@@ -6,8 +6,8 @@ contract LockerInterface {
     /*
      * Inside a require shall be performed
      */
-    function checkLock(bytes32 _timerName) external;
-    function setTimer(bytes32 _timerName, uint _hours) external;
+    function checkLock(bytes32 _lockerName) external;
+    function setIntervalBlocks(bytes32 _lockerName, uint _blocks) external;
 
 }
 

@@ -7,7 +7,7 @@ contract("Locker", accounts => {
     locker = await Locker.deployed()
     assert.ok(locker, "Locker contract is not deployed.");
 
-    calc.shouldSuccess(locker.setTimer("lock", 1000),
+    calc.shouldSuccess(locker.setIntervalBlocks("lock", 1000),
       "CheckLock in first time shouldn't be reverted")
 
     try {
