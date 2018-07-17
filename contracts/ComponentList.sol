@@ -43,6 +43,16 @@ contract ComponentList is ComponentListInterface, Ownable {
         return components[_name][componentVersions[_name][componentVersions[_name].length - 1]];
     }
 
+    function getLatestComponents(bytes32[] _names) public view returns(address[]) {
+        address[] memory addresses = new address[](_names.length);
+        string memory name;
+        for (uint i = 0; i < _names.length; i++) {
+            name = Converter.bytes32ToString(_names[i]);
+            addresses[i] = components[name][componentVersions[name][componentVersions[name].length - 1]];
+        }
+        return addresses;
+    }    
+
     function getComponentVersions(string _name) public view returns (bytes32[] results) {
         results = new bytes32[](componentVersions[_name].length);
         for (uint i = 0; i < componentVersions[_name].length; i++) {

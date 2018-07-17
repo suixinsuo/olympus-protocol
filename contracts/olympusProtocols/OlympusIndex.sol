@@ -10,6 +10,8 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
+import "../libs/ArrayUtils.sol";
+import "../libs/Converter.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 import "../interfaces/RiskControlInterface.sol";
@@ -18,6 +20,7 @@ import "../interfaces/LockerInterface.sol";
 
 contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
+    using ArrayUtils for *;
 
     enum WhitelistKeys { Investment, Maintenance }
 
@@ -96,16 +99,26 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(_componentList != 0x0);
 
         super.initialize(_componentList);
+        bytes32[9] memory names = [MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCK];
+        bytes32[] memory nameParameters;
 
-        setComponent(MARKET, componentList.getLatestComponent(MARKET));
-        setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
-        setComponent(REBALANCE, componentList.getLatestComponent(REBALANCE));
-        setComponent(RISK, componentList.getLatestComponent(RISK));
-        setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
-        setComponent(FEE, componentList.getLatestComponent(FEE));
-        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
-        setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
-        setComponent(LOCK, componentList.getLatestComponent(LOCK));
+        for (uint i = 0; i < names.length; i++) {
+            nameParameters[i] = names[i];
+        }
+        setComponents(
+            nameParameters,
+            componentList.getLatestComponents(nameParameters)
+        );
+
+        // setComponent(MARKET, componentList.getLatestComponent(MARKET));
+        // setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
+        // setComponent(REBALANCE, componentList.getLatestComponent(REBALANCE));
+        // setComponent(RISK, componentList.getLatestComponent(RISK));
+        // setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
+        // setComponent(FEE, componentList.getLatestComponent(FEE));
+        // setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
+        // setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
+        // setComponent(LOCK, componentList.getLatestComponent(LOCK));
         // approve component for charging fees.
         approveComponents();
 

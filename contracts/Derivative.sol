@@ -14,22 +14,22 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
 
     ERC20Extended internal constant ETH = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     ComponentListInterface internal componentList;
-    string public constant MARKET = "MarketProvider";
-    string public constant EXCHANGE = "ExchangeProvider";
-    string public constant WITHDRAW = "WithdrawProvider";
-    string public constant RISK = "RiskProvider";
-    string public constant WHITELIST = "WhitelistProvider";
-    string public constant FEE = "FeeProvider";
-    string public constant REIMBURSABLE = "Reimbursable";
-    string public constant REBALANCE = "RebalanceProvider";
-    string public constant LOCK = "LockProvider";
+    bytes32 public constant MARKET = "MarketProvider";
+    bytes32 public constant EXCHANGE = "ExchangeProvider";
+    bytes32 public constant WITHDRAW = "WithdrawProvider";
+    bytes32 public constant RISK = "RiskProvider";
+    bytes32 public constant WHITELIST = "WhitelistProvider";
+    bytes32 public constant FEE = "FeeProvider";
+    bytes32 public constant REIMBURSABLE = "Reimbursable";
+    bytes32 public constant REBALANCE = "RebalanceProvider";
+    bytes32 public constant LOCK = "LockProvider";
 
     function initialize (address _componentList) internal {
         require(_componentList != 0x0);
         componentList = ComponentListInterface(_componentList);
     }
 
-    function updateComponent(string _name) public onlyOwner returns (address) {
+    function updateComponent(bytes32 _name) public onlyOwner returns (address) {
         // still latest.
         if (super.getComponentByName(_name) == componentList.getLatestComponent(_name)) {
             return super.getComponentByName(_name);
@@ -48,10 +48,11 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
 
 
 
-    function approveComponent(string _name) internal {
+    function approveComponent(bytes32 _name) internal {
         address componentAddress = getComponentByName(_name);
-        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 0);
-        ERC20NoReturn(FeeChargerInterface(componentAddress).MOT()).approve(componentAddress, 2 ** 256 - 1);
+        ERC20NoReturn mot = ERC20NoReturn(FeeChargerInterface(componentAddress).MOT());
+        mot.approve(componentAddress, 0);
+        mot.approve(componentAddress, 2 ** 256 - 1);
     }
 
     function () public payable {
