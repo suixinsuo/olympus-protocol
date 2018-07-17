@@ -7,6 +7,7 @@ import "../interfaces/RebalanceInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/WhitelistInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
+import "../interfaces/StepInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
@@ -29,6 +30,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
+    StepInterface public sp = StepInterface(0x0);
+
 
 
     modifier checkLength(address[] _tokens, uint[] _weights) {
@@ -365,6 +368,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
+        bytes32 category = "rebalance";
+        uint maxSteps = 10;
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -372,26 +377,41 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
         uint[] memory amountsToBuy;
-        uint8 i;
+        uint i;
         uint ETHBalanceBefore = address(this).balance;
+
+        uint currentFunctionStep = sp.initializeOrContinue(category, maxSteps);
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
-        for (i = 0; i < tokensToSell.length; i++) {
-            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
-            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
-            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
-
+        if(sp.getStatus(category) == 1){
+            for (i = currentFunctionStep; i < tokensToSell.length; i++) {
+                ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
+                ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
+                if(sp.nextStep(category) == true){
+                    return false;
+                }
+            }
+            sp.updateStatus(category);
+            currentFunctionStep = 0;
         }
+
 
         // Buy Tokens
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
-        for (i = 0; i < tokensToBuy.length; i++) {
-            require(
-                exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
-            );
+        if(sp.getStatus(category) == 2){
+            for (i = currentFunctionStep; i < tokensToBuy.length; i++) {
+                require(
+                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
+                );
+                if(sp.nextStep(category) == true){
+                    return false;
+                }
+            }
         }
 
+        sp.finalize(category);
         reimburse();
         return true;
     }
