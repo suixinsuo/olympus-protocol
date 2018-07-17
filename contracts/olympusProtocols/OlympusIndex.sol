@@ -75,7 +75,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage)
+    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceHours)
     external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -100,7 +100,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        // LockerInterface(getComponentByName(LOCK)).setTimer(LOCK, 1);
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceHours);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -108,6 +108,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
+    function setIntervalHours(bytes32 _timerName, uint _hours) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(_timerName,  _hours);
+    }
     // Call after you have updated the MARKET provider, not required after initialize
     function registerInNewMarketplace() external onlyOwner returns(bool) {
         require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
@@ -376,7 +379,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
         bytes32 category = "rebalance";
         uint maxSteps = 10;
-        // LockerInterface(getComponentByName(LOCK)).checkLock(REBALANCE);
+        LockerInterface(getComponentByName(LOCKER)).checkLockByHours(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
