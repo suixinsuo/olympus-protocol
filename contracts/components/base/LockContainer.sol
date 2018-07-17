@@ -16,7 +16,7 @@ contract Locker is ComponentInterface, LockerInterface  {
 
 
     function checkLock(bytes32 _lockerName) external {
-        require(block.number >= locker[msg.sender][_lockerName] + (intervalBlocks[msg.sender][_lockerName] * 60 * 60));
+        require(block.number >= locker[msg.sender][_lockerName] + intervalBlocks[msg.sender][_lockerName]);
         locker[msg.sender][_lockerName] = block.number;
     }
 
