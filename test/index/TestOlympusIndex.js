@@ -230,7 +230,7 @@ contract("Olympus Index", accounts => {
   it("Can't rebalance so frequently", async () => {
     await calc.assertReverts(async () => await index.rebalance(), "Should be reverted")
     // disable the lock
-    await index.setIntervalBlocks(await index.REBALANCE(), 0);
+    await index.setIntervalHours(await index.REBALANCE(), 0);
   })
 
   it("Shall be able to request and withdraw", async () => {
