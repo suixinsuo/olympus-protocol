@@ -1,6 +1,12 @@
 const log = require("../utils/log");
 const calc = require("../utils/calc");
-var { DerivativeProviders, ethToken, DerivativeStatus, WhitelistType, DerivativeType } = require("../utils/constants");
+const {
+  DerivativeProviders,
+  ethToken,
+  DerivativeStatus,
+  WhitelistType,
+  DerivativeType
+} = require("../utils/constants");
 const Fund = artifacts.require("OlympusFund");
 const AsyncWithdraw = artifacts.require("components/widrwaw/AsyncWithdraw");
 const RiskControl = artifacts.require("components/RiskControl");
@@ -181,6 +187,11 @@ contract("Fund", accounts => {
 
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
+    // Cant request while withdrawing
+    await calc.assertReverts(
+      async () => await fund.requestWithdraw(toTokenWei(1), { from: investorA }),
+      "Cant request"
+    );
 
     // Second withdraw succeeds
     tx = await fund.withdraw();

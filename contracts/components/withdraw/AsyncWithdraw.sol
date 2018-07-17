@@ -90,6 +90,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     function finalize() external {
         contracts[msg.sender].withdrawRequestLock = false;
         contracts[msg.sender].price = 0;
+        delete contracts[msg.sender].userRequests;
     }
 
     // Out of the interface

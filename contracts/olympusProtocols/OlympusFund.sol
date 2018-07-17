@@ -294,7 +294,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
         uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
         uint _eth;
-        uint tokens;
+        uint _tokenAmount;
         uint i;
         if (_transfers == 0) {
             guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
@@ -303,11 +303,11 @@ contract OlympusFund is FundInterface, Derivative {
 
         for(i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW) ; i++) {
 
-            (_eth, tokens) = withdrawProvider.withdraw(_requests[i]);
-            if(tokens == 0) {continue;}
+            (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
+            if(_tokenAmount == 0) {continue;}
 
-            balances[_requests[i]] -= tokens;
-            totalSupply_ -= tokens;
+            balances[_requests[i]] -= _tokenAmount;
+            totalSupply_ -= _tokenAmount;
             address(_requests[i]).transfer(_eth);
          }
 
@@ -317,7 +317,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
 
         reimburse();
-        return true; // True if completed
+        return i == _requests.length; // True if completed
     }
 
 
