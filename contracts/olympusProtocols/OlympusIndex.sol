@@ -110,21 +110,12 @@ contract OlympusIndex is IndexInterface, Derivative {
             componentList.getLatestComponents(nameParameters)
         );
 
-        // setComponent(MARKET, componentList.getLatestComponent(MARKET));
-        // setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
-        // setComponent(REBALANCE, componentList.getLatestComponent(REBALANCE));
-        // setComponent(RISK, componentList.getLatestComponent(RISK));
-        // setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
-        // setComponent(FEE, componentList.getLatestComponent(FEE));
-        // setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
-        // setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
-        // setComponent(LOCK, componentList.getLatestComponent(LOCK));
         // approve component for charging fees.
         approveComponents();
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(getComponentByName(LOCK)).setTimer(LOCK, 1);
+        // LockerInterface(getComponentByName(LOCK)).setTimer(LOCK, 1);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -398,7 +389,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
-        LockerInterface(getComponentByName(LOCK)).checkLock(REBALANCE);
+        // LockerInterface(getComponentByName(LOCK)).checkLock(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
