@@ -245,7 +245,7 @@ contract("Olympus Index", accounts => {
 
   it("Shall be able to request and withdraw", async () => {
     let tx;
-    await index.setMaxTransfers(1); // For testing
+    await index.setMaxSteps(1, "withdraw"); // For testing
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1), "A has invested");
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), "B has invested");
@@ -269,7 +269,7 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
-    await index.setMaxTransfers(10); // Restore
+    await index.setMaxSteps(10, "withdraw"); // Restore
   });
 
   it("Shall be able to invest whitelist enabled", async () => {
@@ -436,7 +436,7 @@ contract("Olympus Index", accounts => {
     assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
     // Execute Rebalance
     // Make sure it has to do multiple calls
-    await index.updateMaxSteps(1);
+    await index.setMaxSteps(1, "rebalance");
     let rebalanceFinished = false;
     while (rebalanceFinished == false) {
       rebalanceFinished = await index.rebalance.call();
@@ -444,6 +444,8 @@ contract("Olympus Index", accounts => {
       assert.ok(tx);
       assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
     }
+    // Restore
+    await index.setMaxSteps(3, "rebalance");
 
     // Reblacance keep the amounts as per the wieghts
     tokenAmounts = await index.getTokensAndAmounts();

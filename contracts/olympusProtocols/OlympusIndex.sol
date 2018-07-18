@@ -31,10 +31,9 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public constant INITIAL_VALUE =  10**18;
     uint[] public weights;
     uint public accumulatedFee = 0;
-    uint public maxTransfers = 10;
+    mapping(bytes32 => uint) public maxSteps;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
     uint public rebalanceReceivedETHAmountFromSale;
-    uint public maxRebalanceSteps = 3;
 
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
 
@@ -61,6 +60,8 @@ contract OlympusIndex is IndexInterface, Derivative {
       address[] _tokens,
       uint[] _weights)
       public checkLength(_tokens, _weights) checkWeights(_weights) {
+        maxSteps["rebalance"] = 3;
+        maxSteps["withdraw"] = 10;
         name = _name;
         symbol = _symbol;
         totalSupply_ = 0;
@@ -264,9 +265,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
-    function setMaxTransfers(uint _maxTransfers) external onlyOwner {
-        require(_maxTransfers > 0);
-        maxTransfers = _maxTransfers;
+    function setMaxSteps(uint _maxSteps, bytes32 _category) external onlyOwner {
+        require(_maxSteps > 0);
+        maxSteps[_category] = _maxSteps;
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal {
@@ -290,7 +291,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             return true;
         }
 
-        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
+        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxSteps["withdraw"]);
         uint _eth;
         uint _tokenAmount;
         uint i;
@@ -416,7 +417,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint i;
         uint ETHBalanceBefore = address(this).balance;
 
-        uint currentFunctionStep = stepProvider.initializeOrContinue(category, maxRebalanceSteps);
+        uint currentFunctionStep = stepProvider.initializeOrContinue(category, maxSteps["rebalance"]);
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
@@ -472,11 +473,6 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function setAllowed(address[] accounts, WhitelistKeys _key,  bool allowed) onlyOwner public returns(bool){
         WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts,uint8(_key), allowed);
-        return true;
-    }
-
-    function updateMaxSteps(uint _maxRebalanceSteps) public onlyOwner returns (bool success){
-        maxRebalanceSteps = _maxRebalanceSteps;
         return true;
     }
 
