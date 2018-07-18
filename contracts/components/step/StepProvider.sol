@@ -25,17 +25,17 @@ contract StepProvider is StepInterface {
         return currentFunctionStep[msg.sender][_category];
     }
 
-    function getStatus(bytes32 _category) external view returns (uint currentStatus) {
+    function getStatus(bytes32 _category) external view returns (uint _currentStatus) {
         return status[msg.sender][_category];
     }
 
-    function updateStatus(bytes32 _category) external returns (bool success) {
+    function updateStatus(bytes32 _category) external returns (bool _success) {
         status[msg.sender][_category]++;
         currentFunctionStep[msg.sender][_category] = 0;
         return true;
     }
 
-    function goNextStep(bytes32 _category) external returns (bool shouldCallAgain) {
+    function goNextStep(bytes32 _category) external returns (bool _shouldCallAgain) {
         if(currentCallStep[msg.sender][_category] >= maxCalls[msg.sender][_category]){
             return false;
         }
