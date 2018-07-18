@@ -15,7 +15,7 @@ import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 import "../interfaces/RiskControlInterface.sol";
 import "../interfaces/LockerInterface.sol";
-
+import "../interfaces/StepInterface.sol";
 
 contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
@@ -75,7 +75,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint _initialFundFee,
         uint _rebalanceDeltaPercentage,
         uint _rebalanceIntervalHours,
-        uint _buyTokensIntervalHours) 
+        uint _buyTokensIntervalHours)
     external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -84,7 +84,9 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super.initialize(_componentList);
-        bytes32[9] memory names = [MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER];
+        bytes32[10] memory names = [
+            MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP
+        ];
         bytes32[] memory nameParameters = new bytes32[](names.length);
 
         for (uint i = 0; i < names.length; i++) {
@@ -262,10 +264,20 @@ contract OlympusIndex is IndexInterface, Derivative {
         maxTransfers = _maxTransfers;
     }
 
+    function guaranteeLiquidity(uint tokenBalance) internal {
+        uint _totalETHToReturn = ( tokenBalance * getPrice()) / 10 ** decimals;
+        if(_totalETHToReturn > getETHBalance()) {
+            uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+            getETHFromTokens(_tokenPercentToSell);
+        }
+    }
+
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
+
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
         if(_requests.length == 0) {
@@ -273,42 +285,36 @@ contract OlympusIndex is IndexInterface, Derivative {
             return true;
         }
 
-        uint _transfers = 0;
+        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
         uint _eth;
-        uint tokens;
-
-        if (!withdrawProvider.isInProgress()) {
-            withdrawProvider.start();
-        }
-        uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
-
-        if(_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-            getETHFromTokens(_tokenPercentToSell);
+        uint _tokenAmount;
+        uint i;
+        if (_transfers == 0) {
+            guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
+            withdrawProvider.freeze();
         }
 
-        for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
+        for(i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW) ; i++) {
 
 
-            (_eth, tokens) = withdrawProvider.withdraw(_requests[i]);
-            if(tokens == 0) {continue;}
+            (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
+            if(_tokenAmount == 0) {continue;}
 
-            balances[_requests[i]] -= tokens;
-            totalSupply_ -= tokens;
+            balances[_requests[i]] -= _tokenAmount;
+            totalSupply_ -= _tokenAmount;
             address(_requests[i]).transfer(_eth);
             _transfers++;
         }
 
-        if(!withdrawProvider.isInProgress()) {
-            withdrawProvider.unlock();
+        if(i == _requests.length) {
+            withdrawProvider.finalize();
+            stepProvider.finalize(WITHDRAW);
         }
         reimburse();
-        return !withdrawProvider.isInProgress(); // True if completed
+        return i == _requests.length; // True if completed
     }
 
-    function withdrawInProgress() external view returns(bool) {
-        return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
-    }
+
 
     function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
