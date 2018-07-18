@@ -113,14 +113,42 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const contract = web3.eth.contract(abi).at(address);
+const indexContract = web3.eth.contract(abi).at(address);
 const _componentList = '0x...';
 const _initialFundFee = '0x...';
 
-contract.initialize(_componentList, _initialFundFee, (err) => {
+indexContract.initialize(_componentList, _initialFundFee, (err) => {
   if (err) {
     return console.error(err);
   }
+});
+```
+
+#### 2. rebalance 
+
+```javascript
+function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
+```
+#### &emsp;Description
+> The token's price will changed after the Index execute buyTokens function, So the rebalance function is for keeping the weight of the token when the price of Index's token changed.
+
+#### &emsp;Returns
+> Whether the rebalance function execute successfully or not.
+
+#### &emsp;Example code
+
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.rebalance((err, results) => {
+  if (err) {
+    return console.error(err);
+  }
+  // Deal with results.
 });
 ```
 
