@@ -7,14 +7,14 @@ contract("Locker", accounts => {
     locker = await Locker.deployed();
     assert.ok(locker, "Locker contract is not deployed.");
 
-    calc.shouldSuccess(locker.setIntervalSeconds("lock", 1000), "CheckLock in first time shouldn't be reverted");
+    calc.shouldSuccess(locker.setTimeInterval("lock", 1000), "CheckLock in first time shouldn't be reverted");
 
     try {
-      await locker.checkLockerSeconds("lock");
+      await locker.checkLockerByTime("lock");
     } catch (e) {
       assert(false, "should't be revert");
     }
 
-    await calc.assertReverts(async () => await locker.checkLockerSeconds("lock"), "Shall revert");
+    await calc.assertReverts(async () => await locker.checkLockerByTime("lock"), "Shall revert");
   });
 });

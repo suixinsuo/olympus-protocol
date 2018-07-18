@@ -20,6 +20,7 @@ import "../interfaces/LockerInterface.sol";
 contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
+    bytes32 public constant BUYTOKENS = "BuyTokens";
 
     event ChangeStatus(DerivativeStatus status);
     event Invested(address user, uint amount);
@@ -70,7 +71,11 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceHours) 
+    function initialize(
+        address _componentList,
+        uint _initialFundFee,
+        uint _rebalanceDeltaPercentage
+   )
     external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -95,7 +100,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceHours);
+        initalizeTimers();
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -103,9 +108,10 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function setIntervalHours(bytes32 _timerName, uint _hours) external onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(_timerName,  _hours);
+    function setMultpleTimeIntervals(bytes32[] _timerNames, uint[] _hours) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setMultpleTimeIntervals(_timerNames,  _hours);
     }
+
     // Call after you have updated the MARKET provider, not required after initialize
     function registerInNewMarketplace() external onlyOwner returns(bool) {
         require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
@@ -343,7 +349,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // ----------------------------- REBALANCE -----------------------------
 
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
-
+        LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(BUYTOKENS);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
@@ -372,7 +378,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
-        LockerInterface(getComponentByName(LOCKER)).checkLockByHours(REBALANCE);
+        LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -421,6 +427,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
+    // ----------------------------- INITIALIZATION HELPERS -----------------------------
+
     function approveComponents() private {
         approveComponent(EXCHANGE);
         approveComponent(WITHDRAW);
@@ -442,4 +450,16 @@ contract OlympusIndex is IndexInterface, Derivative {
         updateComponent(REIMBURSABLE);
     }
 
+    function initalizeTimers() internal {
+        bytes32[] memory timerNames = new bytes32[](3);
+        uint[] memory intervals = new uint[](3);
+        timerNames[0] = REBALANCE;
+        timerNames[1] = BUYTOKENS;
+        timerNames[2] = WITHDRAW;
+        intervals[0] = DEFAULT_INTERVAL;
+        intervals[1] = DEFAULT_INTERVAL;
+        intervals[2] = DEFAULT_INTERVAL;
+
+        LockerInterface(getComponentByName(LOCKER)).setMultpleTimeIntervals(timerNames, intervals);
+    }
 }
