@@ -6,7 +6,7 @@ contract StepProvider is StepInterface {
 
 
     string public name = "StepProvider";
-    string public description = "Allow a execution step by step";
+    string public description = "Allow a function execution to span multiple transactions";
     string public category = "Steps";
     string public version = "1.0";
 
