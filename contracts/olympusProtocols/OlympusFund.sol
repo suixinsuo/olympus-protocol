@@ -9,6 +9,7 @@ import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/RiskControlInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../interfaces/WhitelistInterface.sol";
+import "../interfaces/StepInterface.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
 import "../interfaces/LockerInterface.sol";
@@ -59,7 +60,7 @@ contract OlympusFund is FundInterface, Derivative {
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
         super.initialize(_componentList);
-        bytes32[8] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER];
+        bytes32[9] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP];
         bytes32[] memory nameParameters = new bytes32[](names.length);
 
         for (uint i = 0; i < names.length; i++) {
@@ -279,10 +280,19 @@ contract OlympusFund is FundInterface, Derivative {
         return withdrawProvider.getTotalWithdrawAmount();
     }
 
-    function withdraw() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused external returns(bool) {
+    function guaranteeLiquidity(uint tokenBalance) internal {
+        uint _totalETHToReturn = ( tokenBalance * getPrice()) / 10 ** decimals;
+        if(_totalETHToReturn > getETHBalance()) {
+            uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+            getETHFromTokens(_tokenPercentToSell);
+        }
+    }
+
+   function withdraw() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused external returns(bool) {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
@@ -290,46 +300,35 @@ contract OlympusFund is FundInterface, Derivative {
             reimburse();
             return true;
         }
-
-        uint _transfers = 0;
+        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
         uint _eth;
-        uint tokens;
-
+        uint _tokenAmount;
+        uint i;
         if (!withdrawProvider.isInProgress()) {
-              LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
-
-            // Sell tokens before start to withdraw
-            uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
-            if(_totalETHToReturn > getETHBalance()) {
-                uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-                getETHFromTokens(_tokenPercentToSell);
-            }
-            withdrawProvider.start();
+            LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
+            guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
+            withdrawProvider.freeze();
         }
 
+        for(i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW) ; i++) {
 
-        for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
+            (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
+            if(_tokenAmount == 0) {continue;}
 
-
-            (_eth, tokens) = withdrawProvider.withdraw(_requests[i]);
-            if(tokens == 0) {continue;}
-
-            balances[_requests[i]] -= tokens;
-            totalSupply_ -= tokens;
+            balances[_requests[i]] -= _tokenAmount;
+            totalSupply_ -= _tokenAmount;
             address(_requests[i]).transfer(_eth);
-            _transfers++;
+         }
+
+        if(i == _requests.length) {
+            withdrawProvider.finalize();
+            stepProvider.finalize(WITHDRAW);
         }
 
-        if(!withdrawProvider.isInProgress()) {
-            withdrawProvider.unlock();
-        }
         reimburse();
-        return !withdrawProvider.isInProgress(); // True if completed
+        return i == _requests.length; // True if completed
     }
 
-    function withdrawInProgress() external view returns(bool) {
-        return  WithdrawInterface(getComponentByName(WITHDRAW)).isInProgress();
-    }
 
     function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
@@ -400,6 +399,7 @@ contract OlympusFund is FundInterface, Derivative {
         approveComponent(WHITELIST);
         approveComponent(FEE);
         approveComponent(REIMBURSABLE);
+
     }
 
     function updateAllComponents() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) {
@@ -410,7 +410,6 @@ contract OlympusFund is FundInterface, Derivative {
         updateComponent(WHITELIST);
         updateComponent(FEE);
         updateComponent(REIMBURSABLE);
+        updateComponent(STEP);
     }
-
-
 }
