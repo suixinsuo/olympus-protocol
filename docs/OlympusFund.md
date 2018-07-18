@@ -89,17 +89,18 @@ web3.eth.contract(abi).new(
 #### 1. initialize
 
 ```javascript
-function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable;
+function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage) onlyOwner external payable;
 ```
 
 #### &emsp;Description
 
-> Initialize the fund that was created with specified configurations and will be registered in olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your Fund)
+> Initialize the fund that was created with specified configurations and will be registered in Olympus Product List product and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your Fund)
 
 #### &emsp;Parameters
 
 > \_componentList: Address of olympus componentlist </br> > \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
 > value: The initial balance of the fund
+> \_rebalanceDeltaPercentage: The index will buy and sell tokens according to the weights is configurated with a margin of error set by deltaPercentage. If the token doesnt fit the amount specify for the weight in the marging of the delta, wont be modify saving gas on the transaction. Must be based in DENOMINATOR, so 1% is 1000.
 
 #### &emsp;Example code
 

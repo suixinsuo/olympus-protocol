@@ -2,7 +2,7 @@
 
 ### Introduction
 
-The fund manager has more insights of the projects thus he knows better which to invest and when to buy/sell​ tokens. Olympus Fund provides a really simple way, so he could operate tokens massively.
+The has more insight into the viability of projects thus he knows better in which tokens to invest and when to buy/sell​ tokens. Olympus Fund provides a really simple way, so the manager can easily operate many tokens at the same time
 
 Initialize a fund already created with the new code.
 
@@ -31,7 +31,7 @@ web3.eth.sendTransaction({ data, to: mot.address }, callback (err, results) => {
 });
 ```
 
-Sending MOT directly the fund won't affect the price of the Fund.
+Sending MOT directly to the fund won't affect the price of the Fund.
 
 ### Interface
 
@@ -53,7 +53,7 @@ There is also an extended function to retrieve the underlying tokens of the Fund
 
 GetTokens will return the list of tokens and the amount.
 
-Note: `getTokens()` function has different behaviour in the index, while `getTokens()` provides the list of tokens and heights, and `getTokensWithAmounts()` provides
+Note: `getTokens()` function has different behaviour in the index, while `getTokens()` provides the list of tokens and weights, and `getTokensWithAmounts()` provides
 the tokens and amounts.
 
 ### Get Tokens
@@ -66,12 +66,12 @@ the tokens and amounts.
 
 > You can also check the balance of a token, use ERC20(address).balanceOf(fund.address).
 
-Note: It might be slightly different than the real balance of those tokens (due to airdrop or mistakenly sending, etc) in both
+Note: When using getTokens, the result might be slightly different than the real balance of those tokens (due to airdrop or mistakenly sending, etc) in both
 of the cases.
 
 The Fund performs a recalculation automatically whenever a token is bought or sold to reflect the price change.
 
-Note: When a token is completely sold, still will be returned in the addresses array with the amount of 0.
+Note: When a token is completely sold, it's address will still be returned in the addresses array with the amount of 0.
 
 ##### Returns
 
@@ -102,7 +102,7 @@ fund.getTokens((err, results) => {
         public returns(bool);
 ```
 
-This function is used for the fund manager to buy tokens with the Ethers in the fund. #Refer to: getETHBalance.
+This function is used for the fund manager to buy tokens with the Ethers in the fund. Refer to: `getETHBalance()`.
 
 The list of tokens and the list of amounts must be of the same size, being the amounts the value of ETH that you want to spend in each
 token.
@@ -123,7 +123,7 @@ Note: The length of this array should be the same as the number of tokens.
 
 1.  The function reverts if there are untradable (determined by OlympusExchangeProvider) tokens in the token list.
 2.  Additional fee might apply during the Exchange process. Make sure you have enough MOT in your fund.
-3.  If the amounts array is different size of tokens array, or the amounts total is higher than the ETH available balance of the fund, it will surely revert.
+3.  It reverts if the parameters are invalid, for instance: the lengths of the arrays differ or the specified ETH value doesn't exactly match msg.value.
 4.  The function reverts if any of the transactions is considered​ risky by RiskControlProvider.
 5.  The function reverts if the ExchangeProvider can't trade within the specified rate after a period of time.
 6.  The function reverts if the caller is not permitted.
@@ -134,15 +134,14 @@ Boolean indicates whether the buying succeeds​.
 
 #### Example code
 
-We are investing 1 ETH, 50% in each token. (Knowing that our fund holds 1 ETH in his available balance).
-First, we set the tokens and amounts, we can select a rate with `0` value, or find the current one
-from the price provider component.
+Example of how get the rates of the tokens.
 
 ```javascript
 const priceAddress = "0x0adasd...";
 const priveAbi = [];
 const priveProvider = web3.eth.contract(priceAbi).at(priveAddress);
 
+// 1 ETH invested 0.5ETH in each token
 const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
 const tokenAddreses = ["0x263c6184...", "0x263c6184..."];
 const rates = [];
@@ -158,8 +157,11 @@ const priveProvider.getPrice(ETH, tokenAddreses[0], amounts[0], "0x0" , (err, to
 });
 ```
 
+TokenAddresses, amounts and rates are calculated in the previus code.
+Instead of rates calculated we could use `[0,0]` which will accept any rate available.
+
 ```javascript
-const data = fund.buyTokens.getData("0x0", tokenAddresses, amounts, [0]);
+const data = fund.buyTokens.getData("0x0", tokenAddresses, amounts, rates);
 
 web3.eth.sendTransation({ data, to: fund.address }, (err, results) => {
   if (err) {
@@ -180,8 +182,7 @@ web3.eth.sendTransation({ data, to: fund.address }, (err, results) => {
         public returns(bool);
 ```
 
-We can sell tokens using this function. The tokens are sold based in the amounts that the fund has (not the owner of the fund). You can query them
-using the previous function `getTokens()`.
+We can sell tokens using this function. The tokens are sold based in the amounts that the fund has (not the owner of the fund). Sell the tokens the fund holds and retrieve ETH back. To know which tokens are available, check `getTokens()`.
 
 ##### Parameters
 
@@ -197,7 +198,7 @@ Note: The length of this array should be the same as the number of tokens.
 
 1.  The function reverts if there are untradable (determined by OlympusExchangeProvider) tokens in the token list.
 2.  Additional fee might apply during the Exchange process. Make sure you have enough MOT in your fund.
-3.  If the amounts array is different size of tokens address, or the amounts total is higher than the ETH available balance of the fund.
+3.  It reverts if the parameters are invalid, for instance: the lengths of the arrays differ or the specified ETH value doesn't exactly match msg.value.
 4.  The function reverts if any of the transactions is considered​ risky by RiskControlProvider.
 5.  The function reverts if the ExchangeProvider can't trade within the specified rate after a period of time.
 6.  The function reverts if the caller is not permitted.
@@ -208,7 +209,7 @@ Boolean indicates whether the buying succeeds​.
 
 #### Example code
 
-We are selling 1000 MOT, that we have purchased before in the token.
+In the code below, sell the 1000 MOT in the fund.
 
 ```javascript
 const tokenAddreses = ["0x263c6184...", "0x263c6184..."];
@@ -229,5 +230,4 @@ web3.eth.sendTransation({ data, to: fund.address }, (err, results) => {
 
 ### Price update.
 
-In a real situation, buy or sell tokens is convert your ETH in assets values or the opposite, that shouldn't change the price of the fund. In a realistic situation,
-the slippage rate, the small fees, etc, will affect to the value bought or sold slightly, so you can expect a slightly reduce of the price of your find.
+There are 2 facts that might slightly affect the price of the Fund. For trade, the assets you get mostly is not exactly equal to what you have estimated; For some components, some little amounts of fee might also apply.
