@@ -3,8 +3,6 @@ pragma solidity 0.4.24;
 import "../../interfaces/StepInterface.sol";
 
 contract StepProvider is StepInterface {
-
-
     string public name = "StepProvider";
     string public description = "Allow a function execution to span multiple transactions";
     string public category = "Steps";
