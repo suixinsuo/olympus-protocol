@@ -33,7 +33,6 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public accumulatedFee = 0;
     uint public maxTransfers = 10;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
-    StepInterface stepProvider = StepInterface(0x0);
 
     modifier checkLength(address[] _tokens, uint[] _weights) {
         require(_tokens.length == _weights.length);
@@ -98,7 +97,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceHours);
-        stepProvider = StepInterface(componentList.getLatestComponent(STEP));
 
         status = DerivativeStatus.Active;
 
@@ -254,6 +252,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
         if(_requests.length == 0) {
@@ -350,7 +349,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-
+        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
         if(getETHBalance() == 0) {
             reimburse();
@@ -370,14 +369,22 @@ contract OlympusIndex is IndexInterface, Derivative {
             totalAmount += _amounts[i];
         }
 
-        for (i = currentFunctionStep; i < tokens.length; i++) {
-            require(exchange.buyToken.value(_amounts[i])(_tokensErc20[i], _amounts[i], _rates[i], address(this), 0x0, 0x0));
+        for (uint t = currentFunctionStep; t < tokens.length; t++) {
+            require(exchange.buyToken.value(_amounts[t])(_tokensErc20[t], _amounts[t], _rates[t], address(this), 0x0, 0x0));
             if(stepProvider.goNextStep("IndexBuyTokens")){
+                reimburse();  
                 return false;
+            }
+            if(t == tokens.length - 1 ){
+                stepProvider.finalize("IndexBuyTokens");
+                reimburse();
+                return true;
             }
         }
 
         stepProvider.updateStatus("IndexBuyTokens");
+
+
 
         reimburse();
         return true;
