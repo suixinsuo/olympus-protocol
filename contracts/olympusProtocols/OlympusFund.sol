@@ -75,7 +75,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(getComponentByName(LOCKER)).setIntervalSeconds(WITHDRAW, _withdrawFrequency);
+        LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
 
         status = DerivativeStatus.Active;
         emit ChangeStatus(status);
@@ -98,7 +98,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function setLocker(bytes32 _type, uint _seconds) onlyOwner public {
-        LockerInterface(getComponentByName(LOCKER)).setIntervalSeconds(_type, _seconds);
+        LockerInterface(getComponentByName(LOCKER)).setTimeInterval(_type, _seconds);
     }
 
     // ----------------------------- FUND INTERFACE -----------------------------
@@ -296,7 +296,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint tokens;
 
         if (!withdrawProvider.isInProgress()) {
-              LockerInterface(getComponentByName(LOCKER)).checkLockerSeconds(WITHDRAW);
+              LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
 
             // Sell tokens before start to withdraw
             uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;

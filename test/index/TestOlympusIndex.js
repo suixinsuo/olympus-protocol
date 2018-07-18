@@ -132,8 +132,12 @@ contract("Olympus Index", accounts => {
     await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
 
-    await index.initialize(componentList.address, 0, 30, 24, { value: web3.toWei(indexData.ethDeposit, "ether") });
+    await index.initialize(componentList.address, 0, 30, { value: web3.toWei(indexData.ethDeposit, "ether") });
     const myProducts = await market.getOwnProducts();
+
+    // Reset the intervals for easy testing
+    const intervals = [await index.REBALANCE(), await index.BUYTOKENS(), await index.WITHDRAW()];
+    await index.setMultpleTimeIntervals(intervals, [0, 0, 0]);
 
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], index.address);
@@ -145,7 +149,9 @@ contract("Olympus Index", accounts => {
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await index.initialize(componentList.address, 0, 30, 24, { value: web3.toWei(indexData.ethDeposit, "ether") });
+      await index.initialize(componentList.address, 0, 30, {
+        value: web3.toWei(indexData.ethDeposit, "ether")
+      });
     }, "Shall revert");
   });
 
@@ -228,10 +234,10 @@ contract("Olympus Index", accounts => {
   });
 
   it("Can't rebalance so frequently", async () => {
-    await calc.assertReverts(async () => await index.rebalance(), "Should be reverted")
+    await calc.assertReverts(async () => await index.rebalance(), "Should be reverted");
     // disable the lock
-    await index.setIntervalHours(await index.REBALANCE(), 0);
-  })
+    await index.setMultpleTimeIntervals([await index.REBALANCE()], [0]);
+  });
 
   it("Shall be able to request and withdraw", async () => {
     let tx;
@@ -378,6 +384,12 @@ contract("Olympus Index", accounts => {
       const expectedAmount = expectedTokenAmount(initialIndexBalance, rates, index);
       assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
     });
+  });
+
+  it("Can't buy tokens so frequently", async () => {
+    await calc.assertReverts(async () => await index.buyTokens(), "Should be reverted");
+    // disable the lock
+    await index.setMultpleTimeIntervals([await index.BUYTOKENS()], [0]);
   });
 
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
