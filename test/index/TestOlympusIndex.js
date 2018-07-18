@@ -221,9 +221,13 @@ contract("Olympus Index", accounts => {
 
   it("Rebalance works with no tokens", async () => {
     let tx;
-    tx = await index.rebalance();
-    assert.ok(tx);
-    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call();
+      tx = await index.rebalance();
+      assert.ok(tx);
+      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
+    }
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
@@ -427,8 +431,15 @@ contract("Olympus Index", accounts => {
     const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
     // Execute Rebalance
-    tx = await index.rebalance();
-    assert.ok(tx);
+    // Make sure it has to do multiple calls
+    await index.updateMaxSteps(1);
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call();
+      tx = await index.rebalance();
+      assert.ok(tx);
+      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
+    }
 
     // Reblacance keep the amounts as per the wieghts
     tokenAmounts = await index.getTokensAndAmounts();

@@ -34,7 +34,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public maxTransfers = 10;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
     uint public rebalanceReceivedETHAmountFromSale;
-    uint public maxRebalanceSteps = 10;
+    uint public maxRebalanceSteps = 3;
 
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
 
@@ -402,6 +402,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
                 if(stepProvider.goNextStep(category) == true){
                     rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
+                    reimburse();
                     return false;
                 }
             }
@@ -419,6 +420,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                     exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
                 );
                 if(stepProvider.goNextStep(category) == true){
+                    reimburse();
                     return false;
                 }
             }
@@ -445,6 +447,11 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function setAllowed(address[] accounts, WhitelistKeys _key,  bool allowed) onlyOwner public returns(bool){
         WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts,uint8(_key), allowed);
+        return true;
+    }
+
+    function updateMaxSteps(uint _maxRebalanceSteps) public onlyOwner returns (bool success){
+        maxRebalanceSteps = _maxRebalanceSteps;
         return true;
     }
 
