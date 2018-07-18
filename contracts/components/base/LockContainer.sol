@@ -31,9 +31,9 @@ contract Locker is ComponentInterface, LockerInterface  {
             intervalHours[msg.sender][_lockerNames[i]] = _blocks[i];
         }
     }
-    
+
     function checkLockByHours(bytes32 _timerName) external {
-        require(now >= timer[msg.sender][_timerName] + intervalHours[msg.sender][_timerName] * 60 * 60);
+        require(now >= timer[msg.sender][_timerName] + intervalHours[msg.sender][_timerName]);
         timer[msg.sender][_timerName] = now;
     }
 

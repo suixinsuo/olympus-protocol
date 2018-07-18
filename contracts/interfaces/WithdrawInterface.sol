@@ -7,9 +7,10 @@ contract WithdrawInterface is ComponentInterface {
 
     function request(address _requester, uint amount) external returns(bool);
     function withdraw(address _requester) external returns(uint eth, uint tokens);
-    function start() external;
+    function freeze() external;
+    // TODO remove in progress
     function isInProgress() external view returns(bool);
-    function unlock() external;
+    function finalize() external;
     function getUserRequests() external view returns(address[]);
     function getTotalWithdrawAmount() external view returns(uint);
 
