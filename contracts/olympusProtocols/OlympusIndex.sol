@@ -422,14 +422,14 @@ contract OlympusIndex is IndexInterface, Derivative {
         // Sell Tokens
         if(stepProvider.getStatus(category) == uint(RebalancePhases.SellTokens)){
             for (i = currentFunctionStep; i < tokensToSell.length; i++) {
-                ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), 0);
-                ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
-                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
-                if(stepProvider.goNextStep(category) == true){
+                if(stepProvider.goNextStep(category) == false){
                     rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
                     reimburse();
                     return false;
                 }
+                ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), 0);
+                ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
             }
             rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
             stepProvider.updateStatus(category);
@@ -441,13 +441,13 @@ contract OlympusIndex is IndexInterface, Derivative {
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
         if(stepProvider.getStatus(category) == uint(RebalancePhases.BuyTokens)){
             for (i = currentFunctionStep; i < tokensToBuy.length; i++) {
-                require(
-                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
-                );
-                if(stepProvider.goNextStep(category) == true){
+                if(stepProvider.goNextStep(category) == false){
                     reimburse();
                     return false;
                 }
+                require(
+                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
+                );
             }
         }
 
