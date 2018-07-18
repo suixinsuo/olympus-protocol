@@ -18,7 +18,6 @@ const Withdraw = artifacts.require("AsyncWithdraw");
 const Locker = artifacts.require("Locker");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
-const StepProvider = artifacts.require("StepProvider");
 
 const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
