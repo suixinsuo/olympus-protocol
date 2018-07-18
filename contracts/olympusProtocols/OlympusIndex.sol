@@ -70,12 +70,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(
-        address _componentList,
-        uint _initialFundFee,
-        uint _rebalanceDeltaPercentage,
-        uint _rebalanceIntervalHours,
-        uint _buyTokensIntervalHours)
+    // solhint-disable-next-line
+    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceHours) 
     external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -116,25 +112,17 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function setIntervalHour(bytes32 _timerName, uint _hours) external onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHour(_timerName,  _hours);
-    }
-
-    function setIntervalHours(bytes32[] _timerNames, uint[] _hours) external onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(_timerNames,  _hours);
-    }
-
-    // Call after you have updated the MARKET provider, not required after initialize
-    function registerInNewMarketplace() external onlyOwner returns(bool) {
-        require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
-        return true;
+    function setIntervalHours(bytes32 _timerName, uint _hours) external onlyOwner {
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(_timerName, _hours);
     }
 
     // Return tokens and weights
     function getTokens() public view returns (address[] _tokens, uint[] _weights) {
         return (tokens, weights);
     }
+
     // Return tokens and amounts
+    // solhint-disable-next-line
     function getTokensAndAmounts() external view returns(address[], uint[]) {
         uint[] memory _amounts = new uint[](tokens.length);
         for (uint i = 0; i < tokens.length; i++) {
@@ -143,7 +131,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         return (tokens, _amounts);
     }
 
+    // solhint-disable-next-line
     function changeStatus(DerivativeStatus _status) public onlyOwner returns(bool) {
+        // solhint-disable-next-line
         require(_status != DerivativeStatus.New && status != DerivativeStatus.New && _status != DerivativeStatus.Closed);
         require(status != DerivativeStatus.Closed && _status != DerivativeStatus.Closed);
 
@@ -152,7 +142,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
-    function close() public onlyOwner returns(bool success){
+    // solhint-disable-next-line
+    function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
         getETHFromTokens(DENOMINATOR); // 100% all the tokens
         status = DerivativeStatus.Closed;
@@ -161,7 +152,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- DERIVATIVE -----------------------------
-
+    // solhint-disable-next-line
     function invest() public payable
      whenNotPaused
      whitelisted(WhitelistKeys.Investment)
@@ -172,8 +163,8 @@ contract OlympusIndex is IndexInterface, Derivative {
          // Current value is already added in the balance, reduce it
         uint _sharePrice;
 
-        if(totalSupply_ > 0) {
-            _sharePrice = getPrice() - ( (msg.value * 10 ** decimals ) / totalSupply_);
+        if (totalSupply_ > 0) {
+            _sharePrice = getPrice() - ((msg.value * 10 ** decimals) / totalSupply_);
          } else {
             _sharePrice = INITIAL_VALUE;
         }
@@ -181,7 +172,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
 
-        uint _investorShare = ( ( (msg.value-fee) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
+        uint _investorShare = (((msg.value-fee) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
         _investorShare = _investorShare / DENOMINATOR;
 
         accumulatedFee += fee;
@@ -192,18 +183,18 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
-    function getPrice() public view returns(uint)  {
-        if(totalSupply_ == 0) {
+    function getPrice() public view returns(uint) {
+        if (totalSupply_ == 0) {
             return INITIAL_VALUE;
         }
 
         // Total Value in ETH among its tokens + ETH new added value
         return (
-          ((getAssetsValue() + getETHBalance() ) * 10 ** decimals ) / (totalSupply_),
+          ((getAssetsValue() + getETHBalance()) * 10 ** decimals) / (totalSupply_),
         );
     }
 
-    function getETHBalance() public view returns(uint){
+    function getETHBalance() public view returns(uint) {
         return address(this).balance - accumulatedFee;
     }
 
@@ -219,11 +210,9 @@ contract OlympusIndex is IndexInterface, Derivative {
 
             _balance = ERC20(tokens[i]).balanceOf(address(this));
 
-            if(_balance == 0){continue;}
-
+            if (_balance == 0) { continue; }
             (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
-
-            if(_expectedRate == 0){continue;}
+            if (_expectedRate == 0) { continue; }
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
 
         }
@@ -232,10 +221,12 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // ----------------------------- FEES  -----------------------------
     // Owner can send ETH to the Index, to perform some task, this eth belongs to him
+    // solhint-disable-next-line
     function addOwnerBalance() external payable onlyOwner {
         accumulatedFee += msg.value;
     }
 
+    // solhint-disable-next-line
     function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
         require(accumulatedFee >= amount);
         accumulatedFee -= amount;
@@ -375,15 +366,17 @@ contract OlympusIndex is IndexInterface, Derivative {
             return true;
         }
         uint[] memory _amounts = new uint[](tokens.length);
-        uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
-        ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
+        // Initialize to 0, making sure any rate is fine
+        uint[] memory _rates = new uint[](tokens.length); 
+        // Initialize to 0, making sure any rate is fine
+        ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); 
         uint ethBalance = getETHBalance();
         uint totalAmount = 0;
 
-        for(uint8 i = 0; i < tokens.length; i++) {
+        for (uint8 i = 0; i < tokens.length; i++) {
             _amounts[i] = ethBalance * weights[i] / 100;
             _tokensErc20[i] = ERC20Extended(tokens[i]);
-            (, _rates[i] ) = exchange.getPrice(ETH,  _tokensErc20[i],  _amounts[i], 0x0);
+            (, _rates[i] ) = exchange.getPrice(ETH, _tokensErc20[i], _amounts[i], 0x0);
             totalAmount += _amounts[i];
         }
 
@@ -411,7 +404,6 @@ contract OlympusIndex is IndexInterface, Derivative {
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
             require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
-
         }
 
         // Buy Tokens
@@ -427,7 +419,6 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- WHITELIST -----------------------------
-
     function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
         WhitelistInterface(getComponentByName(WHITELIST)).enable(uint8(_key));
         return true;
@@ -438,8 +429,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
-    function setAllowed(address[] accounts, WhitelistKeys _key,  bool allowed) onlyOwner public returns(bool){
-        WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts,uint8(_key), allowed);
+    function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool) {
+        WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts, uint8(_key), allowed);
         return true;
     }
 
@@ -452,16 +443,4 @@ contract OlympusIndex is IndexInterface, Derivative {
         approveComponent(REIMBURSABLE);
         approveComponent(REBALANCE);
     }
-
-    function updateAllComponents() public onlyOwner {
-        updateComponent(MARKET);
-        updateComponent(EXCHANGE);
-        updateComponent(WITHDRAW);
-        updateComponent(RISK);
-        updateComponent(WHITELIST);
-        updateComponent(FEE);
-        updateComponent(REBALANCE);
-        updateComponent(REIMBURSABLE);
-    }
-
 }
