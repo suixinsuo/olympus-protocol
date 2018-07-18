@@ -380,10 +380,13 @@ contract OlympusIndex is IndexInterface, Derivative {
         bytes32 category = "rebalance";
         StepInterface stepProvider = StepInterface(ReimbursableInterface(getComponentByName(STEP)));
 
-        LockerInterface(getComponentByName(LOCKER)).checkLockByHours(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        if(!rebalanceProvider.getRebalanceInProgress()){
+            LockerInterface(getComponentByName(LOCKER)).checkLockByHours(REBALANCE);
+        }
+
         address[] memory tokensToSell;
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;

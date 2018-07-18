@@ -133,6 +133,10 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         return amountsToBuy[msg.sender];
     }
 
+    function getRebalanceInProgress() external returns (bool inProgress) {
+        return rebalanceStatus[msg.sender] != RebalanceStatus.Initial;
+    }
+
     function finalizeRebalance() external returns (bool success) {
         rebalanceStatus[msg.sender] = RebalanceStatus.Initial;
         delete tokensToSell[msg.sender];
