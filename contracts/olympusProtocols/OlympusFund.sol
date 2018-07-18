@@ -296,16 +296,17 @@ contract OlympusFund is FundInterface, Derivative {
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
-        if(_requests.length == 0) {
-            reimburse();
-            return true;
-        }
+
         uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
         uint _eth;
         uint _tokenAmount;
         uint i;
-        if (!withdrawProvider.isInProgress()) {
+        if (_transfers == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
+            if(_requests.length == 0) {
+              reimburse();
+              return true;
+            }
             guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
             withdrawProvider.freeze();
         }

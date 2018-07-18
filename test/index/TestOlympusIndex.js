@@ -34,9 +34,12 @@ const indexData = {
   category: "Index",
   decimals: 18,
   managmentFee: 0.1,
+  initialManagementFee: 0,
   ethDeposit: 0.5, // ETH
   weights: [50, 50],
-  tokensLenght: 2
+  tokensLenght: 2,
+  maxTransfers: 10,
+  rebalanceDelta: 30
 };
 const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
@@ -136,7 +139,9 @@ contract("Olympus Index", accounts => {
     await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
 
-    await index.initialize(componentList.address, 0, 30, { value: web3.toWei(indexData.ethDeposit, "ether") });
+    await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
+      value: web3.toWei(indexData.ethDeposit, "ether")
+    });
     const myProducts = await market.getOwnProducts();
 
     // Reset the intervals for easy testing
@@ -153,7 +158,7 @@ contract("Olympus Index", accounts => {
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await index.initialize(componentList.address, 0, 30, {
+      await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
         value: web3.toWei(indexData.ethDeposit, "ether")
       });
     }, "Shall revert");
@@ -269,7 +274,7 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
-    await index.setMaxTransfers(10); // Restore
+    await index.setMaxTransfers(indexData.maxTransfers); // Restore
   });
 
   it("Shall be able to invest whitelist enabled", async () => {
@@ -332,6 +337,35 @@ contract("Olympus Index", accounts => {
 
     //Reset
     await index.disableWhitelist(WhitelistType.Maintenance);
+  });
+
+  it("Shall be able to withdraw only after frequency", async () => {
+    let tx;
+    const interval = 5; //5 seconds frequency
+    await index.setMaxTransfers(1); // For testing
+    await index.setMultpleTimeIntervals([await index.WITHDRAW()], [interval]); // For testing
+
+    // // The lock shall not affect the multy step
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
+
+    await index.requestWithdraw(toTokenWei(1), { from: investorA });
+    await index.requestWithdraw(toTokenWei(1), { from: investorB });
+
+    await index.withdraw();
+    assert.notEqual((await index.balanceOf(investorB)).toNumber(), 0, " B hasn't withdraw yet, step 1/2");
+    await index.withdraw(); // Lock is active, but multistep also
+    assert.equal((await index.balanceOf(investorB)).toNumber(), 0, " B has withdraw, withdraw complete");
+
+    await calc.assertReverts(async () => await index.withdraw(), "Lock avoids the withdraw"); // Lock is active, so we cant withdraw
+    // Reset data, so will be updated in next chek
+    await index.setMultpleTimeIntervals([await index.WITHDRAW()], [0]); // Will be updated in the next withdraw
+    await index.setMaxTransfers(indexData.maxTransfers);
+
+    await calc.waitSeconds(interval);
+    // Lock is over, we can witdraw again
+    tx = await index.withdraw(); // This withdraw has the previus time lock , but will set a new one with 0
+    assert.ok(tx);
   });
 
   it("Manager shall be able to collect a from investment and withdraw it", async () => {

@@ -84,6 +84,9 @@ async function deployMockfund(deployer, network) {
 async function deployReimbursable(deployer, network) {
   deployer.deploy([Reimbursable]);
 }
+async function deployLocker(deployer, network) {
+  deployer.deploy([Locker]);
+}
 
 async function deployOlympusFund(deployer, network) {
   const args = args.parseArgs();
