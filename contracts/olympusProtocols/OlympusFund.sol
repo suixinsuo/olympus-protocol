@@ -258,7 +258,7 @@ contract OlympusFund is FundInterface, Derivative {
     function requestWithdraw(uint amount)
         whenNotPaused
         withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-        externalAllow a function execution to span multiple transactions {
+        external {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
