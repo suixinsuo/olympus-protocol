@@ -1,6 +1,12 @@
 const log = require("../utils/log");
 const calc = require("../utils/calc");
-
+const {
+  DerivativeProviders,
+  ethToken,
+  DerivativeStatus,
+  WhitelistType,
+  DerivativeType
+} = require("../utils/constants");
 const Fund = artifacts.require("OlympusFund");
 const AsyncWithdraw = artifacts.require("components/widrwaw/AsyncWithdraw");
 const RiskControl = artifacts.require("components/RiskControl");
@@ -10,18 +16,12 @@ const Reimbursable = artifacts.require("Reimbursable");
 const MockToken = artifacts.require("MockToken");
 const Whitelist = artifacts.require("WhitelistProvider");
 const ComponentList = artifacts.require("ComponentList");
+const StepProvider = artifacts.require("StepProvider");
 
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
-
-// Constants
-
-const ethToken = "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
-const DerivativeStatus = { New: 0, Active: 1, Paused: 2, Closed: 3 };
-const DerivativeType = { Index: 0, Fund: 1 };
-const WhitelistType = { Investment: 0, Maintenance: 1 };
 
 const fundData = {
   name: "OlympusFund",
@@ -50,6 +50,7 @@ contract("Fund", accounts => {
   let whitelist;
   let reimbursable;
   let componentList;
+  let stepProvider;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -66,6 +67,7 @@ contract("Fund", accounts => {
     whitelist = await Whitelist.deployed();
     reimbursable = await Reimbursable.deployed();
     componentList = await ComponentList.deployed();
+    stepProvider = await StepProvider.deployed();
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
@@ -73,19 +75,20 @@ contract("Fund", accounts => {
     await percentageFee.setMotAddress(mockMOT.address);
     await whitelist.setMotAddress(mockMOT.address);
     await reimbursable.setMotAddress(mockMOT.address);
+
+    componentList.setComponent(DerivativeProviders.MARKET, market.address);
+    componentList.setComponent(DerivativeProviders.EXCHANGE, exchange.address);
+    componentList.setComponent(DerivativeProviders.WITHDRAW, asyncWithdraw.address);
+    componentList.setComponent(DerivativeProviders.RISK, riskControl.address);
+    componentList.setComponent(DerivativeProviders.FEE, percentageFee.address);
+    componentList.setComponent(DerivativeProviders.WHITELIST, whitelist.address);
+    componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
+    componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
   });
 
   it("Create a fund", async () => {
     fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
-
-    componentList.setComponent(await fund.MARKET(), market.address);
-    componentList.setComponent(await fund.EXCHANGE(), exchange.address);
-    componentList.setComponent(await fund.WITHDRAW(), asyncWithdraw.address);
-    componentList.setComponent(await fund.RISK(), riskControl.address);
-    componentList.setComponent(await fund.FEE(), percentageFee.address);
-    componentList.setComponent(await fund.WHITELIST(), whitelist.address);
-    componentList.setComponent(await fund.REIMBURSABLE(), reimbursable.address);
 
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
 
@@ -182,15 +185,18 @@ contract("Fund", accounts => {
     tx = await fund.withdraw();
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
-    assert.equal(await fund.withdrawInProgress(), true, " Withdraw has not finished");
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
+    // Cant request while withdrawing
+    await calc.assertReverts(
+      async () => await fund.requestWithdraw(toTokenWei(1), { from: investorA }),
+      "Cant request"
+    );
 
     // Second withdraw succeeds
     tx = await fund.withdraw();
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
 
-    assert.equal(await fund.withdrawInProgress(), false, " Withdraw has finished");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
     await fund.setMaxTransfers(10); // Restore
@@ -210,14 +216,12 @@ contract("Fund", accounts => {
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
 
     // Request always allowed
-    await fund.setAllowed([investorA, investorB], WhitelistType.Investment, true);
     await fund.requestWithdraw(toTokenWei(1), { from: investorA });
     await fund.requestWithdraw(toTokenWei(1), { from: investorB });
 
     tx = await fund.withdraw();
     assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
-    assert.equal(await fund.withdrawInProgress(), false, " Withdraw has finished");
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, " B has withdrawn");
 
