@@ -34,7 +34,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public maxTransfers = 10;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
     uint public rebalanceReceivedETHAmountFromSale;
-    StepInterface public sp = StepInterface(0x0);
+    uint public maxRebalanceSteps = 10;
 
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
 
@@ -84,7 +84,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super.initialize(_componentList);
-        bytes32[9] memory names = [MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER];
+        bytes32[10] memory names = [MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP];
         bytes32[] memory nameParameters = new bytes32[](names.length);
 
         for (uint i = 0; i < names.length; i++) {
@@ -378,7 +378,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
         bytes32 category = "rebalance";
-        uint maxSteps = 10;
+        StepInterface stepProvider = StepInterface(ReimbursableInterface(getComponentByName(STEP)));
+
         LockerInterface(getComponentByName(LOCKER)).checkLockByHours(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
@@ -390,40 +391,40 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint i;
         uint ETHBalanceBefore = address(this).balance;
 
-        uint currentFunctionStep = sp.initializeOrContinue(category, maxSteps);
+        uint currentFunctionStep = stepProvider.initializeOrContinue(category, maxRebalanceSteps);
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
-        if(sp.getStatus(category) == uint(RebalancePhases.SellTokens)){
+        if(stepProvider.getStatus(category) == uint(RebalancePhases.SellTokens)){
             for (i = currentFunctionStep; i < tokensToSell.length; i++) {
                 ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), 0);
                 ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
                 require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
-                if(sp.goNextStep(category) == true){
+                if(stepProvider.goNextStep(category) == true){
                     rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
                     return false;
                 }
             }
             rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
-            sp.updateStatus(category);
+            stepProvider.updateStatus(category);
             currentFunctionStep = 0;
         }
 
 
         // Buy Tokens
-        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale, amountsToBuy);
-        if(sp.getStatus(category) == uint(RebalancePhases.BuyTokens)){
+        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
+        if(stepProvider.getStatus(category) == uint(RebalancePhases.BuyTokens)){
             for (i = currentFunctionStep; i < tokensToBuy.length; i++) {
                 require(
                     exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
                 );
-                if(sp.goNextStep(category) == true){
+                if(stepProvider.goNextStep(category) == true){
                     return false;
                 }
             }
         }
 
-        sp.finalize(category);
+        stepProvider.finalize(category);
         rebalanceProvider.finalizeRebalance();
         rebalanceReceivedETHAmountFromSale = 0;
         reimburse();

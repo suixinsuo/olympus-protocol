@@ -4,6 +4,7 @@ const calc = require("../utils/calc");
 const OlympusIndex = artifacts.require("OlympusIndex");
 const Rebalance = artifacts.require("RebalanceProvider");
 const RiskControl = artifacts.require("RiskControl");
+const StepProvider = artifacts.require("StepProvider");
 const Marketplace = artifacts.require("Marketplace");
 const Whitelist = artifacts.require("WhitelistProvider");
 const Withdraw = artifacts.require("AsyncWithdraw");
@@ -59,6 +60,7 @@ contract("Olympus Index", accounts => {
   let reimbursable;
   let tokens;
   let componentList;
+  let step;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -79,6 +81,7 @@ contract("Olympus Index", accounts => {
     whitelist = await Whitelist.deployed();
     reimbursable = await Reimbursable.deployed();
     componentList = await ComponentList.deployed();
+    step = await StepProvider.deployed();
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
@@ -126,6 +129,7 @@ contract("Olympus Index", accounts => {
     componentList.setComponent(await index.WHITELIST(), whitelist.address);
     componentList.setComponent(await index.REIMBURSABLE(), reimbursable.address);
     componentList.setComponent(await index.REBALANCE(), rebalance.address);
+    componentList.setComponent(await index.STEP(), step.address);
 
     assert.equal((await index.status()).toNumber(), 0); // new
 
