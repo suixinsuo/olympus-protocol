@@ -8,7 +8,7 @@ contract LockerInterface {
      */
     function checkLockByBlockNumber(bytes32 _lockerName) external;
     function setIntervalBlocks(bytes32 _lockerName, uint _blocks) external;
-    function checkLockByHours(bytes32 _timerName) external;
-    function setIntervalHours(bytes32 _timerName, uint _blocks) external;
+    function checkLockerSeconds(bytes32 _timerName) external;
+    function setIntervalSeconds(bytes32 _timerName, uint _seconds) external;
 }
 

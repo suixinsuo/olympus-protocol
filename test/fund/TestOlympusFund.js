@@ -10,6 +10,7 @@ const Reimbursable = artifacts.require("Reimbursable");
 const MockToken = artifacts.require("MockToken");
 const Whitelist = artifacts.require("WhitelistProvider");
 const ComponentList = artifacts.require("ComponentList");
+const LockerProvider = artifacts.require("Locker");
 
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
@@ -30,7 +31,10 @@ const fundData = {
   description: "Sample of real fund",
   decimals: 18,
   managmentFee: 0.1,
-  ethDeposit: 0.5 // ETH
+  initialManagementFee: 0,
+  withdrawInterval: 0,
+  ethDeposit: 0.5, // ETH
+  maxTransfers: 10
 };
 
 const toTokenWei = amount => {
@@ -50,7 +54,7 @@ contract("Fund", accounts => {
   let whitelist;
   let reimbursable;
   let componentList;
-
+  let locker;
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
@@ -66,6 +70,7 @@ contract("Fund", accounts => {
     whitelist = await Whitelist.deployed();
     reimbursable = await Reimbursable.deployed();
     componentList = await ComponentList.deployed();
+    locker = await LockerProvider.deployed();
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
@@ -76,7 +81,14 @@ contract("Fund", accounts => {
   });
 
   it("Create a fund", async () => {
-    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
+    fund = await Fund.new(
+      fundData.name,
+      fundData.symbol,
+      fundData.description,
+      fundData.category,
+      fundData.decimals,
+      { gas: 8e6 } // At the moment require 5.7M
+    );
     assert.equal((await fund.status()).toNumber(), 0); // new
 
     componentList.setComponent(await fund.MARKET(), market.address);
@@ -86,10 +98,13 @@ contract("Fund", accounts => {
     componentList.setComponent(await fund.FEE(), percentageFee.address);
     componentList.setComponent(await fund.WHITELIST(), whitelist.address);
     componentList.setComponent(await fund.REIMBURSABLE(), reimbursable.address);
+    componentList.setComponent(await fund.LOCKER(), locker.address);
 
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
 
-    await fund.initialize(componentList.address, 0, { value: web3.toWei(fundData.ethDeposit, "ether") });
+    await fund.initialize(componentList.address, fundData.initialManagementFee, fundData.withdrawInterval, {
+      value: web3.toWei(fundData.ethDeposit, "ether")
+    });
     const myProducts = await market.getOwnProducts();
 
     assert.equal(myProducts.length, 1);
@@ -102,7 +117,9 @@ contract("Fund", accounts => {
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await fund.initialize(componentList.address, 0, { value: web3.toWei(fundData.ethDeposit, "ether") });
+      await fund.initialize(componentList.address, fundData.initialManagementFee, fundData.withdrawInterval, {
+        value: web3.toWei(fundData.ethDeposit, "ether")
+      });
     }, "Shall revert");
   });
 
@@ -193,7 +210,7 @@ contract("Fund", accounts => {
     assert.equal(await fund.withdrawInProgress(), false, " Withdraw has finished");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
-    await fund.setMaxTransfers(10); // Restore
+    await fund.setMaxTransfers(fundData.maxTransfers); // Restore
   });
 
   it("Shall be able to invest with whitelist enabled", async () => {
@@ -250,6 +267,39 @@ contract("Fund", accounts => {
 
     //Reset
     await fund.disableWhitelist(WhitelistType.Maintenance);
+  });
+
+  it("Shall be able to withdraw only fater frequency", async () => {
+    let tx;
+    const interval = 5; //5 seconds frequency
+    await fund.setMaxTransfers(1); // For testing
+    await fund.setLocker(await fund.WITHDRAW(), interval); // For testing
+    await calc.assertReverts(async () => await fund.withdraw(), "Lock avoid the withdraw"); // Lock is active, so we cant withdraw
+
+    await calc.waitSeconds(interval);
+
+    // // The lock shall not affect the multy step
+    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
+
+    await fund.requestWithdraw(toTokenWei(1), { from: investorA });
+    await fund.requestWithdraw(toTokenWei(1), { from: investorB });
+
+    await fund.withdraw();
+    assert.notEqual((await fund.balanceOf(investorB)).toNumber(), 0, " B hasn't withdraw yet");
+    assert.equal(await fund.withdrawInProgress(), true, " Withdraw hasn't finished");
+    await fund.withdraw(); // Lock is active, but multistep also
+    assert.equal(await fund.withdrawInProgress(), false, " Withdraw has finished");
+
+    await calc.assertReverts(async () => await fund.withdraw(), "Lock avoid the withdraw"); // Lock is active, so we cant withdraw
+
+    await calc.waitSeconds(interval);
+    // Lock is over, we can witdraw again
+    tx = await fund.withdraw();
+    assert.ok(tx);
+    // Restore test
+    await fund.setMaxTransfers(fundData.maxTransfers);
+    await fund.setLocker(await fund.WITHDRAW(), 0);
   });
 
   it("Manager shall be able to collect a from investment and withdraw it", async () => {

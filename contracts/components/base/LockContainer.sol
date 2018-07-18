@@ -26,13 +26,15 @@ contract Locker is ComponentInterface, LockerInterface  {
         intervalBlocks[msg.sender][_lockerName] = _blocks;
     }
 
-    function checkLockByHours(bytes32 _timerName) external {
-        require(now >= timer[msg.sender][_timerName] + intervalHours[msg.sender][_timerName] * 60 * 60);
+    event LogN(uint number, string text);
+
+    function checkLockerSeconds(bytes32 _timerName) external {
+        require(now >= timer[msg.sender][_timerName] + intervalHours[msg.sender][_timerName]);
         timer[msg.sender][_timerName] = now;
     }
 
-    function setIntervalHours(bytes32 _timerName, uint _blocks) external {
-        intervalHours[msg.sender][_timerName] = _blocks;
+    function setIntervalSeconds(bytes32 _timerName, uint _seconds) external {
+        intervalHours[msg.sender][_timerName] = _seconds * 1 seconds;
     }
 }
 
