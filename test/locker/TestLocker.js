@@ -11,7 +11,7 @@ contract("Locker", accounts => {
     tx = await locker.checkLockByHours("lock");
     assert.ok(tx);
 
-    tx = await locker.setIntervalHours("lock", 10);
+    tx = await locker.setIntervalHour("lock", 10);
     assert.ok(tx);
 
     await calc.assertReverts(async () => await locker.checkLockByHours("lock"), "Shall revert");
