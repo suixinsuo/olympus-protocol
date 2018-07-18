@@ -11,6 +11,7 @@ import "../interfaces/ReimbursableInterface.sol";
 import "../interfaces/WhitelistInterface.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
+import "../interfaces/LockerInterface.sol";
 
 
 contract OlympusFund is FundInterface, Derivative {
@@ -52,26 +53,30 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable {
+    function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency) onlyOwner external payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
         super.initialize(_componentList);
+        bytes32[8] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER];
+        bytes32[] memory nameParameters = new bytes32[](names.length);
 
-        setComponent(MARKET, componentList.getLatestComponent(MARKET));
-        setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
-        setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
-        setComponent(RISK, componentList.getLatestComponent(RISK));
-        setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
-        setComponent(FEE, componentList.getLatestComponent(FEE));
-        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
+        for (uint i = 0; i < names.length; i++) {
+            nameParameters[i] = names[i];
+        }
+        setComponents(
+            nameParameters,
+            componentList.getLatestComponents(nameParameters)
+        );
 
         // approve component for charging fees.
         approveComponents();
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
+        LockerInterface(getComponentByName(LOCKER)).setIntervalSeconds(WITHDRAW, _withdrawFrequency);
+
         status = DerivativeStatus.Active;
         emit ChangeStatus(status);
 
@@ -90,6 +95,10 @@ contract OlympusFund is FundInterface, Derivative {
     function registerInNewMarketplace() external onlyOwner returns(bool) {
         require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
         return true;
+    }
+
+    function setLocker(bytes32 _type, uint _seconds) onlyOwner public {
+        LockerInterface(getComponentByName(LOCKER)).setIntervalSeconds(_type, _seconds);
     }
 
     // ----------------------------- FUND INTERFACE -----------------------------
@@ -274,6 +283,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
         if(_requests.length == 0) {
@@ -286,6 +296,8 @@ contract OlympusFund is FundInterface, Derivative {
         uint tokens;
 
         if (!withdrawProvider.isInProgress()) {
+              LockerInterface(getComponentByName(LOCKER)).checkLockerSeconds(WITHDRAW);
+
             // Sell tokens before start to withdraw
             uint _totalETHToReturn = ( withdrawProvider.getTotalWithdrawAmount() * getPrice()) / 10 ** decimals;
             if(_totalETHToReturn > getETHBalance()) {

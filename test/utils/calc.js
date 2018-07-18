@@ -30,9 +30,12 @@ module.exports = {
     try {
       return await promise;
     } catch (e) {
-      assert(false, `Failed: ${message}`)
+      assert(false, `Failed: ${message}`);
       throw e;
     }
+  },
+  waitSeconds: async seconds => {
+    return new Promise((resolve, reject) => setInterval(() => resolve(), seconds * 1000));
   },
 
   ethToken: "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
