@@ -446,7 +446,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
 
         stepProvider.finalize(category);
-        rebalanceProvider.finalizeRebalance();
+        rebalanceProvider.finalize();
         rebalanceReceivedETHAmountFromSale = 0;
         reimburse();
         return true;

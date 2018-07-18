@@ -137,7 +137,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         return rebalanceStatus[msg.sender] != RebalanceStatus.Initial;
     }
 
-    function finalizeRebalance() external returns (bool success) {
+    function finalize() external returns (bool success) {
         rebalanceStatus[msg.sender] = RebalanceStatus.Initial;
         delete tokensToSell[msg.sender];
         delete amountsToSell[msg.sender];

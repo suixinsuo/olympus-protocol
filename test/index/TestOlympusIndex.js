@@ -226,7 +226,7 @@ contract("Olympus Index", accounts => {
       rebalanceFinished = await index.rebalance.call();
       tx = await index.rebalance();
       assert.ok(tx);
-      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
+      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
     }
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
@@ -444,7 +444,7 @@ contract("Olympus Index", accounts => {
       rebalanceFinished = await index.rebalance.call();
       tx = await index.rebalance();
       assert.ok(tx);
-      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
+      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
     }
 
     // Reblacance keep the amounts as per the wieghts
