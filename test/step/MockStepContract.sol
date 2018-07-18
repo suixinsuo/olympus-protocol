@@ -22,11 +22,12 @@ contract MockStepContract {
         uint currentFunctionStep = stepProvider.initializeOrContinue(stepsCategory, stepAmount);
         uint i;
         if(stepProvider.getStatus(stepsCategory) == 1) {
-            for (i = currentFunctionStep; i < 50; i++) {
-                someVariable++;
-                if(stepProvider.goNextStep(stepsCategory) == true){
+            for (i = currentFunctionStep; i < 50 ; i++) {
+                if(stepProvider.goNextStep(stepsCategory) == false){
                     return false;
                 }
+                someVariable++;
+
             }
             stepProvider.updateStatus(stepsCategory);
             currentFunctionStep = 0;
@@ -34,10 +35,10 @@ contract MockStepContract {
 
         if(stepProvider.getStatus(stepsCategory) == 2){
             for (i = currentFunctionStep; i < 50; i++) {
-                someOtherVariable++;
-                if(stepProvider.goNextStep(stepsCategory) == true){
+                if(stepProvider.goNextStep(stepsCategory) == false){
                     return false;
                 }
+                someOtherVariable++;
             }
         }
         stepProvider.finalize(stepsCategory);
@@ -48,14 +49,17 @@ contract MockStepContract {
         bytes32 stepsCategory = "ourCategory";
         uint currentFunctionStep = stepProvider.initializeOrContinue(stepsCategory, stepAmount);
         uint i;
-        for (i = currentFunctionStep; i < 50; i++) {
+
+        for (i = currentFunctionStep; i < 50 && stepProvider.goNextStep(stepsCategory); i++) {
             someEasyVariable++;
-            if(stepProvider.goNextStep(stepsCategory) == true){
-                return false;
-            }
         }
 
-        stepProvider.finalize(stepsCategory);
-        return true;
+        if( i == 50) {
+           stepProvider.finalize(stepsCategory);
+           // Some extra logic
+           return true;
+        }
+
+        return false;
     }
 }
