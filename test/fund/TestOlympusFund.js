@@ -278,7 +278,7 @@ contract("Fund", accounts => {
     let tx;
     const interval = 5; //5 seconds frequency
     await fund.setMaxTransfers(1); // For testing
-    await fund.setLocker(await fund.WITHDRAW(), interval); // For testing
+    await fund.setMultpleTimeIntervals([await fund.WITHDRAW()], [interval]); // For testing
 
     // // The lock shall not affect the multy step
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
@@ -294,7 +294,7 @@ contract("Fund", accounts => {
 
     await calc.assertReverts(async () => await fund.withdraw(), "Lock avoids the withdraw"); // Lock is active, so we cant withdraw
     // Reset data, so will be updated in next chek
-    await fund.setLocker(await fund.WITHDRAW(), 0); // Will be updated in the next withdraw
+    await fund.setMultpleTimeIntervals([await fund.WITHDRAW()], [0]); // Will be updated in the next withdraw
     await fund.setMaxTransfers(fundData.maxTransfers);
 
     await calc.waitSeconds(interval);

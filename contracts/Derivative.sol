@@ -9,6 +9,7 @@ import "./libs/ERC20NoReturn.sol";
 import "./interfaces/FeeChargerInterface.sol";
 import "./interfaces/WhitelistInterface.sol";
 import "./interfaces/RiskControlInterface.sol";
+import "./interfaces/LockerInterface.sol";
 
 
 // Abstract class that implements the common functions to all our derivatives
@@ -94,4 +95,9 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
         return risk;
     }
+
+    function setMultpleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setMultpleTimeIntervals(_timerNames,  _secondsList);
+    }
+
 }
