@@ -62,6 +62,7 @@ contract OlympusIndex is IndexInterface, Derivative {
       public checkLength(_tokens, _weights) checkWeights(_weights) {
         maxSteps["rebalance"] = 3;
         maxSteps["withdraw"] = 10;
+        maxSteps["buytoken"] = 4;
         name = _name;
         symbol = _symbol;
         totalSupply_ = 0;
@@ -385,7 +386,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
         uint ethBalance = getETHBalance();
         uint totalAmount = 0;
-        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens", 10);
+        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens", maxSteps["buytoken"]);
 
         for(uint8 i = 0; i < tokens.length; i++) {
             _amounts[i] = ethBalance * weights[i] / 100;
@@ -402,7 +403,6 @@ contract OlympusIndex is IndexInterface, Derivative {
             require(exchange.buyToken.value(_amounts[t])(_tokensErc20[t], _amounts[t], _rates[t], address(this), 0x0, 0x0));
 
         }
-        //require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
         stepProvider.finalize("IndexBuyTokens");
         reimburse();
         return true;
