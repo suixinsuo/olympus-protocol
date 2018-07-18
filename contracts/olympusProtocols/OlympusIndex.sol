@@ -7,6 +7,7 @@ import "../interfaces/RebalanceInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/WhitelistInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
+import "../interfaces/StepInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../libs/ERC20Extended.sol";
@@ -30,8 +31,11 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public constant INITIAL_VALUE =  10**18;
     uint[] public weights;
     uint public accumulatedFee = 0;
-    uint public maxTransfers = 10;
+    mapping(bytes32 => uint) public maxSteps;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
+    uint public rebalanceReceivedETHAmountFromSale;
+
+    enum RebalancePhases { Initial, SellTokens, BuyTokens }
 
     modifier checkLength(address[] _tokens, uint[] _weights) {
         require(_tokens.length == _weights.length);
@@ -56,6 +60,8 @@ contract OlympusIndex is IndexInterface, Derivative {
       address[] _tokens,
       uint[] _weights)
       public checkLength(_tokens, _weights) checkWeights(_weights) {
+        maxSteps["rebalance"] = 3;
+        maxSteps["withdraw"] = 10;
         name = _name;
         symbol = _symbol;
         totalSupply_ = 0;
@@ -259,9 +265,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
-    function setMaxTransfers(uint _maxTransfers) external onlyOwner {
-        require(_maxTransfers > 0);
-        maxTransfers = _maxTransfers;
+    function setMaxSteps(uint _maxSteps, bytes32 _category) external onlyOwner {
+        require(_maxSteps > 0);
+        maxSteps[_category] = _maxSteps;
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal {
@@ -285,7 +291,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             return true;
         }
 
-        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
+        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxSteps["withdraw"]);
         uint _eth;
         uint _tokenAmount;
         uint i;
@@ -394,34 +400,61 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
-        LockerInterface(getComponentByName(LOCKER)).checkLockByHours(REBALANCE);
+        bytes32 category = "rebalance";
+        StepInterface stepProvider = StepInterface(ReimbursableInterface(getComponentByName(STEP)));
+
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        if(!rebalanceProvider.getRebalanceInProgress()){
+            LockerInterface(getComponentByName(LOCKER)).checkLockByHours(REBALANCE);
+        }
+
         address[] memory tokensToSell;
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
         uint[] memory amountsToBuy;
-        uint8 i;
+        uint i;
         uint ETHBalanceBefore = address(this).balance;
+
+        uint currentFunctionStep = stepProvider.initializeOrContinue(category, maxSteps["rebalance"]);
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
-        for (i = 0; i < tokensToSell.length; i++) {
-            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
-            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
-            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
-
+        if(stepProvider.getStatus(category) == uint(RebalancePhases.SellTokens)){
+            for (i = currentFunctionStep; i < tokensToSell.length; i++) {
+                if(stepProvider.goNextStep(category) == false){
+                    rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
+                    reimburse();
+                    return false;
+                }
+                ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), 0);
+                ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
+                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
+            }
+            rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
+            stepProvider.updateStatus(category);
+            currentFunctionStep = 0;
         }
+
 
         // Buy Tokens
-        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
-        for (i = 0; i < tokensToBuy.length; i++) {
-            require(
-                exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
-            );
+        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
+        if(stepProvider.getStatus(category) == uint(RebalancePhases.BuyTokens)){
+            for (i = currentFunctionStep; i < tokensToBuy.length; i++) {
+                if(stepProvider.goNextStep(category) == false){
+                    reimburse();
+                    return false;
+                }
+                require(
+                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
+                );
+            }
         }
 
+        stepProvider.finalize(category);
+        rebalanceProvider.finalize();
+        rebalanceReceivedETHAmountFromSale = 0;
         reimburse();
         return true;
     }

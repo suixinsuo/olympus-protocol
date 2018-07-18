@@ -11,13 +11,13 @@ const {
 const OlympusIndex = artifacts.require("OlympusIndex");
 const Rebalance = artifacts.require("RebalanceProvider");
 const RiskControl = artifacts.require("RiskControl");
+const StepProvider = artifacts.require("StepProvider");
 const Marketplace = artifacts.require("Marketplace");
 const Whitelist = artifacts.require("WhitelistProvider");
 const Withdraw = artifacts.require("AsyncWithdraw");
 const Locker = artifacts.require("Locker");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
-const StepProvider = artifacts.require("StepProvider");
 
 const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
@@ -223,9 +223,13 @@ contract("Olympus Index", accounts => {
 
   it("Rebalance works with no tokens", async () => {
     let tx;
-    tx = await index.rebalance();
-    assert.ok(tx);
-    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call();
+      tx = await index.rebalance();
+      assert.ok(tx);
+      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
+    }
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
@@ -241,7 +245,7 @@ contract("Olympus Index", accounts => {
 
   it("Shall be able to request and withdraw", async () => {
     let tx;
-    await index.setMaxTransfers(1); // For testing
+    await index.setMaxSteps(1, "withdraw"); // For testing
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1), "A has invested");
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), "B has invested");
@@ -265,7 +269,7 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
-    await index.setMaxTransfers(10); // Restore
+    await index.setMaxSteps(10, "withdraw"); // Restore
   });
 
   it("Shall be able to invest whitelist enabled", async () => {
@@ -431,8 +435,17 @@ contract("Olympus Index", accounts => {
     const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
     // Execute Rebalance
-    tx = await index.rebalance();
-    assert.ok(tx);
+    // Make sure it has to do multiple calls
+    await index.setMaxSteps(1, "rebalance");
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call();
+      tx = await index.rebalance();
+      assert.ok(tx);
+      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
+    }
+    // Restore
+    await index.setMaxSteps(3, "rebalance");
 
     // Reblacance keep the amounts as per the wieghts
     tokenAmounts = await index.getTokensAndAmounts();
