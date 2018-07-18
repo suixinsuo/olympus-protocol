@@ -379,32 +379,25 @@ contract OlympusIndex is IndexInterface, Derivative {
         ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length); // Initialize to 0, making sure any rate is fine
         uint ethBalance = getETHBalance();
         uint totalAmount = 0;
-        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens", 5);
+        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens", 10);
 
-        for(uint i = 0; i < tokens.length; i++) {
+        for(uint8 i = 0; i < tokens.length; i++) {
             _amounts[i] = ethBalance * weights[i] / 100;
             _tokensErc20[i] = ERC20Extended(tokens[i]);
             (, _rates[i] ) = exchange.getPrice(ETH,  _tokensErc20[i],  _amounts[i], 0x0);
             totalAmount += _amounts[i];
         }
 
-        for (uint t = currentFunctionStep; t < tokens.length; t++) {
-            require(exchange.buyToken.value(_amounts[t])(_tokensErc20[t], _amounts[t], _rates[t], address(this), 0x0, 0x0));
-            if(stepProvider.goNextStep("IndexBuyTokens")){
-                reimburse();  
+        for (uint t = currentFunctionStep;t < tokens.length; t++){
+            if(!stepProvider.goNextStep("IndexBuyTokens")){
+                reimburse();
                 return false;
             }
-            if(t == tokens.length - 1 ){
-                stepProvider.finalize("IndexBuyTokens");
-                reimburse();
-                return true;
-            }
+            require(exchange.buyToken.value(_amounts[t])(_tokensErc20[t], _amounts[t], _rates[t], address(this), 0x0, 0x0));
+
         }
-
-        stepProvider.updateStatus("IndexBuyTokens");
-
-
-
+        //require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
+        stepProvider.finalize("IndexBuyTokens");
         reimburse();
         return true;
     }
