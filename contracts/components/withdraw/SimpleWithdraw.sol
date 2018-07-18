@@ -20,8 +20,8 @@ contract SimpleWithdraw is FeeCharger, WithdrawInterface {
         contracts[msg.sender].userRequests.push(_investor);
         return true;
     }
-    function start() external {return;}
-    function unlock() external  {return;}
+    function freeze() external {return;}
+    function finalize() external  {return;}
     function isInProgress() external view returns(bool) { return false; }
     function getTotalWithdrawAmount() external view returns(uint) {return 0;}
 
