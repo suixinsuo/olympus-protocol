@@ -274,14 +274,11 @@ contract("Fund", accounts => {
     await fund.disableWhitelist(WhitelistType.Maintenance);
   });
 
-  it("Shall be able to withdraw only fater frequency", async () => {
+  it("Shall be able to withdraw only after frequency", async () => {
     let tx;
     const interval = 5; //5 seconds frequency
     await fund.setMaxTransfers(1); // For testing
     await fund.setLocker(await fund.WITHDRAW(), interval); // For testing
-    await calc.assertReverts(async () => await fund.withdraw(), "Lock avoid the withdraw"); // Lock is active, so we cant withdraw
-
-    await calc.waitSeconds(interval);
 
     // // The lock shall not affect the multy step
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
@@ -291,20 +288,19 @@ contract("Fund", accounts => {
     await fund.requestWithdraw(toTokenWei(1), { from: investorB });
 
     await fund.withdraw();
-    assert.notEqual((await fund.balanceOf(investorB)).toNumber(), 0, " B hasn't withdraw yet");
-    assert.equal(await fund.withdrawInProgress(), true, " Withdraw hasn't finished");
+    assert.notEqual((await fund.balanceOf(investorB)).toNumber(), 0, " B hasn't withdraw yet, step 1/2");
     await fund.withdraw(); // Lock is active, but multistep also
-    assert.equal(await fund.withdrawInProgress(), false, " Withdraw has finished");
+    assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, " B has withdraw, withdraw complete");
 
-    await calc.assertReverts(async () => await fund.withdraw(), "Lock avoid the withdraw"); // Lock is active, so we cant withdraw
+    await calc.assertReverts(async () => await fund.withdraw(), "Lock avoids the withdraw"); // Lock is active, so we cant withdraw
+    // Reset data, so will be updated in next chek
+    await fund.setLocker(await fund.WITHDRAW(), 0); // Will be updated in the next withdraw
+    await fund.setMaxTransfers(fundData.maxTransfers);
 
     await calc.waitSeconds(interval);
     // Lock is over, we can witdraw again
-    tx = await fund.withdraw();
+    tx = await fund.withdraw(); // This withdraw has the previus time lock , but will set a new one with 0
     assert.ok(tx);
-    // Restore test
-    await fund.setMaxTransfers(fundData.maxTransfers);
-    await fund.setLocker(await fund.WITHDRAW(), 0);
   });
 
   it("Manager shall be able to collect a from investment and withdraw it", async () => {

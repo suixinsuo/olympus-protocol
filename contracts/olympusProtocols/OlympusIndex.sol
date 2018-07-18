@@ -110,8 +110,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function setMultpleTimeIntervals(bytes32[] _timerNames, uint[] _hours) external onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setMultpleTimeIntervals(_timerNames,  _hours);
+    function setMultpleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setMultpleTimeIntervals(_timerNames,  _secondsList);
     }
 
     // Call after you have updated the MARKET provider, not required after initialize
@@ -270,22 +270,23 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
-        if(_requests.length == 0) {
-            reimburse();
-            return true;
-        }
+
 
         uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
         uint _eth;
         uint _tokenAmount;
         uint i;
         if (_transfers == 0) {
+            LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
+            if(_requests.length == 0) {
+                reimburse();
+                return true;
+            }
             guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
             withdrawProvider.freeze();
         }
 
         for(i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW) ; i++) {
-
 
             (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
             if(_tokenAmount == 0) {continue;}
