@@ -31,7 +31,7 @@ contract MockWithdrawClient is MockDerivative {
         uint tokens;
 
         if(!asyncWithdraw.isInProgress()) {
-            asyncWithdraw.start();
+            asyncWithdraw.freeze();
         }
 
         for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
@@ -46,7 +46,7 @@ contract MockWithdrawClient is MockDerivative {
         }
 
         if(!asyncWithdraw.isInProgress()) {
-            asyncWithdraw.unlock();
+            asyncWithdraw.finalize();
         }
 
         return !asyncWithdraw.isInProgress(); // True if completed

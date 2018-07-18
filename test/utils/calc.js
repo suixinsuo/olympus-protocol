@@ -26,14 +26,6 @@ module.exports = {
       assert(true, message);
     }
   },
-  shouldSuccess: async (promise, message) => {
-    try {
-      return await promise;
-    } catch (e) {
-      assert(false, `Failed: ${message}`);
-      throw e;
-    }
-  },
   waitSeconds: async seconds => {
     return new Promise((resolve, reject) => setInterval(() => resolve(), seconds * 1000));
   },
