@@ -70,7 +70,12 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // ----------------------------- CONFIG -----------------------------
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceHours) 
+    function initialize(
+        address _componentList,
+        uint _initialFundFee,
+        uint _rebalanceDeltaPercentage,
+        uint _rebalanceIntervalHours,
+        uint _buyTokensIntervalHours) 
     external onlyOwner  payable {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -95,7 +100,13 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(REBALANCE, _rebalanceHours);
+        bytes32[] memory timerNames = new bytes32[](2);
+        timerNames[0] = REBALANCE;
+        timerNames[1] = "BuyTokens";
+        uint[] memory intervalHours = new uint[](2);
+        intervalHours[0] = _rebalanceIntervalHours;
+        intervalHours[1] = _buyTokensIntervalHours;
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(timerNames, intervalHours);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -103,9 +114,14 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function setIntervalHours(bytes32 _timerName, uint _hours) external onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(_timerName,  _hours);
+    function setIntervalHour(bytes32 _timerName, uint _hours) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHour(_timerName,  _hours);
     }
+
+    function setIntervalHours(bytes32[] _timerNames, uint[] _hours) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(_timerNames,  _hours);
+    }
+
     // Call after you have updated the MARKET provider, not required after initialize
     function registerInNewMarketplace() external onlyOwner returns(bool) {
         require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
@@ -343,7 +359,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // ----------------------------- REBALANCE -----------------------------
 
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
-
+        LockerInterface(getComponentByName(LOCKER)).checkLockByHours("BuyTokens");
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
