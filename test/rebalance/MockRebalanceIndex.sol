@@ -46,18 +46,18 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         (
         ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
         ) external payable returns(bool success){
-          return exchangeProvider.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
-        }
+        return exchangeProvider.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
+    }
 
 
     function sellToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
         ) external returns(bool success){
-            _token.approve(address(exchangeProvider), 0);
-            _token.approve(address(exchangeProvider), _amount);
-          return exchangeProvider.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
-        }
+        _token.approve(address(exchangeProvider), 0);
+        _token.approve(address(exchangeProvider), _amount);
+        return exchangeProvider.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
+    }
 
     function rebalance() public returns (bool success) {
         address[] memory tokensToSell;
@@ -72,7 +72,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
             require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]),amountsToSell[i],0,address(this),"",0x0));
         }
-        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore, amountsToBuy);
+        amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore);
         for (i = 0; i < tokensToBuy.length; i++) {
             require(exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]),amountsToBuy[i],0,address(this),"",0x0));
         }

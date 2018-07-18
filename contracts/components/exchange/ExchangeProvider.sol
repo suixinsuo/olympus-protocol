@@ -133,7 +133,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         OlympusExchangeAdapterInterface adapter;
 
-        uint[] memory prices = new uint[](3); // 0 tokenPrice, 1 MOT price, 3 totalValueInMOT
+        uint[] memory prices = new uint[](3); // 0 tokenPrice, 1 MOT price, 2 totalValueInMOT
         for (uint i = 0; i < _tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == bytes32("") ?
             exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], false) : _exchangeId;
