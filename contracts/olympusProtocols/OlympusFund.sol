@@ -98,10 +98,6 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
-    function setLocker(bytes32 _type, uint _seconds) onlyOwner public {
-        LockerInterface(getComponentByName(LOCKER)).setTimeInterval(_type, _seconds);
-    }
-
     // ----------------------------- FUND INTERFACE -----------------------------
 
     function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {

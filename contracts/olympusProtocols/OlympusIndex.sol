@@ -110,9 +110,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function setMultpleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setMultpleTimeIntervals(_timerNames,  _secondsList);
-    }
 
     // Call after you have updated the MARKET provider, not required after initialize
     function registerInNewMarketplace() external onlyOwner returns(bool) {
