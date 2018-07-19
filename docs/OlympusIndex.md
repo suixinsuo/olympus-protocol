@@ -130,10 +130,13 @@ indexContract.initialize(_componentList, _initialFundFee, (err) => {
 function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
 ```
 #### &emsp;Description
-> The token's price will changed after the Index execute buyTokens function, So the rebalance function is for keeping the weight of the token when the price of Index's token changed.
+> Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the complete asset value in the value might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased.
+As the blockchain limits the number of operations done per transaction, this function has a built-in feature for executing this function over multiple transaction.
+So to be sure that the function will be completed, as long as the result of the function is false, the function should be called again.
+Once the rebalance function returns true, the rebalance will be completed, and can only be called again after the interval period has passed.
 
 #### &emsp;Returns
-> Whether the rebalance function execute successfully or not.
+> Because we have multiple step support. If it return false when the function needs to execute again until all of steps are finished, and if true the function is finished. If there is any issue, rebalance will revert
 
 #### &emsp;Example code
 
@@ -144,16 +147,28 @@ const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 
-indexContract.rebalance((err, results) => {
+function rebalance(callback){
+  indexContract.rebalance((err, result) => {
+    if (err) {
+      return callback(err)
+    }
+    if(result == false){
+      rebalance(callback)
+    }else (result == true){
+      callback(null,result)
+    }
+}
+
+rebalance((err,result)=>{
   if (err) {
-    return console.error(err);
+    return console.log(err)
   }
-  // Deal with results.
+})
 });
 ```
 
 ### abi
-> you can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) and bytcode from our API
+> you can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) and bytecode from our API
 
 ### bytecode
-> you can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) and bytcode from our API
+> you can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) and bytecode from our API
