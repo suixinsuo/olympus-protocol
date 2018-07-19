@@ -77,8 +77,17 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // ----------------------------- CONFIG -----------------------------
     // solhint-disable-next-line
-    function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage, uint _rebalanceHours) 
-    external onlyOwner  payable {
+    function initialize(
+            address _componentList, 
+            uint _initialFundFee,       
+            uint _rebalanceDeltaPercentage, 
+            uint _rebalanceIntervalHours,
+            uint _buyTokensIntervalHours
+        )
+        external 
+        onlyOwner 
+        payable 
+        {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
         require(_componentList != 0x0);
@@ -119,7 +128,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function setIntervalHours(bytes32 _timerName, uint _hours) external onlyOwner {
-        LockerInterface(getComponentByName(LOCKER)).setIntervalHours(_timerName, _hours);
+        LockerInterface(getComponentByName(LOCKER)).setIntervalHour(_timerName, _hours);
     }
 
     // Return tokens and weights
