@@ -127,7 +127,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee += msg.value;
     }
 
-    function setIntervalHours(bytes32 _timerName, uint _hours) external onlyOwner {
+    function setIntervalHour(bytes32 _timerName, uint _hours) external onlyOwner {
         LockerInterface(getComponentByName(LOCKER)).setIntervalHour(_timerName, _hours);
     }
 
