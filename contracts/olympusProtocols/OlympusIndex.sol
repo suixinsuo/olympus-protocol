@@ -361,10 +361,11 @@ contract OlympusIndex is IndexInterface, Derivative {
     // ----------------------------- REBALANCE -----------------------------
     // solhint-disable-next-line
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
-        LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(BUYTOKENS);
+        //LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(BUYTOKENS);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
+
 
         if(getETHBalance() == 0) {
             reimburse();
@@ -377,13 +378,23 @@ contract OlympusIndex is IndexInterface, Derivative {
         ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length);
         uint ethBalance = getETHBalance();
         uint totalAmount = 0;
-        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens", maxSteps["buytoken"]);
+        uint currentFunctionStep = stepProvider.initializeOrContinue("IndexBuyTokens");
+
+
 
         for (uint8 i = 0; i < tokens.length; i++) {
             _amounts[i] = ethBalance * weights[i] / 100;
             _tokensErc20[i] = ERC20Extended(tokens[i]);
             (, _rates[i] ) = exchange.getPrice(ETH, _tokensErc20[i], _amounts[i], 0x0);
             totalAmount += _amounts[i];
+        }
+
+        if (currentFunctionStep == 0) {
+            LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(BUYTOKENS);
+            if (tokens.length == 0) {
+                reimburse();
+                return true;
+            }
         }
 
         for (uint t = currentFunctionStep;t < tokens.length; t++){
