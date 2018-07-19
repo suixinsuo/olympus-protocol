@@ -10,15 +10,15 @@ contract WhitelistProvider is WhitelistInterface, FeeCharger {
     string public category="Whitelist";
     string public version="1.0";
 
-    function enable(uint8 _key) external {
+    function enable(uint _key) external {
         enabled[msg.sender][_key] = true;
     }
 
-    function disable(uint8 _key) external {
+    function disable(uint _key) external {
         enabled[msg.sender][_key] = false;
     }
 
-    function setAllowed(address[] accounts, uint8 _key,  bool allowed) external returns(bool){
+    function setAllowed(address[] accounts, uint _key,  bool allowed) external returns(bool){
         require(payFee(0));
 
         for(uint i = 0; i < accounts.length; i++) {
@@ -28,7 +28,7 @@ contract WhitelistProvider is WhitelistInterface, FeeCharger {
         return true;
     }
 
-    function isAllowed(uint8 _key, address account) external view returns(bool){
+    function isAllowed(uint _key, address account) external view returns(bool){
         return enabled[msg.sender][_key] ? whitelist[msg.sender][_key][account] : true;
     }
 }
