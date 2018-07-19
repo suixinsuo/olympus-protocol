@@ -17,9 +17,9 @@ import "../interfaces/RiskControlInterface.sol";
 import "../interfaces/LockerInterface.sol";
 import "../interfaces/StepInterface.sol";
 
+
 contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
-
 
     event ChangeStatus(DerivativeStatus status);
     event Invested(address user, uint amount);
@@ -234,15 +234,18 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
+    // solhint-disable-next-line
     function setManagementFee(uint _fee) external onlyOwner {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
 
+    // solhint-disable-next-line
     function getManagementFee() external view returns(uint) {
         return ChargeableInterface(getComponentByName(FEE)).getFeePercentage();
     }
 
     // ----------------------------- WITHDRAW -----------------------------
+    // solhint-disable-next-line
     function requestWithdraw(uint amount) external
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
@@ -250,28 +253,29 @@ contract OlympusIndex is IndexInterface, Derivative {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
+    // solhint-disable-next-line
     function setMaxTransfers(uint _maxTransfers) external onlyOwner {
         require(_maxTransfers > 0);
         maxTransfers = _maxTransfers;
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal {
-        uint _totalETHToReturn = ( tokenBalance * getPrice()) / 10 ** decimals;
-        if(_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = (( _totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+        uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
+        if (_totalETHToReturn > getETHBalance()) {
+            uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
             getETHFromTokens(_tokenPercentToSell);
         }
     }
 
+    // solhint-disable-next-line
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
-
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
-        if(_requests.length == 0) {
+        if (_requests.length == 0) {
             reimburse();
             return true;
         }
@@ -285,11 +289,9 @@ contract OlympusIndex is IndexInterface, Derivative {
             withdrawProvider.freeze();
         }
 
-        for(i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW) ; i++) {
-
-
+        for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
             (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
-            if(_tokenAmount == 0) {continue;}
+            if (_tokenAmount == 0) {continue;}
 
             balances[_requests[i]] -= _tokenAmount;
             totalSupply_ -= _tokenAmount;
@@ -297,7 +299,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             _transfers++;
         }
 
-        if(i == _requests.length) {
+        if (i == _requests.length) {
             withdrawProvider.finalize();
             stepProvider.finalize(WITHDRAW);
         }
@@ -305,8 +307,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return i == _requests.length; // True if completed
     }
 
-
-
+    // solhint-disable-next-line
     function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
         accumulatedFee -= reimbursedAmount;
@@ -314,20 +315,21 @@ contract OlympusIndex is IndexInterface, Derivative {
         msg.sender.transfer(reimbursedAmount);
     }
 
+    // solhint-disable-next-line
     function tokensWithAmount() public view returns( ERC20Extended[] memory) {
         // First check the length
         uint8 length = 0;
         uint[] memory _amounts = new uint[](tokens.length);
         for (uint8 i = 0; i < tokens.length; i++) {
             _amounts[i] = ERC20Extended(tokens[i]).balanceOf(address(this));
-            if(_amounts[i] > 0) {length++;}
+            if (_amounts[i] > 0) {length++;}
         }
 
         ERC20Extended[] memory _tokensWithAmount = new ERC20Extended[](length);
         // Then create they array
         uint8 index = 0;
         for (uint8 j = 0; j < tokens.length; j++) {
-            if(_amounts[j] > 0) {
+            if (_amounts[j] > 0) {
                 _tokensWithAmount[index] = ERC20Extended(tokens[j]);
                 index++;
             }
@@ -337,31 +339,28 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function getETHFromTokens(uint _tokenPercentage ) private {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
-        uint[] memory _amounts = new uint[](  _tokensToSell.length);
-        uint[] memory _sellRates = new uint[]( _tokensToSell.length);
+        uint[] memory _amounts = new uint[](_tokensToSell.length);
+        uint[] memory _sellRates = new uint[](_tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint8 i = 0; i < _tokensToSell.length; i++) {
-
-            _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this)) )/DENOMINATOR;
-            ( , _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
-            require(!hasRisk(address(this), exchange, address( _tokensToSell[i]), _amounts[i] , 0));
-            _tokensToSell[i].approve(exchange,  0);
-            _tokensToSell[i].approve(exchange,  _amounts[i]);
+            _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
+            (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
+            require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], 0));
+            _tokensToSell[i].approve(exchange, 0);
+            _tokensToSell[i].approve(exchange, _amounts[i]);
         }
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
-
     }
 
     // ----------------------------- REBALANCE -----------------------------
-
+    // solhint-disable-next-line
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         LockerInterface(getComponentByName(LOCKER)).checkLockByHours("BuyTokens");
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-
-        if(getETHBalance() == 0) {
+        if (getETHBalance() == 0) {
             reimburse();
             return true;
         }
@@ -386,6 +385,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
+    // solhint-disable-next-line
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
         LockerInterface(getComponentByName(LOCKER)).checkLockByHours(REBALANCE);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
@@ -396,6 +396,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         address[] memory tokensToBuy;
         uint[] memory amountsToBuy;
         uint8 i;
+        // solhint-disable-next-line
         uint ETHBalanceBefore = address(this).balance;
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
