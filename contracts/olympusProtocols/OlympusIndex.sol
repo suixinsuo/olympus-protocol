@@ -25,8 +25,6 @@ contract OlympusIndex is IndexInterface, Derivative {
     bytes32 public constant BUYTOKENS = "BuyTokens";
 
     event ChangeStatus(DerivativeStatus status);
-    // event Invested(address user, uint amount);
-    // event Reimbursed(uint amount);
 
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
@@ -367,7 +365,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
 
-        if(getETHBalance() == 0) {
+        if (getETHBalance() == 0) {
             reimburse();
             return true;
         }
@@ -397,13 +395,13 @@ contract OlympusIndex is IndexInterface, Derivative {
             }
         }
 
-        for (uint t = currentFunctionStep;t < tokens.length; t++){
-            if(!stepProvider.goNextStep("IndexBuyTokens")){
+        for (uint t = currentFunctionStep; t < tokens.length; t++) {
+            if (!stepProvider.goNextStep("IndexBuyTokens")) {
                 reimburse();
                 return false;
             }
+            // solhint-disable-next-line
             require(exchange.buyToken.value(_amounts[t])(_tokensErc20[t], _amounts[t], _rates[t], address(this), 0x0, 0x0));
-
         }
         stepProvider.finalize("IndexBuyTokens");
         reimburse();

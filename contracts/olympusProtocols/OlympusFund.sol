@@ -20,8 +20,6 @@ contract OlympusFund is FundInterface, Derivative {
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
-    event Invested(address user, uint amount);
-    event Reimbursed(uint amount);
     event TokenUpdated(address _token, uint amount);
     event FundStatusChanged(DerivativeStatus status);
 
@@ -158,7 +156,6 @@ contract OlympusFund is FundInterface, Derivative {
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
 
-        emit Invested(msg.sender, _investorShare);
         return true;
     }
 
@@ -374,7 +371,6 @@ contract OlympusFund is FundInterface, Derivative {
     function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
         accumulatedFee -= reimbursedAmount;
-        emit Reimbursed(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
 
