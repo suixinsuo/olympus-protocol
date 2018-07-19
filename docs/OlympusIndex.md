@@ -153,6 +153,7 @@ function rebalance(callback){
       return callback(err)
     }
     if(result == false){
+      // Note: Instead of checking the result directly, you might need to set up a system to wait for the transaction to be mined to check the result
       rebalance(callback)
     }else (result == true){
       callback(null,result)
