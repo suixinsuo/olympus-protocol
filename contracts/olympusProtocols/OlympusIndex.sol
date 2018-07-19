@@ -116,8 +116,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         _categories[2] = BUYTOKENS;
 
         StepInterface(getComponentByName(STEP)).setMultipleMaxCalls(_categories, _maxSteps);
-
-        initalizeTimers();
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -505,17 +503,4 @@ contract OlympusIndex is IndexInterface, Derivative {
         approveComponent(REBALANCE);
     }
 
-    // solhint-disable-next-line
-    function initalizeTimers() internal {
-        bytes32[] memory timerNames = new bytes32[](3);
-        uint[] memory intervals = new uint[](3);
-        timerNames[0] = REBALANCE;
-        timerNames[1] = BUYTOKENS;
-        timerNames[2] = WITHDRAW;
-        intervals[0] = DEFAULT_INTERVAL;
-        intervals[1] = DEFAULT_INTERVAL;
-        intervals[2] = DEFAULT_INTERVAL;
-
-        LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(timerNames, intervals);
-    }
 }
