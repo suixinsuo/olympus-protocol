@@ -94,7 +94,7 @@ function initialize(address _componentList, uint _initialFundFee, uint _rebalanc
 
 #### &emsp;Description
 
-> Initialize the fund that was created with specified configurations and will be registered in Olympus Product List product and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your Fund)
+> Initialize the fund that was created with specified configurations and will be registered in Olympus Product List and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your Fund)
 
 #### &emsp;Parameters
 
