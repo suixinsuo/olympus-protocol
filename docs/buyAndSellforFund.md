@@ -102,7 +102,7 @@ fund.getTokens((err, results) => {
         public returns(bool);
 ```
 
-This function is used for the fund manager to buy tokens with the Ethers in the fund. Refer to: `getETHBalance()`.
+This function is used for the fund manager to buy tokens with the ether in the fund. Refer to: `getETHBalance()`.
 
 The list of tokens and the list of amounts must be of the same size, being the amounts the value of ETH that you want to spend in each
 token.
