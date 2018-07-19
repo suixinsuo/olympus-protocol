@@ -503,17 +503,4 @@ contract OlympusIndex is IndexInterface, Derivative {
         approveComponent(REIMBURSABLE);
         approveComponent(REBALANCE);
     }
-
-    function updateAllComponents() public onlyOwner {
-        updateComponent(MARKET);
-        updateComponent(EXCHANGE);
-        updateComponent(WITHDRAW);
-        updateComponent(RISK);
-        updateComponent(WHITELIST);
-        updateComponent(FEE);
-        updateComponent(REBALANCE);
-        updateComponent(REIMBURSABLE);
-
-    }
-
 }
