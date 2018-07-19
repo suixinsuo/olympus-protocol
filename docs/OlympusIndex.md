@@ -116,8 +116,8 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 const _componentList = '0x...';
 const _initialFundFee = '0x...';
-
-indexContract.initialize(_componentList, _initialFundFee, (err) => {
+const initialBalance = 1 ** 17
+indexContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accounts[0],value: initialBalance}, (err) => {
   if (err) {
     return console.error(err);
   }
@@ -183,18 +183,17 @@ function invest() public payable
 > Whether the function execute successfully or not.
 
 #### &emsp;Example code
-
 > The code below shows how to call this function with Web3.
 
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-
-  indexContract.invest({value: 5 ** 17}, (err, result) => {
-    if (err) {
-      return console.log()
-    }
+const investAmount = 1 ** 17;
+indexContract.invest({value: investAmount}, (err, result) => {
+  if (err) {
+    return console.log()
+  }
 });
 ```
 

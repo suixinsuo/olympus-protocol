@@ -110,17 +110,45 @@ function initialize(address _componentList, uint _initialFundFee, uint _rebalanc
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
-const contract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 const _componentList = "0x...";
 const _initialFundFee = "0x...";
-
-contract.initialize(_componentList, _initialFundFee, err => {
+const initialBalance = 1 ** 17
+fundContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accounts[0],value: initialBalance}, err => {
   if (err) {
     return console.error(err);
   }
 });
 ```
 
+#### 2. invest 
+```javascript
+function invest() public payable
+     whenNotPaused
+     whitelisted(WhitelistKeys.Investment)
+     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+     returns(bool) ;
+```
+#### &emsp;Description
+> Invest Index by sending ETH to the Index.
+
+#### &emsp;Returns
+> Whether the function execute successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const investAmount = 1 ** 17;
+fundContract.invest({value: investAmount}, (err, result) => {
+  if (err) {
+    return console.log()
+  }
+});
+```
 ### abi
 > you can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) and bytecode from our API 
 
