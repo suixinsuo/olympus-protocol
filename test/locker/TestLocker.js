@@ -31,7 +31,7 @@ contract("Locker", accounts => {
     locker = await Locker.deployed();
     assert.ok(locker, "Locker contract is not deployed.");
 
-    tx = await locker.setMultpleTimeIntervals(categories, times);
+    tx = await locker.setMultipleTimeIntervals(categories, times);
     assert.ok(tx);
 
     assert.equal((await locker.timeInterval(accounts[0], categories[0])).toNumber(), times[0], "Category 0 set");

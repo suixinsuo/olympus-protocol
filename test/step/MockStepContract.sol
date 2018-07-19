@@ -7,55 +7,54 @@ contract MockStepContract {
     uint public someVariable = 0;
     uint public someOtherVariable = 0;
     uint public someEasyVariable = 0;
-    uint public stepAmount = 30;
-
+    bytes32 constant CATEGORY = "ourCategory";
     constructor (StepInterface _stepProvider) public {
         stepProvider = _stepProvider;
+        stepProvider.setMaxCalls(CATEGORY,30);
     }
 
     function updateStepAmount(uint _stepAmount) public {
-        stepAmount = _stepAmount;
+        stepProvider.setMaxCalls(CATEGORY,_stepAmount);
     }
 
     function doMultipleSteps() public returns (bool completed){
-        bytes32 stepsCategory = "ourCategory";
-        uint currentFunctionStep = stepProvider.initializeOrContinue(stepsCategory, stepAmount);
+
+        uint currentFunctionStep = stepProvider.initializeOrContinue(CATEGORY);
         uint i;
-        if(stepProvider.getStatus(stepsCategory) == 1) {
+        if(stepProvider.getStatus(CATEGORY) == 1) {
             for (i = currentFunctionStep; i < 50 ; i++) {
-                if(stepProvider.goNextStep(stepsCategory) == false){
+                if(stepProvider.goNextStep(CATEGORY) == false){
                     return false;
                 }
                 someVariable++;
 
             }
-            stepProvider.updateStatus(stepsCategory);
+            stepProvider.updateStatus(CATEGORY);
             currentFunctionStep = 0;
         }
 
-        if(stepProvider.getStatus(stepsCategory) == 2){
+        if(stepProvider.getStatus(CATEGORY) == 2){
             for (i = currentFunctionStep; i < 50; i++) {
-                if(stepProvider.goNextStep(stepsCategory) == false){
+                if(stepProvider.goNextStep(CATEGORY) == false){
                     return false;
                 }
                 someOtherVariable++;
             }
         }
-        stepProvider.finalize(stepsCategory);
+        stepProvider.finalize(CATEGORY);
         return true;
     }
 
     function doEasySteps() public returns (bool completed){
-        bytes32 stepsCategory = "ourCategory";
-        uint currentFunctionStep = stepProvider.initializeOrContinue(stepsCategory, stepAmount);
+        uint currentFunctionStep = stepProvider.initializeOrContinue(CATEGORY);
         uint i;
 
-        for (i = currentFunctionStep; i < 50 && stepProvider.goNextStep(stepsCategory); i++) {
+        for (i = currentFunctionStep; i < 50 && stepProvider.goNextStep(CATEGORY); i++) {
             someEasyVariable++;
         }
 
         if( i == 50) {
-           stepProvider.finalize(stepsCategory);
+           stepProvider.finalize(CATEGORY);
            // Some extra logic
            return true;
         }

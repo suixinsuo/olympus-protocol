@@ -10,6 +10,7 @@ import "./interfaces/FeeChargerInterface.sol";
 import "./interfaces/WhitelistInterface.sol";
 import "./interfaces/RiskControlInterface.sol";
 import "./interfaces/LockerInterface.sol";
+import "./interfaces/StepInterface.sol";
 
 
 // Abstract class that implements the common functions to all our derivatives
@@ -96,8 +97,14 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         return risk;
     }
 
-    function setMultpleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setMultpleTimeIntervals(_timerNames,  _secondsList);
+    function setMultipleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_timerNames,  _secondsList);
     }
+
+
+    function setMaxSteps( bytes32 _category,uint _maxSteps) external onlyOwner {
+        StepInterface(getComponentByName(STEP)).setMaxCalls(_category,  _maxSteps);
+     }
+
 
 }

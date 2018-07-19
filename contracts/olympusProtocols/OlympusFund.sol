@@ -29,8 +29,7 @@ contract OlympusFund is FundInterface, Derivative {
     mapping(address => uint) amounts;
     mapping(address => bool) activeTokens;
 
-    uint public maxTransfers = 10;
-    uint public accumulatedFee = 0;
+   uint public accumulatedFee = 0;
 
 
 
@@ -266,10 +265,7 @@ contract OlympusFund is FundInterface, Derivative {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
-    function setMaxTransfers(uint _maxTransfers) external onlyOwner {
-        require(_maxTransfers > 0);
-        maxTransfers = _maxTransfers;
-    }
+
 
     function totalWithdrawPending() external view returns(uint) {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
@@ -293,7 +289,7 @@ contract OlympusFund is FundInterface, Derivative {
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
 
-        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
+        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW);
         uint _eth;
         uint _tokenAmount;
         uint i;
