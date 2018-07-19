@@ -70,7 +70,5 @@ IOST: '0x6e8704cba63029c442ee995933dc3a2b2197a3e6',
 APPC: '0x7d7ff20dcfbfa9f714987602139ab12801a0677c',
 DGX: '0x5a060e07ae8c5b670d2fd1af4b8f6e8c2e09b8e6', // No tested
 
-
-
 "Olympus Fund","OLF","Derivative which base his assets value in diversification of tokens","General","18"
 "0x0",["0x0f5d2fb29fb7d3cfee444a200298f468908cc942"],["844242424242425"],[0]

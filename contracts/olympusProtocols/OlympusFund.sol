@@ -12,6 +12,7 @@ import "../interfaces/WhitelistInterface.sol";
 import "../interfaces/StepInterface.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
+import "../interfaces/LockerInterface.sol";
 
 
 contract OlympusFund is FundInterface, Derivative {
@@ -28,8 +29,7 @@ contract OlympusFund is FundInterface, Derivative {
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
 
-    uint public maxTransfers = 10;
-    uint public accumulatedFee = 0;
+   uint public accumulatedFee = 0;
 
     constructor(
       string _name,
@@ -52,31 +52,34 @@ contract OlympusFund is FundInterface, Derivative {
     function registerInNewMarketplace() external onlyOwner returns(bool) {
         require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
         return true;
-    }    
+    }
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _componentList, uint _initialFundFee) external onlyOwner payable {
+    function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) onlyOwner external  payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
         super.initialize(_componentList);
+        bytes32[9] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP];
+        bytes32[] memory nameParameters = new bytes32[](names.length);
 
-        setComponent(MARKET, componentList.getLatestComponent(MARKET));
-        setComponent(EXCHANGE, componentList.getLatestComponent(EXCHANGE));
-        setComponent(WITHDRAW, componentList.getLatestComponent(WITHDRAW));
-        setComponent(RISK, componentList.getLatestComponent(RISK));
-        setComponent(WHITELIST, componentList.getLatestComponent(WHITELIST));
-        setComponent(FEE, componentList.getLatestComponent(FEE));
-        setComponent(REIMBURSABLE, componentList.getLatestComponent(REIMBURSABLE));
-        setComponent(STEP, componentList.getLatestComponent(STEP));
+        for (uint i = 0; i < names.length; i++) {
+            nameParameters[i] = names[i];
+        }
+        setComponents(
+            nameParameters,
+            componentList.getLatestComponents(nameParameters)
+        );
 
         // approve component for charging fees.
         approveComponents();
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
+        LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
+
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
 
@@ -246,11 +249,6 @@ contract OlympusFund is FundInterface, Derivative {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
-    // solhint-disable-next-line
-    function setMaxTransfers(uint _maxTransfers) external onlyOwner {
-        require(_maxTransfers > 0);
-        maxTransfers = _maxTransfers;
-    }
 
     // solhint-disable-next-line
     function totalWithdrawPending() external view returns(uint) {
@@ -266,12 +264,12 @@ contract OlympusFund is FundInterface, Derivative {
         }
     }
 
-   // solhint-disable-next-line 
-   function withdraw() 
-        external 
-        onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) 
-        whenNotPaused 
-        returns(bool) 
+   // solhint-disable-next-line
+   function withdraw()
+        external
+        onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance)
+        whenNotPaused
+        returns(bool)
     {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
@@ -279,15 +277,17 @@ contract OlympusFund is FundInterface, Derivative {
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
-        if (_requests.length == 0) {
-            reimburse();
-            return true;
-        }
-        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW, maxTransfers);
+
+        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW);
         uint _eth;
         uint _tokenAmount;
         uint i;
         if (_transfers == 0) {
+            LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
+            if (_requests.length == 0) {
+              reimburse();
+              return true;
+            }
             guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
             withdrawProvider.freeze();
         }
