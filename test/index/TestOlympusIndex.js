@@ -389,8 +389,12 @@ contract("Olympus Index", accounts => {
     // From the preivus test we got 1.8 ETH
     const initialIndexBalance = (await index.getETHBalance()).toNumber();
     assert.equal(initialIndexBalance, web3.toWei(1.8, "ether"), "Must start with 1.8 eth");
-
+    await index.setMaxSteps(await index.BUYTOKENS(), 1); // 2 tokens need to calls
     await index.buyTokens();
+    const status = await stepProvider.status.call(index.address, await index.BUYTOKENS());
+    assert.equal(status.toNumber(), 1, "Buy is in progress");
+    await index.buyTokens();
+
     // Check amounts are correct
     const tokensAndAmounts = await index.getTokensAndAmounts();
 
@@ -402,6 +406,8 @@ contract("Olympus Index", accounts => {
       const expectedAmount = expectedTokenAmount(initialIndexBalance, rates, index);
       assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
     });
+    // Restore
+    await index.setMaxSteps(await index.BUYTOKENS(), 3);
   });
 
   it("Can't buy tokens so frequently", async () => {

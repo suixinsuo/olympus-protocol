@@ -14,7 +14,7 @@ contract StepProvider is StepInterface {
     mapping (address => mapping(bytes32 => uint)) public currentFunctionStep;
 
     function setMaxCalls(bytes32 _category, uint _maxCalls) external {
-         require( _maxCalls> 0);
+        require( _maxCalls > 0);
         maxCalls[msg.sender][_category] = _maxCalls;
     }
 
@@ -23,6 +23,10 @@ contract StepProvider is StepInterface {
             require( _maxCallsList[i] > 0);
             maxCalls[msg.sender][_categories[i]] = _maxCallsList[i];
         }
+    }
+
+    function getMaxCalls(bytes32 _category) external returns(uint) {
+        return maxCalls[msg.sender][_category];
     }
 
     function initializeOrContinue(bytes32 _category) external returns (uint _currentFunctionStep){
