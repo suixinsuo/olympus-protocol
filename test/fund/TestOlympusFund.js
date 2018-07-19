@@ -115,7 +115,7 @@ contract("Fund", accounts => {
     await newRisk.setMotAddress(mockMOT.address);
 
     await componentList.setComponent(await fund.RISK(), newRisk.address);
-    await fund.updateAllComponents();
+    await fund.updateComponent(await fund.RISK());
     assert.equal(await fund.getComponentByName(await fund.RISK()), newRisk.address);
 
     // Check we allowance
@@ -130,7 +130,7 @@ contract("Fund", accounts => {
     // Set new market place
     const newMarket = await Marketplace.new();
     await componentList.setComponent(await fund.MARKET(), newMarket.address);
-    await fund.updateAllComponents();
+    await fund.updateComponent(await fund.MARKET());
     assert.equal(await fund.getComponentByName(await fund.MARKET()), newMarket.address);
 
     // Check we have register
