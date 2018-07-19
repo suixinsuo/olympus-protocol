@@ -25,8 +25,6 @@ contract OlympusIndex is IndexInterface, Derivative {
     bytes32 public constant BUYTOKENS = "BuyTokens";
 
     event ChangeStatus(DerivativeStatus status);
-    // event Invested(address user, uint amount);
-    // event Reimbursed(uint amount);
 
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
@@ -34,7 +32,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public accumulatedFee = 0;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
     uint public rebalanceReceivedETHAmountFromSale;
-
+    uint public freezeETHBalance; // For operations
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
 
     modifier checkLength(address[] _tokens, uint[] _weights) {
@@ -108,15 +106,16 @@ contract OlympusIndex is IndexInterface, Derivative {
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
 
-        uint[] memory _maxSteps = new uint[](2);
-        bytes32[] memory _categories = new bytes32[](2);
+        uint[] memory _maxSteps = new uint[](3);
+        bytes32[] memory _categories = new bytes32[](3);
         _maxSteps[0] = 3;
         _maxSteps[1] = 10;
+        _maxSteps[2] = 5;
         _categories[0] = REBALANCE;
         _categories[1] = WITHDRAW;
-        StepInterface(getComponentByName(STEP)).setMultipleMaxCalls(_categories, _maxSteps);
+        _categories[2] = BUYTOKENS;
 
-        initalizeTimers();
+        StepInterface(getComponentByName(STEP)).setMultipleMaxCalls(_categories, _maxSteps);
         status = DerivativeStatus.Active;
 
         emit ChangeStatus(status);
@@ -361,30 +360,47 @@ contract OlympusIndex is IndexInterface, Derivative {
     // ----------------------------- REBALANCE -----------------------------
     // solhint-disable-next-line
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
-        LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(BUYTOKENS);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
-        if (getETHBalance() == 0) {
-            reimburse();
-            return true;
+        uint currentStep = stepProvider.initializeOrContinue(BUYTOKENS);
+        // Start?
+        if (currentStep == 0) {
+            LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(BUYTOKENS);
+            if (tokens.length == 0 || getETHBalance() == 0) {
+                reimburse();
+                return true;
+            }
+            freezeETHBalance = getETHBalance();
         }
-        uint[] memory _amounts = new uint[](tokens.length);
-        // Initialize to 0, making sure any rate is fine
-        uint[] memory _rates = new uint[](tokens.length);
-        // Initialize to 0, making sure any rate is fine
-        ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](tokens.length);
-        uint ethBalance = getETHBalance();
-        uint totalAmount = 0;
+        // Check the length of the array
+        uint arrayLength = stepProvider.getMaxCalls(BUYTOKENS);
+        if(arrayLength + currentStep >= tokens.length ) {
+          arrayLength = tokens.length - currentStep;
+        }
 
-        for (uint i = 0; i < tokens.length; i++) {
-            _amounts[i] = ethBalance * weights[i] / 100;
-            _tokensErc20[i] = ERC20Extended(tokens[i]);
-            (, _rates[i] ) = exchange.getPrice(ETH, _tokensErc20[i], _amounts[i], 0x0);
-            totalAmount += _amounts[i];
+        uint[] memory _amounts = new uint[](arrayLength);
+        // Initialize to 0, making sure any rate is fine
+        uint[] memory _rates = new uint[](arrayLength);
+        // Initialize to 0, making sure any rate is fine
+        ERC20Extended[] memory _tokensErc20 = new ERC20Extended[](arrayLength);
+        uint totalAmount = 0;
+        uint i; // Current step to tokens.length
+        uint buyIndex; // 0 to currentStepLength
+        for (i = currentStep; i < tokens.length && stepProvider.goNextStep(BUYTOKENS); i++) {
+            buyIndex = i -currentStep;
+            _amounts[buyIndex] = freezeETHBalance * weights[i] / 100;
+            _tokensErc20[buyIndex] = ERC20Extended(tokens[i]);
+            (, _rates[buyIndex] ) = exchange.getPrice(ETH, _tokensErc20[buyIndex], _amounts[buyIndex], 0x0);
+            totalAmount += _amounts[buyIndex];
         }
 
         require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
+
+        if(i == tokens.length) {
+          stepProvider.finalize(BUYTOKENS);
+        }
 
         reimburse();
         return true;
@@ -411,13 +427,13 @@ contract OlympusIndex is IndexInterface, Derivative {
         // solhint-disable-next-line
         uint ETHBalanceBefore = address(this).balance;
 
-        uint currentFunctionStep = stepProvider.initializeOrContinue(REBALANCE);
+        uint currentStep = stepProvider.initializeOrContinue(REBALANCE);
 
         // solhint-disable-next-line
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
         if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.SellTokens)) {
-            for (i = currentFunctionStep; i < tokensToSell.length; i++) {
+            for (i = currentStep; i < tokensToSell.length; i++) {
                 if (stepProvider.goNextStep(REBALANCE) == false) {
                     rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
                     reimburse();
@@ -430,14 +446,14 @@ contract OlympusIndex is IndexInterface, Derivative {
             }
             rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
             stepProvider.updateStatus(REBALANCE);
-            currentFunctionStep = 0;
+            currentStep = 0;
         }
 
 
         // Buy Tokens
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
         if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.BuyTokens)) {
-            for (i = currentFunctionStep; i < tokensToBuy.length; i++) {
+            for (i = currentStep; i < tokensToBuy.length; i++) {
                 if (stepProvider.goNextStep(REBALANCE) == false) {
                     reimburse();
                     return false;
@@ -487,17 +503,4 @@ contract OlympusIndex is IndexInterface, Derivative {
         approveComponent(REBALANCE);
     }
 
-    // solhint-disable-next-line
-    function initalizeTimers() internal {
-        bytes32[] memory timerNames = new bytes32[](3);
-        uint[] memory intervals = new uint[](3);
-        timerNames[0] = REBALANCE;
-        timerNames[1] = BUYTOKENS;
-        timerNames[2] = WITHDRAW;
-        intervals[0] = DEFAULT_INTERVAL;
-        intervals[1] = DEFAULT_INTERVAL;
-        intervals[2] = DEFAULT_INTERVAL;
-
-        LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(timerNames, intervals);
-    }
 }

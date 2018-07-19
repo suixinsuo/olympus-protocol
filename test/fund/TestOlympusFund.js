@@ -174,9 +174,7 @@ contract("Fund", accounts => {
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
     tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
     tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     assert.equal((await fund.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     // Price is the same, as no Token value has changed
@@ -195,13 +193,10 @@ contract("Fund", accounts => {
 
     // Request
     tx = await fund.requestWithdraw(toTokenWei(1), { from: investorA });
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Withdraw uses risk provider");
     tx = await fund.requestWithdraw(toTokenWei(1), { from: investorB });
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Withdraw uses risk provider");
 
     // Withdraw max transfers is set to 1
     tx = await fund.withdraw();
-    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
@@ -213,7 +208,6 @@ contract("Fund", accounts => {
 
     // Second withdraw succeeds
     tx = await fund.withdraw();
-    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
 
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
@@ -238,7 +232,6 @@ contract("Fund", accounts => {
     await fund.requestWithdraw(toTokenWei(1), { from: investorB });
 
     tx = await fund.withdraw();
-    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, " B has withdrawn");
@@ -264,7 +257,6 @@ contract("Fund", accounts => {
 
     await fund.setAllowed([bot], WhitelistType.Maintenance, true);
     tx = await fund.withdraw({ from: bot });
-    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Bot got Reimbursed");
 
     // Permissions removed
     await fund.setAllowed([bot], WhitelistType.Maintenance, false);
@@ -363,7 +355,6 @@ contract("Fund", accounts => {
 
     let tx;
     tx = await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     const fundTokensAndBalance = await fund.getTokens();
     for (let i = 0; i < tokens.length; i++) {
@@ -394,7 +385,6 @@ contract("Fund", accounts => {
     );
     // We sell all
     tx = await fund.sellTokens("", fundTokensAndBalance[0], fundTokensAndBalance[1], sellRates.map(rate => rate[0]));
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     fundTokensAndBalance = await fund.getTokens();
 
