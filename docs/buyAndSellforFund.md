@@ -182,7 +182,7 @@ web3.eth.sendTransation({ data, to: fund.address }, (err, results) => {
         public returns(bool);
 ```
 
-We can sell tokens using this function. The tokens are sold based in the amounts that the fund has (not the owner of the fund). Sell the tokens the fund holds and retrieve ETH back. To know which tokens are available, check `getTokens()`.
+Sell the tokens the fund holds and retrieve ETH back. To know which tokens are available, check `getTokens()`.
 
 ##### Parameters
 
