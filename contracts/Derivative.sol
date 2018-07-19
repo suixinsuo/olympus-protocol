@@ -32,14 +32,14 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     uint public constant DEFAULT_INTERVAL = 1 days;
     enum WhitelistKeys { Investment, Maintenance, Admin }
 
-    event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
+    // event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
 
   // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
         WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
         require(
             msg.sender == owner ||
-            (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed( uint8(_key), msg.sender) )
+            (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed(uint8(_key), msg.sender) )
         );
         _;
     }
@@ -51,7 +51,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     }
 
     modifier withoutRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) {
-        require(!hasRisk(_sender,_receiver,_tokenAddress, _amount, _rate));
+        require(!hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate));
         _;
     }
 
@@ -77,8 +77,6 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         return componentList.getLatestComponent(_name);
     }
 
-
-
     function approveComponent(bytes32 _name) internal {
         address componentAddress = getComponentByName(_name);
         ERC20NoReturn mot = ERC20NoReturn(FeeChargerInterface(componentAddress).MOT());
@@ -93,7 +91,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
         RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
         bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
-        emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
+        // emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
         return risk;
     }
 
@@ -101,10 +99,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_timerNames,  _secondsList);
     }
 
-
     function setMaxSteps( bytes32 _category,uint _maxSteps) external onlyOwner {
         StepInterface(getComponentByName(STEP)).setMaxCalls(_category,  _maxSteps);
      }
-
-
 }
