@@ -26,6 +26,9 @@ module.exports = {
       assert(true, message);
     }
   },
+  waitSeconds: async seconds => {
+    return new Promise((resolve, reject) => setInterval(() => resolve(), seconds * 1000));
+  },
 
   ethToken: "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 };
