@@ -116,8 +116,8 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 const _componentList = '0x...';
 const _initialFundFee = '0x...';
-
-indexContract.initialize(_componentList, _initialFundFee, (err) => {
+const initialBalance = 1 ** 17
+indexContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accounts[0],value: initialBalance}, (err) => {
   if (err) {
     return console.error(err);
   }
@@ -165,6 +165,36 @@ rebalance((err,result)=>{
     return console.log(err)
   }
 })
+});
+```
+
+#### 3. invest 
+
+```javascript
+function invest() public payable
+     whenNotPaused
+     whitelisted(WhitelistKeys.Investment)
+     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+     returns(bool) ;
+```
+#### &emsp;Description
+> Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const investAmount = 1 ** 17;
+indexContract.invest({value: investAmount}, (err, result) => {
+  if (err) {
+    return console.log()
+  }
 });
 ```
 

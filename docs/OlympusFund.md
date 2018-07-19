@@ -89,7 +89,7 @@ web3.eth.contract(abi).new(
 #### 1. initialize
 
 ```javascript
-function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage) onlyOwner external payable;
+function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable;
 ```
 
 #### &emsp;Description
@@ -98,9 +98,9 @@ function initialize(address _componentList, uint _initialFundFee, uint _rebalanc
 
 #### &emsp;Parameters
 
-> \_componentList: Address of olympus componentlist </br> > \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
+> \_componentList: Address of olympus componentlist </br>
+  \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
 > value: The initial balance of the fund
-> \_rebalanceDeltaPercentage: The index will buy and sell tokens according to the weights is configurated with a margin of error set by deltaPercentage. If the token doesnt fit the amount specify for the weight in the marging of the delta, wont be modify saving gas on the transaction. Must be based in DENOMINATOR, so 1% is 1000.
 
 #### &emsp;Example code
 
@@ -110,17 +110,44 @@ function initialize(address _componentList, uint _initialFundFee, uint _rebalanc
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
-const contract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 const _componentList = "0x...";
 const _initialFundFee = "0x...";
-
-contract.initialize(_componentList, _initialFundFee, err => {
+const initialBalance = 1 ** 17
+fundContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accounts[0],value: initialBalance}, err => {
   if (err) {
     return console.error(err);
   }
 });
 ```
 
+#### 2. invest 
+```javascript
+function invest() public payable
+     whenNotPaused
+     whitelisted(WhitelistKeys.Investment)
+     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+     returns(bool) ;
+```
+#### &emsp;Description
+> Invest in the fund by calling the invest function while sending Ether to the fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const investAmount = 1 ** 17;
+fundContract.invest({value: investAmount}, (err, result) => {
+  if (err) {
+    return console.log()
+  }
+});
+```
 ### abi
 > you can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) and bytecode from our API 
 
