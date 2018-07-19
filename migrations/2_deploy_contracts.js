@@ -38,6 +38,10 @@ function deployWithdraw(deployer, network) {
 function deployWhitelist(deployer, network) {
   deployer.deploy([WhitelistProvider]);
 }
+function deployStep(deployer, network) {
+  const MockStepContract = artifacts.require("MockStepContract");
+  deployer.deploy([StepProvider, MockStepContract]);
+}
 
 function deployExchange(deployer, network) {
   let kyberNetwork = KyberConfig[network];
@@ -80,6 +84,9 @@ async function deployMockfund(deployer, network) {
 async function deployReimbursable(deployer, network) {
   deployer.deploy([Reimbursable]);
 }
+async function deployLocker(deployer, network) {
+  deployer.deploy([Locker]);
+}
 
 async function deployOlympusFund(deployer, network) {
   const args = args.parseArgs();
@@ -91,7 +98,8 @@ async function deployOlympusFund(deployer, network) {
     PercentageFee,
     Reimbursable,
     WhitelistProvider,
-    ComponentList
+    ComponentList,
+    Steps
   ]);
   await deployExchange(deployer, network);
 }
@@ -107,7 +115,8 @@ async function deployOlympusIndex(deployer, network) {
     PercentageFee,
     Reimbursable,
     WhitelistProvider,
-    ComponentList
+    ComponentList,
+    Steps
   ]);
   await deployExchange(deployer, network);
   await deployer.deploy(RebalanceProvider, ExchangeProvider.address);
@@ -145,11 +154,7 @@ function deployOnDev(deployer, num) {
 
 function deployOnKovan(deployer, num) {
   return deployer
-    .then(() =>
-      deployer.deploy([
-        [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
-      ])
-    )
+    .then(() => deployer.deploy([[MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]]))
     .then(() => deployer.deploy(MarketplaceProvider))
     .then(() => deployer.deploy(AsyncWithdraw))
     .then(() => deployer.deploy(Locker))
