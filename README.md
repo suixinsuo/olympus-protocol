@@ -15,7 +15,27 @@
 `truffle test --suite=Mockfund ./test/fund/*` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
 The suit option will limit the number of deployment required for the concrete test file.
 
+## Kovan
+
+Exchange subcomponent:
+
+- KyberNetworkAdapter 0x05e4c2c5b4bb9541274b1b2289297132b86fc965
+- ExchangeAdapterManager 0x15de419089c7b95e9ec94b88b6119837edddda59
+
+- ComponentList 0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e
+  - ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a Name: 0x45786368616e676550726f7669646572
+  - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23 Name: 0x4d61726b657450726f7669646572
+  - AsyncWithdraw 0xb1335ecb9996d27b4dc55c61e351645a3dd48ab3 Name: 0x576974686472617750726f7669646572
+  - Reimbursable 0xf28e13b85db2b63158a41d4555b434811f87081d Name: 0x5265696d6275727361626c65
+  - PercentageFee 0xe2b21fb3d2e917e8e89ea0af89366aabf9bf8bd4 Name: 0x46656550726f7669646572
+  - WhitelistProvider 0xb4159f78a40f4631f31f9e873afa1cfd038610f7 Name: 0x57686974656c69737450726f7669646572
+  - Rebalance Provider 0xa2d8a19896787028ec0b28a66f537e16e01f0c4f Name: 0x526562616c616e636550726f7669646572
+  - RISK (DUMMY) 0x3b021c90fd2f5ff847a1d363532531bd496ddb9d Name: 0x5269736b50726f7669646572
+  - Locker 0xada099dbaf457dd5603af6ca080f70eb632a9d2b Name: 0x4c6f636b657250726f7669646572
+  - Step 0x67d4704e9c8fe5815e78372c1e17fe1c5fef4081 Name: 0x5374657050726f7669646572
+
 # Deployed addresses (Mainnet 13 ,July, 2018)
+
 - OlympusIndex: 0x3f8a7f9ccd72f8b81c02c4cd3cfdfa30f1be5463
 
 - ComponentList 0x808806d6c795246c16736a8ca556c5a0e6c0a585
@@ -32,23 +52,6 @@ The suit option will limit the number of deployment required for the concrete te
   - WhitelistProvider: 0xab5853728d776ca34521767211796d106dd19caf
 
 - Olympus Fund 0x420e509a64e5ed5e5b18dd87f13bc40592eaad82
-
-## Kovan
-
-Exchange subcomponent:
-
-- KyberNetworkAdapter 0x05e4c2c5b4bb9541274b1b2289297132b86fc965
-- ExchangeAdapterManager 0x15de419089c7b95e9ec94b88b6119837edddda59
-
-- ComponentList 0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678
-  - ExchangeProvider 0x023d373f70662e8b7031421cfc513aeeaffb983a
-  - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23
-  - AsyncWithdraw 0xb1335ecb9996d27b4dc55c61e351645a3dd48ab3
-  - Reimbursable 0xf28e13b85db2b63158a41d4555b434811f87081d
-  - PercentageFee 0xe2b21fb3d2e917e8e89ea0af89366aabf9bf8bd4
-  - WhitelistProvider 0xb4159f78a40f4631f31f9e873afa1cfd038610f7
-  - Rebalance Provider 0xa2d8a19896787028ec0b28a66f537e16e01f0c4f
-  - RISK (DUMMY) 0x3b021c90fd2f5ff847a1d363532531bd496ddb9d
 
 # Deployed addresses (Mainnet 7 July, 2018) - Deprecated
 
