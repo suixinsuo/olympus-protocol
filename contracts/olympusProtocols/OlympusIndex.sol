@@ -359,9 +359,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
     }
 
-    event LogN(uint number, string text);
-    event LogA(address _address, string text);
-    event LogS(string _string);
     // ----------------------------- REBALANCE -----------------------------
     // solhint-disable-next-line
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
@@ -370,7 +367,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
         uint currentStep = stepProvider.initializeOrContinue(BUYTOKENS);
-        emit LogN(currentStep, 'Current step');
         // Start?
         if (currentStep == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(BUYTOKENS);
@@ -385,7 +381,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         if(arrayLength + currentStep >= tokens.length ) {
           arrayLength = tokens.length - currentStep;
         }
-                emit LogN(arrayLength, 'Length');
 
         uint[] memory _amounts = new uint[](arrayLength);
         // Initialize to 0, making sure any rate is fine
