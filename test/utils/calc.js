@@ -20,19 +20,14 @@ module.exports = {
       assert(false, "Failed: " + message);
     } catch (e) {
       if (!e.message.includes("revert")) {
-        assert(false, e.message);
+        assert(false, e);
         throw e; // Error is not caused by revert but for another reason
       }
       assert(true, message);
     }
   },
-  shouldSuccess: async (promise, message) => {
-    try {
-      return await promise;
-    } catch (e) {
-      assert(false, `Failed: ${message}`)
-      throw e;
-    }
+  waitSeconds: async seconds => {
+    return new Promise((resolve, reject) => setInterval(() => resolve(), seconds * 1000));
   },
 
   ethToken: "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"

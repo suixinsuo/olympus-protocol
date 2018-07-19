@@ -3,43 +3,62 @@ pragma solidity 0.4.24;
 import "../../interfaces/StepInterface.sol";
 
 contract StepProvider is StepInterface {
-    mapping (address => mapping(bytes32 => uint)) public stepAmount;
-    mapping (address => mapping(bytes32 => uint)) public stepStatus;
-    mapping (address => mapping(bytes32 => uint)) public currentCallStepIndex;
-    mapping (address => mapping(bytes32 => uint)) public currentFunctionStepIndex;
+    string public name = "StepProvider";
+    string public description = "Allow a function execution to span multiple transactions";
+    string public category = "Steps";
+    string public version = "1.0";
 
-    function initializeOrContinue(bytes32 _category, uint _stepAmount) external returns (uint _currentFunctionStep){
-        stepAmount[msg.sender][_category] = _stepAmount;
-        if(stepStatus[msg.sender][_category] == 0){
-            stepStatus[msg.sender][_category] = 1;
+    mapping (address => mapping(bytes32 => uint)) public maxCalls;
+    mapping (address => mapping(bytes32 => uint)) public status;
+    mapping (address => mapping(bytes32 => uint)) public currentCallStep;
+    mapping (address => mapping(bytes32 => uint)) public currentFunctionStep;
+
+    function setMaxCalls(bytes32 _category, uint _maxCalls) external {
+         require( _maxCalls> 0);
+        maxCalls[msg.sender][_category] = _maxCalls;
+    }
+
+    function setMultipleMaxCalls(bytes32[] _categories, uint[] _maxCallsList) external {
+        for(uint i =0 ; i < _categories.length;i ++) {
+            require( _maxCallsList[i] > 0);
+            maxCalls[msg.sender][_categories[i]] = _maxCallsList[i];
         }
-        return currentFunctionStepIndex[msg.sender][_category];
     }
 
-    function getStatus(bytes32 _category) external view returns (uint status) {
-        return stepStatus[msg.sender][_category];
+    function initializeOrContinue(bytes32 _category) external returns (uint _currentFunctionStep){
+        require(  maxCalls[msg.sender][_category] > 0);
+        currentCallStep[msg.sender][_category] = 0;
+
+        if(status[msg.sender][_category] == 0) { // Status 0 is not started
+            status[msg.sender][_category] = 1;
+        }
+        return currentFunctionStep[msg.sender][_category];
     }
 
-    function updateStatus(bytes32 _category) external returns (bool success) {
-        stepStatus[msg.sender][_category]++;
-        currentFunctionStepIndex[msg.sender][_category] = 0;
+    function getStatus(bytes32 _category) external view returns (uint _currentStatus) {
+        return status[msg.sender][_category];
+    }
+
+    function updateStatus(bytes32 _category) external returns (bool _success) {
+        status[msg.sender][_category]++;
+        currentFunctionStep[msg.sender][_category] = 0;
         return true;
     }
 
-    function goNextStep(bytes32 _category) external returns (bool shouldReturn) {
-        currentCallStepIndex[msg.sender][_category]++;
-        currentFunctionStepIndex[msg.sender][_category]++;
-        if(currentCallStepIndex[msg.sender][_category] > stepAmount[msg.sender][_category]){
-            currentCallStepIndex[msg.sender][_category] = 0;
-            return true;
+    function goNextStep(bytes32 _category) external returns (bool _shouldCallAgain) {
+        if(currentCallStep[msg.sender][_category] >= maxCalls[msg.sender][_category]){
+            return false;
         }
-        return false;
+        currentCallStep[msg.sender][_category]++;
+        currentFunctionStep[msg.sender][_category]++;
+
+        return true;
     }
 
     function finalize(bytes32 _category) external returns (bool success) {
-        currentCallStepIndex[msg.sender][_category] = 0;
-        currentFunctionStepIndex[msg.sender][_category] = 0;
-        stepStatus[msg.sender][_category] = 0;
+        currentCallStep[msg.sender][_category] = 0;
+        currentFunctionStep[msg.sender][_category] = 0;
+        status[msg.sender][_category] = 0;
         return true;
     }
 
