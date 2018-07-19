@@ -148,6 +148,32 @@ fundContract.invest({value: investAmount}, (err, result) => {
   }
 });
 ```
+
+#### 3. setManagementFee 
+
+```javascript
+function setManagementFee(uint _fee) external onlyOwner;
+```
+#### &emsp;Description
+> Set management fee.
+
+#### &emsp;Parameters
+> _fee: The percentage of investor's investment, that will be as management fee (Note: _fee must bigger than 0 and less than 10000)
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.setManagementFee((err, result) => {
+  if (err) {
+    return console.log()
+  }
+});
+```
 ### abi
 > you can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) and bytecode from our API 
 
