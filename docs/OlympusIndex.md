@@ -127,7 +127,7 @@ indexContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accoun
 #### 2. rebalance 
 
 ```javascript
-unction rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
+function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
 ```
 #### &emsp;Description
 > Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the complete asset value in the value might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased.
@@ -178,10 +178,10 @@ function invest() public payable
      returns(bool) ;
 ```
 #### &emsp;Description
-> Invest Index by sending ETH to the Index.
+> Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
 
 #### &emsp;Returns
-> Whether the function execute successfully or not.
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.

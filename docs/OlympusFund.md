@@ -100,7 +100,7 @@ function initialize(address _componentList, uint _initialFundFee, uint _rebalanc
 
 > \_componentList: Address of olympus componentlist </br> > \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
 > value: The initial balance of the fund
-> \_rebalanceDeltaPercentage: The index will buy and sell tokens according to the weights is configurated with a margin of error set by deltaPercentage. If the token doesnt fit the amount specify for the weight in the marging of the delta, wont be modify saving gas on the transaction. Must be based in DENOMINATOR, so 1% is 1000.
+> \_rebalanceDeltaPercentage: The fund will buy and sell tokens according to the weights is configurated with a margin of error set by deltaPercentage. If the token doesnt fit the amount specify for the weight in the marging of the delta, wont be modify saving gas on the transaction. Must be based in DENOMINATOR, so 1% is 1000.
 
 #### &emsp;Example code
 
@@ -130,10 +130,9 @@ function invest() public payable
      returns(bool) ;
 ```
 #### &emsp;Description
-> Invest Index by sending ETH to the Index.
-
+> Invest in the fund by calling the invest function while sending Ether to the fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
 #### &emsp;Returns
-> Whether the function execute successfully or not.
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
