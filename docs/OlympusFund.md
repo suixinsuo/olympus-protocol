@@ -89,7 +89,7 @@ web3.eth.contract(abi).new(
 #### 1. initialize
 
 ```javascript
-function initialize(address _componentList, uint _initialFundFee, uint _rebalanceDeltaPercentage) onlyOwner external payable;
+function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable;
 ```
 
 #### &emsp;Description
@@ -98,9 +98,9 @@ function initialize(address _componentList, uint _initialFundFee, uint _rebalanc
 
 #### &emsp;Parameters
 
-> \_componentList: Address of olympus componentlist </br> > \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
+> \_componentList: Address of olympus componentlist </br>
+  \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
 > value: The initial balance of the fund
-> \_rebalanceDeltaPercentage: The fund will buy and sell tokens according to the weights is configurated with a margin of error set by deltaPercentage. If the token doesnt fit the amount specify for the weight in the marging of the delta, wont be modify saving gas on the transaction. Must be based in DENOMINATOR, so 1% is 1000.
 
 #### &emsp;Example code
 
