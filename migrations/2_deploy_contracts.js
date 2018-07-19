@@ -13,7 +13,6 @@ let Locker = artifacts.require("Locker");
 let SimpleWithdraw = artifacts.require("SimpleWithdraw");
 let Reimbursable = artifacts.require("Reimbursable");
 
-let DummyDerivative = artifacts.require("MockDerivative");
 let PercentageFee = artifacts.require("PercentageFee");
 let ComponentList = artifacts.require("ComponentList");
 
@@ -22,14 +21,12 @@ let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockToken = artifacts.require("MockToken");
-
-let MockRebalanceIndex = artifacts.require("MockRebalanceIndex");
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 
 let StepProvider = artifacts.require("StepProvider");
-let MockStepContract = artifacts.require("MockStepContract");
 
 let devTokens;
+
 function deployMarketplace(deployer, network) {
   deployer.deploy([MarketplaceProvider]);
 }
@@ -40,6 +37,10 @@ function deployWithdraw(deployer, network) {
 
 function deployWhitelist(deployer, network) {
   deployer.deploy([WhitelistProvider]);
+}
+function deployStep(deployer, network) {
+  const MockStepContract = artifacts.require("MockStepContract");
+  deployer.deploy([StepProvider, MockStepContract]);
 }
 
 function deployExchange(deployer, network) {
@@ -94,7 +95,8 @@ async function deployOlympusFund(deployer, network) {
     PercentageFee,
     Reimbursable,
     WhitelistProvider,
-    ComponentList
+    ComponentList,
+    Steps
   ]);
   await deployExchange(deployer, network);
 }
@@ -110,7 +112,8 @@ async function deployOlympusIndex(deployer, network) {
     PercentageFee,
     Reimbursable,
     WhitelistProvider,
-    ComponentList
+    ComponentList,
+    Steps
   ]);
   await deployExchange(deployer, network);
   await deployer.deploy(RebalanceProvider, ExchangeProvider.address);
@@ -143,19 +146,12 @@ function deployOnDev(deployer, num) {
     .then(() => deployer.deploy(WhitelistProvider))
     .then(() => deployer.deploy(ComponentList))
     .then(() => deployExchange(deployer, "development"))
-    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
-    .then(() =>
-      deployer.deploy(MockRebalanceIndex, devTokens, [50, 50], RebalanceProvider.address, ExchangeProvider.address)
-    ).then(() => deployer.deploy(MockStepContract, StepProvider.address));
+    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
 }
 
 function deployOnKovan(deployer, num) {
   return deployer
-    .then(() =>
-      deployer.deploy([
-        [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
-      ])
-    )
+    .then(() => deployer.deploy([[MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]]))
     .then(() => deployer.deploy(MarketplaceProvider))
     .then(() => deployer.deploy(AsyncWithdraw))
     .then(() => deployer.deploy(Locker))
@@ -176,7 +172,7 @@ function deployOnMainnet(deployer) {
   return deploy;
 }
 
-module.exports = function (deployer, network) {
+module.exports = function(deployer, network) {
   let flags = args.parseArgs();
 
   if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {
