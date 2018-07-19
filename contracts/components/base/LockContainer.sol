@@ -41,7 +41,7 @@ contract Locker is ComponentInterface, LockerInterface  {
         timeInterval[msg.sender][_category] = _seconds * 1 seconds;
     }
 
-    function setMultpleTimeIntervals(bytes32[] _categories, uint[] _secondsList) external {
+    function setMultipleTimeIntervals(bytes32[] _categories, uint[] _secondsList) external {
         for(uint i = 0; i < _categories.length; i++) {
               timeInterval[msg.sender][_categories[i]] =  _secondsList[i] ;
         }

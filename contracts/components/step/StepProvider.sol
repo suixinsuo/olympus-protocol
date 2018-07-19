@@ -3,8 +3,6 @@ pragma solidity 0.4.24;
 import "../../interfaces/StepInterface.sol";
 
 contract StepProvider is StepInterface {
-
-
     string public name = "StepProvider";
     string public description = "Allow a function execution to span multiple transactions";
     string public category = "Steps";
@@ -15,8 +13,20 @@ contract StepProvider is StepInterface {
     mapping (address => mapping(bytes32 => uint)) public currentCallStep;
     mapping (address => mapping(bytes32 => uint)) public currentFunctionStep;
 
-    function initializeOrContinue(bytes32 _category, uint _maxCalls) external returns (uint _currentFunctionStep){
+    function setMaxCalls(bytes32 _category, uint _maxCalls) external {
+         require( _maxCalls> 0);
         maxCalls[msg.sender][_category] = _maxCalls;
+    }
+
+    function setMultipleMaxCalls(bytes32[] _categories, uint[] _maxCallsList) external {
+        for(uint i =0 ; i < _categories.length;i ++) {
+            require( _maxCallsList[i] > 0);
+            maxCalls[msg.sender][_categories[i]] = _maxCallsList[i];
+        }
+    }
+
+    function initializeOrContinue(bytes32 _category) external returns (uint _currentFunctionStep){
+        require(  maxCalls[msg.sender][_category] > 0);
         currentCallStep[msg.sender][_category] = 0;
 
         if(status[msg.sender][_category] == 0) { // Status 0 is not started

@@ -11,13 +11,13 @@ const {
 const OlympusIndex = artifacts.require("OlympusIndex");
 const Rebalance = artifacts.require("RebalanceProvider");
 const RiskControl = artifacts.require("RiskControl");
+const StepProvider = artifacts.require("StepProvider");
 const Marketplace = artifacts.require("Marketplace");
 const Whitelist = artifacts.require("WhitelistProvider");
 const Withdraw = artifacts.require("AsyncWithdraw");
 const Locker = artifacts.require("Locker");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
-const StepProvider = artifacts.require("StepProvider");
 
 const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
@@ -146,7 +146,7 @@ contract("Olympus Index", accounts => {
 
     // Reset the intervals for easy testing
     const intervals = [await index.REBALANCE(), await index.BUYTOKENS(), await index.WITHDRAW()];
-    await index.setMultpleTimeIntervals(intervals, [0, 0, 0]);
+    await index.setMultipleTimeIntervals(intervals, [0, 0, 0]);
 
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], index.address);
@@ -232,9 +232,13 @@ contract("Olympus Index", accounts => {
 
   it("Rebalance works with no tokens", async () => {
     let tx;
-    tx = await index.rebalance();
-    assert.ok(tx);
-    assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call();
+      tx = await index.rebalance();
+      assert.ok(tx);
+      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
+    }
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
@@ -245,12 +249,12 @@ contract("Olympus Index", accounts => {
   it("Can't rebalance so frequently", async () => {
     await calc.assertReverts(async () => await index.rebalance(), "Should be reverted");
     // disable the lock
-    await index.setMultpleTimeIntervals([await index.REBALANCE()], [0]);
+    await index.setMultipleTimeIntervals([await index.REBALANCE()], [0]);
   });
 
   it("Shall be able to request and withdraw", async () => {
     let tx;
-    await index.setMaxTransfers(1); // For testing
+    await index.setMaxSteps(DerivativeProviders.WITHDRAW, 1); // For testing
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1), "A has invested");
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), "B has invested");
@@ -274,7 +278,7 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
-    await index.setMaxTransfers(indexData.maxTransfers); // Restore
+    await index.setMaxSteps(DerivativeProviders.WITHDRAW, indexData.maxTransfers); // Restore
   });
 
   it("Shall be able to invest whitelist enabled", async () => {
@@ -342,8 +346,8 @@ contract("Olympus Index", accounts => {
   it("Shall be able to withdraw only after frequency", async () => {
     let tx;
     const interval = 5; //5 seconds frequency
-    await index.setMaxTransfers(1); // For testing
-    await index.setMultpleTimeIntervals([await index.WITHDRAW()], [interval]); // For testing
+    await index.setMaxSteps(DerivativeProviders.WITHDRAW, 1); // For testing
+    await index.setMultipleTimeIntervals([await index.WITHDRAW()], [interval]); // For testing
 
     // // The lock shall not affect the multy step
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
@@ -359,8 +363,8 @@ contract("Olympus Index", accounts => {
 
     await calc.assertReverts(async () => await index.withdraw(), "Lock avoids the withdraw"); // Lock is active, so we cant withdraw
     // Reset data, so will be updated in next chek
-    await index.setMultpleTimeIntervals([await index.WITHDRAW()], [0]); // Will be updated in the next withdraw
-    await index.setMaxTransfers(indexData.maxTransfers);
+    await index.setMultipleTimeIntervals([await index.WITHDRAW()], [0]); // Will be updated in the next withdraw
+    await index.setMaxSteps(DerivativeProviders.WITHDRAW, indexData.maxTransfers);
 
     await calc.waitSeconds(interval);
     // Lock is over, we can witdraw again
@@ -423,7 +427,7 @@ contract("Olympus Index", accounts => {
   it("Can't buy tokens so frequently", async () => {
     await calc.assertReverts(async () => await index.buyTokens(), "Should be reverted");
     // disable the lock
-    await index.setMultpleTimeIntervals([await index.BUYTOKENS()], [0]);
+    await index.setMultipleTimeIntervals([await index.BUYTOKENS()], [0]);
   });
 
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
@@ -469,8 +473,17 @@ contract("Olympus Index", accounts => {
     const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
     // Execute Rebalance
-    tx = await index.rebalance();
-    assert.ok(tx);
+    // Make sure it has to do multiple calls
+    await index.setMaxSteps(DerivativeProviders.REBALANCE, 1);
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call();
+      tx = await index.rebalance();
+      assert.ok(tx);
+      assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
+    }
+    // Restore
+    await index.setMaxSteps(DerivativeProviders.REBALANCE, 3);
 
     // Reblacance keep the amounts as per the wieghts
     tokenAmounts = await index.getTokensAndAmounts();

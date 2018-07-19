@@ -188,7 +188,7 @@ contract("Fund", accounts => {
 
   it("Shall be able to request and withdraw", async () => {
     let tx;
-    await fund.setMaxTransfers(1); // For testing
+    await fund.setMaxSteps(DerivativeProviders.WITHDRAW, 1); // For testing
 
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1), "A has invested");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), "B has invested");
@@ -217,7 +217,7 @@ contract("Fund", accounts => {
 
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
-    await fund.setMaxTransfers(fundData.maxTransfers); // Restore
+    await fund.setMaxSteps(DerivativeProviders.WITHDRAW, fundData.maxTransfers); // Restore
   });
 
   it("Shall be able to invest with whitelist enabled", async () => {
@@ -277,8 +277,8 @@ contract("Fund", accounts => {
   it("Shall be able to withdraw only after frequency", async () => {
     let tx;
     const interval = 5; //5 seconds frequency
-    await fund.setMaxTransfers(1); // For testing
-    await fund.setMultpleTimeIntervals([await fund.WITHDRAW()], [interval]); // For testing
+    await fund.setMaxSteps(DerivativeProviders.WITHDRAW, 1); // For testing
+    await fund.setMultipleTimeIntervals([await fund.WITHDRAW()], [interval]); // For testing
 
     // // The lock shall not affect the multy step
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
@@ -294,8 +294,8 @@ contract("Fund", accounts => {
 
     await calc.assertReverts(async () => await fund.withdraw(), "Lock avoids the withdraw"); // Lock is active, so we cant withdraw
     // Reset data, so will be updated in next chek
-    await fund.setMultpleTimeIntervals([await fund.WITHDRAW()], [0]); // Will be updated in the next withdraw
-    await fund.setMaxTransfers(fundData.maxTransfers);
+    await fund.setMultipleTimeIntervals([await fund.WITHDRAW()], [0]); // Will be updated in the next withdraw
+    await fund.setMaxSteps(DerivativeProviders.WITHDRAW, fundData.maxTransfers);
 
     await calc.waitSeconds(interval);
     // Lock is over, we can witdraw again

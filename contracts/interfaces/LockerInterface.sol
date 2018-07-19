@@ -13,7 +13,7 @@ contract LockerInterface {
     function checkLockerByTime(bytes32 _timerName) external;
 
     function setTimeInterval(bytes32 _timerName, uint _seconds) external;
-    function setMultpleTimeIntervals(bytes32[] _timerNames, uint[] _hours) external;
+    function setMultipleTimeIntervals(bytes32[] _timerNames, uint[] _hours) external;
 
 }
 
