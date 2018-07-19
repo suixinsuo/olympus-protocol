@@ -71,7 +71,7 @@ of the cases.
 
 The Fund performs a recalculation automatically whenever a token is bought or sold to reflect the price change.
 
-Note: When a token is completely sold, it's address will still be returned in the addresses array with the amount of 0.
+Note: When a token is completely sold, its address will still be returned in the addresses array with the amount of 0.
 
 ##### Returns
 
