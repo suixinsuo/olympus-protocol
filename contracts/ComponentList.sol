@@ -49,7 +49,7 @@ contract ComponentList is ComponentListInterface, Ownable {
             addresses[i] = components[_names[i]][componentVersions[_names[i]][componentVersions[_names[i]].length - 1]];
         }
         return addresses;
-    }    
+    }
 
     function getComponentVersions(bytes32 _name) public view returns (bytes32[] results) {
         results = new bytes32[](componentVersions[_name].length);

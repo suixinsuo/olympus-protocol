@@ -8,7 +8,7 @@ interface StepInterface {
     // Update the status to the following phase
     function updateStatus(bytes32 _category) external returns (bool success);
     // This function should always be called for each operation which is deemed to cost the gas.
-    function goNextStep(bytes32 _category) external returns (bool shouldReturn);
+    function goNextStep(bytes32 _category) external returns (bool shouldCallAgain);
     // This function should always be called at the end of the function, when everything is done. This resets the variables to default state.
     function finalize(bytes32 _category) external returns (bool success);
 }

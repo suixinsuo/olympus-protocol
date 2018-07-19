@@ -11,18 +11,40 @@ contract Locker is ComponentInterface, LockerInterface  {
     string public category = "Category";
     string public version = "1.0";
 
-    mapping(address => mapping(bytes32 => uint)) hoursInterval;
-    mapping(address => mapping(bytes32 => uint)) time;
+    mapping(address => mapping(bytes32 => uint)) intervalBlocks;
+    mapping(address => mapping(bytes32 => uint)) locker;
+    mapping(address => mapping(bytes32 => uint)) intervalHours;
+    mapping(address => mapping(bytes32 => uint)) timer;
 
 
-    function checkLock(bytes32 _timerName) external {
-        require(time[msg.sender][_timerName] >= now);
-        time[msg.sender][_timerName] = now + (hoursInterval[msg.sender][_timerName] * 60 * 60);
+    function checkLockByBlockNumber(bytes32 _lockerName) external {
+        require(block.number >= locker[msg.sender][_lockerName] + intervalBlocks[msg.sender][_lockerName]);
+        locker[msg.sender][_lockerName] = block.number;
     }
 
-    function setTimer(bytes32 _timerName, uint _hours) external {
-        hoursInterval[msg.sender][_timerName] = _hours;
+    function setIntervalBlock(bytes32 _lockerName, uint _blocks) external {
+        intervalBlocks[msg.sender][_lockerName] = _blocks;
     }
 
+    function setIntervalBlocks(bytes32[] _lockerNames, uint[] _blocks) external {
+        for(uint i = 0; i < _lockerNames.length; i++){
+            intervalHours[msg.sender][_lockerNames[i]] = _blocks[i];
+        }
+    }
+
+    function checkLockByHours(bytes32 _timerName) external {
+        require(now >= timer[msg.sender][_timerName] + intervalHours[msg.sender][_timerName]);
+        timer[msg.sender][_timerName] = now;
+    }
+
+    function setIntervalHour(bytes32 _timerName, uint _hours) external {
+        intervalHours[msg.sender][_timerName] = _hours;
+    }
+
+    function setIntervalHours(bytes32[] _timerNames, uint[] _hours) external {
+        for(uint i = 0; i < _timerNames.length; i++){
+            intervalHours[msg.sender][_timerNames[i]] = _hours[i];
+        }
+    }
 }
 
