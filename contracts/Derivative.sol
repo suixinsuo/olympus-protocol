@@ -9,6 +9,8 @@ import "./libs/ERC20NoReturn.sol";
 import "./interfaces/FeeChargerInterface.sol";
 import "./interfaces/WhitelistInterface.sol";
 import "./interfaces/RiskControlInterface.sol";
+import "./interfaces/LockerInterface.sol";
+import "./interfaces/StepInterface.sol";
 
 
 // Abstract class that implements the common functions to all our derivatives
@@ -27,7 +29,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     bytes32 public constant REBALANCE = "RebalanceProvider";
     bytes32 public constant STEP = "StepProvider";
     bytes32 public constant LOCKER = "LockerProvider";
-
+    uint public constant DEFAULT_INTERVAL = 1 days;
     enum WhitelistKeys { Investment, Maintenance, Admin }
 
     event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
@@ -94,4 +96,15 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
         return risk;
     }
+
+    function setMultipleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_timerNames,  _secondsList);
+    }
+
+
+    function setMaxSteps( bytes32 _category,uint _maxSteps) external onlyOwner {
+        StepInterface(getComponentByName(STEP)).setMaxCalls(_category,  _maxSteps);
+     }
+
+
 }

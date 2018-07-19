@@ -24,7 +24,7 @@ Redeem is separated into two different parts:
  function totalWithdrawPending() external view returns(uint);
  function withdrawInProgress() external view returns(bool);
 
-function setMaxTransfers(uint _maxTransfers) external onlyOwner;
+function setMaxSteps(bytes32 category, uint _maxSteps) external onlyOwner;
 uint maxTransfers public;
 ```
 
@@ -88,7 +88,7 @@ derivative.requestWithdraw(amountInWei, (err, results) => {
   external returns(bool);
 ```
 
-Withdraw will allow the owner to complete the redemption of tokens of his investors. Withdraw will handle the request in batches of 10(10 is the default value, this can be changed by calling the setMaxTransfers function). Only for the first time withdraw gets executed, withdraw will run a start function fixing some values of the derivative (the price, for example) that will keep constant for the rest executions.
+Withdraw will allow the owner to complete the redemption of tokens of his investors. Withdraw will handle the request in batches of 10(10 is the default value, this can be changed by calling the setMaxSteps function). Only for the first time withdraw gets executed, withdraw will run a start function fixing some values of the derivative (the price, for example) that will keep constant for the rest executions.
 Then, withdraw will calculate how many ETH corresponds to each investor according to the amount of derivative tokens redeemed, until he finishes the withdraw or the maximum of transfers has been reached.
 
 The function in the transaction will return true if the withdraw process is finished, or false if it is still pending. We can also check this by calling the withdrawInProgress function. If the withdraw process is in progress, the withdraw function needs to keep being called until it returns true.
@@ -219,15 +219,16 @@ derivative.totalWithdrawPending((err, tokenAmount) => {
 ### Withdraw max transfer
 
 ```javascript
-  function setMaxTransfers(uint _maxTransfers) external onlyOwner;
-  uint maxTransfers public.
+  function setMaxSteps(bytes32 _category, uint _maxTransfers) external onlyOwner;
 ```
 
-This function will determine the batch size for the withdraw function. By default, the value is 10.
-Max transfers attribute will retrieve the current max transfers value
+This function will determine the batch size for a function that requires several transactions to be completed.
+Available functions:
+= fund.WITHDRAW() . Batch size for withdraw operation. By default, the value is 10.
 
 ##### Parameters
 
+\_category: Byte32 string that represents the multistep function.
 \_maxTransfers: Number of transfers done each transaction. Must be higher than 0.
 
 ##### Returns
@@ -251,7 +252,7 @@ derivative.maxTransfers(8, (err, _maxTransfers) => {
   console.log("Max transfers " + _maxTransfers.toNumber());
 });
 const maxTransfers = 8; // Set maxTransfers to 8
-derivative.setMaxTransfers(8, (err, tokenAmount) => {
+derivative.setMaxSteps(8, (err, tokenAmount) => {
   if (err) {
     return console.error(err);
   }
