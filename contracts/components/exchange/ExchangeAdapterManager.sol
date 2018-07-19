@@ -12,7 +12,6 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
     mapping(address=>uint) private adapters;
     ERC20Extended private constant ETH_TOKEN_ADDRESS = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
-
     event AddedExchange(bytes32 id);
 
     function addExchange(bytes32 _name, address _adapter)

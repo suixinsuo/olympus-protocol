@@ -209,9 +209,7 @@ contract("Olympus Index", accounts => {
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
     tx = await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
     tx = await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Invest uses risk provider");
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     // Price is the same, as no Token value has changed
@@ -228,7 +226,6 @@ contract("Olympus Index", accounts => {
       rebalanceFinished = await index.rebalance.call();
       tx = await index.rebalance();
       assert.ok(tx);
-      // assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
     }
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
@@ -252,20 +249,16 @@ contract("Olympus Index", accounts => {
 
     // Request
     tx = await index.requestWithdraw(toTokenWei(1), { from: investorA });
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Request withdraw uses risk provider");
     tx = await index.requestWithdraw(toTokenWei(1), { from: investorB });
-    // assert.ok(calc.getEvent(tx, "RiskEvent"), "Request withdraw uses risk provider");
 
     // Withdraw max transfers is set to 1
     tx = await index.withdraw();
-    // assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
 
     // Second withdraw succeeds
     tx = await index.withdraw();
-    // assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed 2");
 
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
 
@@ -292,7 +285,6 @@ contract("Olympus Index", accounts => {
     await index.requestWithdraw(toTokenWei(1), { from: investorB });
 
     tx = await index.withdraw();
-    // assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, " Owner got Reimbursed");
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, " B has withdrawn");
@@ -320,10 +312,7 @@ contract("Olympus Index", accounts => {
 
     await index.setAllowed([bot], WhitelistType.Maintenance, true);
     tx = await index.withdraw({ from: bot });
-    // assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Bot got Reimbursed");
-
     tx = await index.rebalance({ from: bot });
-    // assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Bot got Reimbursed");
 
     // Permissions removed
     await index.setAllowed([bot], WhitelistType.Maintenance, false);
@@ -471,7 +460,6 @@ contract("Olympus Index", accounts => {
       rebalanceFinished = await index.rebalance.call();
       tx = await index.rebalance();
       assert.ok(tx);
-      // assert(calc.getEvent(tx, "Reimbursed").args.amount.toNumber() > 0, "Owner got Reimbursed for rebalance");
     }
     // Restore
     await index.setMaxSteps(DerivativeProviders.REBALANCE, 3);

@@ -32,8 +32,6 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     uint public constant DEFAULT_INTERVAL = 1 days;
     enum WhitelistKeys { Investment, Maintenance, Admin }
 
-    // event  RiskEvent(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate, bool risky);
-
   // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
         WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
@@ -91,7 +89,6 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
         RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
         bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
-        // emit RiskEvent (_sender, _receiver, _tokenAddress, _amount, _rate, risk);
         return risk;
     }
 
