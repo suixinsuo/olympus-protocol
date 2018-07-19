@@ -170,7 +170,7 @@ contract("Olympus Index", accounts => {
     await newRisk.setMotAddress(mockMOT.address);
 
     await componentList.setComponent(await index.RISK(), newRisk.address);
-    await index.updateAllComponents();
+    await index.updateComponent(await index.RISK());
     assert.equal(await index.getComponentByName(await index.RISK()), newRisk.address);
 
     // Check we allowance
@@ -179,20 +179,11 @@ contract("Olympus Index", accounts => {
   });
 
   it("Can register in the new marketplace ", async () => {
-    // Cant register without changing of market provider
-    await calc.assertReverts(async () => await index.registerInNewMarketplace(), "Shall not register");
-
     // Set new market place
     const newMarket = await Marketplace.new();
     await componentList.setComponent(await index.MARKET(), newMarket.address);
-    await index.updateAllComponents();
+    await index.updateComponent(await index.MARKET());
     assert.equal(await index.getComponentByName(await index.MARKET()), newMarket.address);
-
-    // Check we have register
-    await index.registerInNewMarketplace();
-    const myProducts = await newMarket.getOwnProducts();
-    assert.equal(myProducts.length, 1);
-    assert.equal(myProducts[0], index.address);
   });
 
   it("Index shall be able to deploy", async () => {
