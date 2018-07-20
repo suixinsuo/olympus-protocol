@@ -67,9 +67,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         // changed.
         require(super.setComponent(_name, componentList.getLatestComponent(_name)));
         // approve if it's not Marketplace.
-        if (keccak256(abi.encodePacked(_name)) != keccak256(abi.encodePacked(MARKET)) &&
-            keccak256(abi.encodePacked(_name)) != keccak256(abi.encodePacked(STEP)) &&
-            keccak256(abi.encodePacked(_name)) != keccak256(abi.encodePacked(LOCKER))) {
+        if (_name != MARKET && _name != STEP && _name != LOCKER) {
             approveComponent(_name);
         }
 
