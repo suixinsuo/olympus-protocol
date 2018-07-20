@@ -311,15 +311,15 @@ contract OlympusFund is FundInterface, Derivative {
     // solhint-disable-next-line
     function tokensWithAmount() public view returns( ERC20Extended[] memory) {
         // First check the length
-        uint8 length = 0;
-        for (uint8 i = 0; i < tokens.length; i++) {
+        uint length = 0;
+        for (uint i = 0; i < tokens.length; i++) {
             if (amounts[tokens[i]] > 0) {length++;}
         }
 
         ERC20Extended[] memory _tokensWithAmount = new ERC20Extended[](length);
         // Then create they array
-        uint8 index = 0;
-        for (uint8 j = 0; j < tokens.length; j++) {
+        uint index = 0;
+        for (uint j = 0; j < tokens.length; j++) {
             if (amounts[tokens[j]] > 0) {
                 _tokensWithAmount[index] = ERC20Extended(tokens[j]);
                 index++;
@@ -350,19 +350,19 @@ contract OlympusFund is FundInterface, Derivative {
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
     function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
-        WhitelistInterface(getComponentByName(WHITELIST)).enable(uint8(_key));
+        WhitelistInterface(getComponentByName(WHITELIST)).enable(uint(_key));
         return true;
     }
 
     // solhint-disable-next-line
     function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
-        WhitelistInterface(getComponentByName(WHITELIST)).disable(uint8(_key));
+        WhitelistInterface(getComponentByName(WHITELIST)).disable(uint(_key));
         return true;
     }
 
     // solhint-disable-next-line
     function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool) {
-        WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts, uint8(_key), allowed);
+        WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts, uint(_key), allowed);
         return true;
     }
 

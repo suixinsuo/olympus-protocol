@@ -8,7 +8,7 @@ import "../../contracts/interfaces/FeeChargerInterface.sol";
 
 contract MockWhitelistClient is MockDerivative {
 
-    uint8 public constant CATEGORY_BALANCE = 1;
+    uint public constant CATEGORY_BALANCE = 1;
 
     WhitelistInterface whitelistProvider;
 
