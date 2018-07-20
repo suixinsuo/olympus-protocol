@@ -14,7 +14,7 @@ contract Reimbursable is FeeCharger, ReimbursableInterface {
 
     using SafeMath for uint256;
 
-  uint public constant GAS_FEE_RANGE = 10000;
+    uint public constant GAS_FEE_RANGE = 10000;
     mapping(address => uint) public startGas;
     mapping(address => bool) public lock;
 
@@ -27,6 +27,7 @@ contract Reimbursable is FeeCharger, ReimbursableInterface {
         require(address(msg.sender).balance > 0);
         _;
     }
+
     // this should be called at the beginning of a function.
     // such as rebalance and withdraw.
     function startGasCalculation() external {
