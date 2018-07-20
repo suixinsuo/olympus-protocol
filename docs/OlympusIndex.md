@@ -204,10 +204,15 @@ indexContract.invest({value: investAmount}, (err, result) => {
 function setManagementFee(uint _fee) external onlyOwner;
 ```
 #### &emsp;Description
-> Set management fee.
+> Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. Usually, indexes should not have a 100% fee, but this is only restricted to be equal to or under 100% (10000). The following example values correspond to the following percentages:
+1 = 0.01% fee
+10 = 0.1% fee
+100 = 1% fee
+1000 = 10% fee
+10000 = 100% fee
 
 #### &emsp;Parameters
-> _fee: The percentage of investor's investment, that will be as management fee (Note: _fee must bigger than 0 and less than 10000)
+> _fee: The percentage of investor's investment, that will be as management fee (Note: _fee must equal to or bigger than 0 and less than 10000)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
