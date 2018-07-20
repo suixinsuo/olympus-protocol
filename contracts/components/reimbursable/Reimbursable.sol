@@ -27,6 +27,7 @@ contract Reimbursable is FeeCharger, ReimbursableInterface {
         require(address(msg.sender).balance > 0);
         _;
     }
+
     // this should be called at the beginning of a function.
     // such as rebalance and withdraw.
     function startGasCalculation() external {

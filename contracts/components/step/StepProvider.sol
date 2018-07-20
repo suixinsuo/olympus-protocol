@@ -1,8 +1,11 @@
 pragma solidity 0.4.24;
 
 import "../../interfaces/StepInterface.sol";
+import "../../interfaces/ComponentInterface.sol";
 
-contract StepProvider is StepInterface {
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+
+contract StepProvider is StepInterface, ComponentInterface, Ownable {
     string public name = "StepProvider";
     string public description = "Allow a function execution to span multiple transactions";
     string public category = "Steps";
