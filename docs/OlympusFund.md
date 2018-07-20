@@ -148,6 +148,37 @@ fundContract.invest({value: investAmount}, (err, result) => {
   }
 });
 ```
+
+#### 3. setManagementFee 
+
+```javascript
+function setManagementFee(uint _fee) external onlyOwner;
+```
+#### &emsp;Description
+> Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. Usually, indexes should not have a 100% fee, but this is only restricted to be equal to or under 100% (10000). The following example values correspond to the following percentages:</br>
+1 = 0.01% fee</br>
+10 = 0.1% fee</br>
+100 = 1% fee</br>
+1000 = 10% fee</br>
+10000 = 100% fee</br>
+
+#### &emsp;Parameters
+> _fee: The percentage of investor's investment, that will be as management fee (Note: _fee must equal to or bigger than 0 and less than 10000)
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.setManagementFee((err, result) => {
+  if (err) {
+    return console.log()
+  }
+});
+```
 ### abi
 > you can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) and bytecode from our API 
 
