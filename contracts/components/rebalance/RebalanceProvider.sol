@@ -8,7 +8,7 @@ import "../../interfaces/PriceProviderInterface.sol";
 import "../../components/base/FeeCharger.sol";
 
 
-contract RebalanceProvider is FeeCharger, RebalanceInterface {
+contract RebalanceProvider is FeeCharger, RebalanceInterface, Ownable {
     using SafeMath for uint256;
 
     PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
