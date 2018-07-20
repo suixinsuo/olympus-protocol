@@ -77,6 +77,7 @@ contract OlympusFund is FundInterface, Derivative {
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
+        StepInterface(getComponentByName(STEP)).setMaxCalls(WITHDRAW,  10);
 
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
