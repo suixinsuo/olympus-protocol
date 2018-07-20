@@ -1,6 +1,8 @@
 pragma solidity 0.4.24;
 
 import "../../interfaces/StepInterface.sol";
+import "../../interfaces/ComponentInterface.sol";
+
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract StepProvider is StepInterface, ComponentInterface, Ownable {
