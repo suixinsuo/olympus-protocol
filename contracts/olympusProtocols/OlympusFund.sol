@@ -16,7 +16,8 @@ import "../interfaces/LockerInterface.sol";
 
 
 contract OlympusFund is FundInterface, Derivative {
-
+    using SafeMath for uint256;
+    
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
