@@ -34,7 +34,7 @@ contract MockWithdrawClient is MockDerivative {
             asyncWithdraw.freeze();
         }
 
-        for(uint8 i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
+        for(uint i = 0; i < _requests.length && _transfers < maxTransfers ; i++) {
 
             (_eth, tokens) = asyncWithdraw.withdraw(_requests[i]);
             if(tokens == 0) {continue;}

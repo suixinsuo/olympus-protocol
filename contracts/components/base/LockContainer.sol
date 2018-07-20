@@ -3,8 +3,9 @@ pragma solidity 0.4.24;
 
 import "../../interfaces/ComponentInterface.sol";
 import "../../interfaces/LockerInterface.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract Locker is ComponentInterface, LockerInterface  {
+contract Locker is ComponentInterface, LockerInterface, Ownable  {
 
     string public name = "LockerContainer";
     string public description = "Simplifies the locker logic";

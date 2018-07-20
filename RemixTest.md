@@ -12,7 +12,7 @@
     `"Test Index" ,"TIX","Test index in kovan","index",18,["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0x71da415026fa64d1e348415e9486253e94333acc"] , [50,50]`
 2.  Initalize
 
-"0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678",0
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0
 
 # Fund
 
@@ -21,7 +21,7 @@
 
 2.  Initalize
 
-"0x334635f9b2b3b2a6d0406eb3a9fb42ea18222678",0
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0
 
 3.  Buy MANA (0.001 ETH)
 
