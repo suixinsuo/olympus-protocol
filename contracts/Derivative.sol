@@ -37,14 +37,14 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
         require(
             msg.sender == owner ||
-            (whitelist.enabled(address(this), uint8(_key)) && whitelist.isAllowed(uint8(_key), msg.sender) )
+            (whitelist.enabled(address(this), uint(_key)) && whitelist.isAllowed(uint(_key), msg.sender) )
         );
         _;
     }
 
     // If whitelist is disabled, anyone can do this
     modifier whitelisted(WhitelistKeys _key) {
-        require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint8(_key), msg.sender));
+        require(WhitelistInterface(getComponentByName(WHITELIST)).isAllowed(uint(_key), msg.sender));
         _;
     }
 
@@ -67,7 +67,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         // changed.
         require(super.setComponent(_name, componentList.getLatestComponent(_name)));
         // approve if it's not Marketplace.
-        if (keccak256(abi.encodePacked(_name)) != keccak256(abi.encodePacked(MARKET))) {
+        if (_name != MARKET && _name != STEP && _name != LOCKER) {
             approveComponent(_name);
         }
 
