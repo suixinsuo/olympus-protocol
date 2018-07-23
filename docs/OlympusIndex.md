@@ -92,6 +92,49 @@ web3.eth.contract(abi).new(
         }
       }));
 ```
+
+### Basic info 
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+// name
+indexContract.name((err,name)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(name)
+})
+// symbol
+indexContract.symbol((err,symbol)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(symbol)
+})
+// description
+indexContract.description((err,description)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(description)
+})
+// category
+indexContract.category((err,category)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(category)
+})
+// decimals
+indexContract.decimals((err,decimals)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(decimals)
+})
+```
+
 ### Interface
 #### 1. initialize 
 
