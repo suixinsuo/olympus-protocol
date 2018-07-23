@@ -193,7 +193,7 @@ const indexContract = web3.eth.contract(abi).at(address);
 const investAmount = 1 ** 17;
 indexContract.invest({value: investAmount}, (err, result) => {
   if (err) {
-    return console.log()
+    return console.log(err)
   }
 });
 ```
@@ -224,7 +224,30 @@ const indexContract = web3.eth.contract(abi).at(address);
 
 indexContract.setManagementFee((err, result) => {
   if (err) {
-    return console.log()
+    return console.log(err)
+  }
+});
+```
+
+#### 5. close 
+
+```javascript
+function close() public onlyOwner returns(bool success);
+```
+#### &emsp;Description
+> Close Index to stop investor investing 
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.close((err, result) => {
+  if (err) {
+    return console.log(err)
   }
 });
 ```
