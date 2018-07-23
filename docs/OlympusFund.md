@@ -185,7 +185,7 @@ indexContract.setManagementFee((err, result) => {
 function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
-> Close Fund to stop investor investing 
+> Close fund to stop investors from investing on the fund 
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
