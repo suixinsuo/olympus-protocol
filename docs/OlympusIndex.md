@@ -252,7 +252,7 @@ indexContract.close((err, result) => {
 });
 ```
 ### abi
-> you can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) and bytecode from our API
+> you can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) from our API
 
 ### bytecode
-> you can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) and bytecode from our API
+> you can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
