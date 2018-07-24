@@ -57,7 +57,7 @@ productListContract.getAllProducts((err,productAddresses) => {
 });
 ```
 
-#### 1. getOwnProducts 
+#### 2. getOwnProducts 
 
 ```javascript
 function getOwnProducts() external view returns (address[] addresses) ;
