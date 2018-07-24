@@ -94,6 +94,7 @@ web3.eth.contract(abi).new(
 ```
 
 ### Basic info 
+> The code below shows how to get index's basic information, including fund's name, symbol, category and decimals.
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
