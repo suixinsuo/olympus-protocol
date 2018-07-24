@@ -144,7 +144,7 @@ const fundContract = web3.eth.contract(abi).at(address);
 const investAmount = 1 ** 17;
 fundContract.invest({value: investAmount}, (err, result) => {
   if (err) {
-    return console.log()
+    return console.log(err)
   }
 });
 ```
@@ -175,12 +175,34 @@ const indexContract = web3.eth.contract(abi).at(address);
 
 indexContract.setManagementFee((err, result) => {
   if (err) {
-    return console.log()
+    return console.log(err)
+  }
+});
+```
+#### 4. close 
+
+```javascript
+function close() public onlyOwner returns(bool success);
+```
+#### &emsp;Description
+> Close fund to stop investors from investing on the fund 
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.close((err, result) => {
+  if (err) {
+    return console.log(err)
   }
 });
 ```
 ### abi
-> you can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) and bytecode from our API 
+> you can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API 
 
 ### bytecode
-> you can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) and bytecode from our API 
+> you can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API 

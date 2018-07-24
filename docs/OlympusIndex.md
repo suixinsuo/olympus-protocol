@@ -193,7 +193,7 @@ const indexContract = web3.eth.contract(abi).at(address);
 const investAmount = 1 ** 17;
 indexContract.invest({value: investAmount}, (err, result) => {
   if (err) {
-    return console.log()
+    return console.log(err)
   }
 });
 ```
@@ -224,12 +224,35 @@ const indexContract = web3.eth.contract(abi).at(address);
 
 indexContract.setManagementFee((err, result) => {
   if (err) {
-    return console.log()
+    return console.log(err)
+  }
+});
+```
+
+#### 5. close 
+
+```javascript
+function close() public onlyOwner returns(bool success);
+```
+#### &emsp;Description
+> Close index to stop investors from investing on the index
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.close((err, result) => {
+  if (err) {
+    return console.log(err)
   }
 });
 ```
 ### abi
-> you can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) and bytecode from our API
+> you can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) from our API
 
 ### bytecode
-> you can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) and bytecode from our API
+> you can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
