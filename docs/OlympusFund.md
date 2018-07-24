@@ -84,6 +84,49 @@ web3.eth.contract(abi).new(
       }));
 ```
 
+### Basic info 
+> The code below shows how to get fund's basic information, including fund's name, symbol, category and decimals.
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+// name
+fundContract.name((err,name)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(name)
+})
+// symbol
+fundContract.symbol((err,symbol)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(symbol)
+})
+// description
+fundContract.description((err,description)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(description)
+})
+// category
+fundContract.category((err,category)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(category)
+})
+// decimals
+fundContract.decimals((err,decimals)=>{
+  if (err) {
+    return console.error(err);
+  }
+  conosle.log(decimals)
+})
+```
+
 ### Interface
 
 #### 1. initialize
@@ -171,9 +214,9 @@ function setManagementFee(uint _fee) external onlyOwner;
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.setManagementFee((err, result) => {
+fundContract.setManagementFee((err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -185,7 +228,7 @@ indexContract.setManagementFee((err, result) => {
 function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
-> Close fund to stop investors from investing on the fund 
+> Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back.(Note: Investors still can withdraw their investment and Index managers can also withdraw their management fee.)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -193,9 +236,9 @@ function close() public onlyOwner returns(bool success);
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.close((err, result) => {
+fundContract.close((err, result) => {
   if (err) {
     return console.log(err)
   }
