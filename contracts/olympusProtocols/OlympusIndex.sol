@@ -377,7 +377,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         // Check the length of the array
         uint arrayLength = stepProvider.getMaxCalls(BUYTOKENS);
         if(arrayLength + currentStep >= tokens.length ) {
-          arrayLength = tokens.length - currentStep;
+            arrayLength = tokens.length - currentStep;
         }
 
         uint[] memory _amounts = new uint[](arrayLength);
@@ -399,7 +399,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
 
         if(i == tokens.length) {
-          stepProvider.finalize(BUYTOKENS);
+            stepProvider.finalize(BUYTOKENS);
         }
 
         reimburse();
@@ -408,10 +408,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // solhint-disable-next-line
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
-        LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(REBALANCE);
-
         StepInterface stepProvider = StepInterface(ReimbursableInterface(getComponentByName(STEP)));
-
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
