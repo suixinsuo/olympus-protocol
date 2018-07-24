@@ -280,7 +280,7 @@ function setManagementFee(uint _fee) external onlyOwner;
 10000 = 100% fee</br>
 
 #### &emsp;Parameters
-> _fee: The percentage of investor's investment, that will be as management fee (Note: _fee must equal to or bigger than 0 and less than 10000)
+> _fee: The percentage of investor's investment that will be used as management fee (Note: _fee must equal to or bigger than 0 and less than 10000)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -308,7 +308,7 @@ function requestWithdraw(uint amount) external
 > Investor can use this function to request to withdraw his investment.(Note: The investment will be withdraw after the index's manager execute the withdraw function.)
 
 #### &emsp;Parameters
-> amount: Amount is that you want to withdraw
+> amount: Amount of ETH the investor would like to withdraw.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -330,7 +330,7 @@ indexContract.requestWithdraw(amount, (err, result) => {
 function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
 ```
 #### &emsp;Description
-> This function is for index's manager. Investors that has requested to withdraw their investment will get their investment back after the index's management execute this function.
+> This function is for index's manager. Investors that has requested to withdraw their investment will get their investment back after the index's management executes this function.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -355,7 +355,7 @@ function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool)
 > This function is for index's manager to withdraw index management fee.
 
 #### &emsp;Parameters
-> amount: Amount is that you want to withdraw
+> amount: Amount of management fee the index manager would like to withdraw.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -377,7 +377,7 @@ indexContract.withdrawFee((err, result) => {
 function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
-> Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: Investors still can withdraw their investment and index managers can also withdraw their management fee.)
+> Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment and index managers can also withdraw their management fee.)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.

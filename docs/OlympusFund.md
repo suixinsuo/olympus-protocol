@@ -198,15 +198,15 @@ fundContract.invest({value: investAmount}, (err, result) => {
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool);
 ```
 #### &emsp;Description
-> Fund manager execute the function to buy tokens which can be any token you want
+> Call the function to buy any combination of tokens.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
 
 #### &emsp;Parameters
 > _exchangeId: You can choose which exchange will be used to trade.</br>
-  _tokens: The tokens that you want to buy.
-  _amounts: The amount of the token that you want to buy.
+  _tokens: Tokens to buy.
+  _amounts: The corresponding amount of tokens to buy.
   _minimumRates: The minimum amount of tokens per ETH in wei.
 
 #### &emsp;Example code
@@ -266,10 +266,10 @@ function requestWithdraw(uint amount) external
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice());
 ```
 #### &emsp;Description
-> Investor can use this function to request to withdraw his investment.(Note: The investment will be withdraw after the fund's manager execute the withdraw function.)
+> Request withdraw of specific amount of investment for an investor.(Note: The investment will be withdraw after the fund's manager execute the withdraw function.)
 
 #### &emsp;Parameters
-> amount: Amount is that you want to withdraw
+> amount: Amount of ETH the investor would like to withdraw.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -291,7 +291,7 @@ fundContract.requestWithdraw(amount, (err, result) => {
 function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) 
 ```
 #### &emsp;Description
-> This function is for fund's manager. Investors that has requested to withdraw their investment will get their investment back after the fund's management execute this function.
+> This function is for fund's manager. Investors that has requested to withdraw their investment will get their investment back after the fund's management executes this function.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -316,7 +316,7 @@ function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool)
 > This function is for fund's manager to withdraw fund management fee.
 
 #### &emsp;Parameters
-> amount: Amount is that you want to withdraw
+> amount: Amount of management fee the fund manager would like to withdraw.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -338,7 +338,7 @@ fundContract.withdrawFee((err, result) => {
 function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
-> Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back.(Note: Investors still can withdraw their investment and fund managers can also withdraw their management fee.)
+> Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back.(Note: After closing the fund, investors can still withdraw their investment and fund managers can also withdraw their management fee.)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.

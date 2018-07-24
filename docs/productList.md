@@ -1,7 +1,7 @@
 # ProductList
 
 ### Decription
-ProductList is a storage that store all funds and indices. The fund or index will be store to the ProductList when the initialize function is executed.
+ProductList is a storage that stores all funds and indices. The fund or index will be stored to the ProductList while executing the initialize function.
 
 ### Interface
 #### 1. getAllProducts 
@@ -10,7 +10,7 @@ ProductList is a storage that store all funds and indices. The fund or index wil
 function getAllProducts() external view returns (address[] allProducts);
 ```
 #### &emsp;Description
-> This function can get all products (incloding fund and index) that is in the production list.
+> Call this function to get all products (including fund and index) that are in the product list.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -63,7 +63,7 @@ productListContract.getAllProducts((err,productAddresses) => {
 function getOwnProducts() external view returns (address[] addresses) ;
 ```
 #### &emsp;Description
-> This function can get your own products (incloding fund and index) that is in the production list.
+> Call this function to get your own products (including fund and index) that are in the product list.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
