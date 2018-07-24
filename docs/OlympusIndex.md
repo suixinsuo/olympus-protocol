@@ -279,7 +279,7 @@ indexContract.setManagementFee((err, result) => {
 function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
-> Close index to stop investors from investing on the index
+> Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: Investors still can withdraw their investment and Index manager also can withdraw management fee)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
