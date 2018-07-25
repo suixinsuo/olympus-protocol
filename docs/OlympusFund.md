@@ -192,13 +192,48 @@ fundContract.invest({value: investAmount}, (err, result) => {
 });
 ```
 
-#### 3. setManagementFee 
+#### 3. buyTokens 
 
+```javascript
+function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool);
+```
+#### &emsp;Description
+> Call the function to buy any combination of tokens.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Parameters
+> _exchangeId: You can choose which exchange will be used to trade.</br>
+  _tokens: Tokens to buy.
+  _amounts: The corresponding amount of tokens to buy.
+  _minimumRates: The minimum amount of tokens per ETH in wei.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const _exchangeId = 0x0;
+const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _amounts = [10**17,10**17];
+const _minimumRates = [0,0];
+
+fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+
+#### 4. setManagementFee 
 ```javascript
 function setManagementFee(uint _fee) external onlyOwner;
 ```
 #### &emsp;Description
-> Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. Usually, indexes should not have a 100% fee, but this is only restricted to be equal to or under 100% (10000). The following example values correspond to the following percentages:</br>
+> Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. Usually, funds should not have a 100% fee, but this is only restricted to be equal to or under 100% (10000). The following example values correspond to the following percentages:</br>
 1 = 0.01% fee</br>
 10 = 0.1% fee</br>
 100 = 1% fee</br>
@@ -215,20 +250,95 @@ function setManagementFee(uint _fee) external onlyOwner;
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
-
-fundContract.setManagementFee((err, result) => {
+const _fee = 100;
+fundContract.setManagementFee(_fee, (err, result) => {
   if (err) {
     return console.log(err)
   }
 });
 ```
-#### 4. close 
+
+#### 5. requestWithdraw 
+
+```javascript
+function requestWithdraw(uint amount) external
+      whenNotPaused
+      withoutRisk(msg.sender, address(this), address(this), amount, getPrice());
+```
+#### &emsp;Description
+> Request withdraw of specific amount of investment for an investor.(Note: The investment will be withdraw after the fund's manager execute the withdraw function.)
+
+#### &emsp;Parameters
+> amount: Amount of ETH the investor would like to withdraw.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const amount = 10 ** 17;
+fundContract.requestWithdraw(amount, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 6. withdraw 
+
+```javascript
+function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) 
+```
+#### &emsp;Description
+> This function is for fund's manager. Investors that has requested to withdraw their investment will get their investment back after the fund's management executes this function.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+
+fundContract.withdraw((err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 7. withdrawFee 
+
+```javascript
+function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool);
+```
+#### &emsp;Description
+> This function is for fund's manager to withdraw fund management fee.
+
+#### &emsp;Parameters
+> amount: Amount of management fee the fund manager would like to withdraw.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const amount = 10 ** 17;
+fundContract.withdrawFee(amount, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 8. close 
 
 ```javascript
 function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
-> Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back.(Note: Investors still can withdraw their investment and Index managers can also withdraw their management fee.)
+> Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back.(Note: After closing the fund, investors can still withdraw their investment and fund managers can also withdraw their management fee.)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.

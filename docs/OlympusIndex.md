@@ -168,8 +168,62 @@ indexContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accoun
 });
 ```
 
-#### 2. rebalance 
+#### 2. invest 
+```javascript
+function invest() public payable
+     whenNotPaused
+     whitelisted(WhitelistKeys.Investment)
+     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+     returns(bool) ;
+```
+#### &emsp;Description
+> Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
 
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const investAmount = 1 ** 17;
+indexContract.invest({value: investAmount}, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+
+#### 3. buyTokens 
+```javascript
+function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
+```
+#### &emsp;Description
+> Index manager execute the function to buy tokens that are defined in index using the investor's investment.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.buyTokens((err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+
+#### 4. rebalance 
 ```javascript
 function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
 ```
@@ -212,37 +266,7 @@ rebalance((err,result)=>{
 });
 ```
 
-#### 3. invest 
-
-```javascript
-function invest() public payable
-     whenNotPaused
-     whitelisted(WhitelistKeys.Investment)
-     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
-     returns(bool) ;
-```
-#### &emsp;Description
-> Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
-
-#### &emsp;Returns
-> Whether the function executed successfully or not.
-
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
-
-```javascript
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-const investAmount = 1 ** 17;
-indexContract.invest({value: investAmount}, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
-});
-```
-
-#### 4. setManagementFee 
+#### 5. setManagementFee 
 
 ```javascript
 function setManagementFee(uint _fee) external onlyOwner;
@@ -256,7 +280,57 @@ function setManagementFee(uint _fee) external onlyOwner;
 10000 = 100% fee</br>
 
 #### &emsp;Parameters
-> _fee: The percentage of investor's investment, that will be as management fee (Note: _fee must equal to or bigger than 0 and less than 10000)
+> _fee: The percentage of investor's investment that will be used as management fee (Note: _fee must equal to or bigger than 0 and less than 10000)
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const _fee = 100; 
+indexContract.setManagementFee(_fee, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+
+#### 6. requestWithdraw 
+
+```javascript
+function requestWithdraw(uint amount) external
+      whenNotPaused
+      withoutRisk(msg.sender, address(this), address(this), amount, getPrice());
+```
+#### &emsp;Description
+> Investor can use this function to request to withdraw his investment.(Note: The investment will be withdraw after the index's manager execute the withdraw function.)
+
+#### &emsp;Parameters
+> amount: Amount of ETH the investor would like to withdraw.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const amount = 10 ** 17;
+indexContract.requestWithdraw(amount, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 7. withdraw 
+
+```javascript
+function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
+```
+#### &emsp;Description
+> This function is for index's manager. Investors that has requested to withdraw their investment will get their investment back after the index's management executes this function.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -266,20 +340,44 @@ const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 
-indexContract.setManagementFee((err, result) => {
+indexContract.withdraw((err, result) => {
   if (err) {
     return console.log(err)
   }
 });
 ```
+#### 8. withdrawFee 
 
-#### 5. close 
+```javascript
+function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool);
+```
+#### &emsp;Description
+> This function is for index's manager to withdraw index management fee.
+
+#### &emsp;Parameters
+> amount: Amount of management fee the index manager would like to withdraw.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const amount = 10 ** 17;
+indexContract.withdrawFee(amount, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 9. close 
 
 ```javascript
 function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
-> Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: Investors still can withdraw their investment and Index managers can also withdraw their management fee.)
+> Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment and index managers can also withdraw their management fee.)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
