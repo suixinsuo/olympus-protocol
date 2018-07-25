@@ -289,8 +289,8 @@ function setManagementFee(uint _fee) external onlyOwner;
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-
-indexContract.setManagementFee((err, result) => {
+const _fee = 100; 
+indexContract.setManagementFee(_fee, (err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -364,8 +364,8 @@ function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool)
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-
-indexContract.withdrawFee((err, result) => {
+const amount = 10 ** 17;
+indexContract.withdrawFee(amount, (err, result) => {
   if (err) {
     return console.log(err)
   }

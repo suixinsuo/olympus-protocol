@@ -325,8 +325,8 @@ function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool)
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
-
-fundContract.withdrawFee((err, result) => {
+const amount = 10 ** 17;
+fundContract.withdrawFee(amount, (err, result) => {
   if (err) {
     return console.log(err)
   }
