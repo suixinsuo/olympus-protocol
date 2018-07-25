@@ -41,12 +41,6 @@ contract OlympusBaseFund is FundInterface, Derivative {
         fundType = DerivativeType.Fund;
     }
 
-    // Call after you have updated the MARKET provider, not required after initialize
-    function registerInNewMarketplace() external onlyOwner returns(bool) {
-        require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
-        return true;
-    }
-
     // ----------------------------- CONFIG -----------------------------
     // One time call
     function initializeFund(address _componentList) external onlyOwner payable {
@@ -92,7 +86,6 @@ contract OlympusBaseFund is FundInterface, Derivative {
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
-          require(!hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]));
           totalEthRequired += _amounts[i];
         }
         require(getETHBalance() >= totalEthRequired);
@@ -111,7 +104,6 @@ contract OlympusBaseFund is FundInterface, Derivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < tokens.length; i++) {
-            require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
@@ -264,7 +256,6 @@ contract OlympusBaseFund is FundInterface, Derivative {
         for (uint i = 0; i < _tokensToSell.length; i++) {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
-            require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], _sellRates[i]));
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
         }
@@ -276,10 +267,6 @@ contract OlympusBaseFund is FundInterface, Derivative {
     function approveComponents() private {
         approveComponent(EXCHANGE);
         approveComponent(WITHDRAW);
-        approveComponent(RISK);
-        approveComponent(WHITELIST);
-        approveComponent(FEE);
-        approveComponent(REIMBURSABLE);
     }
 
     function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {
