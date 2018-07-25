@@ -17,7 +17,7 @@ import "../interfaces/LockerInterface.sol";
 
 contract OlympusFund is FundInterface, Derivative {
     using SafeMath for uint256;
-    
+
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
@@ -151,8 +151,7 @@ contract OlympusFund is FundInterface, Derivative {
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
 
-        uint _investorShare = (((msg.value-fee) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
-        _investorShare = _investorShare / DENOMINATOR;
+        uint _investorShare = ((msg.value-fee)  * 10 ** decimals) / _sharePrice;
 
         accumulatedFee += fee;
         balances[msg.sender] += _investorShare;

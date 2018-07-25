@@ -3,16 +3,19 @@
 # Kovan Tokens
 
 - MOT 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a
-- KNC 0x965e1449b880ae4e24f8dcd6537d0bef79c7a731
+- KNC 0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b
 
 # Index
 
 1.  Create
-    //50,50 MOT, MANA
-    `"Test Index" ,"TIX","Test index in kovan","index",18,["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0x71da415026fa64d1e348415e9486253e94333acc"] , [50,50]`
+    //50,50 KNC, MANA
+    `"Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x569b92514e4ea12413df6e02e1639976940cde70"] , [50,50]`
+    // 100 KNC
+    `"Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"] , [100]`
 2.  Initalize
 
-"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0 // Olympus labs
+"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 0 // Gerdinand
 
 # Fund
 
@@ -23,9 +26,11 @@
 
 "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0
 
-3.  Buy MANA (0.001 ETH)
-
-`"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["1000000000000000"],[0]`
+3.  Buy
+    // MANA (0.001 ETH)
+    `"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["1000000000000000"],[0]`
+    // MOT (0.001 ETH)
+    `"0x0",["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a"],["1000000000000000"],[0]`
 
 4.  Sell MANA (check balance)
 
