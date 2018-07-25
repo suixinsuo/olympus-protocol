@@ -9,7 +9,7 @@ import "../interfaces/ChargeableInterface.sol";
 import "../libs/ERC20NoReturn.sol";
 
 
-contract OlympusBaseFund is FundInterface, Derivative {
+contract OlympusBasicFund is FundInterface, Derivative {
     using SafeMath for uint256;
     
     uint public constant DENOMINATOR = 10000;
@@ -205,6 +205,15 @@ contract OlympusBaseFund is FundInterface, Derivative {
         return true;
     }
 
+    function guaranteeLiquidity(uint tokenBalance) internal {
+        uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
+        if (_totalETHToReturn > getETHBalance()) {
+            uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+            getETHFromTokens(_tokenPercentToSell);
+        }
+    }    
+
+    event LOGN(uint val, string msg);
    // ----------------------------- WITHDRAW -----------------------------
    // solhint-disable-next-line
    function withdraw()
@@ -214,14 +223,19 @@ contract OlympusBaseFund is FundInterface, Derivative {
     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, balances[msg.sender]); // _amount is not used in simple withdraw.
-        uint ethAmount;
-        uint _tokenAmount;
-        (_tokenAmount, ethAmount) = withdrawProvider.withdraw(msg.sender);
-        if (_tokenAmount == 0) {return false;}
 
-        balances[msg.sender] -= _tokenAmount;
-        totalSupply_ -= _tokenAmount;  
+        guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
+        withdrawProvider.freeze();
+
+        uint ethAmount;
+        uint tokenAmount;
+        (ethAmount, tokenAmount) = withdrawProvider.withdraw(msg.sender);
+        require(tokenAmount > 0, "Insufficient balance");
+
+        balances[msg.sender] -= tokenAmount;
+        totalSupply_ -= tokenAmount;  
         msg.sender.transfer(ethAmount);
+        withdrawProvider.finalize();
 
         return true;
     }
@@ -247,7 +261,7 @@ contract OlympusBaseFund is FundInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function getETHFromTokens(uint _tokenPercentage) public onlyOwner {
+    function getETHFromTokens(uint _tokenPercentage) internal {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](_tokensToSell.length);
         uint[] memory _sellRates = new uint[](_tokensToSell.length);

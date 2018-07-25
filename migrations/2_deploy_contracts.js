@@ -16,7 +16,7 @@ let Reimbursable = artifacts.require("Reimbursable");
 let PercentageFee = artifacts.require("PercentageFee");
 let ComponentList = artifacts.require("ComponentList");
 
-const args = require("../scripts/libs/args");
+const Args = require("../scripts/libs/args");
 let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
@@ -89,7 +89,7 @@ async function deployLocker(deployer, network) {
 }
 
 async function deployOlympusFund(deployer, network) {
-  const args = args.parseArgs();
+  const args = Args.parseArgs();
   await deployer.deploy([
     AsyncWithdraw,
     Locker,
@@ -104,8 +104,22 @@ async function deployOlympusFund(deployer, network) {
   await deployExchange(deployer, network);
 }
 
+async function deployOlympusBasicFund(deployer, network) {
+  const args = Args.parseArgs();
+  await deployExchange(deployer, network);
+  await deployMarketplace(deployer, network);
+
+  await deployer.deploy([
+    [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18],
+    Marketplace,
+    AsyncWithdraw,
+    MarketplaceProvider,
+    ComponentList
+  ]);
+}
+
 async function deployOlympusIndex(deployer, network) {
-  const args = args.parseArgs();
+  const args = Args.parseArgs();
 
   await deployer.deploy([
     AsyncWithdraw,
@@ -176,7 +190,7 @@ function deployOnMainnet(deployer) {
 }
 
 module.exports = function(deployer, network) {
-  let flags = args.parseArgs();
+  let flags = Args.parseArgs();
 
   if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {
     return eval(`deploy${flags.suite}(deployer,network)`);
