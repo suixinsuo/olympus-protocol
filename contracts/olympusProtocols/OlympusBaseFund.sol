@@ -6,7 +6,6 @@ import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
-import "../interfaces/StepInterface.sol";
 import "../libs/ERC20NoReturn.sol";
 
 
@@ -50,13 +49,13 @@ contract OlympusBaseFund is FundInterface, Derivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _componentList) external onlyOwner payable {
+    function initializeFund(address _componentList) external onlyOwner payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
         super.initialize(_componentList);
-        bytes32[4] memory names = [MARKET, EXCHANGE, WITHDRAW, STEP];
+        bytes32[3] memory names = [MARKET, EXCHANGE, WITHDRAW];
         bytes32[] memory nameParameters = new bytes32[](names.length);
 
         for (uint i = 0; i < names.length; i++) {
@@ -71,7 +70,6 @@ contract OlympusBaseFund is FundInterface, Derivative {
         approveComponents();
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
-        StepInterface(getComponentByName(STEP)).setMaxCalls(WITHDRAW, 10);
 
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
@@ -222,7 +220,18 @@ contract OlympusBaseFund is FundInterface, Derivative {
         whenNotPaused
         returns(bool)
     {
-        //todo: use the simple withdraw
+        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        withdrawProvider.request(msg.sender, balances[msg.sender]); // _amount is not used in simple withdraw.
+        uint ethAmount;
+        uint _tokenAmount;
+        (_tokenAmount, ethAmount) = withdrawProvider.withdraw(msg.sender);
+        if (_tokenAmount == 0) {return false;}
+
+        balances[msg.sender] -= _tokenAmount;
+        totalSupply_ -= _tokenAmount;  
+        msg.sender.transfer(ethAmount);
+
+        return true;
     }
 
     // solhint-disable-next-line
