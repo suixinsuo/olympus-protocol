@@ -95,13 +95,13 @@ contract("BasicFund", accounts => {
     const newWithdraw = await AsyncWithdraw.new();
     await newWithdraw.setMotAddress(mockMOT.address);
 
-    await componentList.setComponent(await fund.RISK(), newWithdraw.address);
-    await fund.updateComponent(await fund.RISK());
-    assert.equal(await fund.getComponentByName(await fund.RISK()), newWithdraw.address);
+    await componentList.setComponent(await fund.WITHDRAW(), newWithdraw.address);
+    await fund.updateComponent(await fund.WITHDRAW());
+    assert.equal(await fund.getComponentByName(await fund.WITHDRAW()), newWithdraw.address);
 
     // Check we allowance
     const allowance = await mockMOT.allowance(fund.address, newWithdraw.address);
-    assert.isAbove(allowance, 10 ** 32, 0, "MOT is approved for new component");
+    assert.isAbove(allowance.toNumber(), 10 ** 32, 0, "MOT is approved for new component");
   });
 
   it("Fund shall be able to deploy", async () => {

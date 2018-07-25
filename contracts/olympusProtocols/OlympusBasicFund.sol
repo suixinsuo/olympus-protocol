@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../Derivative.sol";
+import "../BaseDerivative.sol";
 import "../interfaces/FundInterface.sol";
 import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
@@ -9,7 +9,7 @@ import "../interfaces/ChargeableInterface.sol";
 import "../libs/ERC20NoReturn.sol";
 
 
-contract OlympusBasicFund is FundInterface, Derivative {
+contract OlympusBasicFund is FundInterface, BaseDerivative {
     using SafeMath for uint256;
     
     uint public constant DENOMINATOR = 10000;
@@ -116,7 +116,7 @@ contract OlympusBasicFund is FundInterface, Derivative {
 
     function invest() public
         payable
-        whenNotPaused
+        
       returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
@@ -198,7 +198,7 @@ contract OlympusBasicFund is FundInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
+    function withdrawFee(uint amount) external onlyOwner  returns(bool) {
         require(accumulatedFee >= amount);
         accumulatedFee -= amount;
         msg.sender.transfer(amount);
@@ -218,7 +218,6 @@ contract OlympusBasicFund is FundInterface, Derivative {
    // solhint-disable-next-line
    function withdraw()
         external
-        whenNotPaused
         returns(bool)
     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
