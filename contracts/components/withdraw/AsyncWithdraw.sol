@@ -94,16 +94,16 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     }
 
     // Out of the interface
-    function getContractInfo() external view returns(
+    function getContractInfo(address _contract) external view returns(
         uint price,
         address[]  userRequests,
         uint totalWithdrawAmount,
         bool withdrawRequestLock
      ) {
-        price = contracts[msg.sender].price;
-        userRequests = contracts[msg.sender].userRequests;
-        totalWithdrawAmount = contracts[msg.sender].totalWithdrawAmount;
-        withdrawRequestLock = contracts[msg.sender].withdrawRequestLock;
+        price = contracts[_contract].price;
+        userRequests = contracts[_contract].userRequests;
+        totalWithdrawAmount = contracts[_contract].totalWithdrawAmount;
+        withdrawRequestLock = contracts[_contract].withdrawRequestLock;
     }
 
 

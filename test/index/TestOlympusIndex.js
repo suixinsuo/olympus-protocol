@@ -479,11 +479,7 @@ contract("Olympus Index", accounts => {
     // Price is updated because we force the total assets value increase while not the supply
     const price = (await index.getPrice()).toNumber();
     const supply = (await index.totalSupply()).toNumber();
-    const priceInRange = calc.inRange(
-      price,
-      (initialAssetsValue + extraAmount) / supply,
-      web3.toWei(0.0000001, "ether")
-    );
+    const priceInRange = calc.inRange(price, (initialAssetsValue + extraAmount) / supply, web3.toWei(0.00001, "ether"));
     assert.ok(priceInRange, "Price updated");
   });
 
@@ -507,7 +503,6 @@ contract("Olympus Index", accounts => {
 
   it("Shall be able to close a index", async () => {
     await index.invest({ value: web3.toWei(2, "ether"), from: investorC });
-    const initialBalance = (await index.getETHBalance()).toNumber();
     const price = (await index.getPrice()).toNumber();
     const priceInRange = calc.inRange(
       (await index.balanceOf(investorC)).toNumber(),
@@ -534,15 +529,17 @@ contract("Olympus Index", accounts => {
 
   it("Investor cant invest but can withdraw after close", async () => {
     assert.isAbove((await index.balanceOf(investorC)).toNumber(), 0, "C starting balance");
-
+ 
     // Investor cant invest can withdraw
     await calc.assertReverts(
       async () => await index.invest({ value: web3.toWei(1, "ether"), from: investorA }),
       "Cant invest after close"
     );
-    // Request
-    await index.requestWithdraw((await index.balanceOf(investorC)).toNumber(), { from: investorC });
+     // Request
+    await index.requestWithdraw((await index.balanceOf(investorC)).toString(), { from: investorC });
+ 
     await index.withdraw();
-    assert.equal((await index.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
+ 
+    assert.equal((await index.balanceOf(investorC)).toString(), 0, " C has withdrawn");
   });
 });
