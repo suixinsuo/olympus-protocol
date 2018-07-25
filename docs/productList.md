@@ -1,147 +1,88 @@
-# Product List Documentation
+# ProductList
 
-### Introduction
-
-This documentation is to describe component Product List.
-
-Product List provides a list of available derivatives that has been published into it, allowing the derivative owners to keep track of their own products.
-and making them available to other people.
+### Decription
+ProductList is a storage that stores all funds and indices. The fund or index will be stored to the ProductList while executing the initialize function.
 
 ### Interface
+#### 1. getAllProducts 
 
 ```javascript
-    address[] public products;
-    mapping(address => address[]) public productMappings;
-
-    function getAllProducts() external view returns (address[] allProducts);
-    function getOwnProducts() external view returns (address[] addresses);
-
-    event Registered(address product, address owner);
+function getAllProducts() external view returns (address[] allProducts);
 ```
+#### &emsp;Description
+> Call this function to get all products (including fund and index) that are in the product list.
 
-The interface list allows us to see the all products registered and the product list by owner.
-
-### Get Own Products
-
-```javascript
-    function getOwnProducts() external view returns (address[] addresses);
-```
-
-Get own products will retrieve derivatives in the product list which belong to the caller.
-
-##### Returns
-
-An array with the addresses of the derivatives published, empty array if the caller hasn't published any address.
-
-#### Example code
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
 
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const productListContract = web3.eth.contract(abi).at(productlistAddress);
 
-const productListAdress = "0x....";
-const productListAbi = [];
-const productList = web3.eth.contract(productListAbi).at(productListAdress);
-
-productList.getOwnProducts((err, results) => {
+productListContract.getAllProducts((err,productAddresses) => {
   if (err) {
     return console.error(err);
   }
-  // use the template ABI to connect to the addresses and get detailed information.
-  console.log(results);
+  console.log(productAddresses);
+  // We can use the following code to distinguish which is index address or fund address. 
+  const indexContract = web3.eth.contract(indexAbi).at(productAddresses[0])
+  indexContract.fundType((err,fundType)=>{
+      if (err) {
+        return console.error(err);
+      }
+      if(fundType == 0){
+        // this is an index address.
+      }else if (fundType == 1){
+        // this is a fund address.
+      }else{
+        // unexpected result.
+      }
+
+  })
+  // Or
+  const fundContract = web3.eth.contract(fundAbi).at(productAddresses[0])
+  fundContract.fundType((err,fundType)=>{
+      if (err) {
+        return console.error(err);
+      }
+      if(fundType == 0){
+        // this is an index address.
+      }else if (fundType == 1){
+        // this is a fund address.
+      }else{
+        // unexpected result.
+      }
+  })
 });
 ```
 
-### Get All Products
+#### 2. getOwnProducts 
 
 ```javascript
-    function getAllProducts() external view returns (address[] allProducts);
+function getOwnProducts() external view returns (address[] addresses) ;
 ```
+#### &emsp;Description
+> Call this function to get your own products (including fund and index) that are in the product list.
 
-Get all products published in this product list.
-
-##### Returns
-
-An array of product addresses
-
-#### Example code
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
 
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const productListContract = web3.eth.contract(abi).at(address);
 
-const productListAdress = "0x....";
-const productListAbi = [];
-const productList = web3.eth.contract(productListAbi).at(productListAdress);
-
-productList.getAllProducts((err, results) => {
+productListContract.getOwnProducts((err,productAddresses) => {
   if (err) {
     return console.error(err);
   }
-  // use the template ABI to connect to the addresses and get detailed information.
-  console.log(results);
+  console.log(productAddresses);
 });
 ```
 
-## Get information of the products from the address
+### abi
+> you can get the [abi](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
 
-Once we get the product addresses we can hit the derivative contract in order to retrieve information.
-In this example we will retreive common information that belong to all derivative implementations,
-like name and description.
-
-```javascript
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-
-const productListAdress = "0x....";
-const productListAbi = [];
-const productList = web3.eth.contract(productListAbi).at(productListAdress);
-
-const derivativeAbi = [];
-let derivativeContract;
-const derivatives = {}; // Hasmap address => object
-
-productList.getAllProducts((err, derivativeList) => {
-  if (err) {
-    return console.error(err);
-  }
-  // use the template ABI to connect to the addresses and get detailed information.
-  derivativeList.forEach(derivativeAddress => {
-      derivativeContract = web3.eth.contract(derivativeAbi).at(derivativeAddress);
-
-      derivativeContract.name((err, name) => {
-        if (err) {
-          return console.error(err);
-        }
-        derivatives[derivativeAddress].name = name;
-      });
-
-      derivativeContract.description((err, description) => {
-        if (err) {
-          return console.error(err);
-        }
-        derivatives[derivativeAddress].description = description;
-      });
-
-      derivativeContract.totalSupply((err, totalSupply) => {
-        if (err) {
-          return console.error(err);
-        }
-        derivatives[derivativeAddress].totalSupply = totalSupply.toNumber();
-      });
-
-    });
-  });
-});
-```
-
-From a derivative we can get the next list of useful information:
-
-- name: string
-- owner: address
-- description: string
-- status: BigNumber (0: new, 1: active, 2:pause, 3: closed)
-- fundType: number (0: fund, 1: index)
-- totalSupply: BigNumber Total of derivative tokens delivered
-- getPrice: BigNumber
-- tokens: Array<address>, list of addresses of the tokens that are in the derivative.
+### productList address
+> you can get the [productlist address](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
