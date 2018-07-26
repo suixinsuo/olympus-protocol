@@ -181,8 +181,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
 
-        uint _investorShare = (((msg.value-fee) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
-        _investorShare = _investorShare / DENOMINATOR;
+        uint _investorShare = ((msg.value-fee)  * 10 ** decimals) / _sharePrice;
 
         accumulatedFee += fee;
         balances[msg.sender] += _investorShare;
@@ -258,7 +257,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     function requestWithdraw(uint amount) external
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-    {
+    { 
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -295,8 +294,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
             (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
-            if (_tokenAmount == 0) {continue;}
-
+             if (_tokenAmount == 0) {continue;}
+ 
             balances[_requests[i]] -= _tokenAmount;
             totalSupply_ -= _tokenAmount;
             address(_requests[i]).transfer(_eth);
@@ -400,6 +399,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         if(i == tokens.length) {
             stepProvider.finalize(BUYTOKENS);
+            freezeETHBalance = 0;
         }
 
         reimburse();
