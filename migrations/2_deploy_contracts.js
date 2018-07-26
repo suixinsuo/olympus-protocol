@@ -107,7 +107,6 @@ async function deployOlympusFund(deployer, network) {
 async function deployOlympusBasicFund(deployer, network) {
   const args = Args.parseArgs();
   await deployExchange(deployer, network);
-  await deployMarketplace(deployer, network);
 
   await deployer.deploy([
     [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18],

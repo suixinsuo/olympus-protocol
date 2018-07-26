@@ -12,7 +12,6 @@ import "../libs/ERC20NoReturn.sol";
 contract OlympusBasicFund is FundInterface, BaseDerivative {
     using SafeMath for uint256;
     
-    uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
     event TokenUpdated(address _token, uint amount);
@@ -129,8 +128,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
             _sharePrice = INITIAL_VALUE;
         }
 
-        uint _investorShare = (((msg.value) * DENOMINATOR) / _sharePrice) * 10 ** decimals;
-        _investorShare = _investorShare / DENOMINATOR;
+        uint _investorShare = msg.value * 10 ** decimals / _sharePrice;
 
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
@@ -213,13 +211,13 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         }
     }    
 
-    event LOGN(uint val, string msg);
    // ----------------------------- WITHDRAW -----------------------------
    // solhint-disable-next-line
    function withdraw()
         external
         returns(bool)
     {
+        require(balances[msg.sender] > 0, "Insufficient balance");
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, balances[msg.sender]); // _amount is not used in simple withdraw.
 
@@ -229,7 +227,6 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         uint ethAmount;
         uint tokenAmount;
         (ethAmount, tokenAmount) = withdrawProvider.withdraw(msg.sender);
-        require(tokenAmount > 0, "Insufficient balance");
 
         balances[msg.sender] -= tokenAmount;
         totalSupply_ -= tokenAmount;  

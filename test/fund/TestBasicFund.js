@@ -132,10 +132,10 @@ contract("BasicFund", accounts => {
 
   it("Shall be able to request and withdraw", async () => {
     let tx;
-    let val = toTokenWei(1);
+    let tokenInWei = toTokenWei(1);
 
-    assert.equal((await fund.balanceOf(investorA)).toNumber(), val, "A has invested");
-    assert.equal((await fund.balanceOf(investorB)).toNumber(), val, "B has invested");
+    assert.equal((await fund.balanceOf(investorA)).toNumber(), tokenInWei, "A has invested");
+    assert.equal((await fund.balanceOf(investorB)).toNumber(), tokenInWei, "B has invested");
 
     // Request
     tx = await fund.withdraw({ from: investorA });

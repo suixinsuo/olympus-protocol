@@ -18,6 +18,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer, StandardToke
     bytes32 public constant EXCHANGE = "ExchangeProvider";
     bytes32 public constant WITHDRAW = "WithdrawProvider";
     bytes32 public constant REBALANCE = "RebalanceProvider";
+    uint public constant DENOMINATOR = 10000;
 
     bytes32[] internal excludedComponents;
 
