@@ -32,6 +32,8 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     uint public constant DEFAULT_INTERVAL = 1 days;
     enum WhitelistKeys { Investment, Maintenance, Admin }
 
+    bytes32[] internal excludedComponents;
+
   // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
         WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
@@ -53,9 +55,12 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         _;
     }
 
-    function initialize (address _componentList) internal {
+    function _initialize (address _componentList) internal {
         require(_componentList != 0x0);
         componentList = ComponentListInterface(_componentList);
+        excludedComponents.push(MARKET);
+        excludedComponents.push(STEP);
+        excludedComponents.push(LOCKER);
     }
 
     function updateComponent(bytes32 _name) public onlyOwner returns (address) {
@@ -67,8 +72,16 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         // changed.
         require(super.setComponent(_name, componentList.getLatestComponent(_name)));
         // approve if it's not Marketplace.
-        if (_name != MARKET && _name != STEP && _name != LOCKER) {
-            approveComponent(_name);
+        bool requireApproval = true;
+        for (uint i = 0; i < excludedComponents.length; i++) {
+          if (_name == excludedComponents[i]) {
+              requireApproval = false;
+              break;
+          }
+        }
+
+        if (requireApproval) {
+          approveComponent(_name);
         }
 
         // return latest address.

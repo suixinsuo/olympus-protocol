@@ -35,7 +35,6 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
             contracts[msg.sender].totalWithdrawAmount > 0;
     }
 
-
     function request(address _investor, uint256 _amount) external returns (bool) {
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
          // Safe checks

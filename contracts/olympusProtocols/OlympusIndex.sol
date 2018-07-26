@@ -86,7 +86,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(_rebalanceDeltaPercentage <= DENOMINATOR);
 
         rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
-        super.initialize(_componentList);
+        super._initialize(_componentList);
         bytes32[10] memory names = [
             MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP
         ];

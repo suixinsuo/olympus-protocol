@@ -1,24 +1,17 @@
 pragma solidity 0.4.24;
 
-import "../Derivative.sol";
+import "../BaseDerivative.sol";
 import "../interfaces/FundInterface.sol";
 import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
-import "../interfaces/RiskControlInterface.sol";
-import "../interfaces/ReimbursableInterface.sol";
-import "../interfaces/WhitelistInterface.sol";
-import "../interfaces/StepInterface.sol";
 import "../libs/ERC20NoReturn.sol";
-import "../interfaces/FeeChargerInterface.sol";
-import "../interfaces/LockerInterface.sol";
 
 
-contract OlympusFund is FundInterface, Derivative {
+contract OlympusBasicFund is FundInterface, BaseDerivative {
     using SafeMath for uint256;
 
-    uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
     event TokenUpdated(address _token, uint amount);
@@ -47,21 +40,15 @@ contract OlympusFund is FundInterface, Derivative {
         fundType = DerivativeType.Fund;
     }
 
-    // Call after you have updated the MARKET provider, not required after initialize
-    function registerInNewMarketplace() external onlyOwner returns(bool) {
-        require(MarketplaceInterface(getComponentByName(MARKET)).registerProduct());
-        return true;
-    }
-
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) onlyOwner external  payable {
+    function initialize(address _componentList) external onlyOwner payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
         super._initialize(_componentList);
-        bytes32[9] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP];
+        bytes32[3] memory names = [MARKET, EXCHANGE, WITHDRAW];
         bytes32[] memory nameParameters = new bytes32[](names.length);
 
         for (uint i = 0; i < names.length; i++) {
@@ -76,9 +63,6 @@ contract OlympusFund is FundInterface, Derivative {
         approveComponents();
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
-        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
-        LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
-        StepInterface(getComponentByName(STEP)).setMaxCalls(WITHDRAW,  10);
 
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
@@ -96,12 +80,11 @@ contract OlympusFund is FundInterface, Derivative {
 
     // ----------------------------- FUND INTERFACE -----------------------------
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
-         public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
+         public onlyOwner returns(bool) {
 
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
-          require(!hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]));
           totalEthRequired += _amounts[i];
         }
         require(getETHBalance() >= totalEthRequired);
@@ -115,12 +98,11 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
-      public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
+      public onlyOwner returns (bool) {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < tokens.length; i++) {
-            require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
@@ -133,9 +115,7 @@ contract OlympusFund is FundInterface, Derivative {
 
     function invest() public
         payable
-        whitelisted(WhitelistKeys.Investment)
-        withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
-        whenNotPaused
+
       returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
@@ -148,12 +128,8 @@ contract OlympusFund is FundInterface, Derivative {
             _sharePrice = INITIAL_VALUE;
         }
 
-        ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
-        uint fee = feeManager.calculateFee(msg.sender, msg.value);
+        uint _investorShare = msg.value * 10 ** decimals / _sharePrice;
 
-        uint _investorShare = ((msg.value-fee)  * 10 ** decimals) / _sharePrice;
-
-        accumulatedFee += fee;
         balances[msg.sender] += _investorShare;
         totalSupply_ += _investorShare;
 
@@ -220,38 +196,11 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
+    function withdrawFee(uint amount) external onlyOwner  returns(bool) {
         require(accumulatedFee >= amount);
         accumulatedFee -= amount;
         msg.sender.transfer(amount);
         return true;
-    }
-
-    // solhint-disable-next-line
-    function setManagementFee(uint _fee) external onlyOwner {
-        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
-    }
-
-    // solhint-disable-next-line
-    function getManagementFee() external view returns(uint) {
-        return ChargeableInterface(getComponentByName(FEE)).getFeePercentage();
-    }
-
-    // ----------------------------- WITHDRAW -----------------------------
-    // solhint-disable-next-line
-    function requestWithdraw(uint amount)
-        external
-        whenNotPaused
-        withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-        {
-        WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
-    }
-
-
-    // solhint-disable-next-line
-    function totalWithdrawPending() external view returns(uint) {
-        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
-        return withdrawProvider.getTotalWithdrawAmount();
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal {
@@ -262,51 +211,29 @@ contract OlympusFund is FundInterface, Derivative {
         }
     }
 
+   // ----------------------------- WITHDRAW -----------------------------
    // solhint-disable-next-line
    function withdraw()
         external
-        onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance)
-        whenNotPaused
         returns(bool)
     {
-        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+        require(balances[msg.sender] > 0, "Insufficient balance");
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
-        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
+        withdrawProvider.request(msg.sender, balances[msg.sender]); // _amount is not used in simple withdraw.
 
-        // Check if there is request
-        address[] memory _requests = withdrawProvider.getUserRequests();
+        guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
+        withdrawProvider.freeze();
 
-        uint _transfers = stepProvider.initializeOrContinue(WITHDRAW);
-        uint _eth;
-        uint _tokenAmount;
-        uint i;
-        if (_transfers == 0) {
-            LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
-            if (_requests.length == 0) {
-              reimburse();
-              return true;
-            }
-            guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
-            withdrawProvider.freeze();
-        }
+        uint ethAmount;
+        uint tokenAmount;
+        (ethAmount, tokenAmount) = withdrawProvider.withdraw(msg.sender);
 
-        for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
+        balances[msg.sender] -= tokenAmount;
+        totalSupply_ -= tokenAmount;
+        msg.sender.transfer(ethAmount);
+        withdrawProvider.finalize();
 
-            (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
-            if (_tokenAmount == 0) {continue;}
-
-            balances[_requests[i]] -= _tokenAmount;
-            totalSupply_ -= _tokenAmount;
-            address(_requests[i]).transfer(_eth);
-         }
-
-        if (i == _requests.length) {
-            withdrawProvider.finalize();
-            stepProvider.finalize(WITHDRAW);
-        }
-
-        reimburse();
-        return i == _requests.length; // True if completed
+        return true;
     }
 
     // solhint-disable-next-line
@@ -330,7 +257,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function getETHFromTokens(uint _tokenPercentage) public onlyOwner {
+    function getETHFromTokens(uint _tokenPercentage) internal {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](_tokensToSell.length);
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
@@ -339,7 +266,6 @@ contract OlympusFund is FundInterface, Derivative {
         for (uint i = 0; i < _tokensToSell.length; i++) {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
-            require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], _sellRates[i]));
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
         }
@@ -348,40 +274,9 @@ contract OlympusFund is FundInterface, Derivative {
         updateTokens(_tokensToSell);
     }
 
-    // ----------------------------- WHITELIST -----------------------------
-    // solhint-disable-next-line
-    function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
-        WhitelistInterface(getComponentByName(WHITELIST)).enable(uint(_key));
-        return true;
-    }
-
-    // solhint-disable-next-line
-    function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
-        WhitelistInterface(getComponentByName(WHITELIST)).disable(uint(_key));
-        return true;
-    }
-
-    // solhint-disable-next-line
-    function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool) {
-        WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts, uint(_key), allowed);
-        return true;
-    }
-
-
-    // solhint-disable-next-line
-    function reimburse() private {
-        uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
-        accumulatedFee -= reimbursedAmount;
-        msg.sender.transfer(reimbursedAmount);
-    }
-
     function approveComponents() private {
         approveComponent(EXCHANGE);
         approveComponent(WITHDRAW);
-        approveComponent(RISK);
-        approveComponent(WHITELIST);
-        approveComponent(FEE);
-        approveComponent(REIMBURSABLE);
     }
 
     function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {
