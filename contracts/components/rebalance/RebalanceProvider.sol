@@ -38,6 +38,8 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         priceProvider = _priceProvider;
         return true;
     }
+   event  LogN(uint number, string text);
+   event  LogA(address _address, string text);
 
     function rebalanceGetTokensToSellAndBuy(uint _rebalanceDeltaPercentage) external returns
     (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues) {
@@ -56,10 +58,12 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
         (indexTokenAddresses, indexTokenWeights) = IndexInterface(msg.sender).getTokens();
+         emit LogA(msg.sender,' address rebalance');
+
         for(i = 0; i < indexTokenAddresses.length; i++) {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
-
+// emit LogN(ETHTokenPrice,'price');
             (ETHTokenPrice,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
 
             if (ETHTokenPrice == 0) {

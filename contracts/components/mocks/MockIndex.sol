@@ -84,4 +84,9 @@ contract MockIndex is IndexInterface, MockDerivative {
         //mock 1 eth to 1 token
         return 10 ** 18;
     }
+    
+    function buyTokens() external returns(bool) {
+        return true; // Not in the scope of this mockup
+    }
+
 }
