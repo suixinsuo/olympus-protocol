@@ -38,7 +38,7 @@ const tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0xd7cbe7bfc7d2de0b
 const weights = [50,50];
 
 // get gas price
-const gasPrice 
+const gasPrice
 web3.eth.getGasPrice((err, price)=>{
   if (err) {
     return console.error(err);
@@ -93,7 +93,7 @@ web3.eth.contract(abi).new(
       }));
 ```
 
-### Basic info 
+### Basic info
 > The code below shows how to get index's basic information, including fund's name, symbol, category and decimals.
 ```javascript
 const Web3 = require("web3");
@@ -137,7 +137,7 @@ indexContract.decimals((err,decimals)=>{
 ```
 
 ### Interface
-#### 1. initialize 
+#### 1. initialize
 
 ```javascript
 function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable;
@@ -168,7 +168,7 @@ indexContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accoun
 });
 ```
 
-#### 2. invest 
+#### 2. invest
 ```javascript
 function invest() public payable
      whenNotPaused
@@ -197,7 +197,7 @@ indexContract.invest({value: investAmount}, (err, result) => {
 });
 ```
 
-#### 3. buyTokens 
+#### 3. buyTokens
 ```javascript
 function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
 ```
@@ -223,7 +223,7 @@ indexContract.buyTokens((err, result) => {
 });
 ```
 
-#### 4. rebalance 
+#### 4. rebalance
 ```javascript
 function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
 ```
@@ -266,7 +266,7 @@ rebalance((err,result)=>{
 });
 ```
 
-#### 5. setManagementFee 
+#### 5. setManagementFee
 
 ```javascript
 function setManagementFee(uint _fee) external onlyOwner;
@@ -289,7 +289,7 @@ function setManagementFee(uint _fee) external onlyOwner;
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-const _fee = 100; 
+const _fee = 100;
 indexContract.setManagementFee(_fee, (err, result) => {
   if (err) {
     return console.log(err)
@@ -297,7 +297,7 @@ indexContract.setManagementFee(_fee, (err, result) => {
 });
 ```
 
-#### 6. requestWithdraw 
+#### 6. requestWithdraw
 
 ```javascript
 function requestWithdraw(uint amount) external
@@ -324,7 +324,7 @@ indexContract.requestWithdraw(amount, (err, result) => {
   }
 });
 ```
-#### 7. withdraw 
+#### 7. withdraw
 
 ```javascript
 function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
@@ -346,7 +346,7 @@ indexContract.withdraw((err, result) => {
   }
 });
 ```
-#### 8. withdrawFee 
+#### 8. withdrawFee
 
 ```javascript
 function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool);
@@ -371,7 +371,109 @@ indexContract.withdrawFee(amount, (err, result) => {
   }
 });
 ```
-#### 9. close 
+#### 9. enableWhitelist
+
+```javascript
+function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
+```
+#### &emsp;Description
+> Owner of the Index can enable a category of whitelist to protect the index.
+The following three categories of whitelist are available: </br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
+If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the index.
+If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process, rebalance the tokens or trigger the allocation process; otherwise, only the owner of the index can perform those actions.
+Type 2 Admin whitelist is not used on Index for now.
+
+#### &emsp;Parameters
+> \_key: A specific category of whitelist to be enabled for the index. Three categories of whitelist are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const key = 0; // To enable the Investment whitelist
+indexContract.enableWhitelist(key, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 10. setAllowed
+
+```javascript
+function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
+```
+#### &emsp;Description
+> After enabling a specific category of whitelist, the owner of the index can add/remove accounts from the whitelist.
+
+#### &emsp;Parameters
+> accounts: Array of addresses</br>
+> \_key: A specific category of whitelist to be enabled for the index</br>
+> allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const accounts = ['0x7b990738012Dafb67FEa47EC0137842cB582AD71','0x1cD5Fcc6d1d3A2ECdd71473d2FCFE49769643CF2']
+const key = 0; // Investment whitelist
+const allowed = true;
+indexContract.setAllowed(accounts, key, allowed, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 11. disableWhitelist
+
+```javascript
+function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
+```
+
+#### &emsp;Description
+> Owner of the index can disable a category of whitelist that has been enabled before.
+
+#### &emsp;Parameters
+> \_key: A specific category of whitelist to be enabled for the index. Three categories of whitelist are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const key = 0; // To disable the Investment whitelist
+indexContract.disableWhitelist(key, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 12. close
 
 ```javascript
 function close() public onlyOwner returns(bool success);
@@ -394,7 +496,7 @@ indexContract.close((err, result) => {
 });
 ```
 ### abi
-> you can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) from our API
+> You can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) from our API
 
 ### bytecode
-> you can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
+> You can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API

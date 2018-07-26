@@ -2,7 +2,7 @@
 
 ### Introduction
 
-TODO: Definition of a Fund
+An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares.
 
 ### Constructor
 
@@ -84,7 +84,7 @@ web3.eth.contract(abi).new(
       }));
 ```
 
-### Basic info 
+### Basic info
 > The code below shows how to get fund's basic information, including fund's name, symbol, category and decimals.
 ```javascript
 const Web3 = require("web3");
@@ -164,7 +164,7 @@ fundContract.initialize(_componentList, _initialFundFee, {from: web3.eth.account
 });
 ```
 
-#### 2. invest 
+#### 2. invest
 ```javascript
 function invest() public payable
      whenNotPaused
@@ -192,7 +192,7 @@ fundContract.invest({value: investAmount}, (err, result) => {
 });
 ```
 
-#### 3. buyTokens 
+#### 3. buyTokens
 
 ```javascript
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool);
@@ -228,7 +228,7 @@ fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, resu
 });
 ```
 
-#### 4. setManagementFee 
+#### 4. setManagementFee
 ```javascript
 function setManagementFee(uint _fee) external onlyOwner;
 ```
@@ -258,7 +258,7 @@ fundContract.setManagementFee(_fee, (err, result) => {
 });
 ```
 
-#### 5. requestWithdraw 
+#### 5. requestWithdraw
 
 ```javascript
 function requestWithdraw(uint amount) external
@@ -285,10 +285,10 @@ fundContract.requestWithdraw(amount, (err, result) => {
   }
 });
 ```
-#### 6. withdraw 
+#### 6. withdraw
 
 ```javascript
-function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) 
+function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool)
 ```
 #### &emsp;Description
 > This function is for fund's manager. Investors that has requested to withdraw their investment will get their investment back after the fund's management executes this function.
@@ -307,7 +307,7 @@ fundContract.withdraw((err, result) => {
   }
 });
 ```
-#### 7. withdrawFee 
+#### 7. withdrawFee
 
 ```javascript
 function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool);
@@ -332,7 +332,110 @@ fundContract.withdrawFee(amount, (err, result) => {
   }
 });
 ```
-#### 8. close 
+#### 8. enableWhitelist
+
+```javascript
+function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
+```
+#### &emsp;Description
+> Owner of the fund can enable a category of whitelist to protect the fund.
+The following three categories of whitelist are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
+If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the fund.
+If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process; otherwise, only the owner of the fund can trigger the withdraw process.
+If type 2 Admin whitelist is enabled, only users' addresses that have been added to the whitelist are allowed
+to buy and sell tokens for the fund; otherwise, only owner of the fund can buy and sell tokens.
+
+#### &emsp;Parameters
+> \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const key = 0; // To enable the Investment whitelist
+fundContract.enableWhitelist(key, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 9. setAllowed
+
+```javascript
+function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
+```
+#### &emsp;Description
+> After enabling a specific category of whitelist, the owner of the fund can add/remove accounts from the whitelist.
+
+#### &emsp;Parameters
+> accounts: Array of addresses</br>
+> \_key: A specific category of whitelist to be enabled for the fund</br>
+> allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const accounts = ['0x7b990738012Dafb67FEa47EC0137842cB582AD71','0x1cD5Fcc6d1d3A2ECdd71473d2FCFE49769643CF2']
+const key = 0; // Investment whitelist
+const allowed = true;
+fundContract.setAllowed(accounts, key, allowed, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 10. disableWhitelist
+
+```javascript
+function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
+```
+
+#### &emsp;Description
+> Owner of the fund can disable a category of whitelist that has been enabled before.
+
+#### &emsp;Parameters
+> \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const key = 0; // To disable the Investment whitelist
+fundContract.disableWhitelist(key, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+#### 11. close
 
 ```javascript
 function close() public onlyOwner returns(bool success);
@@ -355,7 +458,7 @@ fundContract.close((err, result) => {
 });
 ```
 ### abi
-> you can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API 
+> You can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API
 
 ### bytecode
-> you can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API 
+> You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API
