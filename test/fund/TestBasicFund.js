@@ -69,7 +69,7 @@ contract("BasicFund", accounts => {
 
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
 
-    await fund.initializeFund(componentList.address, {
+    await fund.initialize(componentList.address, {
       value: web3.toWei(fundData.ethDeposit, "ether")
     });
     const myProducts = await market.getOwnProducts();
@@ -84,7 +84,7 @@ contract("BasicFund", accounts => {
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await fund.initializeFund(componentList.address, {
+      await fund.initialize(componentList.address, {
         value: web3.toWei(fundData.ethDeposit, "ether")
       });
     }, "Shall revert");

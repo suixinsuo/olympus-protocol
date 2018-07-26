@@ -22,7 +22,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer, StandardToke
 
     bytes32[] internal excludedComponents;
 
-    function initialize (address _componentList) internal {
+    function _initialize (address _componentList) internal {
         require(_componentList != 0x0);
         componentList = ComponentListInterface(_componentList);
         excludedComponents.push(MARKET);

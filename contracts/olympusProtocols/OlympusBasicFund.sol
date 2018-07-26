@@ -11,7 +11,7 @@ import "../libs/ERC20NoReturn.sol";
 
 contract OlympusBasicFund is FundInterface, BaseDerivative {
     using SafeMath for uint256;
-    
+
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
     event TokenUpdated(address _token, uint amount);
@@ -42,7 +42,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initializeFund(address _componentList) external onlyOwner payable {
+    function initialize(address _componentList) external onlyOwner payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
@@ -115,7 +115,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
     function invest() public
         payable
-        
+
       returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
@@ -209,7 +209,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
             uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
             getETHFromTokens(_tokenPercentToSell);
         }
-    }    
+    }
 
    // ----------------------------- WITHDRAW -----------------------------
    // solhint-disable-next-line
@@ -229,7 +229,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         (ethAmount, tokenAmount) = withdrawProvider.withdraw(msg.sender);
 
         balances[msg.sender] -= tokenAmount;
-        totalSupply_ -= tokenAmount;  
+        totalSupply_ -= tokenAmount;
         msg.sender.transfer(ethAmount);
         withdrawProvider.finalize();
 
