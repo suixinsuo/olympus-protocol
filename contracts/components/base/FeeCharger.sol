@@ -33,7 +33,7 @@ contract FeeCharger is Ownable, FeeChargerInterface {
     function calculateFee(uint _amount) public view returns (uint amount) {
         uint fee;
         if (feeMode == FeeMode.ByTransactionAmount) {
-            fee = _amount * feePercentage / FEE_CHARGER_DENOMINATOR;
+            fee = _amount.mul(feePercentage).div(FEE_CHARGER_DENOMINATOR);
         } else if (feeMode == FeeMode.ByCalls) {
             fee = feeAmount;
         } else {
