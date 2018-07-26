@@ -3,10 +3,11 @@ pragma solidity 0.4.24;
 import "../../interfaces/WithdrawInterface.sol";
 import "../../interfaces/DerivativeInterface.sol";
 import "../../components/base/FeeCharger.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 contract SimpleWithdraw is FeeCharger, WithdrawInterface {
-
+    using SafeMath for uint256;
     struct ContractInfo {
         address[]  userRequests;
         mapping (address => bool)  withdrawPending;
@@ -35,7 +36,7 @@ contract SimpleWithdraw is FeeCharger, WithdrawInterface {
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         tokens = derivative.balanceOf(_requester);
-        eth = (tokens * derivative.getPrice()) / 10 ** derivative.decimals();
+        eth = (tokens * derivative.getPrice()).div(10 ** derivative.decimals());
         emit Withdrawed(_requester, derivative.balanceOf(_requester), eth);
 
         return (eth,tokens);
