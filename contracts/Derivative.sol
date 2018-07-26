@@ -55,13 +55,12 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         _;
     }
 
-    function initialize (address _componentList) internal {
+    function _initialize (address _componentList) internal {
         require(_componentList != 0x0);
         componentList = ComponentListInterface(_componentList);
         excludedComponents.push(MARKET);
         excludedComponents.push(STEP);
         excludedComponents.push(LOCKER);
-
     }
 
     function updateComponent(bytes32 _name) public onlyOwner returns (address) {

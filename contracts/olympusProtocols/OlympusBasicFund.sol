@@ -47,7 +47,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
-        super.initialize(_componentList);
+        super._initialize(_componentList);
         bytes32[3] memory names = [MARKET, EXCHANGE, WITHDRAW];
         bytes32[] memory nameParameters = new bytes32[](names.length);
 
