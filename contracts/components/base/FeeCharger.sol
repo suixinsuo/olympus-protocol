@@ -90,14 +90,16 @@ contract FeeCharger is Ownable, FeeChargerInterface {
             return true;
         }
 
-        uint balanceBefore = MOT.balanceOf(olympusWallet);
-        require(!isPaying);
-        isPaying = true;
-        MOT.transferFrom(msg.sender, olympusWallet, _feeAmount);
-        isPaying = false;
-        uint balanceAfter = MOT.balanceOf(olympusWallet);
+        // uint balanceBefore = MOT.balanceOf(olympusWallet);
+        // require(!isPaying);
+        // isPaying = true;
+        // MOT.transferFrom(msg.sender, olympusWallet, _feeAmount);
+        // isPaying = false;
+        // uint balanceAfter = MOT.balanceOf(olympusWallet);
 
-        require(balanceAfter == balanceBefore + _feeAmount);
-        return true;
+        // require(balanceAfter == balanceBefore + _feeAmount);
+        // return true;
+
+        return MOT.transferFrom(msg.sender, olympusWallet, _feeAmount);
     }
 }
