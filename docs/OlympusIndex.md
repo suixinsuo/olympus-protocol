@@ -377,20 +377,20 @@ indexContract.withdrawFee(amount, (err, result) => {
 function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 ```
 #### &emsp;Description
-> Owner of the Index can eanble a category of whitelist to protect the index.
-There are three categories of whitelist avaialbe to choose: </br>
-1: Investment</br>
-2: Maintenance </br>
-3: Admin</br>
-If type 1 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the index.
-If type 2 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to withdraw investment, rebalance the index tokens or buy tokens; otherwise, only owner of the index can perform those actions.
-Type 3 Admin whitelist is not used on Index for now.
+> Owner of the Index can enable a category of whitelist to protect the index.
+There are three categories of whitelist available to choose: </br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
+If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the index.
+If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process, rebalance the tokens or trigger the allocation process; otherwise, only the owner of the index can perform those action.
+Type 2 Admin whitelist is not used on Index for now.
 
 #### &emsp;Parameters
-> \_key: A specific category of whitelist to be enabled for the index. There are the following three keys avaialbe to choose:</br>
-1: Investment</br>
-2: Maintenance </br>
-3: Admin</br>
+> \_key: A specific category of whitelist to be enabled for the index. Three categories of whitelist are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -402,8 +402,8 @@ Type 3 Admin whitelist is not used on Index for now.
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-const _key = 1; // To enable the Investment whitelist
-indexContract.enableWhitelist(_key, (err, result) => {
+const key = 0; // To enable the Investment whitelist
+indexContract.enableWhitelist(key, (err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -415,7 +415,7 @@ indexContract.enableWhitelist(_key, (err, result) => {
 function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
 ```
 #### &emsp;Description
-> After enabling a specific category of whitelist, owner of the index can add/remove accounts from the whitelist.
+> After enabling a specific category of whitelist, the owner of the index can add/remove accounts from the whitelist.
 
 #### &emsp;Parameters
 > accounts: Array of addresses</br>
@@ -433,9 +433,9 @@ const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 const accounts = ['0x7b990738012Dafb67FEa47EC0137842cB582AD71','0x1cD5Fcc6d1d3A2ECdd71473d2FCFE49769643CF2']
-const _key = 1; // Investment whitelist
+const key = 0; // Investment whitelist
 const allowed = true;
-indexContract.setAllowed(accounts, _key, allowed, (err, result) => {
+indexContract.setAllowed(accounts, key, allowed, (err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -451,10 +451,10 @@ function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 > Owner of the index can disable a category of whitelist that has been eabled before.
 
 #### &emsp;Parameters
-> \_key: A specific category of whitelist to be enabled for the index. There are the following three keys avaialbe to choose:</br>
-1: Investment</br>
-2: Maintenance </br>
-3: Admin</br>
+> \_key: A specific category of whitelist to be enabled for the index. Three categories of whitelist are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -466,8 +466,8 @@ function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-const _key = 1; // To disable the Investment whitelist
-indexContract.disableWhitelist(_key, (err, result) => {
+const key = 0; // To disable the Investment whitelist
+indexContract.disableWhitelist(key, (err, result) => {
   if (err) {
     return console.log(err)
   }

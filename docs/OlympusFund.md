@@ -338,21 +338,21 @@ fundContract.withdrawFee(amount, (err, result) => {
 function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 ```
 #### &emsp;Description
-> Owner of the fund can eanble a category of whitelist to protect the fund.
-There are three categories of whitelist avaialbe to choose:</br>
-1: Investment</br>
-2: Maintenance </br>
-3: Admin</br>
-If type 1 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the fund.
-If type 2 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to withdraw investment; otherwise, only owner of the fund can withdraw.
-If type 3 Admin whitelist is enabled, only users' addresses that have been added to the whitelist are allowed
-to buy&sell tokens for the fund; otherwise, only owner of the fund can buy&sell tokens.
+> Owner of the fund can enable a category of whitelist to protect the fund.
+There are three categories of whitelist available to choose:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
+If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the fund.
+If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process; otherwise, only the owner of the fund can trigger the withdraw process.
+If type 2 Admin whitelist is enabled, only users' addresses that have been added to the whitelist are allowed
+to buy and sell tokens for the fund; otherwise, only owner of the fund can buy&sell tokens.
 
 #### &emsp;Parameters
-> \_key: A specific category of whitelist to be enabled for the fund. There are the following three keys avaialbe to choose:
-1: Investment</br>
-2: Maintenance </br>
-3: Admin</br>
+> \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -364,8 +364,8 @@ to buy&sell tokens for the fund; otherwise, only owner of the fund can buy&sell 
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
-const _key = 1; // To enable the Investment whitelist
-fundContract.enableWhitelist(_key, (err, result) => {
+const key = 0; // To enable the Investment whitelist
+fundContract.enableWhitelist(key, (err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -377,7 +377,7 @@ fundContract.enableWhitelist(_key, (err, result) => {
 function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
 ```
 #### &emsp;Description
-> After enabling a specific category of whitelist, owner of the fund can add/remove accounts from the whitelist.
+> After enabling a specific category of whitelist, the owner of the fund can add/remove accounts from the whitelist.
 
 #### &emsp;Parameters
 > accounts: Array of addresses</br>
@@ -395,9 +395,9 @@ const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const accounts = ['0x7b990738012Dafb67FEa47EC0137842cB582AD71','0x1cD5Fcc6d1d3A2ECdd71473d2FCFE49769643CF2']
-const _key = 1; // Investment whitelist
+const key = 0; // Investment whitelist
 const allowed = true;
-fundContract.setAllowed(accounts, _key, allowed, (err, result) => {
+fundContract.setAllowed(accounts, key, allowed, (err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -410,13 +410,13 @@ function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 ```
 
 #### &emsp;Description
-> Owner of the fund can disable a category of whitelist that has been eabled before.
+> Owner of the fund can disable a category of whitelist that has been enabled before.
 
 #### &emsp;Parameters
-> \_key: A specific category of whitelist to be enabled for the fund. There are the following three keys avaialbe to choose:</br>
-1: Investment</br>
-2: Maintenance </br>
-3: Admin</br>
+> \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:</br>
+0: Investment</br>
+1: Maintenance </br>
+2: Admin</br>
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -428,8 +428,8 @@ function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
-const _key = 1; // To disable the Investment whitelist
-fundContract.disableWhitelist(_key, (err, result) => {
+const key = 0; // To disable the Investment whitelist
+fundContract.disableWhitelist(key, (err, result) => {
   if (err) {
     return console.log(err)
   }
