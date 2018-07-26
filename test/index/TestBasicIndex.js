@@ -14,7 +14,7 @@ const Marketplace = artifacts.require("Marketplace");
 const Withdraw = artifacts.require("AsyncWithdraw");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
- 
+
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
@@ -50,7 +50,7 @@ contract("Olympus Index", accounts => {
   let rebalance;
   let tokens;
   let componentList;
- 
+
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
@@ -65,16 +65,16 @@ contract("Olympus Index", accounts => {
     asyncWithdraw = await Withdraw.deployed();
     rebalance = await Rebalance.deployed();
     componentList = await ComponentList.deployed();
- 
+
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
     await rebalance.setMotAddress(mockMOT.address);
-  
+
     componentList.setComponent(DerivativeProviders.MARKET, market.address);
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchange.address);
     componentList.setComponent(DerivativeProviders.WITHDRAW, asyncWithdraw.address);
     componentList.setComponent(DerivativeProviders.REBALANCE, rebalance.address);
-   });
+  });
 
   it("Required same tokens as weights on create", async () =>
     await calc.assertReverts(
@@ -192,7 +192,7 @@ contract("Olympus Index", accounts => {
     const tokenAmounts = await index.getTokensAndAmounts();
     tokenAmounts[1].forEach(amount => assert.equal(amount, 0, "Amount is 0"));
   });
-  
+
   it("Shall be able to request and withdraw", async () => {
     let tx;
     let tokenInWei = toTokenWei(1);
@@ -207,12 +207,12 @@ contract("Olympus Index", accounts => {
     tx = await index.withdraw({ from: investorB });
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
   });
-   
- 
+
+
 
   it("Shall be able to buy tokens with eth", async () => {
     // From the preivus test we got 1.8 ETH
-    
+
     await index.invest({ value: web3.toWei(1.8, "ether"), from: investorA });
     const initialIndexBalance = (await web3.eth.getBalance(index.address)).toNumber();
 
@@ -222,7 +222,7 @@ contract("Olympus Index", accounts => {
 
     // Check amounts are correct
     const tokensAndAmounts = await index.getTokensAndAmounts();
-  
+
     const rates = await Promise.all(
       tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
     );
@@ -242,7 +242,7 @@ contract("Olympus Index", accounts => {
     const investorABefore = await calc.ethBalance(investorA);
 
     // Request
-    tx = await index.withdraw({from: investorA});
+    tx = await index.withdraw({ from: investorA });
 
     // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
@@ -266,10 +266,6 @@ contract("Olympus Index", accounts => {
     // Buy tokens and sent to index, forcing increase his total assets value
     tx = await index.buyTokens();
     assert.ok(tx);
-   tokenAmounts = await index.getTokensAndAmounts();
-    console.log( tokenAmounts[0].map( (address, index) => `${address}: ${tokenAmounts[1][index].toNumber()}` ))
-  const tW = await index.getTokens();
-      console.log( tW[0].map( (address, index) => `${address}: ${tW[1][index].toNumber()}` ))
 
     assert.equal((await web3.eth.getBalance(index.address)).toNumber(), 0, "ETH used to buy"); // All ETH has been sald
     const initialAssetsValue = +(await index.getAssetsValue()).toNumber();
@@ -279,18 +275,13 @@ contract("Olympus Index", accounts => {
     });
     const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
-     tokenAmounts = await index.getTokensAndAmounts();
-    console.log( tokenAmounts[0].map( (address, index) => `${address}: ${tokenAmounts[1][index].toNumber()}` ))
-  
+
     // Execute Rebalance
-    // Make sure it has to do multiple calls
- 
     tx = await index.rebalance();
     assert.ok(tx);
-  
+
     // Reblacance keep the amounts as per the wieghts
     tokenAmounts = await index.getTokensAndAmounts();
-    console.log( tokenAmounts[0].map( (address, index) => `${address}: ${tokenAmounts[1][index].toNumber()}` ))
     tokenAmounts[1].forEach((amount, index) => {
       const expectedAmount = expectedTokenAmount(initialIndexBalance + extraAmount, rates, index);
       assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
@@ -348,16 +339,16 @@ contract("Olympus Index", accounts => {
 
   it("Investor cant invest but can withdraw after close", async () => {
     assert.isAbove((await index.balanceOf(investorC)).toString(), 0, "C starting balance");
- 
+
     // Investor cant invest can withdraw
     await calc.assertReverts(
       async () => await index.invest({ value: web3.toWei(1, "ether"), from: investorA }),
       "Cant invest after close"
     );
-     // Request
-  
-    await index.withdraw({from: investorC});
- 
+    // Request
+
+    await index.withdraw({ from: investorC });
+
     assert.equal((await index.balanceOf(investorC)).toString(), 0, " C has withdrawn");
   });
 });

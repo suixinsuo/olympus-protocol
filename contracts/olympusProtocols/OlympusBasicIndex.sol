@@ -237,8 +237,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
         uint[] memory _amounts = new uint[](_tokensToSell.length);
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-emit LogN(_tokensToSell.length,'Length');
-        for (uint i = 0; i < _tokensToSell.length; i++) {
+         for (uint i = 0; i < _tokensToSell.length; i++) {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
@@ -273,6 +272,7 @@ emit LogN(_tokensToSell.length,'Length');
     }
     // ----------------------------- REBALANCE -----------------------------
 
+
     function rebalance() public  returns (bool success) {
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -283,14 +283,11 @@ emit LogN(_tokensToSell.length,'Length');
         uint8 i;
         uint ETHBalanceBefore = address(this).balance;
 
-        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
-                       emit LogN(tokensToSell.length,' Token Sell');
+        (tokensToSell, amountsToSell, tokensToBuy , amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
 
         // Sell Tokens
         for (i = 0; i < tokensToSell.length; i++) {
-               emit LogN(i,'index');
-                        emit LogN(amountsToSell[i],'amounts to sell');
-            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
+              ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
             require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
 
@@ -299,14 +296,12 @@ emit LogN(_tokensToSell.length,'Length');
         // Buy Tokens
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore);
         for (i = 0; i < tokensToBuy.length; i++) {
-            emit LogN(i,'index');
-                        emit LogN(amountsToBuy[i],'amounts to buy');
 
             require(
                 exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
             );
         }
-
+      rebalanceProvider.finalize();
         return true;
     }
 

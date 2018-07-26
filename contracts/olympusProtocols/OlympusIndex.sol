@@ -257,7 +257,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     function requestWithdraw(uint amount) external
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-    { 
+    {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -295,7 +295,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
             (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
              if (_tokenAmount == 0) {continue;}
- 
+
             balances[_requests[i]] -= _tokenAmount;
             totalSupply_ -= _tokenAmount;
             address(_requests[i]).transfer(_eth);
