@@ -12,7 +12,7 @@ import "./interfaces/FeeChargerInterface.sol";
 contract BaseDerivative is DerivativeInterface, ComponentContainer, StandardToken {
 
     ERC20Extended internal constant ETH = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
-    ComponentListInterface internal componentList;
+    ComponentListInterface public componentList;
     bytes32 public constant MARKET = "MarketProvider";
     bytes32 public constant PRICE = "PriceProvider";
     bytes32 public constant EXCHANGE = "ExchangeProvider";
@@ -35,7 +35,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer, StandardToke
 
         // changed.
         require(super.setComponent(_name, componentList.getLatestComponent(_name)));
-        // approve if it's not Marketplace.
+        // approve if it's not included in excluded components.
         bool requireApproval = true;
         for (uint i = 0; i < excludedComponents.length; i++) {
           if (_name == excludedComponents[i]) {
@@ -49,7 +49,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer, StandardToke
         }
 
         // return latest address.
-        return componentList.getLatestComponent(_name);
+        return super.getComponentByName(_name);
     }
 
     function approveComponent(bytes32 _name) internal {
