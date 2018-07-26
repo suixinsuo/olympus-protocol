@@ -45,23 +45,27 @@ contract FeeCharger is Ownable, FeeChargerInterface {
 
     function adjustFeeMode(FeeMode _newMode) external onlyOwner returns (bool success) {
         feeMode = _newMode;
+
         return true;
     }
 
     function adjustFeeAmount(uint _newAmount) external onlyOwner returns (bool success) {
         feeAmount = _newAmount;
+
         return true;
     }
 
     function adjustFeePercentage(uint _newPercentage) external onlyOwner returns (bool success) {
         require(_newPercentage <= FEE_CHARGER_DENOMINATOR);
         feePercentage = _newPercentage;
+
         return true;
     }
 
     function setWalletId(address _newWallet) external onlyOwner returns (bool success) {
         require(_newWallet != 0x0);
         olympusWallet = _newWallet;
+
         return true;
     }
 
@@ -71,6 +75,7 @@ contract FeeCharger is Ownable, FeeChargerInterface {
         MOT = ERC20Extended(_motAddress);
         // this is only and will always be MOT.
         require(keccak256(abi.encodePacked(MOT.symbol())) == keccak256(abi.encodePacked("MOT")));
+
 
         return true;
     }
