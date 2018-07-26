@@ -219,9 +219,9 @@ contract OlympusIndex is IndexInterface, Derivative {
 
             _balance = ERC20(tokens[i]).balanceOf(address(this));
 
-            if (_balance == 0) { continue; }
+            if (_balance == 0) {continue;}
             (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
-            if (_expectedRate == 0) { continue; }
+            if (_expectedRate == 0) {continue;}
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
 
         }
@@ -389,7 +389,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint i; // Current step to tokens.length
         uint buyIndex; // 0 to currentStepLength
         for (i = currentStep; i < tokens.length && stepProvider.goNextStep(BUYTOKENS); i++) {
-            buyIndex = i -currentStep;
+            buyIndex = i - currentStep;
             _amounts[buyIndex] = freezeETHBalance * weights[i] / 100;
             _tokensErc20[buyIndex] = ERC20Extended(tokens[i]);
             (, _rates[buyIndex] ) = exchange.getPrice(ETH, _tokensErc20[buyIndex], _amounts[buyIndex], 0x0);
@@ -408,8 +408,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // solhint-disable-next-line
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
-        StepInterface stepProvider = StepInterface(ReimbursableInterface(getComponentByName(STEP)));
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+        StepInterface stepProvider = StepInterface(ReimbursableInterface(getComponentByName(STEP)));
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         if (!rebalanceProvider.getRebalanceInProgress()) {
@@ -422,7 +422,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint[] memory amountsToBuy;
         uint i;
         // solhint-disable-next-line
-        uint ETHBalanceBefore = address(this).balance;
+        uint ETHBalanceBefore = getETHBalance();
 
         uint currentStep = stepProvider.initializeOrContinue(REBALANCE);
 
@@ -432,7 +432,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.SellTokens)) {
             for (i = currentStep; i < tokensToSell.length; i++) {
                 if (stepProvider.goNextStep(REBALANCE) == false) {
-                    rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
+                    rebalanceReceivedETHAmountFromSale += getETHBalance() - ETHBalanceBefore;
                     reimburse();
                     return false;
                 }
@@ -441,7 +441,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 // solhint-disable-next-line
                 require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
             }
-            rebalanceReceivedETHAmountFromSale += address(this).balance - ETHBalanceBefore;
+            rebalanceReceivedETHAmountFromSale += getETHBalance() - ETHBalanceBefore;
             stepProvider.updateStatus(REBALANCE);
             currentStep = 0;
         }
