@@ -378,12 +378,12 @@ function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 ```
 #### &emsp;Description
 > Owner of the Index can enable a category of whitelist to protect the index.
-There are three categories of whitelist available to choose: </br>
+The following three categories of whitelist are available: </br>
 0: Investment</br>
 1: Maintenance </br>
 2: Admin</br>
 If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the index.
-If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process, rebalance the tokens or trigger the allocation process; otherwise, only the owner of the index can perform those action.
+If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process, rebalance the tokens or trigger the allocation process; otherwise, only the owner of the index can perform those actions.
 Type 2 Admin whitelist is not used on Index for now.
 
 #### &emsp;Parameters
@@ -448,7 +448,7 @@ function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 ```
 
 #### &emsp;Description
-> Owner of the index can disable a category of whitelist that has been eabled before.
+> Owner of the index can disable a category of whitelist that has been enabled before.
 
 #### &emsp;Parameters
 > \_key: A specific category of whitelist to be enabled for the index. Three categories of whitelist are available:</br>

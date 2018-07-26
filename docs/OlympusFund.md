@@ -339,14 +339,14 @@ function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 ```
 #### &emsp;Description
 > Owner of the fund can enable a category of whitelist to protect the fund.
-There are three categories of whitelist available to choose:</br>
+The following three categories of whitelist are available:</br>
 0: Investment</br>
 1: Maintenance </br>
 2: Admin</br>
 If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the fund.
 If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process; otherwise, only the owner of the fund can trigger the withdraw process.
 If type 2 Admin whitelist is enabled, only users' addresses that have been added to the whitelist are allowed
-to buy and sell tokens for the fund; otherwise, only owner of the fund can buy&sell tokens.
+to buy and sell tokens for the fund; otherwise, only owner of the fund can buy and sell tokens.
 
 #### &emsp;Parameters
 > \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:</br>
