@@ -63,15 +63,12 @@ contract("BasicFund", accounts => {
       fundData.description,
       fundData.category,
       fundData.decimals,
-      { gas: 8e6 } // At the moment require 5.7M
-    );
+     );
     assert.equal((await fund.status()).toNumber(), 0); // new
 
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
 
-    await fund.initialize(componentList.address, {
-      value: web3.toWei(fundData.ethDeposit, "ether")
-    });
+    await fund.initialize(componentList.address);
     const myProducts = await market.getOwnProducts();
 
     assert.equal(myProducts.length, 1);
@@ -79,14 +76,11 @@ contract("BasicFund", accounts => {
     assert.equal((await fund.status()).toNumber(), 1); // Active
     // The fee send is not taked in account in the price but as a fee
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
-    assert.equal((await fund.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
-  });
+   });
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await fund.initialize(componentList.address, {
-        value: web3.toWei(fundData.ethDeposit, "ether")
-      });
+      await fund.initialize(componentList.address);
     }, "Shall revert");
   });
 
@@ -164,7 +158,7 @@ contract("BasicFund", accounts => {
     // invest allowed
     await fund.invest({ value: web3.toWei(1.8, "ether"), from: investorA });
 
-    const balance = (await fund.getETHBalance()).toNumber();
+    const balance = (await web3.eth.getBalance(fund.address)).toNumber();
 
     assert.equal(balance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     const amounts = [web3.toWei(1, "ether"), web3.toWei(1, "ether")];
@@ -181,7 +175,7 @@ contract("BasicFund", accounts => {
 
   it("Shall be able to buy tokens", async () => {
     // From the preivus test we got 1.8 ETH
-    const initialBalance = (await fund.getETHBalance()).toNumber();
+    const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
     assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
 
     const rates = await Promise.all(
@@ -205,13 +199,13 @@ contract("BasicFund", accounts => {
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
     // ETH balance is reduced
-    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0.8, "ether"), "ETH balance reduced");
+    assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(0.8, "ether"), "ETH balance reduced");
   });
 
   it("Shall be able to sell tokens", async () => {
     let tx;
     // From the preivus test we got 1.8 ETH
-    const initialBalance = (await fund.getETHBalance()).toNumber();
+    const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
 
     assert.equal(initialBalance, web3.toWei(0.8, "ether"), "This test must start with 1.8 eth");
     let fundTokensAndBalance = await fund.getTokens();
@@ -236,12 +230,12 @@ contract("BasicFund", accounts => {
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
     // ETH balance is reduced
-    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance reduced");
+    assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(1.8, "ether"), "ETH balance reduced");
   });
 
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
-    const initialBalance = (await fund.getETHBalance()).toNumber();
+    const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
     assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
     const investorABefore = await calc.ethBalance(investorA);
@@ -258,7 +252,7 @@ contract("BasicFund", accounts => {
       assert.equal(balance.toNumber(), 0.9 * rates[i][0], " Fund get ERC20 correct balance");
     }
 
-    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "We sold all underlying tokens");
+    assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(0, "ether"), "We sold all underlying tokens");
     // Request withdraw, it should sell all tokens.
     await fund.withdraw({ from: investorA });
 
@@ -293,7 +287,7 @@ contract("BasicFund", accounts => {
 
   it("Shall be able to close a fund", async () => {
     await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
-    const initialBalance = (await fund.getETHBalance()).toNumber();
+    const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
     assert.equal((await fund.balanceOf(investorC)).toNumber(), toTokenWei(2), "C has invested");
 
     const rates = await Promise.all(
@@ -303,7 +297,7 @@ contract("BasicFund", accounts => {
     await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
 
     // ETH balance is reduced
-    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "ETH balance reduced");
+    assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(0, "ether"), "ETH balance reduced");
 
     await fund.close();
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
@@ -312,7 +306,7 @@ contract("BasicFund", accounts => {
     assert.equal(fundTokensAndBalance[1][0].toNumber(), 0, "token amount == 0");
     assert.equal(fundTokensAndBalance[1][1].toNumber(), 0, "token amount == 0");
 
-    assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(2, "ether"), "ETH balance returned");
+    assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(2, "ether"), "ETH balance returned");
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Shall not be  close");
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Cant change to active ");
   });

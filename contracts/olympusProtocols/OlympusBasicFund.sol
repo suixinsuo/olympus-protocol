@@ -21,8 +21,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
 
-   uint public accumulatedFee = 0;
-
+ 
     constructor(
       string _name,
       string _symbol,
@@ -42,11 +41,10 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _componentList) external onlyOwner payable {
+    function initialize(address _componentList) external onlyOwner {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
-        require(msg.value > 0); // Require some balance for internal opeations as reimbursable
-
+ 
         super._initialize(_componentList);
         bytes32[3] memory names = [MARKET, EXCHANGE, WITHDRAW];
         bytes32[] memory nameParameters = new bytes32[](names.length);
@@ -67,8 +65,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
 
-        accumulatedFee += msg.value;
-    }
+     }
 
     function getTokens() external view returns(address[], uint[]) {
         uint[] memory _amounts = new uint[](tokens.length);
@@ -87,7 +84,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         for (uint i = 0; i < _amounts.length; i++) {
           totalEthRequired += _amounts[i];
         }
-        require(getETHBalance() >= totalEthRequired);
+        require(address(this).balance >= totalEthRequired);
 
         require(OlympusExchangeInterface(getComponentByName(EXCHANGE))
           .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
@@ -159,14 +156,11 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
         // Total Value in ETH among its tokens + ETH new added value
         return (
-          ((getAssetsValue() + getETHBalance()) * 10 ** decimals) / (totalSupply_),
+          ((getAssetsValue() + address(this).balance) * 10 ** decimals) / (totalSupply_),
         );
     }
 
-    function getETHBalance() public view returns(uint) {
-        return address(this).balance - accumulatedFee;
-    }
-
+    
     function getAssetsValue() public view returns (uint) {
         // TODO cast to OlympusExchangeInterface
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -188,25 +182,11 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         return _totalTokensValue;
     }
 
-    // ----------------------------- FEES  -----------------------------
-    // Owner can send ETH to the Index, to perform some task, this eth belongs to him
-    // solhint-disable-next-line
-    function addOwnerBalance() external payable onlyOwner {
-        accumulatedFee += msg.value;
-    }
-
-    // solhint-disable-next-line
-    function withdrawFee(uint amount) external onlyOwner  returns(bool) {
-        require(accumulatedFee >= amount);
-        accumulatedFee -= amount;
-        msg.sender.transfer(amount);
-        return true;
-    }
-
+    
     function guaranteeLiquidity(uint tokenBalance) internal {
         uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
-        if (_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+        if (_totalETHToReturn > address(this).balance) {
+            uint _tokenPercentToSell = ((_totalETHToReturn - address(this).balance) * DENOMINATOR) / getAssetsValue();
             getETHFromTokens(_tokenPercentToSell);
         }
     }
