@@ -308,6 +308,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
     function approveComponents() private {
         approveComponent(EXCHANGE);
         approveComponent(WITHDRAW);
+        approveComponent(REBALANCE);
     }
 
 }

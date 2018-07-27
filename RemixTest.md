@@ -11,7 +11,9 @@
     //50,50 KNC, MANA
     `"Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x569b92514e4ea12413df6e02e1639976940cde70"] , [50,50]`
     // 100 KNC
-    `"Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"] , [100]`
+    ```s
+    "Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"] , [100]
+    ```
 2.  Initalize
 
 "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0 // Olympus labs
