@@ -19,6 +19,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
     string public version = "v1.0";
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
+    uint private constant RECALCULATION_PERCENTAGE_DENOMINATOR = 10**18;
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     enum RebalanceStatus { Initial, Calculated, Recalculated }
@@ -104,29 +105,38 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         for(i = 0; i < amountsToBuy[msg.sender].length; i++){
             assumedAmountOfEthToBuy += amountsToBuy[msg.sender][i];
         }
-
         // Based on the actual amount of received ETH for sold tokens, calculate the difference percentage
         // So this can be used to modify the ETH used, so we don't have an ETH shortage or leftovers at the last token buy
         if(assumedAmountOfEthToBuy > _receivedETHFromSale){
-            differencePercentage = ((assumedAmountOfEthToBuy - _receivedETHFromSale) * PERCENTAGE_DENOMINATOR) / assumedAmountOfEthToBuy;
+            differencePercentage = ((assumedAmountOfEthToBuy - _receivedETHFromSale) * RECALCULATION_PERCENTAGE_DENOMINATOR) / assumedAmountOfEthToBuy;
         } else if (assumedAmountOfEthToBuy < _receivedETHFromSale){
             surplus = true;
-            differencePercentage = ((_receivedETHFromSale - assumedAmountOfEthToBuy) * PERCENTAGE_DENOMINATOR) / _receivedETHFromSale;
+            differencePercentage = ((_receivedETHFromSale - assumedAmountOfEthToBuy) * RECALCULATION_PERCENTAGE_DENOMINATOR) / _receivedETHFromSale;
         } else {
             differencePercentage = 0;
         }
+        // Reset it, so it can be used again for the recalculation
+        assumedAmountOfEthToBuy = 0;
         for(i = 0; i < amountsToBuy[msg.sender].length; i++) {
             uint slippage;
 
             if(differencePercentage > 0){
                 // Calculate the actual amount we should buy, based on the actual ETH received from selling tokens
-                slippage = (amountsToBuy[msg.sender][i] * differencePercentage) / PERCENTAGE_DENOMINATOR;
+                slippage = (amountsToBuy[msg.sender][i] * differencePercentage) / RECALCULATION_PERCENTAGE_DENOMINATOR;
             }
             if(surplus == true){
                 amountsToBuy[msg.sender][i] = amountsToBuy[msg.sender][i] + slippage;
                 continue;
             }
             amountsToBuy[msg.sender][i] = amountsToBuy[msg.sender][i] - slippage;
+            assumedAmountOfEthToBuy += amountsToBuy[msg.sender][i];
+        }
+        // This shouldn't be different from the received ETH from the sale, but if it is, it is only a couple wei due to rounding issues
+        // Deduct from or add it to the first token, as a safeguard
+        if(assumedAmountOfEthToBuy > _receivedETHFromSale) {
+            amountsToBuy[msg.sender][0] -= assumedAmountOfEthToBuy - _receivedETHFromSale;
+        } else if (assumedAmountOfEthToBuy < _receivedETHFromSale) {
+            amountsToBuy[msg.sender][0] += _receivedETHFromSale - assumedAmountOfEthToBuy;
         }
         rebalanceStatus[msg.sender] = RebalanceStatus.Recalculated;
         return amountsToBuy[msg.sender];
