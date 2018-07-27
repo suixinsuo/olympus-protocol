@@ -21,7 +21,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
 
-   uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
+    uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
 
     modifier checkLength(address[] _tokens, uint[] _weights) {
         require(_tokens.length == _weights.length);
@@ -37,7 +37,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
         _;
     }
 
- constructor (
+    constructor (
       string _name,
       string _symbol,
       string _description,
@@ -162,17 +162,16 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
 
         for (uint16 i = 0; i < tokens.length; i++) {
             _balance = ERC20(tokens[i]).balanceOf(address(this));
-            if (_balance == 0) { continue; }
+            if (_balance == 0) {continue;}
 
             (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
 
-            if (_expectedRate == 0) { continue; }
+            if (_expectedRate == 0) {continue;}
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
 
         }
         return _totalTokensValue;
     }
-   event  LogN(uint number, string text);
 
     function guaranteeLiquidity(uint tokenBalance) internal {
         uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
@@ -185,9 +184,9 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
 
    // ----------------------------- WITHDRAW -----------------------------
    // solhint-disable-next-line
-   function withdraw()
-        external
-        returns(bool)
+    function withdraw()
+            external
+            returns(bool)
     {
         require(balances[msg.sender] > 0, "Insufficient balance");
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
@@ -237,7 +236,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
         uint[] memory _amounts = new uint[](_tokensToSell.length);
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-         for (uint i = 0; i < _tokensToSell.length; i++) {
+        for (uint i = 0; i < _tokensToSell.length; i++) {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
@@ -245,14 +244,14 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
         }
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
-     }
+    }
 
     // ----------------------------- BUY TOKENS -----------------------------
     function buyTokens() external  returns(bool) {
 
-         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-        if(address(this).balance == 0) { return true;}
+        if(address(this).balance == 0) {return true;}
 
         uint[] memory _amounts = new uint[](tokens.length);
         uint[] memory _rates = new uint[](tokens.length); // Initialize to 0, making sure any rate is fine
@@ -283,11 +282,11 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
         uint8 i;
         uint ETHBalanceBefore = address(this).balance;
 
-        (tokensToSell, amountsToSell, tokensToBuy , amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
+        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
 
         // Sell Tokens
         for (i = 0; i < tokensToSell.length; i++) {
-              ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
+            ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
             require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
 
@@ -301,7 +300,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
                 exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
             );
         }
-      rebalanceProvider.finalize();
+        rebalanceProvider.finalize();
         return true;
     }
 
