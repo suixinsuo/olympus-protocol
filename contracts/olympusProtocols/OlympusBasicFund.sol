@@ -20,7 +20,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
 
- 
+
     constructor(
       string _name,
       string _symbol,
@@ -43,7 +43,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
     function initialize(address _componentList) external onlyOwner {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
- 
+
         super._initialize(_componentList);
         bytes32[3] memory names = [MARKET, EXCHANGE, WITHDRAW];
         bytes32[] memory nameParameters = new bytes32[](names.length);
@@ -64,7 +64,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
 
-     }
+    }
 
     function getTokens() external view returns(address[], uint[]) {
         uint[] memory _amounts = new uint[](tokens.length);
@@ -81,12 +81,13 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
-          totalEthRequired += _amounts[i];
+            totalEthRequired += _amounts[i];
         }
         require(address(this).balance >= totalEthRequired);
 
-        require(OlympusExchangeInterface(getComponentByName(EXCHANGE))
-          .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
+        require(
+            OlympusExchangeInterface(getComponentByName(EXCHANGE))
+            .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
         );
         updateTokens(_tokens);
         return true;
@@ -159,7 +160,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         );
     }
 
-    
+
     function getAssetsValue() public view returns (uint) {
         // TODO cast to OlympusExchangeInterface
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -168,20 +169,20 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         uint _expectedRate;
         uint _balance;
 
-        for (uint16 i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < tokens.length; i++) {
             _balance = ERC20(tokens[i]).balanceOf(address(this));
-            if (_balance == 0) { continue; }
+            if (_balance == 0) {continue;}
 
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
 
-            if (_expectedRate == 0) { continue; }
+            if (_expectedRate == 0) {continue;}
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
 
         }
         return _totalTokensValue;
     }
 
-    
+
     function guaranteeLiquidity(uint tokenBalance) internal {
         uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
         if (_totalETHToReturn > address(this).balance) {
@@ -192,7 +193,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
    // ----------------------------- WITHDRAW -----------------------------
    // solhint-disable-next-line
-   function withdraw()
+    function withdraw()
         external
         returns(bool)
     {
