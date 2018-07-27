@@ -12,7 +12,7 @@ import "../libs/ERC20NoReturn.sol";
 contract OlympusBasicIndex is IndexInterface, BaseDerivative {
     using SafeMath for uint256;
 
-    uint public constant INITIAL_VALUE =  10**18; // 1 ETH
+    uint public constant INITIAL_VALUE = 10**18; // 1 ETH
 
     event TokenUpdated(address _token, uint amount);
     event StatusChanged(DerivativeStatus status);
