@@ -2,7 +2,7 @@ pragma solidity 0.4.24;
 
 interface StepInterface {
     // Get number of max calls
-    function getMaxCalls(bytes32 _category) external returns(uint);
+    function getMaxCalls(bytes32 _category) external view returns(uint _maxCall);
     // Set the number of calls that one category can perform in a single transaction
     function setMaxCalls(bytes32 _category, uint _maxCallsList) external;
     // Set several max calls in a single transaction, saving trasnaction cost gas

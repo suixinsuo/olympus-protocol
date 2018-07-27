@@ -28,7 +28,7 @@ contract StepProvider is StepInterface, ComponentInterface, Ownable {
         }
     }
 
-    function getMaxCalls(bytes32 _category) external returns(uint) {
+    function getMaxCalls(bytes32 _category) external view returns(uint _maxCall) {
         return maxCalls[msg.sender][_category];
     }
 
