@@ -60,7 +60,7 @@ contract("BasicFund", accounts => {
       fundData.symbol,
       fundData.description,
       fundData.category,
-      fundData.decimals,
+      fundData.decimals
      );
     assert.equal((await fund.status()).toNumber(), 0); // new
 
