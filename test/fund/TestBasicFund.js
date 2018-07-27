@@ -18,8 +18,6 @@ const fundData = {
   category: "Tests",
   description: "Sample of base fund",
   decimals: 18,
-  ethDeposit: 0.5, // ETH
-  maxTransfers: 10
 };
 
 const toTokenWei = amount => {

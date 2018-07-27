@@ -10,4 +10,5 @@ contract IndexInterface is DerivativeInterface {
     // this should be called until it returns true.
     function rebalance() public returns (bool success);
     function getTokens() public view returns (address[] _tokens, uint[] _weights);
+    function buyTokens() external returns(bool);
 }

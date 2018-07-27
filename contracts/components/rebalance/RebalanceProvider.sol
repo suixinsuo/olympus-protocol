@@ -59,7 +59,6 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         for(i = 0; i < indexTokenAddresses.length; i++) {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
-
             (ETHTokenPrice,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
 
             if (ETHTokenPrice == 0) {

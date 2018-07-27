@@ -48,7 +48,9 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         ) external payable returns(bool success){
         return exchangeProvider.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
     }
-
+    function buyTokens() external returns(bool) {
+      return false; // Out of the scope of the Mock. Use Buy token for this purpose.
+    }
 
     function sellToken
         (

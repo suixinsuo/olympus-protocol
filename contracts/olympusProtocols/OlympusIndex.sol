@@ -181,7 +181,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
 
-        uint _investorShare = ((msg.value-fee)  * 10 ** decimals) / _sharePrice;
+        uint _investorShare = ((msg.value-fee) * 10 ** decimals) / _sharePrice;
 
         accumulatedFee += fee;
         balances[msg.sender] += _investorShare;
@@ -218,9 +218,9 @@ contract OlympusIndex is IndexInterface, Derivative {
 
             _balance = ERC20(tokens[i]).balanceOf(address(this));
 
-            if (_balance == 0) { continue; }
+            if (_balance == 0) {continue;}
             (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
-            if (_expectedRate == 0) { continue; }
+            if (_expectedRate == 0) {continue;}
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
 
         }
@@ -257,7 +257,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     function requestWithdraw(uint amount) external
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-    { 
+    {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
@@ -294,8 +294,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
             (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
-             if (_tokenAmount == 0) {continue;}
- 
+            if (_tokenAmount == 0) {continue;}
+
             balances[_requests[i]] -= _tokenAmount;
             totalSupply_ -= _tokenAmount;
             address(_requests[i]).transfer(_eth);
@@ -388,7 +388,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint i; // Current step to tokens.length
         uint buyIndex; // 0 to currentStepLength
         for (i = currentStep; i < tokens.length && stepProvider.goNextStep(BUYTOKENS); i++) {
-            buyIndex = i -currentStep;
+            buyIndex = i - currentStep;
             _amounts[buyIndex] = freezeETHBalance * weights[i] / 100;
             _tokensErc20[buyIndex] = ERC20Extended(tokens[i]);
             (, _rates[buyIndex] ) = exchange.getPrice(ETH, _tokensErc20[buyIndex], _amounts[buyIndex], 0x0);
