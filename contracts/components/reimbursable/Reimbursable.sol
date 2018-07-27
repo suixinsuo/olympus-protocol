@@ -42,7 +42,7 @@ contract Reimbursable is FeeCharger, ReimbursableInterface {
     function reimburse() external checkIfReimbursable() returns (uint)
     {
         // 21000 is for the transfer below.
-        uint gasToReimburse = (startGas[msg.sender] - gasleft() + 21000) * tx.gasprice;
+        uint gasToReimburse = (startGas[msg.sender].sub(gasleft()).add(21000)).mul(tx.gasprice);
         require(address(msg.sender).balance >= gasToReimburse);
 
         // Reset
