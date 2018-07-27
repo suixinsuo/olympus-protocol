@@ -36,7 +36,7 @@ contract SimpleWithdraw is FeeCharger, WithdrawInterface {
 
         DerivativeInterface derivative = DerivativeInterface(msg.sender);
         tokens = derivative.balanceOf(_requester);
-        eth = (tokens * derivative.getPrice()).div(10 ** derivative.decimals());
+        eth = (tokens.mult(derivative.getPrice())).div(10 ** derivative.decimals());
         emit Withdrawed(_requester, derivative.balanceOf(_requester), eth);
 
         return (eth,tokens);
