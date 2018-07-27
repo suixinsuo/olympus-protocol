@@ -214,12 +214,12 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint _expectedRate;
         uint _balance;
 
-        for (uint16 i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < tokens.length; i++) {
 
             _balance = ERC20(tokens[i]).balanceOf(address(this));
 
             if (_balance == 0) {continue;}
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
             if (_expectedRate == 0) {continue;}
             _totalTokensValue += (_balance * 10**18) / _expectedRate;
 
