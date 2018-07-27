@@ -38,7 +38,7 @@ contract PercentageFee is ChargeableInterface, FeeCharger {
             return 0;
         }
 
-        uint _fee = _amount.mult(fees[derivative.owner()][msg.sender]).div(DENOMINATOR);
+        uint _fee = _amount.mul(fees[derivative.owner()][msg.sender]).div(DENOMINATOR);
         return _fee;
     }
 
