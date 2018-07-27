@@ -18,6 +18,8 @@ import "../interfaces/LockerInterface.sol";
 contract OlympusFund is FundInterface, Derivative {
     using SafeMath for uint256;
 
+    bytes32 public constant GETETH = "GetEth";
+
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
@@ -79,7 +81,7 @@ contract OlympusFund is FundInterface, Derivative {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
         StepInterface(getComponentByName(STEP)).setMaxCalls(WITHDRAW,  10);
-
+        StepInterface(getComponentByName(STEP)).setMaxCalls(GETETH,  4);
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
 
@@ -334,17 +336,25 @@ contract OlympusFund is FundInterface, Derivative {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](_tokensToSell.length);
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
+        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-        for (uint i = 0; i < _tokensToSell.length; i++) {
+        uint currentStep = stepProvider.initializeOrContinue(GETETH);
+        uint i; // Current step to tokens.length
+        uint sellIndex; // 0 to currentStepLength
+
+        for ( i = 0; i < _tokensToSell.length && stepProvider.goNextStep(GETETH); i++) {
+            
+            sellIndex = i - currentStep;
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
-            require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], _sellRates[i]));
-            ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
-            ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
+            require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], 0));
+            _tokensToSell[i].approve(exchange, 0);
+            _tokensToSell[i].approve(exchange, _amounts[i]);
         }
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
+
         updateTokens(_tokensToSell);
     }
 
