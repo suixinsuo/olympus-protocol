@@ -261,13 +261,17 @@ contract OlympusFund is FundInterface, Derivative {
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
         uint _getETHstep = stepProvider.getStatus(GETETH);
         uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
-        if (_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-            if(_getETHstep == 0){
-                _liquidity = _tokenPercentToSell;
+        if(_getETHstep == 0){
+            uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
+            if (_totalETHToReturn <= getETHBalance()) {
+                return true;
             }
-            return getETHFromTokens(_liquidity);
+        // tokenPercentToSell must be freeze as class variable 
+            tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+
         }
+        return getETHFromTokens(_liquidity);
+
     }
 
    // solhint-disable-next-line
