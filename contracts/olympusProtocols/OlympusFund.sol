@@ -348,7 +348,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
         
         for ( i = currentStep; i < (arrayLength + currentStep) && stepProvider.goNextStep(GETETH); i++) {
-            
+
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], 0));
@@ -361,7 +361,7 @@ contract OlympusFund is FundInterface, Derivative {
         if(i == tokens.length) {
             updateTokens(_tokensToSell);
             stepProvider.finalize(GETETH);
-            return success;
+            return true;
         }else{
             return false;
         }
