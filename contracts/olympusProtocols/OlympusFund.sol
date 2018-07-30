@@ -21,6 +21,7 @@ contract OlympusFund is FundInterface, Derivative {
     bytes32 public constant GETETH = "GetEth";
 
     uint public constant DENOMINATOR = 10000;
+    uint private _liquidity;
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
     event TokenUpdated(address _token, uint amount);
@@ -257,10 +258,15 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
+        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
+        uint _getETHstep = stepProvider.getStatus(GETETH);
         uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
         if (_totalETHToReturn > getETHBalance()) {
             uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-            return getETHFromTokens(_tokenPercentToSell);
+            if(_getETHstep = 0){
+                _liquidity = _tokenPercentToSell;
+            }
+            return getETHFromTokens(_liquidity);
         }
     }
 
