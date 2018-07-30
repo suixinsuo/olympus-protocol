@@ -263,7 +263,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
         if (_totalETHToReturn > getETHBalance()) {
             uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-            if(_getETHstep = 0){
+            if(_getETHstep == 0){
                 _liquidity = _tokenPercentToSell;
             }
             return getETHFromTokens(_liquidity);
@@ -289,7 +289,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint _eth;
         uint _tokenAmount;
         uint i;
-        if (_transfers == 0&&   _getETHstep == 0) {
+        if (_transfers == 0&&  _getETHstep == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
                 reimburse();
