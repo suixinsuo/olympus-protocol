@@ -262,7 +262,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint _getETHstep = stepProvider.getStatus(GETETH);
         uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
         if(_getETHstep == 0){
-            uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
+            _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
             if (_totalETHToReturn <= getETHBalance()) {
                 return true;
             }
