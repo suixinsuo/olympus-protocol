@@ -264,7 +264,7 @@ contract OlympusFund is FundInterface, Derivative {
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
         
-        if(stepProvider.initializeOrContinue(GETETH) == 0) {
+        if(stepProvider.getStatus(GETETH) == 0) {
             uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
             if (_totalETHToReturn <= getETHBalance()) {
                 return true;
@@ -292,12 +292,11 @@ contract OlympusFund is FundInterface, Derivative {
         address[] memory _requests = withdrawProvider.getUserRequests();
 
         uint _transfers = stepProvider.initializeOrContinue(WITHDRAW);
-        uint _getETHstep = stepProvider.initializeOrContinue(GETETH);
         uint _eth;
         uint _tokenAmount;
         uint i;
     
-        if (_transfers == 0 && _getETHstep == 0) {
+        if (_transfers == 0 && stepProvider.getStatus(GETETH) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
                 reimburse();
