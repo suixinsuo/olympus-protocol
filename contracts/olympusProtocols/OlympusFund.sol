@@ -357,7 +357,7 @@ contract OlympusFund is FundInterface, Derivative {
             arrayLength = tokens.length - currentStep;
         }
 
-        ERC20Extended[] memory _tokensThisStep = new uint[](arrayLength);
+        ERC20Extended[] memory _tokensThisStep = new ERC20Extended[](arrayLength);
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](arrayLength);
         uint[] memory _sellRates = new uint[](arrayLength);
