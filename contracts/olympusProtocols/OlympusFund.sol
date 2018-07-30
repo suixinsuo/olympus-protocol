@@ -283,14 +283,20 @@ contract OlympusFund is FundInterface, Derivative {
         uint _eth;
         uint _tokenAmount;
         uint i;
-        if (_transfers == 0&& _getETHstep == 0) {
+        if (_transfers == 0&&   _getETHstep == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
                 reimburse();
                 return true;
             }
-            if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){return false;}
-            withdrawProvider.freeze();
+        }
+
+        if (_transfers == 0){
+            if(guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){
+                withdrawProvider.freeze();
+            }else{
+                return false;
+            }           
         }
 
         for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
