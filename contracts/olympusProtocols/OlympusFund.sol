@@ -265,7 +265,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
    // solhint-disable-next-line
-   function withdraw()
+    function withdraw()
         external
         onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance)
         whenNotPaused
