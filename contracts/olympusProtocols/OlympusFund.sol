@@ -279,14 +279,15 @@ contract OlympusFund is FundInterface, Derivative {
         address[] memory _requests = withdrawProvider.getUserRequests();
 
         uint _transfers = stepProvider.initializeOrContinue(WITHDRAW);
+        uint _getETHstep = stepProvider.getStatus(GETETH);
         uint _eth;
         uint _tokenAmount;
         uint i;
-        if (_transfers == 0) {
+        if (_transfers == 0&&_getETHstep == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
-              reimburse();
-              return true;
+                reimburse();
+                return true;
             }
             if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){return false;}
             withdrawProvider.freeze();
@@ -352,8 +353,8 @@ contract OlympusFund is FundInterface, Derivative {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], 0));
-            _tokensToSell[i].approve(exchange, 0);
-            _tokensToSell[i].approve(exchange, _amounts[i]);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
+            ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
         }
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
@@ -362,9 +363,9 @@ contract OlympusFund is FundInterface, Derivative {
             updateTokens(_tokensToSell);
             stepProvider.finalize(GETETH);
             return true;
-        }else{
-            return false;
         }
+
+        return false;
     }
 
     // ----------------------------- WHITELIST -----------------------------
