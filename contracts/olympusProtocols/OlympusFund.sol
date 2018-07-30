@@ -256,11 +256,11 @@ contract OlympusFund is FundInterface, Derivative {
         return withdrawProvider.getTotalWithdrawAmount();
     }
 
-    function guaranteeLiquidity(uint tokenBalance) internal {
+    function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
         uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
         if (_totalETHToReturn > getETHBalance()) {
             uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
-            getETHFromTokens(_tokenPercentToSell);
+            return getETHFromTokens(_tokenPercentToSell);
         }
     }
 
@@ -288,7 +288,7 @@ contract OlympusFund is FundInterface, Derivative {
               reimburse();
               return true;
             }
-            guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
+            if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){return false;}
             withdrawProvider.freeze();
         }
 
@@ -332,7 +332,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function getETHFromTokens(uint _tokenPercentage) public onlyOwner {
+    function getETHFromTokens(uint _tokenPercentage) public onlyOwner   returns(bool success) {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](_tokensToSell.length);
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
@@ -341,11 +341,13 @@ contract OlympusFund is FundInterface, Derivative {
 
         uint currentStep = stepProvider.initializeOrContinue(GETETH);
         uint i; // Current step to tokens.length
-        uint sellIndex; // 0 to currentStepLength
+        uint arrayLength = stepProvider.getMaxCalls(GETETH);
 
-        for ( i = 0; i < _tokensToSell.length && stepProvider.goNextStep(GETETH); i++) {
-            
-            sellIndex = i - currentStep;
+        if(arrayLength + currentStep >= tokens.length ) {
+            arrayLength = tokens.length - currentStep;
+        }
+        
+        for ( i = currentStep; i < (arrayLength + currentStep) && stepProvider.goNextStep(GETETH); i++) {
             _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], 0));
@@ -355,7 +357,13 @@ contract OlympusFund is FundInterface, Derivative {
 
         require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
 
-        updateTokens(_tokensToSell);
+        if(i == tokens.length) {
+            updateTokens(_tokensToSell);
+            stepProvider.finalize(GETETH);
+            return success;
+        }else{
+            return false;
+        }
     }
 
     // ----------------------------- WHITELIST -----------------------------
