@@ -346,9 +346,6 @@ contract OlympusFund is FundInterface, Derivative {
 
     // solhint-disable-next-line
     function getETHFromTokens(uint _tokenPercentage) public onlyOwner returns(bool success) {
-        ERC20Extended[] memory _tokensToSell = tokensWithAmount();
-        uint[] memory _amounts = new uint[](_tokensToSell.length);
-        uint[] memory _sellRates = new uint[](_tokensToSell.length);
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
@@ -359,17 +356,26 @@ contract OlympusFund is FundInterface, Derivative {
         if(arrayLength + currentStep >= tokens.length ) {
             arrayLength = tokens.length - currentStep;
         }
-        
-        for ( i = currentStep; i < (arrayLength + currentStep) && stepProvider.goNextStep(GETETH); i++) {
 
-            _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
-            (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
-            require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], 0));
-            ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
-            ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
+        ERC20Extended[] memory _tokensThisStep = new uint[](arrayLength);
+        ERC20Extended[] memory _tokensToSell = tokensWithAmount();
+        uint[] memory _amounts = new uint[](arrayLength);
+        uint[] memory _sellRates = new uint[](arrayLength);
+
+        for(i = currentStep;i < (arrayLength + currentStep) && stepProvider.goNextStep(GETETH); i++){
+            _tokensThisStep[i-currentStep] = _tokensToSell[i];
         }
 
-        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
+        for ( uint t = 0; t <= arrayLength; t++) {
+
+            _amounts[t] = (_tokenPercentage * _tokensThisStep[t].balanceOf(address(this))) / DENOMINATOR;
+            (, _sellRates[t] ) = exchange.getPrice(_tokensToSell[t], ETH, _amounts[t], 0x0);
+            require(!hasRisk(address(this), exchange, address(_tokensThisStep[t]), _amounts[t], 0));
+            ERC20NoReturn(_tokensThisStep[t]).approve(exchange, 0);
+            ERC20NoReturn(_tokensThisStep[t]).approve(exchange, _amounts[t]);
+        }
+
+        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0, 0x0));
 
         if(i == tokens.length) {
             updateTokens(_tokensToSell);
