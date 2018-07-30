@@ -95,6 +95,7 @@ contract FeeCharger is Ownable, FeeChargerInterface {
             return true;
         }
 
-        return MOT.transferFrom(msg.sender, olympusWallet, _feeAmount);
+        require(MOT.transferFrom(msg.sender, olympusWallet, _feeAmount));
+        return true;
     }
 }
