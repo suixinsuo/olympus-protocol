@@ -283,7 +283,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint _eth;
         uint _tokenAmount;
         uint i;
-        if (_transfers == 0&&_getETHstep == 0) {
+        if (_transfers == 0&& _getETHstep == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
                 reimburse();
