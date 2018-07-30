@@ -90,18 +90,10 @@ contract OlympusIndex is IndexInterface, Derivative {
         bytes32[10] memory names = [
             MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP
         ];
-        bytes32[] memory nameParameters = new bytes32[](names.length);
 
         for (uint i = 0; i < names.length; i++) {
-            nameParameters[i] = names[i];
+           updateComponent(names[i]);
         }
-        setComponents(
-            nameParameters,
-            componentList.getLatestComponents(nameParameters)
-        );
-
-        // approve component for charging fees.
-        approveComponents();
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
@@ -490,17 +482,4 @@ contract OlympusIndex is IndexInterface, Derivative {
         WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts, uint(_key), allowed);
         return true;
     }
-
-    // ----------------------------- INITIALIZATION HELPERS -----------------------------
-    // solhint-disable-next-line
-    function approveComponents() private {
-        approveComponent(EXCHANGE);
-        approveComponent(WITHDRAW);
-        approveComponent(RISK);
-        approveComponent(WHITELIST);
-        approveComponent(FEE);
-        approveComponent(REIMBURSABLE);
-        approveComponent(REBALANCE);
-    }
-
 }
