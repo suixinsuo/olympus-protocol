@@ -474,6 +474,7 @@ contract("Fund", accounts => {
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "ETH balance reduced");
 
     await fund.close();
+    await fund.close();
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
 
     let fundTokensAndBalance = await fund.getTokens();
