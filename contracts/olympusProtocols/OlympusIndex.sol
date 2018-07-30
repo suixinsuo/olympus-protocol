@@ -362,8 +362,6 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         if(i == tokens.length) {
             stepProvider.finalize(GETETH);
-            delete freezeTokens;
-            freezeTokens.length = 0;
             return true;
         }
         return false;
@@ -441,7 +439,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint currentStep = stepProvider.initializeOrContinue(REBALANCE);
 
         // solhint-disable-next-line
-        (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
+        (tokensToSell, amountsToSell, tokensToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
         if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.SellTokens)) {
             for (i = currentStep; i < tokensToSell.length; i++) {
