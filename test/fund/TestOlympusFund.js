@@ -526,7 +526,7 @@ contract("Fund", accounts => {
     );
     // Request
     await fund.requestWithdraw(toTokenWei(1.8), { from: investorC });
-    await fund.withdraw2();
+    await fund.withdraw();
     assert.equal((await fund.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
   });
 });
