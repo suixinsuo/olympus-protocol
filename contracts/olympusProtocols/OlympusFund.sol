@@ -19,7 +19,7 @@ contract OlympusFund is FundInterface, Derivative {
     using SafeMath for uint256;
 
     uint public constant DENOMINATOR = 10000;
-    uint private liquidity; // Freeze variable for ETH tokens
+    uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
  
@@ -81,7 +81,7 @@ contract OlympusFund is FundInterface, Derivative {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
         StepInterface(getComponentByName(STEP)).setMaxCalls(WITHDRAW,  10);
-        StepInterface(getComponentByName(STEP)).setMaxCalls(GETETH,  4);
+        StepInterface(getComponentByName(STEP)).setMaxCalls(GETETH,  5);
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
 
