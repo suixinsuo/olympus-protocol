@@ -11,7 +11,7 @@ import "../libs/ERC20NoReturn.sol";
 contract OlympusBasicFund is FundInterface, BaseDerivative {
     using SafeMath for uint256;
 
-    uint public constant INITIAL_VALUE =  10**18; // 1 ETH
+    uint public constant INITIAL_VALUE = 10**18; // 1 ETH
 
     event TokenUpdated(address _token, uint amount);
     event FundStatusChanged(DerivativeStatus status);
@@ -81,7 +81,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
-            totalEthRequired += _amounts[i];
+            totalEthRequired = totalEthRequired.add(_amounts[i]);
         }
         require(address(this).balance >= totalEthRequired);
 
@@ -120,15 +120,15 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         uint _sharePrice;
 
         if (totalSupply_ > 0) {
-            _sharePrice = getPrice() - ((msg.value * 10 ** decimals) / totalSupply_);
+            _sharePrice = getPrice().sub((msg.value.mul(10**decimals)).div(totalSupply_));
          } else {
             _sharePrice = INITIAL_VALUE;
         }
 
-        uint _investorShare = msg.value * 10 ** decimals / _sharePrice;
+        uint _investorShare = msg.value.mul(10**decimals).div(_sharePrice);
 
-        balances[msg.sender] += _investorShare;
-        totalSupply_ += _investorShare;
+        balances[msg.sender] = balances[msg.sender].add(_investorShare);
+        totalSupply_ = totalSupply_.add(_investorShare);
 
         return true;
     }
@@ -156,13 +156,12 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
         // Total Value in ETH among its tokens + ETH new added value
         return (
-          ((getAssetsValue() + address(this).balance) * 10 ** decimals) / (totalSupply_),
+          (getAssetsValue().add(address(this).balance).mul(10**decimals)).div(totalSupply_),
         );
     }
 
 
     function getAssetsValue() public view returns (uint) {
-        // TODO cast to OlympusExchangeInterface
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         uint _totalTokensValue = 0;
         // Iterator
@@ -176,7 +175,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
             (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
 
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue += (_balance * 10**18) / _expectedRate;
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
 
         }
         return _totalTokensValue;
@@ -184,9 +183,9 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
 
     function guaranteeLiquidity(uint tokenBalance) internal {
-        uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
+        uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
         if (_totalETHToReturn > address(this).balance) {
-            uint _tokenPercentToSell = ((_totalETHToReturn - address(this).balance) * DENOMINATOR) / getAssetsValue();
+            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul(DENOMINATOR)).div(getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
     }
@@ -208,8 +207,8 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         uint tokenAmount;
         (ethAmount, tokenAmount) = withdrawProvider.withdraw(msg.sender);
 
-        balances[msg.sender] -= tokenAmount;
-        totalSupply_ -= tokenAmount;
+        balances[msg.sender] = balances[msg.sender].sub(tokenAmount);
+        totalSupply_ = totalSupply_.sub(tokenAmount);
         msg.sender.transfer(ethAmount);
         withdrawProvider.finalize();
 
@@ -244,7 +243,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);

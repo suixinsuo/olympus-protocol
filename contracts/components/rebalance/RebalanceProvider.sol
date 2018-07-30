@@ -66,17 +66,21 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
                 tokensWithPriceIssues[msg.sender].push(indexTokenAddresses[i]);
             }
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)); //
-            uint shouldHaveAmountOfTokensInETH = (getTotalIndexValue() * indexTokenWeights[i]) / 100;
-            uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH * ETHTokenPrice) / 10**18;
-
+            uint shouldHaveAmountOfTokensInETH = (getTotalIndexValue().mul(indexTokenWeights[i])).div(100);
+            uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18);
+            uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
             // minus delta
-            if (shouldHaveAmountOfTokens < (currentTokenBalance - (currentTokenBalance * _rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+            if (shouldHaveAmountOfTokens < currentTokenBalance.sub(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
                 tokensToSell[msg.sender].push(indexTokenAddresses[i]);
                 amountsToSell[msg.sender].push(currentTokenBalance - shouldHaveAmountOfTokens);
             // minus delta
-            } else if (shouldHaveAmountOfTokens > (currentTokenBalance + (currentTokenBalance * _rebalanceDeltaPercentage / PERCENTAGE_DENOMINATOR))){
+            } else if (shouldHaveAmountOfTokens > currentTokenBalance.add(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
                 tokensToBuy[msg.sender].push(indexTokenAddresses[i]);
-                amountsToBuy[msg.sender].push(shouldHaveAmountOfTokensInETH - (currentTokenBalance * (10**ERC20Extended(indexTokenAddresses[i]).decimals())) / ETHTokenPrice);
+                amountsToBuy[msg.sender].push(
+                  shouldHaveAmountOfTokensInETH.sub(
+                    currentTokenBalance
+                    .mul(10**ERC20Extended(indexTokenAddresses[i]).decimals())
+                    .div(ETHTokenPrice)));
             }
             //TODO Does this run out of gas for 100 tokens?
         }
@@ -103,15 +107,15 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
 
         // Get the total amount of ETH that we are supposed to buy
         for(i = 0; i < amountsToBuy[msg.sender].length; i++){
-            assumedAmountOfEthToBuy += amountsToBuy[msg.sender][i];
+            assumedAmountOfEthToBuy = assumedAmountOfEthToBuy.add(amountsToBuy[msg.sender][i]);
         }
         // Based on the actual amount of received ETH for sold tokens, calculate the difference percentage
         // So this can be used to modify the ETH used, so we don't have an ETH shortage or leftovers at the last token buy
         if(assumedAmountOfEthToBuy > _receivedETHFromSale){
-            differencePercentage = ((assumedAmountOfEthToBuy - _receivedETHFromSale) * RECALCULATION_PERCENTAGE_DENOMINATOR) / assumedAmountOfEthToBuy;
+            differencePercentage = ((assumedAmountOfEthToBuy.sub(_receivedETHFromSale)).mul(RECALCULATION_PERCENTAGE_DENOMINATOR)).div(assumedAmountOfEthToBuy);
         } else if (assumedAmountOfEthToBuy < _receivedETHFromSale){
             surplus = true;
-            differencePercentage = ((_receivedETHFromSale - assumedAmountOfEthToBuy) * RECALCULATION_PERCENTAGE_DENOMINATOR) / _receivedETHFromSale;
+            differencePercentage = ((_receivedETHFromSale.sub(assumedAmountOfEthToBuy)).mul(RECALCULATION_PERCENTAGE_DENOMINATOR)).div(_receivedETHFromSale);
         } else {
             differencePercentage = 0;
         }
@@ -122,21 +126,21 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
 
             if(differencePercentage > 0){
                 // Calculate the actual amount we should buy, based on the actual ETH received from selling tokens
-                slippage = (amountsToBuy[msg.sender][i] * differencePercentage) / RECALCULATION_PERCENTAGE_DENOMINATOR;
+                slippage = (amountsToBuy[msg.sender][i].mul(differencePercentage)).div(RECALCULATION_PERCENTAGE_DENOMINATOR);
             }
             if(surplus == true){
-                amountsToBuy[msg.sender][i] = amountsToBuy[msg.sender][i] + slippage;
+                amountsToBuy[msg.sender][i] = amountsToBuy[msg.sender][i].add(slippage);
                 continue;
             }
-            amountsToBuy[msg.sender][i] = amountsToBuy[msg.sender][i] - slippage;
-            assumedAmountOfEthToBuy += amountsToBuy[msg.sender][i];
+            amountsToBuy[msg.sender][i] = amountsToBuy[msg.sender][i].sub(slippage);
+            assumedAmountOfEthToBuy = assumedAmountOfEthToBuy.add(amountsToBuy[msg.sender][i]);
         }
         // This shouldn't be different from the received ETH from the sale, but if it is, it is only a couple wei due to rounding issues
         // Deduct from or add it to the first token, as a safeguard
         if(assumedAmountOfEthToBuy > _receivedETHFromSale) {
-            amountsToBuy[msg.sender][0] -= assumedAmountOfEthToBuy - _receivedETHFromSale;
+            amountsToBuy[msg.sender][0] = amountsToBuy[msg.sender][0].sub(assumedAmountOfEthToBuy.sub(_receivedETHFromSale));
         } else if (assumedAmountOfEthToBuy < _receivedETHFromSale) {
-            amountsToBuy[msg.sender][0] += _receivedETHFromSale - assumedAmountOfEthToBuy;
+            amountsToBuy[msg.sender][0] = amountsToBuy[msg.sender][0].add(_receivedETHFromSale.sub(assumedAmountOfEthToBuy));
         }
         rebalanceStatus[msg.sender] = RebalanceStatus.Recalculated;
         return amountsToBuy[msg.sender];
@@ -163,8 +167,8 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
 
         for(uint i = 0; i < indexTokenAddresses.length; i++) {
             (price,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
-            totalValue += ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender))*
-            10**ERC20Extended(indexTokenAddresses[i]).decimals() / price;
+            totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)).mul(
+            10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(price));
         }
     }
 }

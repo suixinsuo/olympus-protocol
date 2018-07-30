@@ -19,7 +19,7 @@ contract OlympusFund is FundInterface, Derivative {
     using SafeMath for uint256;
 
     uint public constant DENOMINATOR = 10000;
-    uint public constant INITIAL_VALUE =  10**18; // 1 ETH
+    uint public constant INITIAL_VALUE = 10**18; // 1 ETH
 
     event TokenUpdated(address _token, uint amount);
     event FundStatusChanged(DerivativeStatus status);
@@ -83,7 +83,7 @@ contract OlympusFund is FundInterface, Derivative {
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
 
-        accumulatedFee += msg.value;
+        accumulatedFee = accumulatedFee.add(msg.value);
     }
 
     function getTokens() external view returns(address[], uint[]) {
@@ -102,7 +102,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
             require(!hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]));
-            totalEthRequired += _amounts[i];
+            totalEthRequired = totalEthRequired.add(_amounts[i]);
         }
         require(getETHBalance() >= totalEthRequired);
 
@@ -144,7 +144,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint _sharePrice;
 
         if (totalSupply_ > 0) {
-            _sharePrice = getPrice() - ((msg.value * 10 ** decimals) / totalSupply_);
+            _sharePrice = getPrice().sub((msg.value.mul(10**decimals)).div(totalSupply_));
          } else {
             _sharePrice = INITIAL_VALUE;
         }
@@ -152,11 +152,11 @@ contract OlympusFund is FundInterface, Derivative {
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
 
-        uint _investorShare = ((msg.value-fee) * 10 ** decimals) / _sharePrice;
+        uint _investorShare = msg.value.sub(fee).mul(10**decimals).div(_sharePrice);
 
-        accumulatedFee += fee;
-        balances[msg.sender] += _investorShare;
-        totalSupply_ += _investorShare;
+        accumulatedFee = accumulatedFee.add(fee);
+        balances[msg.sender] = balances[msg.sender].add(_investorShare);
+        totalSupply_ = totalSupply_.add(_investorShare);
 
         return true;
     }
@@ -184,12 +184,12 @@ contract OlympusFund is FundInterface, Derivative {
 
         // Total Value in ETH among its tokens + ETH new added value
         return (
-          ((getAssetsValue() + getETHBalance()) * 10 ** decimals) / (totalSupply_),
+          getAssetsValue().add(getETHBalance()).mul(10**decimals).div(totalSupply_),
         );
     }
 
     function getETHBalance() public view returns(uint) {
-        return address(this).balance - accumulatedFee;
+        return address(this).balance.sub(accumulatedFee);
     }
 
     function getAssetsValue() public view returns (uint) {
@@ -207,7 +207,7 @@ contract OlympusFund is FundInterface, Derivative {
             (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
 
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue += (_balance * 10**18) / _expectedRate;
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
 
         }
         return _totalTokensValue;
@@ -217,13 +217,13 @@ contract OlympusFund is FundInterface, Derivative {
     // Owner can send ETH to the Index, to perform some task, this eth belongs to him
     // solhint-disable-next-line
     function addOwnerBalance() external payable onlyOwner {
-        accumulatedFee += msg.value;
+        accumulatedFee = accumulatedFee.add(msg.value);
     }
 
     // solhint-disable-next-line
     function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
         require(accumulatedFee >= amount);
-        accumulatedFee -= amount;
+        accumulatedFee = accumulatedFee.sub(amount);
         msg.sender.transfer(amount);
         return true;
     }
@@ -256,9 +256,9 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal {
-        uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
+        uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
         if (_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+            uint _tokenPercentToSell = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
     }
@@ -296,8 +296,8 @@ contract OlympusFund is FundInterface, Derivative {
             (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
             if (_tokenAmount == 0) {continue;}
 
-            balances[_requests[i]] -= _tokenAmount;
-            totalSupply_ -= _tokenAmount;
+            balances[_requests[i]] = balances[_requests[i]].sub(_tokenAmount);
+            totalSupply_ = totalSupply_.sub(_tokenAmount);
             address(_requests[i]).transfer(_eth);
         }
 
@@ -338,7 +338,7 @@ contract OlympusFund is FundInterface, Derivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], _sellRates[i]));
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
@@ -372,7 +372,7 @@ contract OlympusFund is FundInterface, Derivative {
     // solhint-disable-next-line
     function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
-        accumulatedFee -= reimbursedAmount;
+        accumulatedFee = accumulatedFee.sub(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
 
