@@ -60,11 +60,6 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         return true;
     }
 
-    function sellTokenFee(ERC20Extended _token, uint _amount,  bytes32 exchangeId) internal view returns (uint) {
-        uint tokenPrice;
-        (tokenPrice,) = exchangeAdapterManager.getPrice(_token, ETH, _amount, exchangeId);
-        return tokenPrice.mul(_amount).mul(getMotPrice()).div(10 ** _token.decimals()).div(10 ** 18);
-    }
 
     function sellToken
         (
@@ -97,11 +92,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         (price,) = exchangeAdapterManager.getPrice(ETH, MOT, 10**18, 0x0);
     }
 
-    function buyTokenFee(uint _value) internal view returns(uint) {
-      return _value.mul(getMotPrice()).div( 10 ** 18);
-    }
-
-    function buyTokens
+   function buyTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
@@ -175,5 +166,15 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId)
         external view returns(uint expectedRate, uint slippageRate) {
         return exchangeAdapterManager.getPrice(_sourceAddress, _destAddress, _amount, _exchangeId);
+    }
+
+    function sellTokenFee(ERC20Extended _token, uint _amount,  bytes32 _exchangeId) internal view returns (uint) {
+        uint tokenPrice;
+        (tokenPrice,) = exchangeAdapterManager.getPrice(_token, ETH, _amount, _exchangeId);
+        return tokenPrice.mul(_amount).mul(getMotPrice()).div(10 ** _token.decimals()).div(10 ** 18);
+    }
+
+    function buyTokenFee(uint _value) internal view returns(uint) {
+      return _value.mul(getMotPrice()).div( 10 ** 18);
     }
 }

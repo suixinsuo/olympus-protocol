@@ -151,12 +151,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
-
-<<<<<<< HEAD
-        uint _investorShare = ((msg.value-fee)  * 10 ** decimals) / _sharePrice;
-=======
         uint _investorShare = msg.value.sub(fee).mul(10**decimals).div(_sharePrice);
->>>>>>> eefdd8c2fe4cf2ef7ad186eda6d1ab5621b62c5d
 
         accumulatedFee = accumulatedFee.add(fee);
         balances[msg.sender] = balances[msg.sender].add(_investorShare);
@@ -210,14 +205,8 @@ contract OlympusFund is FundInterface, Derivative {
 
             (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
 
-<<<<<<< HEAD
-            if (_expectedRate == 0) { continue; }
-            _totalTokensValue += (_balance * 10**18) / _expectedRate;
-=======
             if (_expectedRate == 0) {continue;}
             _totalTokensValue = _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
->>>>>>> eefdd8c2fe4cf2ef7ad186eda6d1ab5621b62c5d
-
         }
         return _totalTokensValue;
     }
