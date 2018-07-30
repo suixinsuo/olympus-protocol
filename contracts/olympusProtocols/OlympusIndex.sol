@@ -261,12 +261,11 @@ contract OlympusIndex is IndexInterface, Derivative {
         address[] memory _requests = withdrawProvider.getUserRequests();
 
         uint _transfers = stepProvider.initializeOrContinue(WITHDRAW);
-        uint _getETHstep = stepProvider.getStatus(GETETH);
         uint _eth;
         uint _tokenAmount;
         uint i;
         
-        if (_transfers == 0 && _getETHstep == 0) {
+        if (_transfers == 0 && stepProvider.getStatus(GETETH) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
                 reimburse();
@@ -439,7 +438,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint currentStep = stepProvider.initializeOrContinue(REBALANCE);
 
         // solhint-disable-next-line
-        (tokensToSell, amountsToSell, tokensToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
+        (tokensToSell, amountsToSell, tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
         if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.SellTokens)) {
             for (i = currentStep; i < tokensToSell.length; i++) {
