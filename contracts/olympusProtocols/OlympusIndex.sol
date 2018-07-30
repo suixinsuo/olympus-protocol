@@ -43,7 +43,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     modifier checkWeights(uint[] _weights) {
         uint totalWeight;
         for (uint i = 0; i < _weights.length; i++) {
-            totalWeight += _weights[i];
+            totalWeight = totalWeight.add(_weights[i]);
         }
         require(totalWeight == 100);
         _;
@@ -90,18 +90,10 @@ contract OlympusIndex is IndexInterface, Derivative {
         bytes32[10] memory names = [
             MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP
         ];
-        bytes32[] memory nameParameters = new bytes32[](names.length);
 
         for (uint i = 0; i < names.length; i++) {
-            nameParameters[i] = names[i];
+           updateComponent(names[i]);
         }
-        setComponents(
-            nameParameters,
-            componentList.getLatestComponents(nameParameters)
-        );
-
-        // approve component for charging fees.
-        approveComponents();
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
@@ -120,7 +112,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         emit ChangeStatus(status);
 
-        accumulatedFee += msg.value;
+        accumulatedFee = accumulatedFee.add(msg.value);
     }
 
 
@@ -173,19 +165,18 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint _sharePrice;
 
         if (totalSupply_ > 0) {
-            _sharePrice = getPrice() - ((msg.value * 10 ** decimals) / totalSupply_);
+            _sharePrice = getPrice().sub((msg.value.mul(10 ** decimals)).div(totalSupply_));
          } else {
             _sharePrice = INITIAL_VALUE;
         }
 
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
+        uint _investorShare = (msg.value.sub(fee)).mul(10 ** decimals).div(_sharePrice);
 
-        uint _investorShare = ((msg.value-fee) * 10 ** decimals) / _sharePrice;
-
-        accumulatedFee += fee;
-        balances[msg.sender] += _investorShare;
-        totalSupply_ += _investorShare;
+        accumulatedFee = accumulatedFee.add(fee);
+        balances[msg.sender] = balances[msg.sender].add(_investorShare);
+        totalSupply_ = totalSupply_.add(_investorShare);
 
         // emit Invested(msg.sender, _investorShare);
         return true;
@@ -195,15 +186,14 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (totalSupply_ == 0) {
             return INITIAL_VALUE;
         }
-
+        uint valueETH = getAssetsValue().add(getETHBalance()).mul(10 ** decimals);
         // Total Value in ETH among its tokens + ETH new added value
-        return (
-          ((getAssetsValue() + getETHBalance()) * 10 ** decimals) / (totalSupply_),
-        );
+        return valueETH.div(totalSupply_);
+
     }
 
     function getETHBalance() public view returns(uint) {
-        return address(this).balance - accumulatedFee;
+        return address(this).balance.sub( accumulatedFee);
     }
 
     function getAssetsValue() public view returns (uint) {
@@ -214,14 +204,14 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint _expectedRate;
         uint _balance;
 
-        for (uint16 i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < tokens.length; i++) {
 
             _balance = ERC20(tokens[i]).balanceOf(address(this));
 
             if (_balance == 0) {continue;}
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue += (_balance * 10**18) / _expectedRate;
+            _totalTokensValue =  _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
 
         }
         return _totalTokensValue;
@@ -231,13 +221,13 @@ contract OlympusIndex is IndexInterface, Derivative {
     // Owner can send ETH to the Index, to perform some task, this eth belongs to him
     // solhint-disable-next-line
     function addOwnerBalance() external payable onlyOwner {
-        accumulatedFee += msg.value;
+        accumulatedFee = accumulatedFee.add(msg.value);
     }
 
     // solhint-disable-next-line
     function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
         require(accumulatedFee >= amount);
-        accumulatedFee -= amount;
+        accumulatedFee = accumulatedFee.sub(amount);
         msg.sender.transfer(amount);
         return true;
     }
@@ -262,9 +252,11 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal {
-        uint _totalETHToReturn = (tokenBalance * getPrice()) / 10 ** decimals;
+        uint _totalETHToReturn = tokenBalance.mul(getPrice()).div( 10 ** decimals);
+
         if (_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = ((_totalETHToReturn - getETHBalance()) * DENOMINATOR) / getAssetsValue();
+            uint _ethDifference = _totalETHToReturn.sub( getETHBalance()).mul(DENOMINATOR);
+            uint _tokenPercentToSell = _ethDifference.div( getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
     }
@@ -296,8 +288,8 @@ contract OlympusIndex is IndexInterface, Derivative {
             (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
             if (_tokenAmount == 0) {continue;}
 
-            balances[_requests[i]] -= _tokenAmount;
-            totalSupply_ -= _tokenAmount;
+            balances[_requests[i]] =  balances[_requests[i]].sub(_tokenAmount);
+            totalSupply_ = totalSupply_.sub(_tokenAmount);
             address(_requests[i]).transfer(_eth);
             _transfers++;
         }
@@ -313,7 +305,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
-        accumulatedFee -= reimbursedAmount;
+        accumulatedFee = accumulatedFee.sub(reimbursedAmount);
         // emit Reimbursed(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
@@ -347,7 +339,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = (_tokenPercentage * _tokensToSell[i].balanceOf(address(this))) / DENOMINATOR;
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], 0));
             _tokensToSell[i].approve(exchange, 0);
@@ -375,9 +367,10 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
         // Check the length of the array
         uint arrayLength = stepProvider.getMaxCalls(BUYTOKENS);
-        if(arrayLength + currentStep >= tokens.length ) {
-            arrayLength = tokens.length - currentStep;
+        if(arrayLength.add(currentStep) >= tokens.length ) {
+            arrayLength = tokens.length.sub(currentStep);
         }
+
 
         uint[] memory _amounts = new uint[](arrayLength);
         // Initialize to 0, making sure any rate is fine
@@ -389,10 +382,10 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint buyIndex; // 0 to currentStepLength
         for (i = currentStep; i < tokens.length && stepProvider.goNextStep(BUYTOKENS); i++) {
             buyIndex = i - currentStep;
-            _amounts[buyIndex] = freezeETHBalance * weights[i] / 100;
+            _amounts[buyIndex] = freezeETHBalance.mul(weights[i]).div(100);
             _tokensErc20[buyIndex] = ERC20Extended(tokens[i]);
             (, _rates[buyIndex] ) = exchange.getPrice(ETH, _tokensErc20[buyIndex], _amounts[buyIndex], 0x0);
-            totalAmount += _amounts[buyIndex];
+             totalAmount = totalAmount.add(_amounts[buyIndex]);
         }
 
         require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
@@ -432,7 +425,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.SellTokens)) {
             for (i = currentStep; i < tokensToSell.length; i++) {
                 if (stepProvider.goNextStep(REBALANCE) == false) {
-                    rebalanceReceivedETHAmountFromSale += getETHBalance() - ETHBalanceBefore;
+                    rebalanceReceivedETHAmountFromSale =
+                        rebalanceReceivedETHAmountFromSale.add(getETHBalance()).sub(ETHBalanceBefore) ;
+
                     reimburse();
                     return false;
                 }
@@ -441,7 +436,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 // solhint-disable-next-line
                 require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
             }
-            rebalanceReceivedETHAmountFromSale += getETHBalance() - ETHBalanceBefore;
+            rebalanceReceivedETHAmountFromSale = rebalanceReceivedETHAmountFromSale.add(getETHBalance()).sub(ETHBalanceBefore);
             stepProvider.updateStatus(REBALANCE);
             currentStep = 0;
         }
@@ -487,17 +482,4 @@ contract OlympusIndex is IndexInterface, Derivative {
         WhitelistInterface(getComponentByName(WHITELIST)).setAllowed(accounts, uint(_key), allowed);
         return true;
     }
-
-    // ----------------------------- INITIALIZATION HELPERS -----------------------------
-    // solhint-disable-next-line
-    function approveComponents() private {
-        approveComponent(EXCHANGE);
-        approveComponent(WITHDRAW);
-        approveComponent(RISK);
-        approveComponent(WHITELIST);
-        approveComponent(FEE);
-        approveComponent(REIMBURSABLE);
-        approveComponent(REBALANCE);
-    }
-
 }

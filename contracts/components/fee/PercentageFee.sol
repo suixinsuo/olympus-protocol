@@ -4,9 +4,10 @@ pragma solidity 0.4.24;
 import "../../interfaces/ChargeableInterface.sol";
 import "../../interfaces/DerivativeInterface.sol";
 import "../../components/base/FeeCharger.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract PercentageFee is ChargeableInterface, FeeCharger {
-
+    using SafeMath for uint256;
     mapping(address => mapping(address => uint)) fees; // owner => contract => fee value
 
     constructor () public {
@@ -37,7 +38,7 @@ contract PercentageFee is ChargeableInterface, FeeCharger {
             return 0;
         }
 
-        uint _fee = _amount * fees[derivative.owner()][msg.sender]/DENOMINATOR;
+        uint _fee = _amount.mul(fees[derivative.owner()][msg.sender]).div(DENOMINATOR);
         return _fee;
     }
 
