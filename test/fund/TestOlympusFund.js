@@ -403,9 +403,14 @@ contract("Fund", accounts => {
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance reduced");
   });
 
-  it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
+  it("Shall be able to sell tokens (by step) to get enough eth for withdraw", async () => {
+    
+    let token0_erc20 = await ERC20.at(await fund.tokens(0));
+    let token1_erc20 = await ERC20.at(await fund.tokens(1));
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
     const initialBalance = (await fund.getETHBalance()).toNumber();
+    await fund.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
+
     assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
     const investorABefore = await calc.ethBalance(investorA);
@@ -415,7 +420,7 @@ contract("Fund", accounts => {
     );
     const amounts = [web3.toWei(0.9, "ether"), web3.toWei(0.9, "ether")];
     await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
-
+ 
     for (let i = 0; i < tokens.length; i++) {
       let erc20 = await ERC20.at(tokens[i]);
       let balance = await erc20.balanceOf(fund.address);
@@ -423,10 +428,18 @@ contract("Fund", accounts => {
     }
 
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "We sold all into tokens");
-
-    // Request
+    const tokensAmount = await fund.tokensWithAmount();
+     // Request
     await fund.requestWithdraw(toTokenWei(1.8), { from: investorA });
+    // GET ETH steps is 1, need 2 times to sell all 2 tokens, and in the second will withdraw
     tx = await fund.withdraw();
+    // getTokens will return amounts, but they are not updated til the steps are finished.
+    // So that we check directly the balance of erc20
+    assert.equal( (await token0_erc20.balanceOf(fund.address)).toNumber(), 0, "First step sell 1st token");
+    assert.isAbove((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "First step dont sell 2nd token");
+    // Second time complete sell tokens and withdraw at once
+    tx = await fund.withdraw();
+    assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "Second step sell 2nd token");
 
     // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
@@ -435,6 +448,8 @@ contract("Fund", accounts => {
 
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
+    await fund.setMaxSteps(DerivativeProviders.GETETH, 4); // Reset
+ 
   });
 
   it.skip("Shall be able to dispatch a broken token", async () => {});
@@ -459,7 +474,12 @@ contract("Fund", accounts => {
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, " Cant change to close");
   });
 
-  it("Shall be able to close a fund", async () => {
+  it("Shall be able to close (by step) a fund", async () => {
+    await fund.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
+ 
+    let token0_erc20 = await ERC20.at(await fund.tokens(0));
+    let token1_erc20 = await ERC20.at(await fund.tokens(1));
+
     await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
     const initialBalance = (await fund.getETHBalance()).toNumber();
     assert.equal((await fund.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C has invested with fee");
@@ -474,7 +494,15 @@ contract("Fund", accounts => {
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "ETH balance reduced");
 
     await fund.close();
+    // getTokens will return amounts, but they are not updated til the steps are finished.
+    // So that we check directly the balance of erc20
+    assert.equal( (await token0_erc20.balanceOf(fund.address)).toNumber(), 0, "First step sell 1st token");
+    assert.isAbove((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "First step dont sell 2nd token");
+    // Second time complete sell tokens and withdraw at once
     await fund.close();
+    assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "Second step sell 2nd token");
+
+
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
 
     let fundTokensAndBalance = await fund.getTokens();
@@ -484,6 +512,8 @@ contract("Fund", accounts => {
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance returned");
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Shall not be  close");
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Cant change to active ");
+    await fund.setMaxSteps(DerivativeProviders.GETETH, 4); // reset
+
   });
 
   it("Investor cant invest but can withdraw after close", async () => {
