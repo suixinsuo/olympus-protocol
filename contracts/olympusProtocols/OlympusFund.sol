@@ -332,7 +332,7 @@ contract OlympusFund is FundInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function getETHFromTokens(uint _tokenPercentage) public onlyOwner   returns(bool success) {
+    function getETHFromTokens(uint _tokenPercentage) public onlyOwner returns(bool success) {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](_tokensToSell.length);
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
