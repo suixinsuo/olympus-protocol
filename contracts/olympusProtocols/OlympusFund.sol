@@ -28,7 +28,7 @@ contract OlympusFund is FundInterface, Derivative {
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
 
-    uint public accumulatedFee = 0;
+   uint public accumulatedFee = 0;
 
     constructor(
       string _name,
@@ -101,14 +101,14 @@ contract OlympusFund is FundInterface, Derivative {
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
-            require(!hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]));
-            totalEthRequired = totalEthRequired.add(_amounts[i]);
+          require(!hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]));
+          totalEthRequired = totalEthRequired.add(_amounts[i]);
+ 
         }
         require(getETHBalance() >= totalEthRequired);
 
-        require(
-            OlympusExchangeInterface(getComponentByName(EXCHANGE))
-            .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
+        require(OlympusExchangeInterface(getComponentByName(EXCHANGE))
+          .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
         );
         updateTokens(_tokens);
         return true;
@@ -151,7 +151,6 @@ contract OlympusFund is FundInterface, Derivative {
 
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
-
         uint _investorShare = msg.value.sub(fee).mul(10**decimals).div(_sharePrice);
 
         accumulatedFee = accumulatedFee.add(fee);
@@ -200,15 +199,14 @@ contract OlympusFund is FundInterface, Derivative {
         uint _expectedRate;
         uint _balance;
 
-        for (uint i = 0; i < tokens.length; i++) {
+        for (uint16 i = 0; i < tokens.length; i++) {
             _balance = ERC20(tokens[i]).balanceOf(address(this));
-            if (_balance == 0) {continue;}
+            if (_balance == 0) { continue; }
 
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
 
             if (_expectedRate == 0) {continue;}
             _totalTokensValue = _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
-
         }
         return _totalTokensValue;
     }
@@ -263,8 +261,8 @@ contract OlympusFund is FundInterface, Derivative {
         }
     }
 
-    // solhint-disable-next-line
-    function withdraw()
+   // solhint-disable-next-line
+   function withdraw()
         external
         onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance)
         whenNotPaused
@@ -284,8 +282,8 @@ contract OlympusFund is FundInterface, Derivative {
         if (_transfers == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
-                reimburse();
-                return true;
+              reimburse();
+              return true;
             }
             guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
             withdrawProvider.freeze();
@@ -299,7 +297,7 @@ contract OlympusFund is FundInterface, Derivative {
             balances[_requests[i]] = balances[_requests[i]].sub(_tokenAmount);
             totalSupply_ = totalSupply_.sub(_tokenAmount);
             address(_requests[i]).transfer(_eth);
-        }
+         }
 
         if (i == _requests.length) {
             withdrawProvider.finalize();

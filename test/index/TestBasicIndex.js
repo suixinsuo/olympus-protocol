@@ -248,7 +248,7 @@ contract("Olympus Index", accounts => {
     const investorAAfter = await calc.ethBalance(investorA);
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(0), "Redeemed all");
     assert.equal(calc.roundTo(investorABefore + 1.8, 2), calc.roundTo(investorAAfter, 2), "Investor A received ether");
-
+  
     // Price is constant
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
   });

@@ -430,7 +430,7 @@ contract("Olympus Index", accounts => {
     // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(0), "Redeemed all");
-    assert.equal(calc.roundTo(investorABefore + 1.8, 2), calc.roundTo(investorAAfter, 2), "Investor A received ether");
+    assert(calc.inRange(investorAAfter - investorABefore, 1.8, 0.001), "Investor A received ether");
 
     // Price is constant
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
@@ -529,17 +529,17 @@ contract("Olympus Index", accounts => {
 
   it("Investor cant invest but can withdraw after close", async () => {
     assert.isAbove((await index.balanceOf(investorC)).toNumber(), 0, "C starting balance");
- 
+
     // Investor cant invest can withdraw
     await calc.assertReverts(
       async () => await index.invest({ value: web3.toWei(1, "ether"), from: investorA }),
       "Cant invest after close"
     );
-     // Request
+    // Request
     await index.requestWithdraw((await index.balanceOf(investorC)).toString(), { from: investorC });
- 
+
     await index.withdraw();
- 
+
     assert.equal((await index.balanceOf(investorC)).toString(), 0, " C has withdrawn");
   });
 });
