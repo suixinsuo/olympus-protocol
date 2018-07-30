@@ -362,17 +362,14 @@ contract OlympusFund is FundInterface, Derivative {
         uint[] memory _amounts = new uint[](arrayLength);
         uint[] memory _sellRates = new uint[](arrayLength);
 
-        for(i = currentStep;i < (arrayLength + currentStep) && stepProvider.goNextStep(GETETH); i++){
-            _tokensThisStep[i-currentStep] = _tokensToSell[i];
-        }
-
-        for ( uint t = 0; t <= arrayLength; t++) {
-
-            _amounts[t] = (_tokenPercentage * _tokensThisStep[t].balanceOf(address(this))) / DENOMINATOR;
-            (, _sellRates[t] ) = exchange.getPrice(_tokensToSell[t], ETH, _amounts[t], 0x0);
-            require(!hasRisk(address(this), exchange, address(_tokensThisStep[t]), _amounts[t], 0));
-            ERC20NoReturn(_tokensThisStep[t]).approve(exchange, 0);
-            ERC20NoReturn(_tokensThisStep[t]).approve(exchange, _amounts[t]);
+        for(i = currentStep;i < _tokensThisStep.length && stepProvider.goNextStep(GETETH); i++){
+            uint sellIndex = i-currentStep;
+            _tokensThisStep[sellIndex] = _tokensToSell[currentStep];
+            _amounts[i] = (_tokenPercentage * _tokensThisStep[i].balanceOf(address(this))) / DENOMINATOR;
+            (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
+            require(!hasRisk(address(this), exchange, address(_tokensThisStep[i]), _amounts[i], 0));
+            ERC20NoReturn(_tokensThisStep[i]).approve(exchange, 0);
+            ERC20NoReturn(_tokensThisStep[i]).approve(exchange, _amounts[t]);
         }
 
         require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0, 0x0));
