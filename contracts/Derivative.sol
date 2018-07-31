@@ -39,7 +39,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     }
 
     modifier OnlyOwnerOrPausedTimeout() {
-        require((msg.sender == owner)||((paused==true)&&((pausedTime+pausedCycle)<now)));
+        require((msg.sender == owner)||((paused==true)&&((pausedTime+pausedCycle)<=now)));
         _;
     }
     

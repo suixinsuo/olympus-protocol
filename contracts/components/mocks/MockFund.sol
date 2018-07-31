@@ -85,6 +85,14 @@ contract MockFund is FundInterface, Derivative {
         return true;
     }
 
+    function close() public OnlyOwnerOrPausedTimeout returns(bool success) {
+        require(status != DerivativeStatus.New);
+
+        status = DerivativeStatus.Closed;
+
+        return true;
+    }
+
     function invest() public payable returns(bool) {
           // Current value is already added in the balance, reduce it
         uint _sharePrice;
