@@ -32,7 +32,7 @@ contract MockFund is FundInterface, Derivative {
         symbol = _symbol;
         description = _description;
         fundType = DerivativeType.Fund;
-
+        pausedCycle = 3;
         status = DerivativeStatus.Active;
         setComponent(EXCHANGE, exchangeAddress);
     }

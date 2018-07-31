@@ -119,6 +119,11 @@ contract("Mock Fund", accounts => {
     await fund.changeStatus(DerivativeStatus.Paused);
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Paused, " Status is paused");
     await fund.pause();
+    await calc.assertReverts(
+      async () => await fund.close({ from: investorB }),
+      "Shall not be able to close"
+    );
+    await calc.waitSeconds(3);
     await fund.close({ from: investorB });
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
 
