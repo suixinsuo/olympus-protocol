@@ -87,7 +87,7 @@ web3.eth.contract(abi).new(
           return console.error(err);
         }
         if (newIndex && newIndex.address) {
-          // now the index is deployed, do whatever you need to do.
+          // now the index is deployed,you can get the deployed index address, do whatever you need to do.
           console.log(newIndex.address)
         }
       }));
@@ -98,7 +98,7 @@ web3.eth.contract(abi).new(
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const indexContract = web3.eth.contract(abi).at(address); // address: deployed index address
 // name
 indexContract.name((err,name)=>{
   if (err) {

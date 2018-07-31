@@ -3,8 +3,25 @@
 ### Decription
 ProductList is a storage that stores all funds and indices. The fund or index will be stored to the ProductList while executing the initialize function.
 
+> To use Product List, first of all, you will have to get the productlistAddress from ComponentList contract.
+
+#### &emsp;Example code
+> The code below shows how to get productlistAddress with Web3.
+
+```javascript
+const productlistName = web3.fromAscii('Marketplace');
+const componentListContract = web3.eth.contract(abi).at(componentListAddress);
+const productlistAddress;
+componentListContract.getComponentByName(productlistName,(err, address)=>{
+   if (err) {
+        return console.error(err);
+    }
+  productlistAddress = address;
+});
+```
+
 ### Interface
-#### 1. getAllProducts 
+#### 1. getAllProducts
 
 ```javascript
 function getAllProducts() external view returns (address[] allProducts);
@@ -25,7 +42,7 @@ productListContract.getAllProducts((err,productAddresses) => {
     return console.error(err);
   }
   console.log(productAddresses);
-  // We can use the following code to distinguish which is index address or fund address. 
+  // We can use the following code to distinguish which is index address or fund address.
   const indexContract = web3.eth.contract(indexAbi).at(productAddresses[0])
   indexContract.fundType((err,fundType)=>{
       if (err) {
@@ -57,7 +74,7 @@ productListContract.getAllProducts((err,productAddresses) => {
 });
 ```
 
-#### 2. getOwnProducts 
+#### 2. getOwnProducts
 
 ```javascript
 function getOwnProducts() external view returns (address[] addresses) ;
@@ -84,5 +101,5 @@ productListContract.getOwnProducts((err,productAddresses) => {
 ### abi
 > you can get the [abi](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
 
-### productList address
-> you can get the [productlist address](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
+### componentList address
+> you can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
