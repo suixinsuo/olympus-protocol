@@ -407,10 +407,10 @@ contract("Fund", accounts => {
     
     let token0_erc20 = await ERC20.at(await fund.tokens(0));
     let token1_erc20 = await ERC20.at(await fund.tokens(1));
-    // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
-    const initialBalance = (await fund.getETHBalance()).toNumber();
     await fund.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
 
+    // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
+    const initialBalance = (await fund.getETHBalance()).toNumber();
     assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
     const investorABefore = await calc.ethBalance(investorA);

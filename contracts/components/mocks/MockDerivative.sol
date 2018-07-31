@@ -14,7 +14,7 @@ contract MockDerivative is  Derivative {
 
     // ------------  DERIVATIVE ------------
     function invest() public payable returns(bool success) {return true;}
-    function changeStatus(DerivativeStatus) public returns(bool) {return true;}
+    // function changeStatus(DerivativeStatus _status) pure returns(bool) {return true;}
     function getPrice() public view returns(uint)  { return 10**decimals;}
 
 }

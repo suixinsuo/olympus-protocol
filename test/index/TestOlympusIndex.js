@@ -49,6 +49,16 @@ const expectedTokenAmount = (balance, rates, tokenIndex) => {
   // Balance ETH * (weight)%  * tokenRate / ETH  ==> Expected tokenAmount
   return (balance * (indexData.weights[tokenIndex] / 100) * rates[0][tokenIndex].toNumber()) / 10 ** 18;
 };
+
+const getTokensAndAmounts = async (index) => {
+    const tokensWeights = await index.getTokens();
+    const amounts = await Promise.all( tokensWeights[0].map( async (token) => {
+      let erc20 = await ERC20.at(token);
+      return  erc20.balanceOf(index.address);
+    }));
+    return [tokensWeights[0], amounts];
+}
+
 contract("Olympus Index", accounts => {
   let index;
   let market;
@@ -136,7 +146,6 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.status()).toNumber(), 0); // new
 
-    await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Must be still new");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
 
     await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
@@ -230,7 +239,7 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
-    const tokenAmounts = await index.getTokensAndAmounts();
+    const tokenAmounts = await getTokensAndAmounts(index);
     tokenAmounts[1].forEach(amount => assert.equal(amount, 0, "Amount is 0"));
   });
 
@@ -269,7 +278,7 @@ contract("Olympus Index", accounts => {
     let tx;
 
     // Invest Not allowed
-    await index.enableWhitelist(WhitelistType.Investment);
+    await index.enableWhitelist(WhitelistType.Investment,true);
     await calc.assertReverts(
       async () => await index.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
       "Is not allowed to invest"
@@ -291,7 +300,7 @@ contract("Olympus Index", accounts => {
 
     // Reset permissions and disable, so anyone could invest again
     await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
-    await index.disableWhitelist(WhitelistType.Investment);
+    await index.enableWhitelist(WhitelistType.Investment, false);
   });
 
   // In this scenario, there are not request, but is enought to check the modifier
@@ -304,7 +313,7 @@ contract("Olympus Index", accounts => {
     await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Whitdraw (only owner)");
 
     // Withdraw allowed
-    await index.enableWhitelist(WhitelistType.Maintenance);
+    await index.enableWhitelist(WhitelistType.Maintenance, true);
 
     // Only owner is allowed
     await calc.assertReverts(async () => await index.withdraw({ from: bot }), "Withdraw (not  whitelisted)");
@@ -320,7 +329,7 @@ contract("Olympus Index", accounts => {
     await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Is not allowed to rebalance");
 
     //Reset
-    await index.disableWhitelist(WhitelistType.Maintenance);
+    await index.enableWhitelist(WhitelistType.Maintenance, false);
   });
 
   it("Shall be able to withdraw only after frequency", async () => {
@@ -356,8 +365,6 @@ contract("Olympus Index", accounts => {
     // Set fee
     const denominator = (await (await PercentageFee.deployed()).DENOMINATOR()).toNumber();
     await index.setManagementFee(indexData.managmentFee * denominator);
-    const managmentFee = (await index.getManagementFee()).toNumber();
-    assert.equal(managmentFee, indexData.managmentFee * denominator, "Fee is set correctly");
     // Invest two times (two different logics for first time and others)
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
 
@@ -396,7 +403,7 @@ contract("Olympus Index", accounts => {
     await index.buyTokens();
 
     // Check amounts are correct
-    const tokensAndAmounts = await index.getTokensAndAmounts();
+    const tokensAndAmounts = await getTokensAndAmounts(index);
 
     const rates = await Promise.all(
       tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
@@ -417,15 +424,27 @@ contract("Olympus Index", accounts => {
   });
 
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
+    let token0_erc20 = await ERC20.at(await index.tokens(0));
+    let token1_erc20 = await ERC20.at(await index.tokens(1));
+    await index.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
+
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
     const initialIndexBalance = (await index.getAssetsValue()).toNumber();
     assert.equal(initialIndexBalance, web3.toWei(1.8, "ether"), "Must start with 1.8 eth");
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
     const investorABefore = await calc.ethBalance(investorA);
 
+
     // Request
     await index.requestWithdraw(toTokenWei(1.8), { from: investorA });
     tx = await index.withdraw();
+    // getTokens will return amounts, but they are not updated til the steps are finished.
+    // So that we check directly the balance of erc20
+    assert.equal( (await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
+    assert.isAbove((await token1_erc20.balanceOf(index.address)).toNumber(), 0, "First step dont sell 2nd token");
+    // Second time complete sell tokens and withdraw at once
+    tx = await index.withdraw();
+    assert.equal((await token1_erc20.balanceOf(index.address)).toNumber(), 0, "Second step sell 2nd token");
 
     // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
@@ -434,6 +453,8 @@ contract("Olympus Index", accounts => {
 
     // Price is constant
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
+    await index.setMaxSteps(DerivativeProviders.GETETH, 4); // Reset
+
   });
 
   it("Shall be able to rebalance", async () => {
@@ -471,7 +492,7 @@ contract("Olympus Index", accounts => {
     await index.setMaxSteps(DerivativeProviders.REBALANCE, 3);
 
     // Reblacance keep the amounts as per the wieghts
-    tokenAmounts = await index.getTokensAndAmounts();
+    tokenAmounts = await getTokensAndAmounts(index);
     tokenAmounts[1].forEach((amount, index) => {
       const expectedAmount = expectedTokenAmount(initialIndexBalance + extraAmount, rates, index);
       assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
@@ -483,26 +504,14 @@ contract("Olympus Index", accounts => {
     assert.ok(priceInRange, "Price updated");
   });
 
-  it("Shall be able to change the status", async () => {
-    assert.equal((await index.status()).toNumber(), DerivativeStatus.Active, "Status Is active");
 
-    await index.changeStatus(DerivativeStatus.Paused);
-    assert.equal((await index.status()).toNumber(), DerivativeStatus.Paused, " Status is paused");
-
-    await index.changeStatus(DerivativeStatus.Active);
-    assert.equal((await index.status()).toNumber(), DerivativeStatus.Active, "Status Is active");
-
-    await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.New), "Shall not change to New");
-
-    assert.equal((await index.status()).toNumber(), DerivativeStatus.Active, "Cant change to new");
-
-    await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Closed), "Cant change to close");
-
-    assert.equal((await index.status()).toNumber(), DerivativeStatus.Active, "Cant change to close");
-  });
-
-  it("Shall be able to close a index", async () => {
+  it("Shall be able to close (by step) a index", async () => {
     await index.invest({ value: web3.toWei(2, "ether"), from: investorC });
+    await index.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
+
+    let token0_erc20 = await ERC20.at(await index.tokens(0));
+    let token1_erc20 = await ERC20.at(await index.tokens(1));
+    
     const price = (await index.getPrice()).toNumber();
     const priceInRange = calc.inRange(
       (await index.balanceOf(investorC)).toNumber(),
@@ -514,8 +523,14 @@ contract("Olympus Index", accounts => {
     await index.buyTokens();
 
     await index.close();
+    // getTokens will return amounts, but they are not updated til the steps are finished.
+    // So that we check directly the balance of erc20
+    assert.equal( (await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
+    assert.isAbove((await token1_erc20.balanceOf(index.address)).toNumber(), 0, "First step dont sell 2nd token");
+    // Second time complete sell tokens and withdraw at once
+    await index.close();  
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
-    // TODO VERIFY TOKENS ARE SOLD
+    // TODO VERIFY TOKENS ARE SOLD (refactor with getTokensAndAmounts())
     for (let i = 0; i < indexData.tokensLenght; i++) {
       let erc20 = await ERC20.at(tokens[i]);
       let balance = await erc20.balanceOf(index.address);
@@ -523,8 +538,9 @@ contract("Olympus Index", accounts => {
     }
     assert.equal((await index.getAssetsValue()).toNumber(), 0, "Assets value is 0");
     assert.isAbove((await index.getETHBalance()).toNumber(), 0, "ETH balance returned");
-    await calc.assertReverts(async () => await index.changeStatus(DerivativeStatus.Active), "Shall keep close");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Shall keep being closed");
+    await index.setMaxSteps(DerivativeProviders.GETETH, 4); // For testing
+
   });
 
   it("Investor cant invest but can withdraw after close", async () => {
