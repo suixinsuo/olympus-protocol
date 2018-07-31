@@ -30,7 +30,20 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     bytes32 public constant STEP = "StepProvider";
     bytes32 public constant LOCKER = "LockerProvider";
     bytes32 public constant GETETH = "GetEth";
+    uint public PausedTime;
+    uint public PausedCycle;
 
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        PausedTime = now;
+        emit Pause();
+    }
+
+    modifier OnlyOwnerOrPausedTimeout() {
+        require((msg.sender == owner)||((paused==true)&&((PausedTime+PausedCycle)<now)));
+        _;
+    }
+    
     uint public constant DEFAULT_INTERVAL = 1 days;
     enum WhitelistKeys { Investment, Maintenance, Admin }
 

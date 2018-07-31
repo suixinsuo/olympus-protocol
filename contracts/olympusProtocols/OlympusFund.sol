@@ -62,6 +62,10 @@ contract OlympusFund is FundInterface, Derivative {
         require(status == DerivativeStatus.New);
         require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
+        //Set PausedCycle
+
+        PausedCycle = 1 years;
+
         super._initialize(_componentList);
         bytes32[9] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP];
         bytes32[] memory nameParameters = new bytes32[](names.length);
@@ -170,7 +174,7 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
-    function close() public onlyOwner returns(bool success) {
+    function close() public OnlyOwnerOrPausedTimeout returns(bool success) {
         require(status != DerivativeStatus.New);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
 
