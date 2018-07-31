@@ -3,6 +3,7 @@
 ### Decription
 ProductList is a storage that stores all funds and indices. The fund or index will be stored to the ProductList while executing the initialize function.
 
+### Get the productlistAddress
 > To use Product List, first of all, you will have to get the productlistAddress from ComponentList contract.
 
 #### &emsp;Example code
@@ -99,7 +100,7 @@ productListContract.getOwnProducts((err,productAddresses) => {
 ```
 
 ### abi
-> you can get the [abi](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
+> You can get the [abi](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
 
 ### componentList address
-> you can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
+> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API

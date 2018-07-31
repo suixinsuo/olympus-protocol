@@ -37,7 +37,7 @@ const decimals = 18;
 const tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"]
 const weights = [50,50];
 
-// get gas price
+// Get gas price
 const gasPrice
 web3.eth.getGasPrice((err, price)=>{
   if (err) {
@@ -46,7 +46,7 @@ web3.eth.getGasPrice((err, price)=>{
   gasPrice = price;
 })
 
-// get gas limit
+// Get gas limit
 const gasLimit;
 const data = web3.eth.contract(abi).new.getData({
     name,
@@ -67,7 +67,7 @@ web3.eth.estimateGas(data,(err,gas)=>{
   gasLimit = gas;
 })
 
-// deploy and get index address
+// Deploy and get index contract address
 web3.eth.contract(abi).new(
       name,
       symbol,
@@ -87,7 +87,7 @@ web3.eth.contract(abi).new(
           return console.error(err);
         }
         if (newIndex && newIndex.address) {
-          // now the index is deployed,you can get the deployed index address, do whatever you need to do.
+          // Now the index is deployed,you can get the deployed index address, do whatever you need to do.
           console.log(newIndex.address)
         }
       }));
@@ -95,39 +95,40 @@ web3.eth.contract(abi).new(
 
 ### Basic info
 > The code below shows how to get index's basic information, including fund's name, symbol, category and decimals.
+
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address); // address: deployed index address
-// name
+// Name
 indexContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
   conosle.log(name)
 })
-// symbol
+// Symbol
 indexContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
   conosle.log(symbol)
 })
-// description
+// Description
 indexContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
   conosle.log(description)
 })
-// category
+// Category
 indexContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
   conosle.log(category)
 })
-// decimals
+// Decimals
 indexContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
@@ -137,11 +138,13 @@ indexContract.decimals((err,decimals)=>{
 ```
 
 ### Interface
+
 #### 1. initialize
 
 ```javascript
 function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable;
 ```
+
 #### &emsp;Description
 > Initialize the Index then you can find it from olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So is required to transfer some MOT to your Index)
 
@@ -169,6 +172,7 @@ indexContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accoun
 ```
 
 #### 2. invest
+
 ```javascript
 function invest() public payable
      whenNotPaused
@@ -176,6 +180,7 @@ function invest() public payable
      withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
      returns(bool) ;
 ```
+
 #### &emsp;Description
 > Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
 
@@ -198,6 +203,7 @@ indexContract.invest({value: investAmount}, (err, result) => {
 ```
 
 #### 3. buyTokens
+
 ```javascript
 function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
 ```
@@ -224,9 +230,11 @@ indexContract.buyTokens((err, result) => {
 ```
 
 #### 4. rebalance
+
 ```javascript
 function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
 ```
+
 #### &emsp;Description
 > Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the complete asset value in the value might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased.
 As the blockchain limits the number of operations done per transaction, this function has a built-in feature for executing this function over multiple transaction.
@@ -271,6 +279,7 @@ rebalance((err,result)=>{
 ```javascript
 function setManagementFee(uint _fee) external onlyOwner;
 ```
+
 #### &emsp;Description
 > Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. Usually, indexes should not have a 100% fee, but this is only restricted to be equal to or under 100% (10000). The following example values correspond to the following percentages:</br>
 1 = 0.01% fee</br>
@@ -304,6 +313,7 @@ function requestWithdraw(uint amount) external
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice());
 ```
+
 #### &emsp;Description
 > Investor can use this function to request to withdraw his investment.(Note: The investment will be withdraw after the index's manager execute the withdraw function.)
 
@@ -324,6 +334,7 @@ indexContract.requestWithdraw(amount, (err, result) => {
   }
 });
 ```
+
 #### 7. withdraw
 
 ```javascript
@@ -346,6 +357,7 @@ indexContract.withdraw((err, result) => {
   }
 });
 ```
+
 #### 8. withdrawFee
 
 ```javascript
@@ -371,11 +383,13 @@ indexContract.withdrawFee(amount, (err, result) => {
   }
 });
 ```
+
 #### 9. enableWhitelist
 
 ```javascript
 function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
 ```
+
 #### &emsp;Description
 > Owner of the Index can enable a category of whitelist to protect the index.
 The following three categories of whitelist are available: </br>
@@ -409,11 +423,13 @@ indexContract.enableWhitelist(key, (err, result) => {
   }
 });
 ```
+
 #### 10. setAllowed
 
 ```javascript
 function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
 ```
+
 #### &emsp;Description
 > After enabling a specific category of whitelist, the owner of the index can add/remove accounts from the whitelist.
 
@@ -441,6 +457,7 @@ indexContract.setAllowed(accounts, key, allowed, (err, result) => {
   }
 });
 ```
+
 #### 11. disableWhitelist
 
 ```javascript
@@ -473,11 +490,13 @@ indexContract.disableWhitelist(key, (err, result) => {
   }
 });
 ```
+
 #### 12. close
 
 ```javascript
 function close() public onlyOwner returns(bool success);
 ```
+
 #### &emsp;Description
 > Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment and index managers can also withdraw their management fee.)
 
@@ -495,6 +514,7 @@ indexContract.close((err, result) => {
   }
 });
 ```
+
 ### abi
 > You can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) from our API
 
