@@ -29,6 +29,8 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     bytes32 public constant REBALANCE = "RebalanceProvider";
     bytes32 public constant STEP = "StepProvider";
     bytes32 public constant LOCKER = "LockerProvider";
+    bytes32 public constant GETETH = "GetEth";
+
     uint public constant DEFAULT_INTERVAL = 1 days;
     enum WhitelistKeys { Investment, Maintenance, Admin }
 

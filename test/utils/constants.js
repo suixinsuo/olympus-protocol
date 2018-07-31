@@ -17,6 +17,7 @@ module.exports = {
     REIMBURSABLE: "Reimbursable",
     REBALANCE: "RebalanceProvider",
     STEP: "StepProvider",
-    LOCKER: "LockerProvider"
+    LOCKER: "LockerProvider",
+    GETETH: "GetEth",
   }
 };

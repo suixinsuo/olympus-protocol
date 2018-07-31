@@ -19,8 +19,10 @@ contract OlympusFund is FundInterface, Derivative {
     using SafeMath for uint256;
 
     uint public constant DENOMINATOR = 10000;
-    uint public constant INITIAL_VALUE = 10**18; // 1 ETH
+    uint private freezeTokenPercentage; // Freeze variable for ETH tokens
+    uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
+ 
     event TokenUpdated(address _token, uint amount);
     event FundStatusChanged(DerivativeStatus status);
 
@@ -79,7 +81,7 @@ contract OlympusFund is FundInterface, Derivative {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
         StepInterface(getComponentByName(STEP)).setMaxCalls(WITHDRAW,  10);
-
+        StepInterface(getComponentByName(STEP)).setMaxCalls(GETETH,  4);
         status = DerivativeStatus.Active;
         emit FundStatusChanged(status);
 
@@ -170,9 +172,15 @@ contract OlympusFund is FundInterface, Derivative {
 
     function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
-        getETHFromTokens(DENOMINATOR); // 100% all the tokens
+        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+
+        if(!getETHFromTokens(DENOMINATOR)){
+            reimburse();
+            return false;
+        }
         status = DerivativeStatus.Closed;
         emit FundStatusChanged(status);
+        reimburse();
         return true;
     }
 
@@ -253,16 +261,24 @@ contract OlympusFund is FundInterface, Derivative {
         return withdrawProvider.getTotalWithdrawAmount();
     }
 
-    function guaranteeLiquidity(uint tokenBalance) internal {
-        uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
-        if (_totalETHToReturn > getETHBalance()) {
-            uint _tokenPercentToSell = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
-            getETHFromTokens(_tokenPercentToSell);
+    function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
+        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
+        
+        if(stepProvider.getStatus(GETETH) == 0) {
+            uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
+            if (_totalETHToReturn <= getETHBalance()) {
+                return true;
+            }
+            // tokenPercentToSell must be freeze as class variable 
+           freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
         }
+        return getETHFromTokens(freezeTokenPercentage);
     }
 
+       
+
    // solhint-disable-next-line
-   function withdraw()
+    function withdraw()
         external
         onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance)
         whenNotPaused
@@ -279,14 +295,21 @@ contract OlympusFund is FundInterface, Derivative {
         uint _eth;
         uint _tokenAmount;
         uint i;
-        if (_transfers == 0) {
+    
+        if (_transfers == 0 && stepProvider.getStatus(GETETH) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
-              reimburse();
-              return true;
+                reimburse();
+                return true;
             }
-            guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
-            withdrawProvider.freeze();
+        }
+
+        if (_transfers == 0){
+            if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){
+              reimburse();
+              return false;
+            }
+           withdrawProvider.freeze();
         }
 
         for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
@@ -298,7 +321,7 @@ contract OlympusFund is FundInterface, Derivative {
             totalSupply_ = totalSupply_.sub(_tokenAmount);
             address(_requests[i]).transfer(_eth);
          }
-
+       
         if (i == _requests.length) {
             withdrawProvider.finalize();
             stepProvider.finalize(WITHDRAW);
@@ -306,7 +329,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         reimburse();
         return i == _requests.length; // True if completed
-    }
+    } 
 
     // solhint-disable-next-line
     function tokensWithAmount() public view returns( ERC20Extended[] memory) {
@@ -327,26 +350,45 @@ contract OlympusFund is FundInterface, Derivative {
         }
         return _tokensWithAmount;
     }
-
+ 
     // solhint-disable-next-line
-    function getETHFromTokens(uint _tokenPercentage) public onlyOwner {
-        ERC20Extended[] memory _tokensToSell = tokensWithAmount();
-        uint[] memory _amounts = new uint[](_tokensToSell.length);
-        uint[] memory _sellRates = new uint[](_tokensToSell.length);
+    function getETHFromTokens(uint _tokenPercentage) public onlyOwner returns(bool success) {
+        StepInterface stepProvider = StepInterface(getComponentByName(STEP));
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-        for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
-            (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
-            require(!hasRisk(address(this), exchange, address(_tokensToSell[i]), _amounts[i], _sellRates[i]));
-            ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
-            ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
+        uint currentStep = stepProvider.initializeOrContinue(GETETH);
+        uint i; // Current step to tokens.length
+        uint arrayLength = stepProvider.getMaxCalls(GETETH);
+        ERC20Extended[] memory _tokensToSell = tokensWithAmount();
+
+        if(arrayLength + currentStep >= _tokensToSell.length ) {
+            arrayLength = tokens.length - currentStep;
         }
 
-        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
-        updateTokens(_tokensToSell);
-    }
+        ERC20Extended[] memory _tokensThisStep = new ERC20Extended[](arrayLength);
+        uint[] memory _amounts = new uint[](arrayLength);
+        uint[] memory _sellRates = new uint[](arrayLength);
 
+        for(i = currentStep;i < _tokensToSell.length && stepProvider.goNextStep(GETETH); i++){
+            uint sellIndex = i.sub(currentStep);
+            _tokensThisStep[sellIndex] = _tokensToSell[i];
+            _amounts[sellIndex] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
+            (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
+            require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
+            ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, 0);
+            ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, _amounts[sellIndex]);
+        }
+        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0, 0x0));
+
+        if(i == tokens.length) {
+            updateTokens(_tokensToSell); // Must update tokens at the end to keep _tokensToSell freeze
+            stepProvider.finalize(GETETH);
+            return true;
+        }
+
+        return false;
+    }
+ 
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
     function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
