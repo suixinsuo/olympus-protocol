@@ -4,12 +4,21 @@ import "./Manageable.sol";
 
 
 library TypeDefinitions {
+
     enum ProviderType {
         Strategy,
         Price,
-        Exchange
+        Exchange,
+        Storage,
+        ExtendedStorage,
+        Whitelist,
+        RiskManagement,
+        TokenizationProvider
     }
-
+    enum TokenizationType {
+        Fund,
+        Index
+    }
     struct ProviderStatistic {
         uint counter;
         uint amountInEther;

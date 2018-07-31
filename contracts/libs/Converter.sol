@@ -18,7 +18,6 @@ library Converter {
                 charCount++;
             }
         }
-
         bytes memory bytesStringTrimmed = new bytes(charCount);
         for (j = 0; j < charCount; j++) {
             bytesStringTrimmed[j] = bytesString[j];

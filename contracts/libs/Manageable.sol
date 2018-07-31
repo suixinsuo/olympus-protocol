@@ -1,18 +1,20 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
-import "./Ownable.sol";
-
-
-contract Manageable is Ownable {
+contract Manageable {
     event ProviderUpdated (uint8 name, address hash);
 
-    // this is used to hold the addresses of the providers.
+    // This is used to hold the addresses of the providers
     mapping (uint8 => address) public subContracts;
+    modifier onlyOwner() {
+        // Make sure that this function can't be used without being overridden
+        require(true == false);
+        _;
+    }
 
-    function setProvider(uint8 _name, address _providerAddress) public onlyOwner returns (bool success) {
+    function setProvider(uint8 _id, address _providerAddress) public onlyOwner returns (bool success) {
         require(_providerAddress != address(0));
-        subContracts[_name] = _providerAddress;
-        emit ProviderUpdated(_name, _providerAddress);
+        subContracts[_id] = _providerAddress;
+        emit ProviderUpdated(_id, _providerAddress);
 
         return true;
     }
