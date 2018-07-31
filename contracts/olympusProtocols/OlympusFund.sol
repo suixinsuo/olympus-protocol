@@ -64,7 +64,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         //Set PausedCycle
 
-        PausedCycle = 1 years;
+        pausedCycle = 1 years;
 
         super._initialize(_componentList);
         bytes32[9] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP];
