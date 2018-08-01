@@ -11,6 +11,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
 
     KyberNetworkInterface public kyber;
     address public exchangeAdapterManager;
+    address public exchangeProvider;
     bytes32 public exchangeId;
     bytes32 public name;
     ERC20Extended public constant ETH_TOKEN_ADDRESS = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
@@ -23,15 +24,20 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
         _;
     }
 
-    constructor (KyberNetworkInterface _kyber, address _exchangeAdapterManager) public {
+    constructor (KyberNetworkInterface _kyber, address _exchangeAdapterManager, address _exchangeProvider) public {
         require(address(_kyber) != 0x0);
         kyber = _kyber;
         exchangeAdapterManager = _exchangeAdapterManager;
+        exchangeProvider = _exchangeProvider;
         adapterEnabled = true;
     }
 
     function setExchangeAdapterManager(address _exchangeAdapterManager) external onlyOwner{
         exchangeAdapterManager = _exchangeAdapterManager;
+    }
+
+    function setExchangeProvider(address _exchangeProvider) external onlyOwner{
+        exchangeProvider = _exchangeProvider;
     }
 
     function setExchangeDetails(bytes32 _id, bytes32 _name)
@@ -142,6 +148,12 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
         // require(_token.balanceOf(this) < beforeTokenBalance);
         // require((beforeTokenBalance - _token.balanceOf(this)) == _amount);
 
+        return true;
+    }
+
+    function approveToken(ERC20Extended _token) external {
+        _token.approve(exchangeProvider,0);
+        _token.approve(exchangeProvider,2**255);
         return true;
     }
 
