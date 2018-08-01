@@ -148,7 +148,7 @@ function initialize(address _componentList, uint _rebalanceDeltaPercentage) exte
 ```
 
 #### &emsp;Description
-> Initialize the Index then you can find it from olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So is required to transfer some MOT to your Index)
+> Initialize the Index then you can find it from olympus marketplace and you can invest it.
 
 #### &emsp;Parameters
 > _componentList: address of the Olympus componentlist (please refer this to xxxxx) </br>
@@ -209,7 +209,7 @@ function buyTokens() external returns(bool)
 ```
 
 #### &emsp;Description
-> Index manager executes the function to buy tokens that defined in index using the investor's investment.
+> Index manager executes the function to buy the tokens that are defined in the index
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
