@@ -16,12 +16,13 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     string public category = "exchange";
     string public version = "v1.0";
     ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
-    uint public registerTradeFailureInterval = 1 hours;
+    uint public registerTradeFailureInterval = 1 days;
     // exchangeId > sourceAddress > destAddress
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceExpected;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceSlippage;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public lastCachedPriceTime;
     // msg.sender => sourceAddress > destAddress
+    mapping(address => mapping(address => mapping(address => uint))) firstTradeFailure;
     mapping(address => mapping(address => mapping(address => uint))) amountOfTradeFailures;
     mapping(address => mapping(address => mapping(address => uint))) lastTradeFailure;
 
@@ -45,8 +46,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
-        ) external payable returns(bool success, uint amountOfTradeFailuresInTimespan) {
-
+        ) external payable returns(bool success) {
+        // , uint amountOfTradeFailuresInTimespan
         require(msg.value == _amount);
 
         OlympusExchangeAdapterInterface adapter;
@@ -59,26 +60,33 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         require(payFee(fee));
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
 
-        bool result = adapter.buyToken.value(msg.value)(
-                _token,
-                _amount,
-                _minimumRate,
-        _depositAddress);
-
-        require(result);
+        bool result = address(adapter).call.value(
+            msg.value)(bytes4(keccak256("buyToken(address,uint256,uint256,address)")),_token,_amount,_minimumRate, _depositAddress);
         if (!result) {
-            if(lastTradeFailure[msg.sender][address(ETH)][address(_token)].add(registerTradeFailureInterval) < now){
+            if (lastTradeFailure[msg.sender][address(ETH)][address(_token)].add(registerTradeFailureInterval) < now) {
+                if (amountOfTradeFailures[msg.sender][address(ETH)][address(_token)] == 0) {
+                    firstTradeFailure[msg.sender][address(ETH)][address(_token)] = now;
+                }
                 amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]++;
                 lastTradeFailure[msg.sender][address(ETH)][address(_token)] = now;
             }
-            return (false, amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]);
+            // Refund user
+            msg.sender.transfer(msg.value);
+            return false;
+            //return (false, amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]);
         }
 
+        firstTradeFailure[msg.sender][address(ETH)][address(_token)] = 0;
         amountOfTradeFailures[msg.sender][address(ETH)][address(_token)] = 0;
         lastTradeFailure[msg.sender][address(ETH)][address(_token)] = 0;
-        return (true, 0);
+        return true;
+        //return (true, 0);
     }
 
+    function updateInterval(uint _registerTradeFailureInterval) external onlyOwner returns (bool success){
+        registerTradeFailureInterval = _registerTradeFailureInterval;
+        return true;
+    }
 
     function sellToken
         (
