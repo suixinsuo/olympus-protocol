@@ -18,13 +18,13 @@ constructor (
 ```
 
 #### &emsp;Parameters
-> _name: Index name</br>
-  _symbol: Index symbol (The derivative is ERC20 compatible, so it follow the rules of ERC20. For example: the symbol length can be any, but it's better to keep in from 2 - 5)</br>
-  _description: Index description</br>
-  _category: Index category</br>
-  _decimals: Index decimals (normally it should be 18)</br>
-  _tokens: The token addresses that the index can buy, sell and rebalance</br>
-  _wights: the weights of token</br>
+> _name: Index name </br>
+  _symbol: Index symbol (The derivative is ERC20 compatible, so it follow the rules of ERC20. For example: the symbol length can be any, but it's better to keep it from 2 - 5) </br>
+  _description: Index description </br>
+  _category: Index category </br>
+  _decimals: Index decimals (normally it should be 18) </br>
+  _tokens: The token addresses that the index can buy, sell and rebalance </br>
+  _wights: the weights of token </br>
 
 #### &emsp;Example code
 ```javascript
@@ -151,7 +151,7 @@ function initialize(address _componentList, uint _rebalanceDeltaPercentage) exte
 > Initialize the Index then you can find it from olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So is required to transfer some MOT to your Index)
 
 #### &emsp;Parameters
-> _componentList: address of olympus componentlist (please refer this to xxxxx) </br>
+> _componentList: address of the Olympus componentlist (please refer this to xxxxx) </br>
   _rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:</br>
     1 = 0.01%</br>
     10 = 0.1%</br>
@@ -237,9 +237,6 @@ function rebalance() public  returns (bool success)
 
 #### &emsp;Description
 > Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the complete asset value in the value might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased.
-As the blockchain limits the number of operations done per transaction, this function has a built-in feature for executing this function over multiple transaction.
-So to be sure that the function will be completed, as long as the result of the function is false, the function should be called again.
-Once the rebalance function returns true, the rebalance will be completed, and can only be called again after the interval period has passed.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -281,7 +278,7 @@ function withdraw() external returns(bool)
 ```
 
 #### &emsp;Description
-> This function is for index's manager and Investors to withdraw all their investment.
+> This function is for investors to withdraw all their investment.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.

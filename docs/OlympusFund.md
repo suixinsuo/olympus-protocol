@@ -134,11 +134,11 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 ```
 
 #### &emsp;Description
-> Initialize the fund that was created with specified configurations and will be registered in Olympus Product List and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your Fund)
+> Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
 
 #### &emsp;Parameters
-> \_componentList: Address of olympus componentlist </br>
-  \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
+> \_componentList: Address of the Olympus componentlist </br>
+  \_initialFundFee: The fee that the owner will take from the investments. Must be based on DENOMINATOR, so 1% is 1000 </br>
 > value: The initial balance of the fund
 
 #### &emsp;Example code
@@ -234,7 +234,7 @@ function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amount
 ```
 
 #### &emsp;Description
-> Call the function for fund manager or whitelisted fund administrator to sell any combination of tokens.
+> Call the function for fund manager or whitelisted fund administrator to sell any combination of tokens that are available in the fund.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.

@@ -146,10 +146,10 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 ```
 
 #### &emsp;Description
-> Initialize the Index then you can find it from olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So is required to transfer some MOT to your Index)
+> Initialize the Index then you can find it from the Olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So is required to transfer some MOT to your Index)
 
 #### &emsp;Parameters
-> _componentList: address of olympus componentlist (please refer this to xxxxx) </br>
+> _componentList: address of the Olympus componentlist (please refer this to xxxxx) </br>
   _initialFundFee: management fee of index
   value: the initial balance of the index
 

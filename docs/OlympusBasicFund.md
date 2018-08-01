@@ -2,7 +2,7 @@
 
 ### Introduction
 
-An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. Olympus Basic Fund contains basic interfaces that a fund needs.
+An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. The Olympus Basic Fund contains basic interfaces that a fund needs.
 
 ### Constructor
 
@@ -136,10 +136,10 @@ function initialize(address _componentList) external onlyOwner
 ```
 
 #### &emsp;Description
-> Initialize the fund that was created with specified configurations and will be registered in Olympus Product List and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your Fund)
+> Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
 
 #### &emsp;Parameters
-> \_componentList: Address of olympus componentlist </br>
+> \_componentList: Address of the Olympus componentlist </br>
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -232,7 +232,7 @@ function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amount
 ```
 
 #### &emsp;Description
-> Call the function for fund manager to sell any combination of tokens that he has bought.
+> Call the function for fund manager to sell any combination of tokens that are available in the fund.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -269,7 +269,7 @@ function withdraw() external returns(bool)
 ```
 
 #### &emsp;Description
-> This function is for fund's manager and investors to withdraw all their investment.
+> This function is for investors to withdraw all their investment.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.

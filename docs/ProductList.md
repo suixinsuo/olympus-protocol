@@ -7,7 +7,7 @@ ProductList is a storage that stores all funds and indices. The fund or index wi
 > To use Product List, first of all, you will have to get the productlistAddress from ComponentList contract.
 
 #### &emsp;Example code
-> The code below shows how to get productlistAddress with Web3.
+> The code below shows how to get the productlistAddress with Web3.
 
 ```javascript
 const productlistName = web3.fromAscii('Marketplace');
