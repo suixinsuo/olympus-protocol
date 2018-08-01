@@ -151,7 +151,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
         return true;
     }
 
-    function approveToken(ERC20Extended _token) external {
+    function approveToken(ERC20Extended _token) external returns(bool success){
         _token.approve(exchangeProvider,0);
         _token.approve(exchangeProvider,2**255);
         return true;

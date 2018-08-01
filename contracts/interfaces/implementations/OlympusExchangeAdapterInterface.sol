@@ -32,6 +32,6 @@ contract OlympusExchangeAdapterInterface is Ownable {
     function setExchangeDetails(bytes32 _id, bytes32 _name) external returns(bool success);
     function getExchangeDetails() external view returns(bytes32 _name, bool _enabled);
 
-    function approveToken() external returns(bool success);
+    function approveToken(ERC20Extended _token) external returns(bool success);
 
 }

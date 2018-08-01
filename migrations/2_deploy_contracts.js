@@ -54,8 +54,8 @@ function deployExchange(deployer, network) {
         return deployer.deploy(MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18);
       }
     })
-    .then(() => deployer.deploy(KyberNetworkAdapter, kyberAddress, ExchangeAdapterManager.address))
     .then(() => deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address))
+    .then(() => deployer.deploy(KyberNetworkAdapter, kyberAddress, ExchangeAdapterManager.address, ExchangeProvider.address))
     .then(() => {
       if (network === "development") {
         return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18);
@@ -188,7 +188,7 @@ function deployOnMainnet(deployer) {
   return deploy;
 }
 
-module.exports = function(deployer, network) {
+module.exports = function (deployer, network) {
   let flags = Args.parseArgs();
 
   if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {

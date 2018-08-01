@@ -56,7 +56,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         } else if(_needToRefund) {
             uint beforeBalance = ERC20Extended(_sourceAddress).balanceOf(msg.sender);
             ERC20Extended(_sourceAddress).transferFrom(_adapter, msg.sender, _amount);
-            require(ERC20Extended(_sourceAddress).balanceOf(msg.sender) = beforeBalance.add(_amount));
+            require(ERC20Extended(_sourceAddress).balanceOf(msg.sender) == beforeBalance.add(_amount));
         }
     }
 
