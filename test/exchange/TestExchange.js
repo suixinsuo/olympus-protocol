@@ -11,6 +11,8 @@ const ethToken = "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 const expectedRate = web3.toBigNumber("1000" + "000000000000000000");
 const expectedRateToSell = web3.toBigNumber("1000000000000000");
 const BigNumber = web3.BigNumber;
+const calc = require("../utils/calc");
+
 
 function bytes32ToString(bytes32) {
   return web3.toAscii(bytes32).replace(/\u0000/g, "");
@@ -27,6 +29,7 @@ contract("ExchangeProvider", accounts => {
   let tokens;
   let mockFund;
   let exchangeProvider;
+  let mockKyberNetwork;
   const deposit = accounts[0];
   before(async () => {
     return await Promise.all([
@@ -45,6 +48,7 @@ contract("ExchangeProvider", accounts => {
           assert.ok(_exchangeProvider, "ExchangeProvider contract is not deployed.");
           await _exchangeProvider.setMotAddress(_mockToken.address);
           tokens = await _mockKyberNetwork.supportedTokens();
+          mockKyberNetwork = _mockKyberNetwork;
           return (exchangeProvider = _exchangeProvider);
         }
       )
@@ -146,9 +150,36 @@ contract("ExchangeProvider", accounts => {
 
   it("Should be able to check availability for a token", async () => {
     const result = await mockFund.supportsTradingPair.call(ethToken, tokens[0], "");
-    // Ignore this test for now, mock kyber network now always returns a rate
-    // const nonExistent = await mockFund.supportsTradingPair.call(ethToken, 0x4532453245, "");
     assert.ok(result);
-    // assert.ok(!nonExistent);
+  });
+
+  it("Should be able to get the price also from cache", async () => {
+    let result = await exchangeProvider.getPriceOrCacheFallback.call(ethToken, tokens[0], 10 ** 18, 0x0, 0);
+    let resultTx = await exchangeProvider.getPriceOrCacheFallback(ethToken, tokens[0], 10 ** 18, 0x0, 0);
+    assert.ok(resultTx);
+    assert.equal(result[0].toNumber(), expectedRate.toNumber());
+    assert.equal(result[1].toNumber(), expectedRate.toNumber());
+    assert.equal(result[2], false); // False indicates this is a live price, not from cache
+
+    await mockKyberNetwork.toggleSimulatePriceZero(true);
+    result = await exchangeProvider.getPriceOrCacheFallback.call(ethToken, tokens[0], 10 ** 18, 0x0, 1000);
+    resultTx = await exchangeProvider.getPriceOrCacheFallback(ethToken, tokens[0], 10 ** 18, 0x0, 1000);
+
+    assert.ok(resultTx);
+    assert.equal(result[0].toNumber(), expectedRate.toNumber());
+    assert.equal(result[1].toNumber(), expectedRate.toNumber());
+    assert.equal(result[2], true); // True indicates that this price comes from the cache
+  });
+
+  it("Should not be able to get the price from cache if it's not recent enough", async () => {
+    await calc.waitSeconds(1);
+
+    result = await exchangeProvider.getPriceOrCacheFallback.call(ethToken, tokens[0], 10 ** 18, 0x0, 0);
+    resultTx = await exchangeProvider.getPriceOrCacheFallback(ethToken, tokens[0], 10 ** 18, 0x0, 0);
+
+    assert.ok(resultTx);
+    assert.equal(result[0].toNumber(), 0);
+    assert.equal(result[1].toNumber(), 0);
+    assert.equal(result[2], false); // Didn't come from cache, because there is none for the specified maxAge
   });
 });
