@@ -74,6 +74,21 @@ contract("ExchangeProvider", accounts => {
     assert.equal(new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(), afterBalance.toNumber());
   });
 
+  it("OlympusExchange should return the ETH if the trade cannot be executed", async () => {
+    const srcAmountETH = 1;
+    const initialBalance = web3.eth.getBalance(accounts[0]);
+
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+
+    await mockFund.buyToken(ethToken, amount, rate, deposit, 0x0, 0x0, {
+      value: web3.toWei(srcAmountETH)
+    });
+    const endBalance = web3.eth.getBalance(accounts[0]);
+    // Still uses some ETH for the gas, as long as it's not more than 1 ETH, we know it got returned succesfully
+    assert.ok(endBalance.toNumber() - amount < initialBalance.toNumber());
+  });
+
   it("OlympusExchange should be able to buy multiple tokens.", async () => {
     const srcAmountETH = 1;
     const totalSrcAmountETH = srcAmountETH * tokens.length;

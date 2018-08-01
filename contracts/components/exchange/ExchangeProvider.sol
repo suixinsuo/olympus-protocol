@@ -42,6 +42,17 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
     }
 
+    function exitTrade(address _sourceAddress, address _destAddress, uint _value) internal {
+        if (lastTradeFailure[msg.sender][_sourceAddress][_destAddress].add(registerTradeFailureInterval) < now) {
+            if (amountOfTradeFailures[msg.sender][_sourceAddress][_destAddress] == 0) {
+                firstTradeFailure[msg.sender][_sourceAddress][_destAddress] = now;
+            }
+            amountOfTradeFailures[msg.sender][_sourceAddress][_destAddress]++;
+            lastTradeFailure[msg.sender][_sourceAddress][_destAddress] = now;
+        }
+        // Refund user
+        msg.sender.transfer(_value);
+    }
     function buyToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
@@ -54,28 +65,21 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         // solhint-disable-next-line
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, true) : _exchangeId;
         if(exchangeId == 0){
-            revert("No suitable exchange found");
+            exitTrade(address(ETH), address(_token), msg.value);
+            return false;
         }
-        uint fee = msg.value.mul(getMotPrice()).div(10 ** 18);
-        require(payFee(fee));
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
 
         bool result = address(adapter).call.value(
             msg.value)(bytes4(keccak256("buyToken(address,uint256,uint256,address)")),_token,_amount,_minimumRate, _depositAddress);
         if (!result) {
-            if (lastTradeFailure[msg.sender][address(ETH)][address(_token)].add(registerTradeFailureInterval) < now) {
-                if (amountOfTradeFailures[msg.sender][address(ETH)][address(_token)] == 0) {
-                    firstTradeFailure[msg.sender][address(ETH)][address(_token)] = now;
-                }
-                amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]++;
-                lastTradeFailure[msg.sender][address(ETH)][address(_token)] = now;
-            }
-            // Refund user
-            msg.sender.transfer(msg.value);
+            exitTrade(address(ETH), address(_token), msg.value);
             return false;
             //return (false, amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]);
         }
 
+        uint fee = msg.value.mul(getMotPrice()).div(10 ** 18);
+        require(payFee(fee));
         firstTradeFailure[msg.sender][address(ETH)][address(_token)] = 0;
         amountOfTradeFailures[msg.sender][address(ETH)][address(_token)] = 0;
         lastTradeFailure[msg.sender][address(ETH)][address(_token)] = 0;
