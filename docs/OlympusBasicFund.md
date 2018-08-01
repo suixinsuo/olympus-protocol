@@ -139,7 +139,7 @@ function initialize(address _componentList) external onlyOwner
 > Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
 
 #### &emsp;Parameters
-> \_componentList: Address of the Olympus componentlist </br>
+> \_componentList: Address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -315,3 +315,6 @@ fundContract.close((err, result) => {
 
 ### bytecode
 > You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API
+
+### componentList address
+> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API

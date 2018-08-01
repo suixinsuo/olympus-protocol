@@ -149,7 +149,7 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 > Initialize the Index then you can find it from the Olympus marketplace and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So is required to transfer some MOT to your Index)
 
 #### &emsp;Parameters
-> _componentList: address of the Olympus componentlist (please refer this to xxxxx) </br>
+> _componentList: address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
   _initialFundFee: management fee of index
   value: the initial balance of the index
 
@@ -520,3 +520,6 @@ indexContract.close((err, result) => {
 
 ### bytecode
 > You can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
+
+### Olympus componentList address
+> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API

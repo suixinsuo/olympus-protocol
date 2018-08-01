@@ -151,7 +151,7 @@ function initialize(address _componentList, uint _rebalanceDeltaPercentage) exte
 > Initialize the Index then you can find it from olympus marketplace and you can invest it.
 
 #### &emsp;Parameters
-> _componentList: address of the Olympus componentlist (please refer this to xxxxx) </br>
+> _componentList: address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
   _rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:</br>
     1 = 0.01%</br>
     10 = 0.1%</br>
@@ -324,3 +324,6 @@ indexContract.close((err, result) => {
 
 ### bytecode
 > You can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
+
+### Olympus componentList address
+> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
