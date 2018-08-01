@@ -16,10 +16,14 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     string public category = "exchange";
     string public version = "v1.0";
     ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+    uint public registerTradeFailureInterval = 1 hours;
     // exchangeId > sourceAddress > destAddress
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceExpected;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceSlippage;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public lastCachedPriceTime;
+    // msg.sender => sourceAddress > destAddress
+    mapping(address => mapping(address => mapping(address => uint))) amountOfTradeFailures;
+    mapping(address => mapping(address => mapping(address => uint))) lastTradeFailure;
 
     OlympusExchangeAdapterManagerInterface private exchangeAdapterManager;
 
@@ -41,7 +45,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
-        ) external payable returns(bool success) {
+        ) external payable returns(bool success, uint amountOfTradeFailuresInTimespan) {
 
         require(msg.value == _amount);
 
@@ -54,14 +58,25 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         uint fee = msg.value.mul(getMotPrice()).div(10 ** 18);
         require(payFee(fee));
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
-        require(
-            adapter.buyToken.value(msg.value)(
+
+        bool result = adapter.buyToken.value(msg.value)(
                 _token,
                 _amount,
                 _minimumRate,
-                _depositAddress)
-        );
-        return true;
+        _depositAddress);
+
+        require(result);
+        if (!result) {
+            if(lastTradeFailure[msg.sender][address(ETH)][address(_token)].add(registerTradeFailureInterval) < now){
+                amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]++;
+                lastTradeFailure[msg.sender][address(ETH)][address(_token)] = now;
+            }
+            return (false, amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]);
+        }
+
+        amountOfTradeFailures[msg.sender][address(ETH)][address(_token)] = 0;
+        lastTradeFailure[msg.sender][address(ETH)][address(_token)] = 0;
+        return (true, 0);
     }
 
 
@@ -81,7 +96,6 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
 
         ERC20NoReturn(_token).transferFrom(msg.sender, address(adapter), _amount);
-
         require(
             adapter.sellToken(
                 _token,
