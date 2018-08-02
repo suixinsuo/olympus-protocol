@@ -117,6 +117,46 @@ contract("ExchangeProvider", accounts => {
     }
   });
 
+  it("OlympusExchange should return the ETH if one of the buy trades in multiple buy cannot be executed.", async () => {
+    const srcAmountETH = 1;
+    const totalSrcAmountETH = srcAmountETH * tokens.length;
+    const beforeETHBalance = await web3.eth.getBalance(deposit);
+    const tokenArrayWithIssueToken = [];
+    const amounts = [];
+    const rates = [];
+    const beforeBalance = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      tokenArrayWithIssueToken[i] = tokens[i];
+      const erc20Token = await ERC20Extended.at(tokens[i]);
+      beforeBalance.push(await erc20Token.balanceOf(deposit));
+      amounts.push(web3.toWei(srcAmountETH));
+      rates.push(expectedRate);
+    }
+
+    tokenArrayWithIssueToken[0] = ethToken;
+    await exchangeProvider.buyTokens(tokenArrayWithIssueToken, amounts, rates, deposit, 0x0, {
+      from: deposit,
+      value: web3.toWei(totalSrcAmountETH)
+    });
+    const afterETHBalance = await web3.eth.getBalance(deposit);
+
+    assert.ok(afterETHBalance.toNumber() < (beforeETHBalance.toNumber() - srcAmountETH * 10 ** 18)
+      && afterETHBalance.toNumber() > (beforeETHBalance.toNumber() - totalSrcAmountETH * 10 ** 18));
+    for (let i = 0; i < tokens.length; i++) {
+      if (i == 0) {
+        continue;
+      }
+      const erc20Token = await ERC20Extended.at(tokens[i]);
+      const afterBalance = await erc20Token.balanceOf(deposit);
+
+      assert.equal(
+        new BigNumber(beforeBalance[i]).plus(expectedRate.mul(srcAmountETH)).toNumber(),
+        afterBalance.toNumber()
+      );
+    }
+  });
+
   it("OlympusExchange should be able to sell a single token.", async () => {
     const erc20Token = await ERC20Extended.at(tokens[0]);
     const amount = (await erc20Token.balanceOf(deposit)) / 2; // Keep some for multiple sell tokens
@@ -168,6 +208,33 @@ contract("ExchangeProvider", accounts => {
 
     const beforeBalance = await web3.eth.getBalance(mockFund.address);
     await mockFund.sellTokens(tokens, amounts, rates, "", 0x0);
+    assert.ok(
+      checkPercentageDifference(
+        new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber(),
+        expectedAmounts.reduce((a, b) => a + b, 0),
+        1
+      )
+    );
+    assert.ok(new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber() > 0);
+  });
+
+  it.skip("OlympusExchange should return the tokens if one of the sell trades in multiple sell cannot be executed.", async () => {
+    const amounts = [];
+    const rates = [];
+    const expectedAmounts = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      const erc20Token = await ERC20Extended.at(tokens[i]);
+      const actualBalance = await erc20Token.balanceOf(deposit);
+      amounts.push(actualBalance);
+      rates.push(expectedRateToSell);
+      expectedAmounts.push((actualBalance * expectedRateToSell.toNumber()) / 10 ** 18); // ETH decimals
+      // send all it has to the mockFund so it can sell below.
+      await erc20Token.transfer(mockFund.address, actualBalance);
+    }
+
+    const beforeBalance = await web3.eth.getBalance(mockFund.address);
+    await exchangeProvider.sellTokens(tokens, amounts, rates, "", 0x0);
     assert.ok(
       checkPercentageDifference(
         new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber(),
