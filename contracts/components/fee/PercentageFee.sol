@@ -8,7 +8,7 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract PercentageFee is ChargeableInterface, FeeCharger {
     using SafeMath for uint256;
-    mapping(address => mapping(address => uint)) fees; // owner => contract => fee value
+    mapping(address => mapping(address => uint)) public fees; // owner => contract => fee value
 
     constructor () public {
         name = "PercentageFee";

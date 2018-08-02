@@ -17,7 +17,7 @@ import "./interfaces/StepInterface.sol";
 contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
 
     ERC20Extended internal constant ETH = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
-    ComponentListInterface internal componentList;
+    ComponentListInterface public componentList;
     bytes32 public constant MARKET = "MarketProvider";
     bytes32 public constant PRICE = "PriceProvider";
     bytes32 public constant EXCHANGE = "ExchangeProvider";
