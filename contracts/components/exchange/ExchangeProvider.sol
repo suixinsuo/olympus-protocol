@@ -180,6 +180,11 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             adapter = OlympusExchangeAdapterInterface(
                 exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
                 exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
+            if(address(adapter) == 0x0) {
+                completeSuccess = false;
+                exitTrade(address(ETH), address(_tokens[i]), _amounts[i], address(adapter), true);
+                continue;
+            }
             if (!(address(adapter).call.value(
                 _amounts[i])(bytes4(keccak256("buyToken(address,uint256,uint256,address)")),_tokens[i],_amounts[i],_minimumRates[i],_depositAddress))) {
                 completeSuccess = false;
