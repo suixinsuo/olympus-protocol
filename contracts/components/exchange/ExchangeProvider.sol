@@ -61,6 +61,10 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     }
 
     function registerSuccesfullTrade(address _sourceAddress, address _destAddress) private {
+        if(firstTradeFailure[msg.sender][_sourceAddress][_destAddress] == 0){
+            // Guard, we don't need to write to storage if the previous trades were succesfull
+            return;
+        }
         firstTradeFailure[msg.sender][_sourceAddress][_destAddress] = 0;
         amountOfTradeFailures[msg.sender][_sourceAddress][_destAddress] = 0;
         lastTradeFailure[msg.sender][_sourceAddress][_destAddress] = 0;
@@ -137,47 +141,61 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         registerSuccesfullTrade(address(_token), address(ETH));
 
         return true;
+        //return (true, 0);
     }
 
     function getMotPrice() private view returns (uint price) {
         (price,) = exchangeAdapterManager.getPrice(ETH, MOT, 10**18, 0x0);
     }
 
-    function buyTokens
-        (
-        ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
-        ) external payable returns(bool success) {
-        require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
-        require(payFee(buyTokenFee(msg.value)));
+    function checkTotalValue(uint[] _amounts) private {
         uint totalValue;
         uint i;
         for(i = 0; i < _amounts.length; i++ ) {
             totalValue = totalValue.add(_amounts[i]);
         }
         require(totalValue == msg.value, "msg.value is not the same as total value");
+    }
+
+    function getFailedTradesArray(ERC20Extended[] _tokens) private returns (uint[] memory failedTimes) {
+        failedTimes = new uint[](_tokens.length);
+        for(uint i = 0; i < _tokens.length; i++){
+            failedTimes[i] = amountOfTradeFailures[msg.sender][address(ETH)][address(_tokens[i])];
+        }
+        return failedTimes;
+    }
+
+    function buyTokens
+        (
+        ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
+        address _depositAddress, bytes32 _exchangeId
+        ) external payable returns(bool success) {
+        require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
+        require(payFee(buyTokenFee(msg.value)));
+        uint i;
+        OlympusExchangeAdapterInterface adapter;
+        bool completeSuccess = true;
 
         for (i = 0; i < _tokens.length; i++ ) {
-            bytes32 exchangeId = _exchangeId == "" ?
-            exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId;
-            if (exchangeId == 0) {
-                revert("No suitable exchange found");
+            adapter = OlympusExchangeAdapterInterface(
+                exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
+                exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
+
+            if (!(address(adapter).call.value(
+                _amounts[i])(bytes4(keccak256("buyToken(address,uint256,uint256,address)")),_tokens[i],_amounts[i],_minimumRates[i],_depositAddress))) {
+                completeSuccess = false;
+                exitTrade(address(ETH), address(_tokens[i]), _amounts[i], address(adapter), true);
+                continue;
             }
-            require(
-                OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId)).buyToken.value(_amounts[i])(
-                    _tokens[i],
-                    _amounts[i],
-                    _minimumRates[i],
-                    _depositAddress)
-            );
         }
-        return true;
+        // return (completeSuccess, getFailedTradesArray());
+        return completeSuccess;
     }
 
     function sellTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
+        address _depositAddress, bytes32 _exchangeId
         ) external returns(bool success) {
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         OlympusExchangeAdapterInterface adapter;

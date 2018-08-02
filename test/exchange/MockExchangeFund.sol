@@ -45,7 +45,7 @@ contract MockExchangeFund is MockDerivative {
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address _partnerId
         ) external payable returns(bool success) {
-            return exchange.buyTokens.value(msg.value)(_tokens, _amounts, _minimumRates, _depositAddress, _exchangeId, _partnerId);
+            return exchange.buyTokens.value(msg.value)(_tokens, _amounts, _minimumRates, _depositAddress, _exchangeId);
         }
 
 
@@ -57,7 +57,7 @@ contract MockExchangeFund is MockDerivative {
                 _tokens[i].approve(address(exchange), 0);
                 _tokens[i].approve(address(exchange), _amounts[i]);
             }
-            return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), _exchangeId, _partnerId);
+            return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), _exchangeId);
         }
 }
 

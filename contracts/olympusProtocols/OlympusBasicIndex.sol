@@ -241,7 +241,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
         }
 
-        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
+        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0));
     }
 
     // ----------------------------- BUY TOKENS -----------------------------
@@ -264,7 +264,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
             totalAmount = totalAmount.add(_amounts[i]);
         }
 
-        require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
+        require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0));
         return true;
     }
     // ----------------------------- REBALANCE -----------------------------

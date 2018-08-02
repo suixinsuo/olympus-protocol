@@ -74,7 +74,7 @@ contract("ExchangeProvider", accounts => {
     assert.equal(new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(), afterBalance.toNumber());
   });
 
-  it("OlympusExchange should return the ETH if the trade cannot be executed", async () => {
+  it("OlympusExchange should return the ETH if the single buy trade cannot be executed", async () => {
     const srcAmountETH = 1;
     const initialBalance = web3.eth.getBalance(accounts[0]);
 
@@ -135,7 +135,7 @@ contract("ExchangeProvider", accounts => {
     );
   });
 
-  it("OlympusExchange should return the tokens if the trade cannot be executed.", async () => {
+  it("OlympusExchange should return the tokens if the single sell trade cannot be executed.", async () => {
     const erc20Token = await ERC20Extended.at(tokens[0]);
     const amount = await erc20Token.balanceOf(deposit);
     const rate = expectedRateToSell;

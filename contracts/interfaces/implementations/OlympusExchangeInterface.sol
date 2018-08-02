@@ -19,7 +19,7 @@ contract OlympusExchangeInterface is ExchangeInterface, PriceProviderInterface, 
     function buyTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId
         ) external payable returns(bool success);
 
     /*
@@ -35,6 +35,6 @@ contract OlympusExchangeInterface is ExchangeInterface, PriceProviderInterface, 
     function sellTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId
         ) external returns(bool success);
 }
