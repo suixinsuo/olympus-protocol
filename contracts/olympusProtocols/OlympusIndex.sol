@@ -452,7 +452,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), 0);
                 ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
                 // solhint-disable-next-line
-                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
+                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0));
             }
             rebalanceReceivedETHAmountFromSale = rebalanceReceivedETHAmountFromSale.add(getETHBalance()).sub(ETHBalanceBefore);
             stepProvider.updateStatus(REBALANCE);
@@ -470,7 +470,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 }
                 require(
                     // solhint-disable-next-line
-                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
+                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0)
                 );
             }
         }

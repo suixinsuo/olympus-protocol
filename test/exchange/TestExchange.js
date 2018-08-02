@@ -143,7 +143,7 @@ contract("ExchangeProvider", accounts => {
     await erc20Token.approve(exchangeProvider.address, amount);
     await mockKyberNetwork.toggleSimulatePriceZero(true);
 
-    await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, 0x0, 0x0);
+    await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, 0x0);
     assert.ok((await web3.eth.getBalance(deposit)).toNumber() < beforeBalance.toNumber());
     assert.equal(amount.toNumber(), (await erc20Token.balanceOf(deposit)).toNumber());
     await mockKyberNetwork.toggleSimulatePriceZero(false);

@@ -46,7 +46,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         (
         ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
         ) external payable returns(bool success){
-        return exchangeProvider.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
+        return exchangeProvider.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), _exchangeId);
     }
     function buyTokens() external returns(bool) {
       return false; // Out of the scope of the Mock. Use Buy token for this purpose.
@@ -58,7 +58,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         ) external returns(bool success){
         _token.approve(address(exchangeProvider), 0);
         _token.approve(address(exchangeProvider), _amount);
-        return exchangeProvider.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
+        return exchangeProvider.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId);
     }
 
     function rebalance() public returns (bool success) {
@@ -72,11 +72,11 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         for (i = 0; i < tokensToSell.length; i++) {
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
-            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]),amountsToSell[i],0,address(this),"",0x0));
+            require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]),amountsToSell[i],0,address(this),""));
         }
         amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(address(this).balance - ETHBalanceBefore);
         for (i = 0; i < tokensToBuy.length; i++) {
-            require(exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]),amountsToBuy[i],0,address(this),"",0x0));
+            require(exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]),amountsToBuy[i],0,address(this),""));
         }
         return true;
     }

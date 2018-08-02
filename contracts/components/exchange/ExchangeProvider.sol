@@ -73,7 +73,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     function buyToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
+        address _depositAddress, bytes32 _exchangeId
         ) external payable returns(bool success) {
         // , uint amountOfTradeFailuresInTimespan
         require(msg.value == _amount);
@@ -110,7 +110,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     function sellToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
+        address _depositAddress, bytes32 _exchangeId
         ) checkAllowance(_token, _amount) external returns(bool success) {
 
         OlympusExchangeAdapterInterface adapter;
