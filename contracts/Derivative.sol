@@ -17,7 +17,7 @@ import "./interfaces/StepInterface.sol";
 contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
 
     ERC20Extended internal constant ETH = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
-    ComponentListInterface internal componentList;
+    ComponentListInterface public componentList;
     bytes32 public constant MARKET = "MarketProvider";
     bytes32 public constant PRICE = "PriceProvider";
     bytes32 public constant EXCHANGE = "ExchangeProvider";
@@ -30,7 +30,19 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     bytes32 public constant STEP = "StepProvider";
     bytes32 public constant LOCKER = "LockerProvider";
     bytes32 public constant GETETH = "GetEth";
+    uint public pausedTime;
+    uint public pausedCycle;
 
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        pausedTime = now;
+    }
+
+    modifier OnlyOwnerOrPausedTimeout() {
+        require((msg.sender == owner)||((paused==true)&&((pausedTime+pausedCycle)<=now)));
+        _;
+    }
+    
     uint public constant DEFAULT_INTERVAL = 1 days;
     enum WhitelistKeys { Investment, Maintenance, Admin }
 

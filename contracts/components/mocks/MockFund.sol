@@ -32,7 +32,7 @@ contract MockFund is FundInterface, Derivative {
         symbol = _symbol;
         description = _description;
         fundType = DerivativeType.Fund;
-
+        pausedCycle = 3;
         status = DerivativeStatus.Active;
         setComponent(EXCHANGE, exchangeAddress);
     }
@@ -82,6 +82,14 @@ contract MockFund is FundInterface, Derivative {
     function changeStatus(DerivativeStatus _status) public returns(bool) {
         require(_status != DerivativeStatus.New && status != DerivativeStatus.New);
         status = _status;
+        return true;
+    }
+
+    function close() public OnlyOwnerOrPausedTimeout returns(bool success) {
+        require(status != DerivativeStatus.New);
+
+        status = DerivativeStatus.Closed;
+
         return true;
     }
 

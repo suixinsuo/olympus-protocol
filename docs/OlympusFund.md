@@ -17,11 +17,9 @@ constructor(
 ```
 
 #### &emsp;Parameters
-
 > \_name: Fund name</br> > \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of ERC20. For example: the symbol length can be any, but it's better to keep in from 2 - 5)</br> > \_description: Fund description</br> > \_category: Fund category</br> > \_decimals: Fund decimals (normally it should be 18)</br>
 
 #### &emsp;Example code
-
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
@@ -32,7 +30,7 @@ const description = "YH's Fund";
 const category = "YH";
 const decimals = 18;
 
-// get gas price
+// Get gas price
 const gasPrice
 web3.eth.getGasPrice((err, price)=>{
   if (err) {
@@ -41,7 +39,7 @@ web3.eth.getGasPrice((err, price)=>{
   gasPrice = price;
 })
 
-// get gas limit
+// Get gas limit
 const gasLimit;
 const data = web3.eth.contract(abi).new.getData({
     name,
@@ -60,7 +58,7 @@ web3.eth.estimateGas(data,(err,gas)=>{
   gasLimit = gas;
 })
 
-// deploy and get fund address
+// Deploy and get fund address
 web3.eth.contract(abi).new(
       name,
       symbol,
@@ -78,7 +76,7 @@ web3.eth.contract(abi).new(
           return console.error(err);
         }
         if (newFund && newFund.address) {
-          // now the fund is deployed, do whatever you need to do.
+          // Now the fund is deployed, you can get the fund contract address.
           console.log(newFund.address)
         }
       }));
@@ -89,36 +87,36 @@ web3.eth.contract(abi).new(
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const fundContract = web3.eth.contract(abi).at(address);
-// name
+const fundContract = web3.eth.contract(abi).at(address); // address: deployed fund contract address
+// Name
 fundContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
   conosle.log(name)
 })
-// symbol
+// Symbol
 fundContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
   conosle.log(symbol)
 })
-// description
+// Description
 fundContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
   conosle.log(description)
 })
-// category
+// Category
 fundContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
   conosle.log(category)
 })
-// decimals
+// Decimals
 fundContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
@@ -136,17 +134,14 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 ```
 
 #### &emsp;Description
-
-> Initialize the fund that was created with specified configurations and will be registered in Olympus Product List and you can invest it. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your Fund)
+> Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
 
 #### &emsp;Parameters
-
-> \_componentList: Address of olympus componentlist </br>
-  \_initialFundFee: The fee that the owner will take from the investments. Must be based in DENOMINATOR, so 1% is 1000.
+> \_componentList: Address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
+  \_initialFundFee: The fee that the owner will take from the investments. Must be based on DENOMINATOR, so 1% is 1000 </br>
 > value: The initial balance of the fund
 
 #### &emsp;Example code
-
 > The code below shows how to call this function with Web3.
 
 ```javascript
@@ -165,6 +160,7 @@ fundContract.initialize(_componentList, _initialFundFee, {from: web3.eth.account
 ```
 
 #### 2. invest
+
 ```javascript
 function invest() public payable
      whenNotPaused
@@ -172,6 +168,7 @@ function invest() public payable
      withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
      returns(bool) ;
 ```
+
 #### &emsp;Description
 > Invest in the fund by calling the invest function while sending Ether to the fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
 #### &emsp;Returns
@@ -197,6 +194,7 @@ fundContract.invest({value: investAmount}, (err, result) => {
 ```javascript
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool);
 ```
+
 #### &emsp;Description
 > Call the function to buy any combination of tokens.
 
@@ -205,9 +203,9 @@ function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts
 
 #### &emsp;Parameters
 > _exchangeId: You can choose which exchange will be used to trade.</br>
-  _tokens: Tokens to buy.
-  _amounts: The corresponding amount of tokens to buy.
-  _minimumRates: The minimum amount of tokens per ETH in wei.
+  _tokens: Tokens to buy.</br>
+  _amounts: The corresponding amount of tokens to buy.</br>
+  _minimumRates: The minimum amount of tokens per ETH in wei.</br>
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -228,10 +226,50 @@ fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, resu
 });
 ```
 
-#### 4. setManagementFee
+#### 4. sellTokens
+
+```javascript
+function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
+      public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool)
+```
+
+#### &emsp;Description
+> Call the function for fund manager or whitelisted fund administrator to sell any combination of tokens that are available in the fund.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
+
+#### &emsp;Parameters
+> _exchangeId: You can choose which exchange will be used to trade.</br>
+  _tokens: Tokens to sell.
+  _amounts: The corresponding amount of tokens to sell.
+  _minimumRates: The minimum amount of tokens per ETH in wei.
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const _exchangeId = 0x0;
+const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _amounts = [10**17,10**17];
+const _minimumRates = [0,0];
+
+fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+
+#### 5. setManagementFee
+
 ```javascript
 function setManagementFee(uint _fee) external onlyOwner;
 ```
+
 #### &emsp;Description
 > Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. Usually, funds should not have a 100% fee, but this is only restricted to be equal to or under 100% (10000). The following example values correspond to the following percentages:</br>
 1 = 0.01% fee</br>
@@ -258,13 +296,14 @@ fundContract.setManagementFee(_fee, (err, result) => {
 });
 ```
 
-#### 5. requestWithdraw
+#### 6. requestWithdraw
 
 ```javascript
 function requestWithdraw(uint amount) external
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice());
 ```
+
 #### &emsp;Description
 > Request withdraw of specific amount of investment for an investor.(Note: The investment will be withdraw after the fund's manager execute the withdraw function.)
 
@@ -285,7 +324,8 @@ fundContract.requestWithdraw(amount, (err, result) => {
   }
 });
 ```
-#### 6. withdraw
+
+#### 7. withdraw
 
 ```javascript
 function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool)
@@ -307,7 +347,8 @@ fundContract.withdraw((err, result) => {
   }
 });
 ```
-#### 7. withdrawFee
+
+#### 8. withdrawFee
 
 ```javascript
 function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool);
@@ -332,7 +373,8 @@ fundContract.withdrawFee(amount, (err, result) => {
   }
 });
 ```
-#### 8. enableWhitelist
+
+#### 9. enableWhitelist
 
 ```javascript
 function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
@@ -371,7 +413,8 @@ fundContract.enableWhitelist(key, (err, result) => {
   }
 });
 ```
-#### 9. setAllowed
+
+#### 10. setAllowed
 
 ```javascript
 function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
@@ -403,7 +446,8 @@ fundContract.setAllowed(accounts, key, allowed, (err, result) => {
   }
 });
 ```
-#### 10. disableWhitelist
+
+#### 11. disableWhitelist
 
 ```javascript
 function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
@@ -435,7 +479,8 @@ fundContract.disableWhitelist(key, (err, result) => {
   }
 });
 ```
-#### 11. close
+
+#### 12. close
 
 ```javascript
 function close() public onlyOwner returns(bool success);
@@ -457,8 +502,12 @@ fundContract.close((err, result) => {
   }
 });
 ```
+
 ### abi
 > You can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API
 
 ### bytecode
 > You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API
+
+### componentList address
+> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
