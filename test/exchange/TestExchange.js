@@ -135,6 +135,21 @@ contract("ExchangeProvider", accounts => {
     );
   });
 
+  it("OlympusExchange should return the tokens if the trade cannot be executed.", async () => {
+    const erc20Token = await ERC20Extended.at(tokens[0]);
+    const amount = await erc20Token.balanceOf(deposit);
+    const rate = expectedRateToSell;
+    const beforeBalance = await web3.eth.getBalance(deposit);
+    await erc20Token.approve(exchangeProvider.address, amount);
+    await mockKyberNetwork.toggleSimulatePriceZero(true);
+
+    await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, 0x0, 0x0);
+    assert.ok((await web3.eth.getBalance(deposit)).toNumber() < beforeBalance.toNumber());
+    assert.equal(amount.toNumber(), (await erc20Token.balanceOf(deposit)).toNumber());
+    await mockKyberNetwork.toggleSimulatePriceZero(false);
+
+  });
+
   it("OlympusExchange should be able to sell multiple tokens.", async () => {
     const amounts = [];
     const rates = [];
