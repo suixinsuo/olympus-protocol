@@ -295,7 +295,7 @@ contract("Fund", accounts => {
     assert.ok(tx);
   });
 
-  it("Manager shall be able to collect a from investment and withdraw it", async () => {
+  it("Manager shall be able to collect fee from investment and withdraw it", async () => {
     // Set fee
     const denominator = (await (await PercentageFee.deployed()).DENOMINATOR()).toNumber();
     await fund.setManagementFee(fundData.managmentFee * denominator);
@@ -316,7 +316,7 @@ contract("Fund", accounts => {
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
     await fund.withdrawFee(web3.toWei(0.2, "ether"));
 
-    assert(calc.inRange(fee, web3.toWei(expectedFee - 0.2, "ether"), web3.toWei(0.1, "ether")), "Owner pending fee");
+    assert(calc.inRange(fee, web3.toWei(expectedFee - 0.2, "ether"), web3.toWei(0.01, "ether")), "Owner pending fee");
 
     const ownerBalanceAfter = await calc.ethBalance(accounts[0]);
 
