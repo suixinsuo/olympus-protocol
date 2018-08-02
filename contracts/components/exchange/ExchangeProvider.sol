@@ -16,6 +16,10 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     string public category = "exchange";
     string public version = "v1.0";
     ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+    // exchangeId > sourceAddress > destAddress
+    mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceExpected;
+    mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceSlippage;
+    mapping(bytes32 => mapping(address => mapping(address => uint))) public lastCachedPriceTime;
 
     OlympusExchangeAdapterManagerInterface private exchangeAdapterManager;
 
@@ -47,7 +51,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         if(exchangeId == 0){
             revert("No suitable exchange found");
         }
-        uint fee = msg.value.mul(getMotPrice()).div( 10 ** 18);
+        uint fee = msg.value.mul(getMotPrice()).div(10 ** 18);
         require(payFee(fee));
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
         require(
@@ -92,7 +96,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         (price,) = exchangeAdapterManager.getPrice(ETH, MOT, 10**18, 0x0);
     }
 
-   function buyTokens
+    function buyTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId, address /* _partnerId */
@@ -131,7 +135,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         OlympusExchangeAdapterInterface adapter;
 
-        uint tokenFee =  0; // All tokens to MOT price, to pay fee at the end
+        uint tokenFee = 0; // All tokens to MOT price, to pay fee at the end
         for (uint i = 0; i < _tokens.length; i++ ) {
             bytes32 exchangeId = _exchangeId == bytes32("") ?
             exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], false) : _exchangeId;
@@ -168,6 +172,36 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         return exchangeAdapterManager.getPrice(_sourceAddress, _destAddress, _amount, _exchangeId);
     }
 
+    function getPriceOrCacheFallback(
+        ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId, uint _maxPriceAgeIfCache)
+        external returns(uint expectedRate, uint slippageRate, bool isCached) {
+        uint _currentPriceExpected;
+        uint _currentPriceSlippage;
+        (_currentPriceExpected, _currentPriceSlippage) = exchangeAdapterManager.getPrice(_sourceAddress, _destAddress, _amount, _exchangeId);
+        if (_currentPriceExpected > 0){
+            currentPriceExpected[_exchangeId][_sourceAddress][_destAddress] = _currentPriceExpected;
+            currentPriceSlippage[_exchangeId][_sourceAddress][_destAddress] = _currentPriceSlippage;
+            lastCachedPriceTime[_exchangeId][_sourceAddress][_destAddress] = now;
+            return (
+                _currentPriceExpected,
+                _currentPriceSlippage,
+                false
+            );
+        }
+        if (lastCachedPriceTime[_exchangeId][_sourceAddress][_destAddress].add(_maxPriceAgeIfCache) < now) {
+            return (
+                0,
+                0,
+                false
+            );
+        }
+        return (
+            currentPriceExpected[_exchangeId][_sourceAddress][_destAddress],
+            currentPriceSlippage[_exchangeId][_sourceAddress][_destAddress],
+            true
+        );
+    }
+
     function sellTokenFee(ERC20Extended _token, uint _amount,  bytes32 _exchangeId) internal view returns (uint) {
         uint tokenPrice;
         (tokenPrice,) = exchangeAdapterManager.getPrice(_token, ETH, _amount, _exchangeId);
@@ -175,6 +209,6 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     }
 
     function buyTokenFee(uint _value) internal view returns(uint) {
-      return _value.mul(getMotPrice()).div( 10 ** 18);
+        return _value.mul(getMotPrice()).div(10 ** 18);
     }
 }

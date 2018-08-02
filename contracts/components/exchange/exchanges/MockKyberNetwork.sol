@@ -7,7 +7,7 @@ import "../../../libs/ERC20Extended.sol";
 
 
 contract MockKyberNetwork {
-
+    bool public simulatePriceZero = false;
     struct Token{
         SimpleERC20Token   token;
         uint    slippageRate;
@@ -23,6 +23,11 @@ contract MockKyberNetwork {
                 slippageRate:10**18*1000
             }));
         }
+    }
+
+    function toggleSimulatePriceZero(bool _shouldSimulateZero) external returns(bool success){
+        simulatePriceZero = _shouldSimulateZero;
+        return true;
     }
 
     function supportedTokens() external view returns(address[]){
@@ -42,13 +47,16 @@ contract MockKyberNetwork {
     function _getExpectedRate(ERC20Extended /*src*/, ERC20Extended dest, uint) private view
     returns (uint expectedRate, uint slippageRate)
     {
+        if (simulatePriceZero) {
+            return (0,0);
+        }
         if (address(dest) == ETH_ADDRESS) {
             return (10 ** 15, 10 ** 15);
         } else {
             for (uint i = 0; i < supportedTokens.length; i++){
                 if(address(supportedTokens[i].token) == address(dest)){
                     return (supportedTokens[i].slippageRate, supportedTokens[i].slippageRate);
-                } 
+                }
             }
         }
 

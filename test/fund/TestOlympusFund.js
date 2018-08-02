@@ -321,8 +321,8 @@ contract("Fund", accounts => {
     const ownerBalanceAfter = await calc.ethBalance(accounts[0]);
 
     assert(
-      calc.inRange(ownerBalanceInital + 2 * fundData.managmentFee,ownerBalanceAfter, 0.01),
-      "Owner received ether"
+      calc.inRange((ownerBalanceInital + 2 * fundData.managmentFee), ownerBalanceAfter, 0.01),
+       "Owner received ether"
     );
   });
 
