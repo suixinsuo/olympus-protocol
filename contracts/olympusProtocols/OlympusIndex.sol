@@ -44,7 +44,8 @@ contract OlympusIndex is IndexInterface, Derivative {
       uint _decimals,
       address[] _tokens,
       uint[] _weights)
-      public   {
+      public {
+
         require(_tokens.length == _weights.length);
         uint _totalWeight;
  
@@ -52,6 +53,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             _totalWeight = _totalWeight.add(_weights[i]);
         }
         require(_totalWeight == 100);
+
         name = _name;
         symbol = _symbol;
         totalSupply_ = 0;
@@ -85,7 +87,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ];
 
         for (uint i = 0; i < names.length; i++) {
-           updateComponent(names[i]);
+            updateComponent(names[i]);
         }
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
@@ -123,8 +125,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(status != DerivativeStatus.New);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
 
-         // 100% all the tokens
-         if(!getETHFromTokens(DENOMINATOR)){
+        // 100% all the tokens
+        if(!getETHFromTokens(DENOMINATOR)){
             reimburse();
             return false;
         }
@@ -416,9 +418,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
 
         address[] memory _tokensToSell;
-        uint[] memory _amountsToSell;
+        uint[] memory _amounts;
         address[] memory _tokensToBuy;
-        uint[] memory _amountsToBuy;
         uint i;
         // solhint-disable-next-line
         uint ETHBalanceBefore = getETHBalance();
@@ -426,15 +427,15 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint currentStep = stepProvider.initializeOrContinue(REBALANCE);
 
         // solhint-disable-next-line
-        (_tokensToSell, _amountsToSell, _tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
+        (_tokensToSell, _amounts, _tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
         if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.SellTokens)) {
             for (i = currentStep; i < _tokensToSell.length && stepProvider.goNextStep(REBALANCE) ; i++) {
 
                 ERC20NoReturn(_tokensToSell[i]).approve(address(exchangeProvider), 0);
-                ERC20NoReturn(_tokensToSell[i]).approve(address(exchangeProvider), _amountsToSell[i]);
+                ERC20NoReturn(_tokensToSell[i]).approve(address(exchangeProvider), _amounts[i]);
                 // solhint-disable-next-line
-                require(exchangeProvider.sellToken(ERC20Extended(_tokensToSell[i]), _amountsToSell[i], 0, address(this), 0x0, 0x0));
+                require(exchangeProvider.sellToken(ERC20Extended(_tokensToSell[i]), _amounts[i], 0, address(this), 0x0, 0x0));
             }
             
             rebalanceReceivedETHAmountFromSale = rebalanceReceivedETHAmountFromSale.add(getETHBalance()).sub(ETHBalanceBefore) ;
@@ -446,11 +447,11 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         // Buy Tokens
         if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.BuyTokens)) {
-            _amountsToBuy = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
+            _amounts = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
             for (i = currentStep; i < _tokensToBuy.length && stepProvider.goNextStep(REBALANCE); i++) {
                 require(
                     // solhint-disable-next-line
-                    exchangeProvider.buyToken.value(_amountsToBuy[i])(ERC20Extended(_tokensToBuy[i]), _amountsToBuy[i], 0, address(this), 0x0, 0x0)
+                    exchangeProvider.buyToken.value(_amounts[i])(ERC20Extended(_tokensToBuy[i]), _amounts[i], 0, address(this), 0x0, 0x0)
                 );
             }
             if(i == _tokensToBuy.length) {
