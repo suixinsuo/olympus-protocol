@@ -62,7 +62,7 @@ contract MockKyberNetwork {
 
         return (10 ** 18 * 1000, 10 ** 18 * 1000);
     }
-
+ 
     function trade(
         ERC20Extended source,
         uint srcAmount,
@@ -83,10 +83,9 @@ contract MockKyberNetwork {
             require(msg.value == srcAmount);
 
             uint destAmount = getExpectAmount(srcAmount, dest.decimals(), expectedRate);
-
             dest.transfer(destAddress,destAmount);
             return destAmount;
-        } else {
+         } else {
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
             uint ethAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
@@ -102,7 +101,4 @@ contract MockKyberNetwork {
     function () public payable  {
 
     }
-    event LogA(address _address, string text);
-
-    event LogN(uint number, string text);
 }

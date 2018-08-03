@@ -26,8 +26,8 @@
 
 2.  Initalize
 
-"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0
-
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0 // Basic
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","1","1296000" // As the portal will do
 3.  Buy
     // MANA (0.001 ETH)
     `"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["1000000000000000"],[0]`
