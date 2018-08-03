@@ -17,7 +17,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     string public version = "v1.0";
     ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
     uint public registerTradeFailureInterval = 1 days;
-
+    bytes4 public constant BUY_FUNCTION_SELECTOR = bytes4(keccak256("buyToken(address,uint256,uint256,address)"));
+    bytes4 public constant SELL_FUNCTION_SELECTOR = bytes4(keccak256("sellToken(address,uint256,uint256,address)"));
     uint public failureFeeToDeduct = 0;
     uint sellMultipleTokenFee = 0; // All tokens to MOT price, to pay fee at the end
     bool functionCompleteSuccess = true;
@@ -48,6 +49,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     }
 
     function exitTrade(address _sourceAddress, address _destAddress, uint _amount, address _adapter, bool _needToRefund) private {
+
+        // Updating lastTradeFailure
         if (lastTradeFailure[msg.sender][_sourceAddress][_destAddress].add(registerTradeFailureInterval) < now) {
             if (amountOfTradeFailures[msg.sender][_sourceAddress][_destAddress] == 0) {
                 firstTradeFailure[msg.sender][_sourceAddress][_destAddress] = now;
@@ -55,6 +58,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             amountOfTradeFailures[msg.sender][_sourceAddress][_destAddress]++;
             lastTradeFailure[msg.sender][_sourceAddress][_destAddress] = now;
         }
+
         // Refund user
         if(_sourceAddress == address(ETH)){
             msg.sender.transfer(_amount);
@@ -80,7 +84,6 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress, bytes32 _exchangeId
         ) external payable returns(bool success) {
-        // , uint amountOfTradeFailuresInTimespan
         require(msg.value == _amount);
 
         OlympusExchangeAdapterInterface adapter;
@@ -93,7 +96,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
 
         bool result = address(adapter).call.value(
-            msg.value)(bytes4(keccak256("buyToken(address,uint256,uint256,address)")),_token,_amount,_minimumRate, _depositAddress);
+            msg.value)(BUY_FUNCTION_SELECTOR,_token,_amount,_minimumRate, _depositAddress);
         if (!result) {
             exitTrade(address(ETH), address(_token), msg.value, address(adapter), true);
             return false;
@@ -135,8 +138,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         }
         ERC20NoReturn(_token).transferFrom(msg.sender, address(adapter), _amount);
 
-        bool result = address(adapter).call(
-            bytes4(keccak256("sellToken(address,uint256,uint256,address)")),_token,_amount,_minimumRate, _depositAddress);
+        bool result = address(adapter).call(SELL_FUNCTION_SELECTOR,_token,_amount,_minimumRate, _depositAddress);
         if (!result) {
             exitTrade(address(_token), address(ETH), _amount, address(adapter), true);
             return false;
@@ -192,7 +194,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
                 continue;
             }
             if (!(address(adapter).call.value(
-                _amounts[i])(bytes4(keccak256("buyToken(address,uint256,uint256,address)")),_tokens[i],_amounts[i],_minimumRates[i],_depositAddress))) {
+                _amounts[i])(BUY_FUNCTION_SELECTOR,_tokens[i],_amounts[i],_minimumRates[i],_depositAddress))) {
                 completeSuccess = false;
                 failureFeeToDeduct += _amounts[i];
                 exitTrade(address(ETH), address(_tokens[i]), _amounts[i], address(adapter), true);
@@ -225,8 +227,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             }
             require(_tokens[i].allowance(msg.sender, address(this)) >= _amounts[i], "Not enough tokens approved");
             ERC20NoReturn(_tokens[i]).transferFrom(msg.sender, address(adapter), _amounts[i]);
-            if (!(address(adapter).call(
-            bytes4(keccak256("sellToken(address,uint256,uint256,address)")),_tokens[i],_amounts[i],_minimumRates[i], _depositAddress))) {
+            if (!(address(adapter).call(SELL_FUNCTION_SELECTOR,_tokens[i],_amounts[i],_minimumRates[i], _depositAddress))) {
                 functionCompleteSuccess = false;
                 exitTrade(address(_tokens[i]), address(ETH), _amounts[i], address(adapter), true);
                 continue;
