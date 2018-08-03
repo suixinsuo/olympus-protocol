@@ -155,7 +155,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         (price,) = exchangeAdapterManager.getPrice(ETH, MOT, 10**18, 0x0);
     }
 
-    function checkTotalValue(uint[] _amounts) private {
+    function checkTotalValue(uint[] _amounts) private view {
         uint totalValue;
         uint i;
         for(i = 0; i < _amounts.length; i++ ) {
@@ -164,7 +164,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         require(totalValue == msg.value, "msg.value is not the same as total value");
     }
 
-    function getFailedTradesArray(ERC20Extended[] _tokens) private returns (uint[] memory failedTimes) {
+    function getFailedTradesArray(ERC20Extended[] _tokens) private view returns (uint[] memory failedTimes) {
         failedTimes = new uint[](_tokens.length);
         for(uint i = 0; i < _tokens.length; i++){
             failedTimes[i] = amountOfTradeFailures[msg.sender][address(ETH)][address(_tokens[i])];

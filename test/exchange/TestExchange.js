@@ -66,7 +66,7 @@ contract("ExchangeProvider", accounts => {
     const rate = expectedRate;
     const beforeBalance = await erc20Token.balanceOf(deposit);
 
-    await mockFund.buyToken(tokens[0], amount, rate, deposit, "", 0x0, {
+    await mockFund.buyToken(tokens[0], amount, rate, deposit, 0x0, {
       value: web3.toWei(srcAmountETH)
     });
 
@@ -81,7 +81,7 @@ contract("ExchangeProvider", accounts => {
     const amount = web3.toWei(srcAmountETH);
     const rate = expectedRate;
 
-    await mockFund.buyToken(ethToken, amount, rate, deposit, 0x0, 0x0, {
+    await mockFund.buyToken(ethToken, amount, rate, deposit, 0x0, {
       value: web3.toWei(srcAmountETH)
     });
     const endBalance = web3.eth.getBalance(accounts[0]);
@@ -103,7 +103,7 @@ contract("ExchangeProvider", accounts => {
       amounts.push(web3.toWei(srcAmountETH));
       rates.push(expectedRate);
     }
-    await mockFund.buyTokens(tokens, amounts, rates, deposit, "", 0x0, {
+    await mockFund.buyTokens(tokens, amounts, rates, deposit, 0x0, {
       value: web3.toWei(totalSrcAmountETH)
     });
 
@@ -164,7 +164,7 @@ contract("ExchangeProvider", accounts => {
 
     const beforeBalance = await web3.eth.getBalance(mockFund.address);
     await erc20Token.transfer(mockFund.address, amount);
-    await mockFund.sellToken(tokens[0], amount, rate, "", 0x0);
+    await mockFund.sellToken(tokens[0], amount, rate, "");
     const expectedAmount = (amount * expectedRateToSell.toNumber()) / 10 ** 18; // ETH decimals
     assert.ok(
       checkPercentageDifference(
@@ -229,7 +229,7 @@ contract("ExchangeProvider", accounts => {
     }
 
     const beforeBalance = await web3.eth.getBalance(mockFund.address);
-    await mockFund.sellTokens(tokens, amounts, rates, "", 0x0);
+    await mockFund.sellTokens(tokens, amounts, rates, "");
     assert.ok(
       checkPercentageDifference(
         new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber(),

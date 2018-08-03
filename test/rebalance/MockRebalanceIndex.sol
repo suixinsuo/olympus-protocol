@@ -44,7 +44,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
 
     function buyToken
         (
-        ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
+        ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId
         ) external payable returns(bool success){
         return exchangeProvider.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), _exchangeId);
     }
@@ -54,7 +54,7 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
 
     function sellToken
         (
-        ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
+        ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId
         ) external returns(bool success){
         _token.approve(address(exchangeProvider), 0);
         _token.approve(address(exchangeProvider), _amount);
