@@ -21,6 +21,7 @@ let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockToken = artifacts.require("MockToken");
+let mockTokenSupply =  10 ** 9 * 10 ** 18;
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 
 let StepProvider = artifacts.require("StepProvider");
@@ -51,7 +52,7 @@ function deployExchange(deployer, network) {
     .then(() => deployer.deploy(ExchangeAdapterManager))
     .then(() => {
       if (network === "development") {
-        return deployer.deploy(MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18);
+        return deployer.deploy(MockToken, "", "MOT", 18, mockTokenSupply);
       }
     })
     .then(() => deployer.deploy(KyberNetworkAdapter, kyberAddress, ExchangeAdapterManager.address))
@@ -64,10 +65,14 @@ function deployExchange(deployer, network) {
     .then(async () => {
       let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
       let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
+
       if (network === "development") {
         let mockKyberNetwork = await MockKyberNetwork.deployed();
         devTokens = await mockKyberNetwork.supportedTokens();
         await kyberNetworkAdapter.configAdapter(mockKyberNetwork.address, 0x0);
+        const mot = await MockToken.deployed();
+         // Send MOT for mock kyber so can trade it
+        mot.transfer(mockKyberNetwork.address, mockTokenSupply /2 );
       }
       await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
       return deployer;
@@ -109,7 +114,7 @@ async function deployOlympusBasicFund(deployer, network) {
   await deployExchange(deployer, network);
 
   await deployer.deploy([
-    [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18],
+    [MockToken, "", "MOT", 18, mockTokenSupply],
     Marketplace,
     AsyncWithdraw,
     MarketplaceProvider,
@@ -149,25 +154,17 @@ function deployOnDev(deployer, num) {
         WhitelistProvider,
         ComponentList,
         StepProvider,
-        [MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]
+        Locker,
+        [MockToken, "", "MOT", 18, mockTokenSupply]
       ])
     )
-    .then(() => deployer.deploy(MarketplaceProvider))
-    .then(() => deployer.deploy(AsyncWithdraw))
-    .then(() => deployer.deploy(Locker))
-    .then(() => deployer.deploy(RiskControl))
-    .then(() => deployer.deploy(SimpleWithdraw))
-    .then(() => deployer.deploy(PercentageFee))
-    .then(() => deployer.deploy(Reimbursable))
-    .then(() => deployer.deploy(WhitelistProvider))
-    .then(() => deployer.deploy(ComponentList))
     .then(() => deployExchange(deployer, "development"))
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
 }
 
 function deployOnKovan(deployer, num) {
   return deployer
-    .then(() => deployer.deploy([[MockToken, "", "MOT", 18, 10 ** 9 * 10 ** 18]]))
+    .then(() => deployer.deploy([[MockToken, "", "MOT", 18, mockTokenSupply]]))
     .then(() => deployer.deploy(MarketplaceProvider))
     .then(() => deployer.deploy(AsyncWithdraw))
     .then(() => deployer.deploy(Locker))

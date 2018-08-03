@@ -257,7 +257,7 @@ contract("BasicFund", accounts => {
     // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(0), "Investor redeemed all the funds");
-    assert(calc.inRange(investorAAfter - investorABefore, 1.8, 0.001), "Investor A received ether");
+    assert(await calc.inRange(investorAAfter - investorABefore, 1.8, 0.001), "Investor A received ether");
 
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
