@@ -190,6 +190,28 @@ contract("ExchangeProvider", accounts => {
 
   });
 
+  it("OlympusExchange should return the tokens if one of the sell trades in multiple sell cannot be executed.", async () => {
+    const amounts = [];
+    const rates = [];
+    for (let i = 0; i < tokens.length; i++) {
+      const erc20Token = await ERC20Extended.at(tokens[i]);
+      const actualBalance = await erc20Token.balanceOf(deposit);
+      amounts.push(actualBalance);
+      rates.push(expectedRateToSell);
+      await erc20Token.approve(exchangeProvider.address, actualBalance);
+    }
+    await mockKyberNetwork.toggleSimulatePriceZero(true);
+    await exchangeProvider.sellTokens(tokens, amounts, rates, deposit, 0x0);
+
+    for (let i = 0; i < tokens.length; i++) {
+      const erc20Token = await ERC20Extended.at(tokens[i]);
+      const actualBalance = await erc20Token.balanceOf(deposit);
+      // Should still have all the tokens
+      assert.equal(actualBalance.toNumber(), amounts[i].toNumber());
+    }
+    await mockKyberNetwork.toggleSimulatePriceZero(false);
+  });
+
   it("OlympusExchange should be able to sell multiple tokens.", async () => {
     const amounts = [];
     const rates = [];
@@ -208,33 +230,6 @@ contract("ExchangeProvider", accounts => {
 
     const beforeBalance = await web3.eth.getBalance(mockFund.address);
     await mockFund.sellTokens(tokens, amounts, rates, "", 0x0);
-    assert.ok(
-      checkPercentageDifference(
-        new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber(),
-        expectedAmounts.reduce((a, b) => a + b, 0),
-        1
-      )
-    );
-    assert.ok(new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber() > 0);
-  });
-
-  it.skip("OlympusExchange should return the tokens if one of the sell trades in multiple sell cannot be executed.", async () => {
-    const amounts = [];
-    const rates = [];
-    const expectedAmounts = [];
-
-    for (let i = 0; i < tokens.length; i++) {
-      const erc20Token = await ERC20Extended.at(tokens[i]);
-      const actualBalance = await erc20Token.balanceOf(deposit);
-      amounts.push(actualBalance);
-      rates.push(expectedRateToSell);
-      expectedAmounts.push((actualBalance * expectedRateToSell.toNumber()) / 10 ** 18); // ETH decimals
-      // send all it has to the mockFund so it can sell below.
-      await erc20Token.transfer(mockFund.address, actualBalance);
-    }
-
-    const beforeBalance = await web3.eth.getBalance(mockFund.address);
-    await exchangeProvider.sellTokens(tokens, amounts, rates, "", 0x0);
     assert.ok(
       checkPercentageDifference(
         new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber(),

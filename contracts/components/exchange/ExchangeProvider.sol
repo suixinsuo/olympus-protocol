@@ -19,6 +19,9 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     uint public registerTradeFailureInterval = 1 days;
 
     uint public failureFeeToDeduct = 0;
+    uint sellMultipleTokenFee = 0; // All tokens to MOT price, to pay fee at the end
+    bool functionCompleteSuccess = true;
+
     // exchangeId > sourceAddress > destAddress
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceExpected;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceSlippage;
@@ -198,7 +201,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             registerSuccesfullTrade(address(ETH), address(_tokens[i]));
         }
         require(payFee(buyTokenFee(msg.value-failureFeeToDeduct)));
-        // return (completeSuccess, getFailedTradesArray());
+        // return (completeSuccess, getFailedTradesArray(_tokens));
         return completeSuccess;
     }
 
@@ -207,35 +210,37 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId
         ) external returns(bool success) {
+        sellMultipleTokenFee = 0;
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         OlympusExchangeAdapterInterface adapter;
-
-        uint tokenFee = 0; // All tokens to MOT price, to pay fee at the end
-        for (uint i = 0; i < _tokens.length; i++ ) {
-            bytes32 exchangeId = _exchangeId == bytes32("") ?
-            exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], false) : _exchangeId;
-            if(exchangeId == 0){
-                revert("No suitable exchange found");
+        uint i;
+        for (i = 0; i < _tokens.length; i++ ) {
+            adapter = OlympusExchangeAdapterInterface(
+                exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
+                exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
+            if (address(adapter) == 0x0) {
+                functionCompleteSuccess = false;
+                exitTrade(address(_tokens[i]), address(ETH), _amounts[i], address(adapter), false);
+                continue;
             }
-
-
-            tokenFee = tokenFee.add(sellTokenFee(_tokens[i], _amounts[i], exchangeId));
-
-            adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             require(_tokens[i].allowance(msg.sender, address(this)) >= _amounts[i], "Not enough tokens approved");
             ERC20NoReturn(_tokens[i]).transferFrom(msg.sender, address(adapter), _amounts[i]);
-            require(
-                adapter.sellToken(
-                    _tokens[i],
-                    _amounts[i],
-                    _minimumRates[i],
-                    _depositAddress)
-            );
+            if (!(address(adapter).call(
+            bytes4(keccak256("sellToken(address,uint256,uint256,address)")),_tokens[i],_amounts[i],_minimumRates[i], _depositAddress))) {
+                functionCompleteSuccess = false;
+                exitTrade(address(_tokens[i]), address(ETH), _amounts[i], address(adapter), true);
+                continue;
+                //return (false, amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]);
+            }
+            registerSuccesfullTrade(address(_tokens[i]), address(ETH));
+            sellMultipleTokenFee = sellMultipleTokenFee.add(sellTokenFee(
+                _tokens[i], _amounts[i], _exchangeId));
         }
 
-        require(payFee(tokenFee));
+        require(payFee(sellMultipleTokenFee));
+        return functionCompleteSuccess;
+        // return (functionCompleteSuccess, getFailedTradesArray(_tokens));
 
-        return true;
     }
 
     function supportsTradingPair(address _srcAddress, address _destAddress, bytes32 _exchangeId) external view returns (bool){
@@ -277,7 +282,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         );
     }
 
-    function sellTokenFee(ERC20Extended _token, uint _amount,  bytes32 _exchangeId) internal view returns (uint) {
+    function sellTokenFee(ERC20Extended _token, uint _amount, bytes32 _exchangeId) internal view returns (uint) {
         uint tokenPrice;
         (tokenPrice,) = exchangeAdapterManager.getPrice(_token, ETH, _amount, _exchangeId);
         return tokenPrice.mul(_amount).mul(getMotPrice()).div(10 ** _token.decimals()).div(10 ** 18);
