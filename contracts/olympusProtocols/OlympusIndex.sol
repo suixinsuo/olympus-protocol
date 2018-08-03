@@ -214,11 +214,16 @@ contract OlympusIndex is IndexInterface, Derivative {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
 
-    // solhint-disable-next-line
-    function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool) {
-        require(accumulatedFee >= amount);
-        accumulatedFee = accumulatedFee.sub(amount);
-        msg.sender.transfer(amount);
+  // solhint-disable-next-line
+    function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
+        require(accumulatedFee >= _amount);
+        accumulatedFee = accumulatedFee.sub(_amount);
+    // Exchange to MOT
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        ERC20Extended MOT = ERC20Extended(FeeChargerInterface(address(exchange)).MOT());
+        uint _rate;
+        (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
+        exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0, 0x0);
         return true;
     }
 

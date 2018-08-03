@@ -40,7 +40,7 @@ const expectedTokenAmount = (balance, rates, tokenIndex) => {
   // Balance ETH * (weight)%  * tokenRate / ETH  ==> Expected tokenAmount
   return (balance * (indexData.weights[tokenIndex] / 100) * rates[0][tokenIndex].toNumber()) / 10 ** 18;
 };
-contract("Olympus Index", accounts => {
+contract("Basic Index", accounts => {
   let index;
   let market;
   let mockKyber;
@@ -247,7 +247,7 @@ contract("Olympus Index", accounts => {
     // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(0), "Redeemed all");
-    assert.equal(calc.roundTo(investorABefore + 1.8, 2), calc.roundTo(investorAAfter, 2), "Investor A received ether");
+    assert(await calc.inRange(investorAAfter - investorABefore, 1.8, 0.001), "Investor A received ether");
   
     // Price is constant
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
@@ -289,8 +289,9 @@ contract("Olympus Index", accounts => {
     // Price is updated because we force the total assets value increase while not the supply
     const price = (await index.getPrice()).toNumber();
     const supply = (await index.totalSupply()).toNumber();
-    const priceInRange = calc.inRange(price, (initialAssetsValue + extraAmount) / supply, web3.toWei(0.00001, "ether"));
+    const priceInRange =   await calc.inRange(price, (initialAssetsValue + extraAmount) * 10**indexData.decimals/ supply, web3.toWei(0.00001, "ether"));
     assert.ok(priceInRange, "Price updated");
+    
   });
 
   it("Shall be able to change the status", async () => {
@@ -314,7 +315,7 @@ contract("Olympus Index", accounts => {
   it("Shall be able to close a index", async () => {
     await index.invest({ value: web3.toWei(1.8, "ether"), from: investorC });
     const price = (await index.getPrice()).toNumber();
-    const priceInRange = calc.inRange(
+    const priceInRange = await calc.inRange(
       (await index.balanceOf(investorC)).toNumber(),
       web3.toWei(toTokenWei(1.8) / price, "ether"),
       web3.toWei(0.001, "ether")
