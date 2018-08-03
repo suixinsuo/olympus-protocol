@@ -18,6 +18,10 @@ function bytes32ToString(bytes32) {
   return web3.toAscii(bytes32).replace(/\u0000/g, "");
 }
 
+const getAmountWithRates = async () => {
+
+}
+
 const Promise = require("bluebird");
 
 const checkPercentageDifference = (value1, value2, percentage) => {
@@ -142,15 +146,14 @@ contract("ExchangeProvider", accounts => {
     });
     const afterETHBalance = await web3.eth.getBalance(deposit);
 
-    assert.ok(afterETHBalance.toNumber() < (beforeETHBalance.toNumber() - srcAmountETH * 10 ** 18)
-      && afterETHBalance.toNumber() > (beforeETHBalance.toNumber() - totalSrcAmountETH * 10 ** 18));
-    for (let i = 0; i < tokens.length; i++) {
-      if (i == 0) {
-        continue;
-      }
+    // Total amount used is 2 ETH, but we should have still spent 1ETH, for the token that we didn't break
+    assert.ok(
+      await calc.inRange(afterETHBalance.toNumber(), (beforeETHBalance.toNumber() - srcAmountETH * 10 ** 18), 10 ** 15));
+    // We start at 1, because the 0 index is our artificially broken token
+    for (let i = 1; i < tokens.length; i++) {
       const erc20Token = await ERC20Extended.at(tokens[i]);
       const afterBalance = await erc20Token.balanceOf(deposit);
-
+      // Check if the token got succesfully bought
       assert.equal(
         new BigNumber(beforeBalance[i]).plus(expectedRate.mul(srcAmountETH)).toNumber(),
         afterBalance.toNumber()
@@ -185,7 +188,9 @@ contract("ExchangeProvider", accounts => {
     await mockKyberNetwork.toggleSimulatePriceZero(true);
 
     await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, 0x0);
-    assert.ok((await web3.eth.getBalance(deposit)).toNumber() < beforeBalance.toNumber());
+    // Only the gas should be used, we shouldn't have received any ETH
+    assert.ok(await calc.inRange(await web3.eth.getBalance(deposit).toNumber(), beforeBalance.toNumber(), 10 ** 15));
+    // Amount of tokens we have shouldn't have changed
     assert.equal(amount.toNumber(), (await erc20Token.balanceOf(deposit)).toNumber());
     await mockKyberNetwork.toggleSimulatePriceZero(false);
 
@@ -201,7 +206,9 @@ contract("ExchangeProvider", accounts => {
       rates.push(expectedRateToSell);
       await erc20Token.approve(exchangeProvider.address, actualBalance);
     }
+
     await mockKyberNetwork.toggleSimulatePriceZero(true);
+
     await exchangeProvider.sellTokens(tokens, amounts, rates, deposit, 0x0);
 
     for (let i = 0; i < tokens.length; i++) {
