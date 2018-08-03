@@ -227,7 +227,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
 
-    
+
     // ----------------------------- WITHDRAW -----------------------------
     // solhint-disable-next-line
     function requestWithdraw(uint amount) external
@@ -239,13 +239,13 @@ contract OlympusIndex is IndexInterface, Derivative {
 
   function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
-        
+
         if(stepProvider.getStatus(GETETH) == 0) {
             uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
             if (_totalETHToReturn <= getETHBalance()) {
                 return true;
             }
-            // tokenPercentToSell must be freeze as class variable 
+            // tokenPercentToSell must be freeze as class variable
            freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
         }
         return getETHFromTokens(freezeBalance);
@@ -264,7 +264,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint _eth;
         uint _tokenAmount;
         uint i;
-        
+
         if (_transfers == 0 && stepProvider.getStatus(GETETH) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
@@ -298,7 +298,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         reimburse();
         return i == _requests.length; // True if completed
     }
- 
+
     // solhint-disable-next-line
     function reimburse() private {
         uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
@@ -338,7 +338,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint arrayLength = stepProvider.getMaxCalls(GETETH);
         if(currentStep == 0) {
             freezeTokens = tokensWithAmount();
-        } 
+        }
 
         if(arrayLength + currentStep >= freezeTokens.length ) {
             arrayLength = tokens.length - currentStep;
@@ -357,7 +357,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, 0);
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, _amounts[sellIndex]);
         }
-        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0, 0x0));
+        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
 
         if(i == tokens.length) {
             stepProvider.finalize(GETETH);
@@ -406,7 +406,7 @@ contract OlympusIndex is IndexInterface, Derivative {
              totalAmount = totalAmount.add(_amounts[buyIndex]);
         }
 
-        require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0, 0x0));
+        require(exchange.buyTokens.value(totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0));
 
         if(i == tokens.length) {
             stepProvider.finalize(BUYTOKENS);
@@ -452,7 +452,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), 0);
                 ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), amountsToSell[i]);
                 // solhint-disable-next-line
-                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0, 0x0));
+                require(exchangeProvider.sellToken(ERC20Extended(tokensToSell[i]), amountsToSell[i], 0, address(this), 0x0));
             }
             rebalanceReceivedETHAmountFromSale = rebalanceReceivedETHAmountFromSale.add(getETHBalance()).sub(ETHBalanceBefore);
             stepProvider.updateStatus(REBALANCE);
@@ -470,7 +470,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 }
                 require(
                     // solhint-disable-next-line
-                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0, 0x0)
+                    exchangeProvider.buyToken.value(amountsToBuy[i])(ERC20Extended(tokensToBuy[i]), amountsToBuy[i], 0, address(this), 0x0)
                 );
             }
         }
@@ -489,7 +489,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         if(enable) {
             whitelist.enable(uint(_key));
         } else {
-            whitelist.disable(uint(_key));   
+            whitelist.disable(uint(_key));
         }
         return true;
     }

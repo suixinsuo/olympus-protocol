@@ -33,17 +33,17 @@ contract MockFeeChargerFund is MockDerivative  {
     }
 
     function buyToken(ERC20Extended _token, uint _amount, uint _minimumRate) external payable returns(bool success){
-        return exchange.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), bytes32(0), 0x0);
+        return exchange.buyToken.value(msg.value)(_token, _amount, _minimumRate, address(this), bytes32(0));
     }
 
     function buyTokens(ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) external payable returns(bool success) {
-        return exchange.buyTokens.value(msg.value)(_tokens, _amounts, _minimumRates, address(this), bytes32(0), 0x0);
+        return exchange.buyTokens.value(msg.value)(_tokens, _amounts, _minimumRates, address(this), 0x0);
     }
 
     function sellToken(ERC20Extended _token, uint _amount, uint _minimumRate) external returns(bool success) {
         _token.approve(address(exchange), 0);
         _token.approve(address(exchange), _amount);
-        return exchange.sellToken(_token, _amount, _minimumRate, address(this), bytes32(0), 0x0);
+        return exchange.sellToken(_token, _amount, _minimumRate, address(this), bytes32(0));
       }
 
     function sellTokens(ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) external returns(bool success) {
@@ -51,7 +51,7 @@ contract MockFeeChargerFund is MockDerivative  {
             _tokens[i].approve(address(exchange), 0);
             _tokens[i].approve(address(exchange), _amounts[i]);
         }
-        return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), bytes32(0), 0x0);
+        return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), bytes32(0));
     }
 
     event LogNumber(string _text, uint _number);

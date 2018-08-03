@@ -22,7 +22,7 @@ contract OlympusFund is FundInterface, Derivative {
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
 
- 
+
     event TokenUpdated(address _token, uint amount);
     event FundStatusChanged(DerivativeStatus status);
 
@@ -109,12 +109,12 @@ contract OlympusFund is FundInterface, Derivative {
         for (uint i = 0; i < _amounts.length; i++) {
           require(!hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]));
           totalEthRequired = totalEthRequired.add(_amounts[i]);
- 
+
         }
         require(getETHBalance() >= totalEthRequired);
 
         require(OlympusExchangeInterface(getComponentByName(EXCHANGE))
-          .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
+          .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)
         );
         updateTokens(_tokens);
         return true;
@@ -132,7 +132,7 @@ contract OlympusFund is FundInterface, Derivative {
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
 
-        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
+        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId));
         updateTokens(_tokens);
         return true;
     }
@@ -229,7 +229,7 @@ contract OlympusFund is FundInterface, Derivative {
     function addOwnerBalance() external payable onlyOwner {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
-   
+
     // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
         require(accumulatedFee >= _amount);
@@ -239,7 +239,7 @@ contract OlympusFund is FundInterface, Derivative {
         ERC20Extended MOT = ERC20Extended(FeeChargerInterface(address(exchange)).MOT());
         uint _rate;
         (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
-        exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0, 0x0);
+        exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0);
         return true;
     }
 
@@ -272,19 +272,19 @@ contract OlympusFund is FundInterface, Derivative {
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
-        
+
         if(stepProvider.getStatus(GETETH) == 0) {
             uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
             if (_totalETHToReturn <= getETHBalance()) {
                 return true;
             }
-            // tokenPercentToSell must be freeze as class variable 
+            // tokenPercentToSell must be freeze as class variable
            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
         }
         return getETHFromTokens(freezeTokenPercentage);
     }
 
-       
+
 
    // solhint-disable-next-line
     function withdraw()
@@ -304,7 +304,7 @@ contract OlympusFund is FundInterface, Derivative {
         uint _eth;
         uint _tokenAmount;
         uint i;
-    
+
         if (_transfers == 0 && stepProvider.getStatus(GETETH) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
@@ -330,7 +330,7 @@ contract OlympusFund is FundInterface, Derivative {
             totalSupply_ = totalSupply_.sub(_tokenAmount);
             address(_requests[i]).transfer(_eth);
          }
-       
+
         if (i == _requests.length) {
             withdrawProvider.finalize();
             stepProvider.finalize(WITHDRAW);
@@ -338,7 +338,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         reimburse();
         return i == _requests.length; // True if completed
-    } 
+    }
 
     // solhint-disable-next-line
     function tokensWithAmount() public view returns( ERC20Extended[] memory) {
@@ -359,7 +359,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
         return _tokensWithAmount;
     }
- 
+
     // solhint-disable-next-line
     function getETHFromTokens(uint _tokenPercentage) public onlyOwner returns(bool success) {
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
@@ -387,7 +387,7 @@ contract OlympusFund is FundInterface, Derivative {
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, 0);
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, _amounts[sellIndex]);
         }
-        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0, 0x0));
+        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
 
         if(i == tokens.length) {
             updateTokens(_tokensToSell); // Must update tokens at the end to keep _tokensToSell freeze
@@ -397,7 +397,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         return false;
     }
- 
+
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
     function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {

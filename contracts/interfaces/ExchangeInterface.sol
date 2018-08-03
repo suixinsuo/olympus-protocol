@@ -23,13 +23,12 @@ contract ExchangeInterface is ComponentInterface {
      * @param uint _minimumRate The minimum amount of tokens to receive for 1 ETH.
      * @param address _depositAddress The address to send the bought tokens to.
      * @param bytes32 _exchangeId The exchangeId to choose. If it's an empty string, then the exchange will be chosen automatically.
-     * @param address _partnerId If the exchange supports a partnerId, you can supply your partnerId here.
      * @return boolean whether or not the trade succeeded.
      */
     function buyToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId
         ) external payable returns(bool success);
 
     /*
@@ -39,12 +38,11 @@ contract ExchangeInterface is ComponentInterface {
      * @param uint _minimumRate The minimum amount of ETH to receive for 1 ERC20Extended token.
      * @param address _depositAddress The address to send the bought tokens to.
      * @param bytes32 _exchangeId The exchangeId to choose. If it's an empty string, then the exchange will be chosen automatically.
-     * @param address _partnerId If the exchange supports a partnerId, you can supply your partnerId here
      * @return boolean boolean whether or not the trade succeeded.
      */
     function sellToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId
         ) external returns(bool success);
 }

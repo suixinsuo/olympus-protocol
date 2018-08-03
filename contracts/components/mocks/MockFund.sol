@@ -62,7 +62,7 @@ contract MockFund is FundInterface, Derivative {
 
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-        exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0);
+        exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId);
         updateTokens(_tokens);
         return true;
 
@@ -74,7 +74,7 @@ contract MockFund is FundInterface, Derivative {
             _tokens[i].approve(address(exchange), 0);
             _tokens[i].approve(address(exchange), _amounts[i]);
         }
-        exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0);
+        exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId);
         updateTokens(_tokens);
         return true;
     }

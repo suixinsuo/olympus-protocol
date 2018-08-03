@@ -51,12 +51,12 @@ const expectedTokenAmount = (balance, rates, tokenIndex) => {
 };
 
 const getTokensAndAmounts = async (index) => {
-    const tokensWeights = await index.getTokens();
-    const amounts = await Promise.all( tokensWeights[0].map( async (token) => {
-      let erc20 = await ERC20.at(token);
-      return  erc20.balanceOf(index.address);
-    }));
-    return [tokensWeights[0], amounts];
+  const tokensWeights = await index.getTokens();
+  const amounts = await Promise.all(tokensWeights[0].map(async (token) => {
+    let erc20 = await ERC20.at(token);
+    return erc20.balanceOf(index.address);
+  }));
+  return [tokensWeights[0], amounts];
 }
 
 contract("Olympus Index", accounts => {
@@ -278,7 +278,7 @@ contract("Olympus Index", accounts => {
     let tx;
 
     // Invest Not allowed
-    await index.enableWhitelist(WhitelistType.Investment,true);
+    await index.enableWhitelist(WhitelistType.Investment, true);
     await calc.assertReverts(
       async () => await index.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
       "Is not allowed to invest"
@@ -440,7 +440,7 @@ contract("Olympus Index", accounts => {
     tx = await index.withdraw();
     // getTokens will return amounts, but they are not updated til the steps are finished.
     // So that we check directly the balance of erc20
-    assert.equal( (await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
+    assert.equal((await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
     assert.isAbove((await token1_erc20.balanceOf(index.address)).toNumber(), 0, "First step dont sell 2nd token");
     // Second time complete sell tokens and withdraw at once
     tx = await index.withdraw();
@@ -474,7 +474,7 @@ contract("Olympus Index", accounts => {
     assert.equal((await index.getETHBalance()).toNumber(), 0, "ETH used to buy"); // All ETH has been sald
     const initialAssetsValue = +(await index.getAssetsValue()).toNumber();
 
-    exchange.buyToken(tokens[0], extraAmount, 0, index.address, 0x0, "", {
+    exchange.buyToken(tokens[0], extraAmount, 0, index.address, 0x0, {
       value: extraAmount
     });
     const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
@@ -511,7 +511,7 @@ contract("Olympus Index", accounts => {
 
     let token0_erc20 = await ERC20.at(await index.tokens(0));
     let token1_erc20 = await ERC20.at(await index.tokens(1));
-    
+
     const price = (await index.getPrice()).toNumber();
     const priceInRange = calc.inRange(
       (await index.balanceOf(investorC)).toNumber(),
@@ -525,10 +525,10 @@ contract("Olympus Index", accounts => {
     await index.close();
     // getTokens will return amounts, but they are not updated til the steps are finished.
     // So that we check directly the balance of erc20
-    assert.equal( (await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
+    assert.equal((await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
     assert.isAbove((await token1_erc20.balanceOf(index.address)).toNumber(), 0, "First step dont sell 2nd token");
     // Second time complete sell tokens and withdraw at once
-    await index.close();  
+    await index.close();
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
     // TODO VERIFY TOKENS ARE SOLD (refactor with getTokensAndAmounts())
     for (let i = 0; i < indexData.tokensLenght; i++) {

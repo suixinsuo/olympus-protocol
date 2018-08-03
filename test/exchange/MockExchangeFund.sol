@@ -25,39 +25,39 @@ contract MockExchangeFund is MockDerivative {
     function buyToken
         (
         ERC20Extended _token, uint _amount, uint _minimumRate,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId
         ) external payable returns(bool success){
-          return exchange.buyToken.value(msg.value)(_token, _amount, _minimumRate, _depositAddress, _exchangeId, _partnerId);
+          return exchange.buyToken.value(msg.value)(_token, _amount, _minimumRate, _depositAddress, _exchangeId);
         }
 
 
     function sellToken
         (
-        ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId, address _partnerId
+        ERC20Extended _token, uint _amount, uint _minimumRate, bytes32 _exchangeId
         ) external returns(bool success){
             _token.approve(address(exchange), 0);
             _token.approve(address(exchange), _amount);
-          return exchange.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId, _partnerId);
+          return exchange.sellToken(_token, _amount, _minimumRate, address(this), _exchangeId);
         }
 
     function buyTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId
         ) external payable returns(bool success) {
-            return exchange.buyTokens.value(msg.value)(_tokens, _amounts, _minimumRates, _depositAddress, _exchangeId, _partnerId);
+            return exchange.buyTokens.value(msg.value)(_tokens, _amounts, _minimumRates, _depositAddress, _exchangeId);
         }
 
 
     function sellTokens
         (
-        ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates, bytes32 _exchangeId, address _partnerId
+        ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates, bytes32 _exchangeId
         ) external returns(bool success){
             for (uint i=0; i< _tokens.length; i++) {
                 _tokens[i].approve(address(exchange), 0);
                 _tokens[i].approve(address(exchange), _amounts[i]);
             }
-            return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), _exchangeId, _partnerId);
+            return exchange.sellTokens(_tokens, _amounts, _minimumRates, address(this), _exchangeId);
         }
 }
 
