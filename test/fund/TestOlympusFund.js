@@ -296,34 +296,39 @@ contract("Fund", accounts => {
   });
 
   it("Manager shall be able to collect fee from investment and withdraw it", async () => {
+    const motRatio = await mockKyber.getExpectedRate(ethToken, mockMOT.address, web3.toWei(1, "ether"));
+
     // Set fee
     const denominator = (await (await PercentageFee.deployed()).DENOMINATOR()).toNumber();
     await fund.setManagementFee(fundData.managmentFee * denominator);
     let fee = (await fund.getManagementFee()).toNumber();
-
     assert.equal(fee, fundData.managmentFee * denominator, "Fee is set correctly");
+
     // Invest two times (two different logics for first time and others)
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
     await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
 
     const expectedFee = 0.5 + 0.2 - 0.01; // Base Fee + Fee from investments - commision of withdraw
     fee = (await fund.accumulatedFee()).toNumber();
-    assert(calc.inRange(fee, web3.toWei(expectedFee, "ether"), web3.toWei(0.1, "ether")), "Owner got fee");
+    assert(await calc.inRange(fee, web3.toWei(expectedFee, "ether"), web3.toWei(0.1, "ether")), "Owner got fee");
 
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
 
     // Withdraw
+    const withdrawETHAmount = web3.toWei(0.2, "ether");
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
-    await fund.withdrawFee(web3.toWei(0.2, "ether"));
+    const MOTBefore =(await mockMOT.balanceOf(accounts[0]));
+  
+    await fund.withdrawFee(withdrawETHAmount);
 
-    assert(calc.inRange(fee, web3.toWei(expectedFee - 0.2, "ether"), web3.toWei(0.01, "ether")), "Owner pending fee");
+    assert(await calc.inRange(fee, web3.toWei(expectedFee - 0.2, "ether"), web3.toWei(0.01, "ether")), "Owner pending fee");
 
     const ownerBalanceAfter = await calc.ethBalance(accounts[0]);
+    const MOTAfter = await mockMOT.balanceOf(accounts[0]);
 
-    assert(
-      calc.inRange((ownerBalanceInital + 2 * fundData.managmentFee), ownerBalanceAfter, 0.01),
-       "Owner received ether"
-    );
+    assert(ownerBalanceAfter < ownerBalanceInital, "Owner dont receive ether as fee"); // Pay gas, just reduced
+    const expectedAmountMOT = motRatio[0].mul(withdrawETHAmount).div(10**18).toString();
+    assert.equal(expectedAmountMOT, MOTAfter.sub(MOTBefore).toString(),'Owner recieve MOT as fee');
   });
 
   it("Buy tokens fails if ether required is not enough", async () => {
@@ -443,7 +448,7 @@ contract("Fund", accounts => {
     // Investor has recover all his eth  tokens
     const investorAAfter = await calc.ethBalance(investorA);
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(0), "Investor redeemed all the funds");
-    assert.equal(calc.roundTo(investorABefore + 1.8, 2), calc.roundTo(investorAAfter, 2), "Investor A received ether");
+    assert(await calc.inRange(investorABefore + 1.8,  investorAAfter, 0.01), "Investor A received ether");
 
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");

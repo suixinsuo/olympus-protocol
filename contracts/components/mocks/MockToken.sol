@@ -14,6 +14,7 @@ contract MockToken is  ERC20Extended, StandardToken {
         require(_decimals > 0 && _decimals <= 18);
         name = _name;
         symbol = _symbol;
+        decimals = _decimals;
         balances[msg.sender] = _supply;
         totalSupply_ = _supply;
     }
