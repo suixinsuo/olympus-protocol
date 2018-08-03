@@ -215,7 +215,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ERC20Extended MOT = ERC20Extended(FeeChargerInterface(address(exchange)).MOT());
         uint _rate;
         (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
-        exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0, 0x0);
+        exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0);
         return true;
     }
 
