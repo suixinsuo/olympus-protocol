@@ -126,14 +126,13 @@ contract OlympusIndex is IndexInterface, Derivative {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
 
         // 100% all the tokens
-        if(!getETHFromTokens(DENOMINATOR)){
-            reimburse();
-            return false;
+        bool _completed = getETHFromTokens(DENOMINATOR);
+        if(_completed){
+            status = DerivativeStatus.Closed;
         }
-        status = DerivativeStatus.Closed;
         // emit ChangeStatus(status);
         reimburse();
-        return true;
+        return _completed;
     }
 
     // ----------------------------- DERIVATIVE -----------------------------
@@ -152,8 +151,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             _sharePrice = getPrice().sub((msg.value.mul(10 ** decimals)).div(totalSupply_));
         }
 
-        ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
-        uint fee = feeManager.calculateFee(msg.sender, msg.value);
+        uint fee =  ChargeableInterface(getComponentByName(FEE)).calculateFee(msg.sender, msg.value);
         uint _investorShare = (msg.value.sub(fee)).mul(10 ** decimals).div(_sharePrice);
 
         accumulatedFee = accumulatedFee.add(fee);
@@ -425,11 +423,11 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint ETHBalanceBefore = getETHBalance();
 
         uint currentStep = stepProvider.initializeOrContinue(REBALANCE);
-
+        uint stepStatus = stepProvider.getStatus(REBALANCE);
         // solhint-disable-next-line
         (_tokensToSell, _amounts, _tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         // Sell Tokens
-        if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.SellTokens)) {
+        if ( stepStatus == uint(RebalancePhases.SellTokens)) {
             for (i = currentStep; i < _tokensToSell.length && stepProvider.goNextStep(REBALANCE) ; i++) {
 
                 ERC20NoReturn(_tokensToSell[i]).approve(address(exchangeProvider), 0);
@@ -447,7 +445,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
 
         // Buy Tokens
-        if (stepProvider.getStatus(REBALANCE) == uint(RebalancePhases.BuyTokens)) {
+        if (stepStatus == uint(RebalancePhases.BuyTokens)) {
             _amounts = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
             for (i = currentStep; i < _tokensToBuy.length && stepProvider.goNextStep(REBALANCE); i++) {
                 require(
