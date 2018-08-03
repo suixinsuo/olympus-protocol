@@ -17,6 +17,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     string public version = "v1.0";
     ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
     uint public registerTradeFailureInterval = 1 days;
+
+    uint public failureFeeToDeduct = 0;
     // exchangeId > sourceAddress > destAddress
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceExpected;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceSlippage;
@@ -170,8 +172,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
         address _depositAddress, bytes32 _exchangeId
         ) external payable returns(bool success) {
+        failureFeeToDeduct = 0;
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
-        require(payFee(buyTokenFee(msg.value)));
         uint i;
         OlympusExchangeAdapterInterface adapter;
         bool completeSuccess = true;
@@ -182,16 +184,20 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
                 exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
             if(address(adapter) == 0x0) {
                 completeSuccess = false;
+                failureFeeToDeduct += _amounts[i];
                 exitTrade(address(ETH), address(_tokens[i]), _amounts[i], address(adapter), true);
                 continue;
             }
             if (!(address(adapter).call.value(
                 _amounts[i])(bytes4(keccak256("buyToken(address,uint256,uint256,address)")),_tokens[i],_amounts[i],_minimumRates[i],_depositAddress))) {
                 completeSuccess = false;
+                failureFeeToDeduct += _amounts[i];
                 exitTrade(address(ETH), address(_tokens[i]), _amounts[i], address(adapter), true);
                 continue;
             }
+            registerSuccesfullTrade(address(ETH), address(_tokens[i]));
         }
+        require(payFee(buyTokenFee(msg.value-failureFeeToDeduct)));
         // return (completeSuccess, getFailedTradesArray());
         return completeSuccess;
     }
