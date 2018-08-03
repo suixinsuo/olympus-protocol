@@ -13,13 +13,12 @@ contract OlympusExchangeInterface is ExchangeInterface, PriceProviderInterface, 
      * @param uint[] _minimumRates The minimum amount of tokens to receive for 1 ETH.
      * @param address _depositAddress The address to send the bought tokens to.
      * @param bytes32 _exchangeId The exchangeId to choose. If it's an empty string, then the exchange will be chosen automatically.
-     * @param address _partnerId If the exchange supports a partnerId, you can supply your partnerId here
      * @return boolean boolean whether or not the trade succeeded.
      */
     function buyTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId
         ) external payable returns(bool success);
 
     /*
@@ -29,12 +28,11 @@ contract OlympusExchangeInterface is ExchangeInterface, PriceProviderInterface, 
      * @param uint[] _minimumRates The minimum amount of ETH to receive for 1 specified ERC20Extended token.
      * @param address _depositAddress The address to send the bought tokens to.
      * @param bytes32 _exchangeId The exchangeId to choose. If it's an empty string, then the exchange will be chosen automatically.
-     * @param address _partnerId If the exchange supports a partnerId, you can supply your partnerId here
      * @return boolean boolean whether or not the trade succeeded.
      */
     function sellTokens
         (
         ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates,
-        address _depositAddress, bytes32 _exchangeId, address _partnerId
+        address _depositAddress, bytes32 _exchangeId
         ) external returns(bool success);
 }

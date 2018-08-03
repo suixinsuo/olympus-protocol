@@ -61,7 +61,7 @@ contract("MockRebalanceIndex", accounts => {
         const erc20Token = await ERC20Extended.at(tokens[0]);
         const amount = web3.toWei(srcAmountETH);
         const rate = expectedRate;
-        await _mockRebalanceIndex.buyToken(tokens[0], amount, rate, "", 0x0, {
+        await _mockRebalanceIndex.buyToken(tokens[0], amount, rate, 0x0, {
           value: web3.toWei(srcAmountETH)
         });
         const afterBalance = await erc20Token.balanceOf(_mockRebalanceIndex.address);

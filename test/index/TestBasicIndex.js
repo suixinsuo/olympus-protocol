@@ -40,7 +40,9 @@ const expectedTokenAmount = (balance, rates, tokenIndex) => {
   // Balance ETH * (weight)%  * tokenRate / ETH  ==> Expected tokenAmount
   return (balance * (indexData.weights[tokenIndex] / 100) * rates[0][tokenIndex].toNumber()) / 10 ** 18;
 };
+
 contract("Basic Index", accounts => {
+ 
   let index;
   let market;
   let mockKyber;
@@ -248,7 +250,7 @@ contract("Basic Index", accounts => {
     const investorAAfter = await calc.ethBalance(investorA);
     assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(0), "Redeemed all");
     assert(await calc.inRange(investorAAfter - investorABefore, 1.8, 0.001), "Investor A received ether");
-  
+   
     // Price is constant
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
   });
@@ -270,7 +272,7 @@ contract("Basic Index", accounts => {
     assert.equal((await web3.eth.getBalance(index.address)).toNumber(), 0, "ETH used to buy"); // All ETH has been sald
     const initialAssetsValue = +(await index.getAssetsValue()).toNumber();
 
-    exchange.buyToken(tokens[0], extraAmount, 0, index.address, 0x0, "", {
+    exchange.buyToken(tokens[0], extraAmount, 0, index.address, 0x0, {
       value: extraAmount
     });
     const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();

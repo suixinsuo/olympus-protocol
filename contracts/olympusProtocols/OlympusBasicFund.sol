@@ -87,7 +87,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
         require(
             OlympusExchangeInterface(getComponentByName(EXCHANGE))
-            .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId, 0x0)
+            .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)
         );
         updateTokens(_tokens);
         return true;
@@ -104,7 +104,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
 
-        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId, 0x0));
+        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId));
         updateTokens(_tokens);
         return true;
     }
@@ -249,7 +249,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
         }
 
-        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0, 0x0));
+        require(exchange.sellTokens(_tokensToSell, _amounts, _sellRates, address(this), 0x0));
         updateTokens(_tokensToSell);
     }
 
