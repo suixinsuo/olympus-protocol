@@ -20,7 +20,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     bytes4 public constant BUY_FUNCTION_SELECTOR = bytes4(keccak256("buyToken(address,uint256,uint256,address)"));
     bytes4 public constant SELL_FUNCTION_SELECTOR = bytes4(keccak256("sellToken(address,uint256,uint256,address)"));
     uint public failureFeeToDeduct = 0;
-    uint sellMultipleTokenFee = 0; // All tokens to MOT price, to pay fee at the end
+    uint sellMultipleTokenFee = 0; // Used in sellTokens, put as a storage variable because the stack got too deep
     bool functionCompleteSuccess = true;
 
     // exchangeId > sourceAddress > destAddress
