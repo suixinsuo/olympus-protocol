@@ -75,7 +75,8 @@ contract("ExchangeProvider", accounts => {
     });
 
     const afterBalance = await erc20Token.balanceOf(deposit);
-    assert.equal(new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(), afterBalance.toNumber());
+    assert.equal(new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(), afterBalance.toNumber(),
+      "Did receive the right amount of tokens");
   });
 
   it("OlympusExchange should return the ETH if the single buy trade cannot be executed", async () => {
@@ -91,7 +92,8 @@ contract("ExchangeProvider", accounts => {
 
     const endBalance = web3.eth.getBalance(accounts[0]);
     // Still uses some ETH for the gas, as long as the difference is not 0.001 ETH we know it got returned succesfully
-    assert.ok(await calc.inRange(endBalance.toNumber(), initialBalance.toNumber(), 10 ** 15));
+    assert.ok(await calc.inRange(endBalance.toNumber(), initialBalance.toNumber(), 10 ** 15),
+      "Did return the Ether back after trade failure");
   });
 
   it("OlympusExchange should be able to buy multiple tokens.", async () => {
@@ -117,7 +119,8 @@ contract("ExchangeProvider", accounts => {
       const afterBalance = await erc20Token.balanceOf(deposit);
       assert.equal(
         new BigNumber(beforeBalance[i]).plus(expectedRate.mul(srcAmountETH)).toNumber(),
-        afterBalance.toNumber()
+        afterBalance.toNumber(),
+        `Did receive correct amount of token ${tokens[i]}`
       );
     }
   });
@@ -148,7 +151,7 @@ contract("ExchangeProvider", accounts => {
 
     // Total amount used is 2 ETH, but we should have still spent 1ETH, for the token that we didn't break
     assert.ok(
-      await calc.inRange(afterETHBalance.toNumber(), (beforeETHBalance.toNumber() - srcAmountETH * 10 ** 18), 10 ** 15));
+      await calc.inRange(afterETHBalance.toNumber(), (beforeETHBalance.toNumber() - srcAmountETH * 10 ** 18), 10 ** 15), `Did use only one ETH`);
     // We start at 1, because the 0 index is our artificially broken token
     for (let i = 1; i < tokens.length; i++) {
       const erc20Token = await ERC20Extended.at(tokens[i]);
@@ -156,7 +159,8 @@ contract("ExchangeProvider", accounts => {
       // Check if the token got succesfully bought
       assert.equal(
         new BigNumber(beforeBalance[i]).plus(expectedRate.mul(srcAmountETH)).toNumber(),
-        afterBalance.toNumber()
+        afterBalance.toNumber(),
+        `Did receive the tokens succesfully`
       );
     }
   });
@@ -175,7 +179,8 @@ contract("ExchangeProvider", accounts => {
         new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber(),
         expectedAmount,
         1
-      )
+      ),
+      `Did receive ETH for the sale of a token`
     );
   });
 
@@ -189,9 +194,11 @@ contract("ExchangeProvider", accounts => {
 
     await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, 0x0);
     // Only the gas should be used, we shouldn't have received any ETH
-    assert.ok(await calc.inRange(await web3.eth.getBalance(deposit).toNumber(), beforeBalance.toNumber(), 10 ** 15));
+    assert.ok(await calc.inRange(await web3.eth.getBalance(deposit).toNumber(), beforeBalance.toNumber(), 10 ** 15),
+      `Did only use gas, haven't received ETH`);
     // Amount of tokens we have shouldn't have changed
-    assert.equal(amount.toNumber(), (await erc20Token.balanceOf(deposit)).toNumber());
+    assert.equal(amount.toNumber(), (await erc20Token.balanceOf(deposit)).toNumber(),
+      `Did not take any tokens`);
     await mockKyberNetwork.toggleSimulatePriceZero(false);
 
   });
@@ -215,7 +222,7 @@ contract("ExchangeProvider", accounts => {
       const erc20Token = await ERC20Extended.at(tokens[i]);
       const actualBalance = await erc20Token.balanceOf(deposit);
       // Should still have all the tokens
-      assert.equal(actualBalance.toNumber(), amounts[i].toNumber());
+      assert.equal(actualBalance.toNumber(), amounts[i].toNumber(), `Should still have all the tokens`);
     }
     await mockKyberNetwork.toggleSimulatePriceZero(false);
   });
@@ -243,32 +250,34 @@ contract("ExchangeProvider", accounts => {
         new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber(),
         expectedAmounts.reduce((a, b) => a + b, 0),
         1
-      )
+      ),
+      `Did receive expected ETH for the sale of a token`
     );
-    assert.ok(new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber() > 0);
+    assert.ok(new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber() > 0,
+      `Did have more ETH than at the start due to the sale`);
   });
 
   it("Should be able to check availability for a token", async () => {
     const result = await mockFund.supportsTradingPair.call(ethToken, tokens[0], "");
-    assert.ok(result);
+    assert.ok(result, `Token is available`);
   });
 
   it("Should be able to get the price also from cache", async () => {
     let result = await exchangeProvider.getPriceOrCacheFallback.call(ethToken, tokens[0], 10 ** 18, 0x0, 0);
     let resultTx = await exchangeProvider.getPriceOrCacheFallback(ethToken, tokens[0], 10 ** 18, 0x0, 0);
-    assert.ok(resultTx);
-    assert.equal(result[0].toNumber(), expectedRate.toNumber());
-    assert.equal(result[1].toNumber(), expectedRate.toNumber());
-    assert.equal(result[2], false); // False indicates this is a live price, not from cache
+    assert.ok(resultTx, `Tx does not revert`);
+    assert.equal(result[0].toNumber(), expectedRate.toNumber(), `ExpectedRate is correct`);
+    assert.equal(result[1].toNumber(), expectedRate.toNumber(), `SlippageRate is correct`);
+    assert.equal(result[2], false, `It's a live price`); // False indicates this is a live price, not from cache
 
     await mockKyberNetwork.toggleSimulatePriceZero(true);
     result = await exchangeProvider.getPriceOrCacheFallback.call(ethToken, tokens[0], 10 ** 18, 0x0, 1000);
     resultTx = await exchangeProvider.getPriceOrCacheFallback(ethToken, tokens[0], 10 ** 18, 0x0, 1000);
 
-    assert.ok(resultTx);
-    assert.equal(result[0].toNumber(), expectedRate.toNumber());
-    assert.equal(result[1].toNumber(), expectedRate.toNumber());
-    assert.equal(result[2], true); // True indicates that this price comes from the cache
+    assert.ok(resultTx, `Tx does not revert`);
+    assert.equal(result[0].toNumber(), expectedRate.toNumber(), `ExpectedRate is correct`);
+    assert.equal(result[1].toNumber(), expectedRate.toNumber(), `SlippageRate is correct`);
+    assert.equal(result[2], true, `It's a cached price`); // True indicates that this price comes from the cache
   });
 
   it("Should not be able to get the price from cache if it's not recent enough", async () => {
@@ -277,9 +286,9 @@ contract("ExchangeProvider", accounts => {
     result = await exchangeProvider.getPriceOrCacheFallback.call(ethToken, tokens[0], 10 ** 18, 0x0, 0);
     resultTx = await exchangeProvider.getPriceOrCacheFallback(ethToken, tokens[0], 10 ** 18, 0x0, 0);
 
-    assert.ok(resultTx);
-    assert.equal(result[0].toNumber(), 0);
-    assert.equal(result[1].toNumber(), 0);
-    assert.equal(result[2], false); // Didn't come from cache, because there is none for the specified maxAge
+    assert.ok(resultTx, `Tx does not revert`);
+    assert.equal(result[0].toNumber(), 0, `ExpectedRate is zero`);
+    assert.equal(result[1].toNumber(), 0, `SlippageRate is zero`);
+    assert.equal(result[2], false, `ExpectedRate should not come from cache`); // Didn't come from cache, because there is none for the specified maxAge
   });
 });
