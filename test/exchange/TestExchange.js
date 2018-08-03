@@ -81,12 +81,13 @@ contract("ExchangeProvider", accounts => {
     const amount = web3.toWei(srcAmountETH);
     const rate = expectedRate;
 
-    await mockFund.buyToken(ethToken, amount, rate, deposit, 0x0, {
+    await exchangeProvider.buyToken(ethToken, amount, rate, deposit, 0x0, {
       value: web3.toWei(srcAmountETH)
     });
+
     const endBalance = web3.eth.getBalance(accounts[0]);
-    // Still uses some ETH for the gas, as long as it's not more than 1 ETH, we know it got returned succesfully
-    assert.ok(endBalance.toNumber() - amount < initialBalance.toNumber());
+    // Still uses some ETH for the gas, as long as the difference is not 0.001 ETH we know it got returned succesfully
+    assert.ok(await calc.inRange(endBalance.toNumber(), initialBalance.toNumber(), 10 ** 15));
   });
 
   it("OlympusExchange should be able to buy multiple tokens.", async () => {

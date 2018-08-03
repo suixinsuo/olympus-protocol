@@ -230,8 +230,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
             // Let the adapter approve the token for the exchange provider address, so that in the event of a failure, we can return the tokens
             // This is needed because we use the low level call for function selector, which doesn't propagate the error
-            if (_token.allowance(address(adapter), address(this)) == 0) {
-                adapter.approveToken(_token);
+            if (_tokens[i].allowance(address(adapter), address(this)) == 0) {
+                adapter.approveToken(_tokens[i]);
             }
             if (!(address(adapter).call(SELL_FUNCTION_SELECTOR,_tokens[i],_amounts[i],_minimumRates[i], _depositAddress))) {
                 functionCompleteSuccess = false;
