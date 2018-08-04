@@ -64,7 +64,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         //Set PausedCycle
 
-        pausedCycle = 1 years;
+        pausedCycle = 365 days;
 
         super._initialize(_componentList);
         bytes32[9] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP];
@@ -147,13 +147,11 @@ contract OlympusFund is FundInterface, Derivative {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
          // Current value is already added in the balance, reduce it
-        uint _sharePrice;
+        uint _sharePrice = INITIAL_VALUE;
 
         if (totalSupply_ > 0) {
             _sharePrice = getPrice().sub((msg.value.mul(10**decimals)).div(totalSupply_));
-         } else {
-            _sharePrice = INITIAL_VALUE;
-        }
+        }  
 
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
