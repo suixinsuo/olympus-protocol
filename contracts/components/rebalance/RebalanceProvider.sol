@@ -60,7 +60,8 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         for(i = 0; i < indexTokenAddresses.length; i++) {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
-            (ETHTokenPrice,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
+            (ETHTokenPrice,,) = priceProvider.getPriceOrCacheFallback(
+                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
 
             if (ETHTokenPrice == 0) {
                 tokensWithPriceIssues[msg.sender].push(indexTokenAddresses[i]);
@@ -166,7 +167,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         (indexTokenAddresses, ) = IndexInterface(msg.sender).getTokens();
 
         for(uint i = 0; i < indexTokenAddresses.length; i++) {
-            (price,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
+            (price,,) = priceProvider.getPriceOrCacheFallback(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
             totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)).mul(
             10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(price));
         }
