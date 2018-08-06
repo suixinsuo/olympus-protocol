@@ -366,7 +366,7 @@ contract("Olympus Index", accounts => {
     // Set fee
     const denominator = (await (await PercentageFee.deployed()).DENOMINATOR()).toNumber();
     await index.setManagementFee(indexData.managmentFee * denominator);
-    
+
     // Invest two times (two different logics for first time and others)
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
@@ -380,7 +380,7 @@ contract("Olympus Index", accounts => {
     // Withdraw
     const withdrawETHAmount = web3.toWei(0.2, "ether");
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
-    const MOTBefore =(await mockMOT.balanceOf(accounts[0]));
+    const MOTBefore = (await mockMOT.balanceOf(accounts[0]));
 
     await index.withdrawFee(withdrawETHAmount);
 
@@ -391,8 +391,8 @@ contract("Olympus Index", accounts => {
     const MOTAfter = await mockMOT.balanceOf(accounts[0]);
 
     assert(ownerBalanceAfter < ownerBalanceInital, "Owner dont receive ether as fee"); // Pay gas, just reduced
-    const expectedAmountMOT = motRatio[0].mul(withdrawETHAmount).div(10**18).toString();
-    assert.equal(expectedAmountMOT, MOTAfter.sub(MOTBefore).toString(),'Owner recieve MOT as fee');
+    const expectedAmountMOT = motRatio[0].mul(withdrawETHAmount).div(10 ** 18).toString();
+    assert.equal(expectedAmountMOT, MOTAfter.sub(MOTBefore).toString(), 'Owner recieve MOT as fee');
   });
 
   it("Shall be able to buy tokens with eth", async () => {
@@ -503,7 +503,7 @@ contract("Olympus Index", accounts => {
     // Price is updated because we force the total assets value increase while not the supply
     const price = (await index.getPrice()).toNumber();
     const supply = (await index.totalSupply()).toNumber();
-    const priceInRange =   await calc.inRange(price, (initialAssetsValue + extraAmount) * 10**indexData.decimals/ supply, web3.toWei(0.00001, "ether"));
+    const priceInRange = await calc.inRange(price, (initialAssetsValue + extraAmount) * 10 ** indexData.decimals / supply, web3.toWei(0.00001, "ether"));
     assert.ok(priceInRange, "Price updated");
   });
 
@@ -516,7 +516,7 @@ contract("Olympus Index", accounts => {
     let token1_erc20 = await ERC20.at(await index.tokens(1));
 
     const price = (await index.getPrice()).toNumber();
-    const priceInRange = await  calc.inRange(
+    const priceInRange = await calc.inRange(
       (await index.balanceOf(investorC)).toNumber(),
       web3.toWei(toTokenWei(1.8) / price, "ether"),
       web3.toWei(0.001, "ether")

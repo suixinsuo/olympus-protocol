@@ -48,7 +48,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         require(_tokens.length == _weights.length);
         uint _totalWeight;
- 
+
         for (uint i = 0; i < _weights.length; i++) {
             _totalWeight = _totalWeight.add(_weights[i]);
         }
@@ -377,7 +377,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
         // Check the length of the array
         uint arrayLength =   getNextArrayLength(stepProvider, BUYTOKENS, currentStep);
-   
+
         uint[] memory _amounts = new uint[](arrayLength);
         // Initialize to 0, making sure any rate is fine
         uint[] memory _rates = new uint[](arrayLength);
@@ -436,12 +436,12 @@ contract OlympusIndex is IndexInterface, Derivative {
 
                 require(exchangeProvider.sellToken(ERC20Extended(_tokensToSell[i]), _amounts[i], 0, address(this), 0x0));
             }
-            
+
             rebalanceReceivedETHAmountFromSale = rebalanceReceivedETHAmountFromSale.add(getETHBalance()).sub(ETHBalanceBefore) ;
             if (i ==  _tokensToSell.length) {
                 stepProvider.updateStatus(REBALANCE);
                 currentStep = 0;
-            } 
+            }
         }
 
         // Buy Tokens
@@ -449,7 +449,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             _amounts = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
             for (i = currentStep; i < _tokensToBuy.length && stepProvider.goNextStep(REBALANCE); i++) {
                 require(
-                    // solhint-disable-next-line 
+                    // solhint-disable-next-line
                     exchangeProvider.buyToken.value(_amounts[i])(ERC20Extended(_tokensToBuy[i]), _amounts[i], 0, address(this), 0x0)
                 );
             }

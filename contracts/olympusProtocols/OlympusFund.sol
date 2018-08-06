@@ -151,7 +151,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         if (totalSupply_ > 0) {
             _sharePrice = getPrice().sub((msg.value.mul(10**decimals)).div(totalSupply_));
-        }  
+        }
 
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint fee = feeManager.calculateFee(msg.sender, msg.value);
