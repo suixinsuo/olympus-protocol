@@ -37,4 +37,5 @@ contract OlympusExchangeInterface is ExchangeInterface, PriceProviderInterface, 
         ) external returns(bool success);
 
     function getFailedTrade(address _token) public view returns (uint failedTimes);
+    function getFailedTradesArray(ERC20Extended[] _tokens) public view returns (uint[] memory failedTimes);
 }
