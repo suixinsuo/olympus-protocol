@@ -5,11 +5,6 @@ import "../../interfaces/MappeableDerivative.sol";
 
 contract MockMappeableDerivative is MockDerivative , MappeableDerivative {
 
-    uint256 public totalSupply_ = 0;
-    string public name = "Dummy";
-    uint256 public decimals = 18;
-    string public symbol = "DMY";
-
 
     // ------------  MAPPEABLE (Copy this section in your derivative) ------------
 
@@ -48,10 +43,8 @@ contract MockMappeableDerivative is MockDerivative , MappeableDerivative {
 
       balances[msg.sender] = msg.value;
       totalSupply_ += msg.value;
-
       return true;
     }
-
 
     function requestWithdraw(uint _amount) external {
         require(balances[msg.sender] >= _amount);
