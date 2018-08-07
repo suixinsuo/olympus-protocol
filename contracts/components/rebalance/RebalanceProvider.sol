@@ -161,7 +161,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         return true;
     }
 
-    function getTotalIndexValue() public view returns (uint totalValue){
+    function getTotalIndexValue() public returns (uint totalValue){
         uint price;
         address[] memory indexTokenAddresses;
         (indexTokenAddresses, ) = IndexInterface(msg.sender).getTokens();
