@@ -51,7 +51,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
                 tokensWithPriceIssues[msg.sender]
             );
         }
-        require(payFee(0));
+        require(payFee(0), "Fee cannot be paid");
 
         uint i;
         address[] memory indexTokenAddresses;
