@@ -15,10 +15,16 @@ contract TokenBroken is TokenBrokenInterface {
     string public category="TokenBroken";
     string public version="1.0";
 
-    // sender -> token -> balance
-    // mapping(address => mapping(address => uint[])) public _balances;
+    // sender -> token -> balances length. When is 0 is redeemed and can be removed
+    mapping(address => mapping(address  => uint) ) public balancePendingLength;
+    // sender -> token -> user -> balances
+    mapping(address => mapping(address  =>  mapping (address => uint))) public tokenBalances;
+  
+ 
+    function calculateBalanceByInvestor(ERC20Extended _token) external returns(uint[]) {
+        require(balancePendingLength[msg.sender][address(_token)] == 0, "Token was not broken");
+        require(_token.balanceOf(address(msg.sender)) > 0, "Derivative has this token" );
 
-    function calculateBalanceByInvestor(ERC20Extended _token) external view returns(uint[]) {
         address[] memory _investors = MappeableDerivative(msg.sender).getActiveInvestors();
         uint[] memory _balances = new uint[](_investors.length);
         uint _tokenDecimals = _token.decimals();
@@ -33,9 +39,32 @@ contract TokenBroken is TokenBrokenInterface {
             .balanceOf(_investors[i])
             .mul(_tokenAmountPrecision)
             .div(_totalSupplyPrecision);
+            tokenBalances[msg.sender][address(_token)][_investors[i]] =   _balances[i]; 
         }
+        balancePendingLength[msg.sender][address(_token)] = _balances.length;
 
         return _balances;
+    }
+
+    // For single balance, you can query the public mapping. That support avoid several
+    // calls for several balances
+    function tokenBalancesOf(address [] _tokens, address _investor) external returns(uint[]){
+        uint[] memory _tokenBrokenBalances = new uint[] (_tokens.length);
+        uint i;
+        for( i = 0; i < _tokenBrokenBalances.length; i++) {
+            _tokenBrokenBalances[i] = tokenBalances[msg.sender][_tokens[i]][_investor];
+        }
+        return _tokenBrokenBalances;
+    }
+
+    // Once this function is called, the amount is reduced from the provider
+    function withdraw(address _token, address _investor) external returns(uint) {
+        require(tokenBalances[msg.sender][_token][_investor] > 0); 
+
+        // reset the data
+        balancePendingLength[msg.sender][_token] --;  
+        tokenBalances[msg.sender][_token][_investor] = 0;
+        return  balancePendingLength[msg.sender][_token];
     }
 
 

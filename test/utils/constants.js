@@ -19,5 +19,6 @@ module.exports = {
     STEP: "StepProvider",
     LOCKER: "LockerProvider",
     GETETH: "GetEth",
+    TOKENBROKEN: "TokenBroken",
   }
 };

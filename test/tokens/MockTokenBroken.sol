@@ -12,7 +12,7 @@ contract MockTokenBroken is MockMappeableDerivative {
         tokenBroken = _tokenBroken;
     }
 
-    function setBrokenToken(ERC20Extended _token) external  view returns(uint[]) {
+    function setBrokenToken(ERC20Extended _token) external returns(uint[]) {
       return tokenBroken.calculateBalanceByInvestor(_token);
     }
 }

@@ -108,7 +108,8 @@ async function deployOlympusFund(deployer, network) {
     Reimbursable,
     WhitelistProvider,
     ComponentList,
-    Steps
+    Steps,
+    TokenBroken,
   ]);
   await deployExchange(deployer, network);
 }
@@ -138,7 +139,8 @@ async function deployOlympusIndex(deployer, network) {
     Reimbursable,
     WhitelistProvider,
     ComponentList,
-    Steps
+    Steps,
+    TokenBroken,
   ]);
   await deployExchange(deployer, network);
   await deployer.deploy(RebalanceProvider, ExchangeProvider.address);

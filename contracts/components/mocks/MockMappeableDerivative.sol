@@ -38,7 +38,7 @@ contract MockMappeableDerivative is MockDerivative , MappeableDerivative {
     // ------------  DERIVATIVE  (How to use Mappeable) ------------
     function invest() public payable returns(bool success) {
 
-      // Map investor
+      // Map investor (do it at starting)
       addInvestor(msg.sender);
 
       balances[msg.sender] = msg.value;
@@ -55,7 +55,7 @@ contract MockMappeableDerivative is MockDerivative , MappeableDerivative {
         balances[msg.sender] -= _amount;
         totalSupply_ -= _amount;
 
-        // Unmap investor
+        // Unmap investor (do it at the end)
         removeInvestor(msg.sender);
 
     }
