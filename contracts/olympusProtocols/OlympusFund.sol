@@ -103,6 +103,8 @@ contract OlympusFund is FundInterface, Derivative {
     // ----------------------------- FUND INTERFACE -----------------------------
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
+        
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
@@ -113,9 +115,11 @@ contract OlympusFund is FundInterface, Derivative {
         }
         require(getETHBalance() >= totalEthRequired);
 
-        require(OlympusExchangeInterface(getComponentByName(EXCHANGE))
-          .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)
-        );
+        if(!exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)){
+            uint[] memory _failedTimes = new uint[](_tokens.length);
+            _failedTimes = exchange.getFailedTradesArray(_tokens);
+            return false;
+        }
         updateTokens(_tokens);
         return true;
 
@@ -132,7 +136,11 @@ contract OlympusFund is FundInterface, Derivative {
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
 
-        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId));
+        if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
+            uint[] memory _failedTimes = new uint[](_tokens.length);
+            _failedTimes = exchange.getFailedTradesArray(_tokens);
+            return false;
+        }
         updateTokens(_tokens);
         return true;
     }
