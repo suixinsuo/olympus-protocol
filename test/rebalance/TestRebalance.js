@@ -8,6 +8,7 @@ const KyberNetworkAdapter = artifacts.require("KyberNetworkAdapter");
 const MockToken = artifacts.require("MockToken");
 
 const expectedRate = web3.toBigNumber("1000" + "000000000000000000");
+const calc = require("../utils/calc");
 
 const Promise = require("bluebird");
 
@@ -15,6 +16,7 @@ contract("MockRebalanceIndex", accounts => {
   let tokens;
   let exchangeProvider;
   let mockRebalanceIndex;
+  let mockKyberNetwork;
   const deposit = accounts[0];
   before(async () => {
     return await Promise.all([
@@ -52,6 +54,7 @@ contract("MockRebalanceIndex", accounts => {
 
         exchangeProvider = _exchangeProvider;
         rebalanceProvider = _rebalanceProvider;
+        mockKyberNetwork = _mockKyberNetwork;
         mockRebalanceIndex = _mockRebalanceIndex;
         const srcAmountETH = 1;
 
@@ -70,6 +73,29 @@ contract("MockRebalanceIndex", accounts => {
         await mockRebalanceIndex.initialize();
       }
     );
+  });
+
+  it("MockRebalanceIndex should not use cached price if timeout is exceeded.", async () => {
+    await rebalanceProvider.updateCachedPriceTimeout(0);
+    await mockKyberNetwork.toggleSimulatePriceZero(true);
+    const erc20Token1 = await ERC20Extended.at(tokens[0]);
+    const erc20Token2 = await ERC20Extended.at(tokens[1]);
+    const beforeBalance1 = (await erc20Token1.balanceOf(mockRebalanceIndex.address)).toNumber();
+    const beforeBalance2 = (await erc20Token2.balanceOf(mockRebalanceIndex.address)).toNumber();
+    try {
+      await mockRebalanceIndex.rebalance();
+      assert.ok(false);
+    } catch (e) {
+      assert.ok(true);
+    }
+    const afterBalance1 = (await erc20Token1.balanceOf(mockRebalanceIndex.address)).toNumber();
+    const afterBalance2 = (await erc20Token2.balanceOf(mockRebalanceIndex.address)).toNumber();
+    // Should have sold exactly half of our tokens
+    assert.equal(afterBalance1, beforeBalance1);
+    // Should have received some tokens, rates can vary
+    assert.equal(afterBalance2, beforeBalance2);
+    await mockKyberNetwork.toggleSimulatePriceZero(false);
+    await rebalanceProvider.updateCachedPriceTimeout(3600 * 6);
   });
 
   it("MockRebalanceIndex should be able to rebalance tokens.", async () => {

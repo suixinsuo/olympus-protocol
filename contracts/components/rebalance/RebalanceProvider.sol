@@ -1,6 +1,5 @@
 pragma solidity 0.4.24;
 
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../interfaces/RebalanceInterface.sol";
 import "../../interfaces/IndexInterface.sol";
@@ -20,6 +19,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
     uint private constant RECALCULATION_PERCENTAGE_DENOMINATOR = 10**18;
+    uint private priceTimeout = 6 hours;
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     enum RebalanceStatus { Initial, Calculated, Recalculated }
@@ -38,6 +38,10 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
     function updatePriceProvider(PriceProviderInterface _priceProvider) public onlyOwner returns(bool success){
         priceProvider = _priceProvider;
         return true;
+    }
+
+    function updateCachedPriceTimeout(uint _newTimeout) public onlyOwner {
+        priceTimeout = _newTimeout;
     }
 
     function rebalanceGetTokensToSellAndBuy(uint _rebalanceDeltaPercentage) external returns
@@ -61,7 +65,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
             (ETHTokenPrice,,) = priceProvider.getPriceOrCacheFallback(
-                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "", 365 days);
+                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "", priceTimeout);
 
             if (ETHTokenPrice == 0) {
                 tokensWithPriceIssues[msg.sender].push(indexTokenAddresses[i]);
@@ -168,7 +172,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
 
         for(uint i = 0; i < indexTokenAddresses.length; i++) {
             (price,,) = priceProvider.getPriceOrCacheFallback(
-                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0, 365 days);
+                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0, priceTimeout);
             totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)).mul(
             10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(price));
         }
