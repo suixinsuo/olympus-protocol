@@ -117,7 +117,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         if(!exchange.buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)){
             uint[] memory _failedTimes = new uint[](_tokens.length);
-            _failedTimes = exchange.getFailedTradesArray(_tokens);
+            _failedTimes = exchange.getFailedTrade(_tokens);
             return false;
         }
         updateTokens(_tokens);
@@ -138,7 +138,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
             uint[] memory _failedTimes = new uint[](_tokens.length);
-            _failedTimes = exchange.getFailedTradesArray(_tokens);
+            _failedTimes = exchange.getFailedTrade(_tokens);
             return false;
         }
         updateTokens(_tokens);
