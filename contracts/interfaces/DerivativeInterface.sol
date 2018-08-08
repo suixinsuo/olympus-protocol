@@ -4,7 +4,6 @@ import "../libs/ERC20Extended.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ComponentContainerInterface.sol";
 
-
 contract DerivativeInterface is ERC20Extended, Ownable, ComponentContainerInterface {
 
     enum DerivativeStatus { New, Active, Paused, Closed }
