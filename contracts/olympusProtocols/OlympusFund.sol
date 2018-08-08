@@ -337,7 +337,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             ERC20Extended(tokensBroken[i]).transfer(_investor,_tokenBalances[i]);
 
-            // Remove token broken completed (such a ugly thing)
+            // Remove token broken completed
             if(requestPending == 0) {
                 if (tokensBroken.length > 1) { // Swap the last one with the index, remove last element
                     tokensBroken[i] = tokensBroken[tokensBroken.length-1];

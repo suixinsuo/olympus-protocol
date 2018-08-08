@@ -22,12 +22,11 @@ contract TokenBroken is TokenBrokenInterface {
 
 
     function calculateBalanceByInvestor(ERC20Extended _token) external returns(uint[]) {
-        require(balancePendingLength[msg.sender][address(_token)] == 0, "Token was not broken");
-        require(_token.balanceOf(address(msg.sender)) > 0, "Derivative has this token" );
 
         address[] memory _investors = MappeableDerivative(msg.sender).getActiveInvestors();
         uint[] memory _balances = new uint[](_investors.length);
-
+        // 0 except in rebroken tokens
+        uint pendingTransactions = balancePendingLength[msg.sender][address(_token)];
         // Precision means already premultiploed by token deciamls, saving gas on the loop
         uint _totalSupply = ERC20Extended(msg.sender).totalSupply();
         uint _tokenAmount = _token.balanceOf(address(msg.sender));
@@ -39,9 +38,13 @@ contract TokenBroken is TokenBrokenInterface {
                 .balanceOf(_investors[i])
                 .mul(_tokenAmount)
                 .div(_totalSupply);
-            tokenBalances[msg.sender][address(_token)][_investors[i]] = _balances[i];
+            // In case the token was broken twice and not withdrawn, we dont increase the size of pending.
+            if(tokenBalances[msg.sender][address(_token)][_investors[i]] == 0) {
+                pendingTransactions++;
+            }
+            tokenBalances[msg.sender][address(_token)][_investors[i]] += _balances[i]; // Token can break
         }
-        balancePendingLength[msg.sender][address(_token)] = _balances.length;
+        balancePendingLength[msg.sender][address(_token)] = pendingTransactions;
 
         return _balances;
     }

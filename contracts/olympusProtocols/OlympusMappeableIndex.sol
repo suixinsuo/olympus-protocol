@@ -246,6 +246,7 @@ contract OlympusMappeableIndex is IndexInterface, BaseDerivative, MappeableDeriv
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         for (uint i = 0; i < _tokensToSell.length; i++) {
             _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
+            // TODO: Require token broken check
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
@@ -270,7 +271,7 @@ contract OlympusMappeableIndex is IndexInterface, BaseDerivative, MappeableDeriv
 
             ERC20Extended(tokensBroken[i]).transfer(_investor,_tokenBalances[i]);
 
-            // Remove token broken completed (such a ugly thing)
+            // Remove token broken completed 
             if(requestPending == 0) {
                 if (tokensBroken.length > 1) { // Swap the last one with the index, remove last element
                     tokensBroken[i] = tokensBroken[tokensBroken.length-1];

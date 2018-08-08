@@ -19,7 +19,7 @@ module.exports = {
       await call();
       assert(false, "Failed: " + message);
     } catch (e) {
-       if (!e.message.includes("revert")) {
+      if (!e.message.includes("revert")) {
         assert(false, e);
         throw e; // Error is not caused by revert but for another reason
       }
@@ -27,12 +27,12 @@ module.exports = {
     }
   },
 
-   assertInvalidOpCode: async (call, message) => {
+  assertInvalidOpCode: async (call, message) => {
     try {
       await call();
       assert(false, "Failed: " + message);
     } catch (e) {
-       if (!e.message.includes("invalid opcode")) {
+      if (!e.message.includes("invalid opcode")) {
         assert(false, e);
         throw e; // Error is not caused by revert but for another reason
       }
