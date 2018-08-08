@@ -57,16 +57,16 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // ----------------------------- CONFIG -----------------------------
     // One time call
     function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) external onlyOwner payable {
-        require(_componentList != 0x0,"Component list not null");
+        require(_componentList != 0x0, "Component list not null");
         require(status == DerivativeStatus.New,"Status is new");
         require(msg.value > 0,"ETH investment on initialize"); // Require some balance for internal opeations as reimbursable
 
-        //Set PausedCycle
-
+        // Set PausedCycle
         pausedCycle = 365 days;
-        excludedComponents.push(TOKENBROKEN);
 
         super._initialize(_componentList);
+        excludedComponents.push(TOKENBROKEN);
+
         bytes32[10] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP, TOKENBROKEN];
 
         for (uint i = 0; i < names.length; i++) {
@@ -76,8 +76,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
-        uint[] memory _maxSteps = new uint[](4);
-        bytes32[] memory _categories = new bytes32[](4);
+        uint[] memory _maxSteps = new uint[](2);
+        bytes32[] memory _categories = new bytes32[](2);
         _maxSteps[0] = 10;
         _maxSteps[1] = 5;
         _categories[0] = WITHDRAW;
@@ -165,13 +165,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         balances[msg.sender] = balances[msg.sender].add(_investorShare);
         totalSupply_ = totalSupply_.add(_investorShare);
 
-        return true;
-    }
-
-    function changeStatus(DerivativeStatus _status) public onlyOwner returns(bool) {
-        require(_status != DerivativeStatus.New && status != DerivativeStatus.New,"Is not new");
-        require(status != DerivativeStatus.Closed && _status != DerivativeStatus.Closed, "Is not close");
-        status = _status;
         return true;
     }
 
