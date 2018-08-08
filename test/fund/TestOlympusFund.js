@@ -468,7 +468,7 @@ contract("Fund", accounts => {
     await fund.setBrokenToken(mockMOT.address);
 
     // TODO check thet tokensBrokens contain both
-    assert.equal((await fund.tokensBroken(0)), mockMOT.address, 'Tokens brokens is reset');
+    assert.equal((await fund.tokensBroken(0)), mockMOT.address, 'Tokens brokens contains the broken token');
 
 
   });

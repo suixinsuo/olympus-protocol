@@ -127,6 +127,7 @@ async function deployOlympusBasicFund(deployer, network) {
   ]);
 }
 
+
 async function deployOlympusIndex(deployer, network) {
   const args = Args.parseArgs();
 

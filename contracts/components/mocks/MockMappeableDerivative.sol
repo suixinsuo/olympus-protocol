@@ -8,8 +8,8 @@ contract MockMappeableDerivative is MockDerivative , MappeableDerivative {
 
     // ------------  MAPPEABLE (Copy this section in your derivative) ------------
 
-    mapping (address => uint) activeInvestorIndex; // Starts from 1 (0 is not existing)
-    address[] activeInvestors; // Start in 0
+    mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
+    address[] public activeInvestors; // Start in 0
 
     function addInvestor(address investor) internal {
         if (activeInvestorIndex[investor] == 0) {
