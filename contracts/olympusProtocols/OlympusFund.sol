@@ -19,14 +19,14 @@ import "../interfaces/MappeableDerivative.sol";
 contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     using SafeMath for uint256;
 
+    // Does not fit in derivative, index out of gas
+    bytes32 public constant TOKENBROKEN = "TokenBroken";
+
+
     uint public constant DENOMINATOR = 10000;
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
-
-
-    event TokenUpdated(address _token, uint amount);
-    event FundStatusChanged(DerivativeStatus status);
-
+ 
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
@@ -70,6 +70,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         //Set PausedCycle
 
         pausedCycle = 365 days;
+        excludedComponents.push(TOKENBROKEN);
 
         super._initialize(_componentList);
         bytes32[10] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP, TOKENBROKEN];
@@ -81,10 +82,15 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_initialFundFee);
         LockerInterface(getComponentByName(LOCKER)).setTimeInterval(WITHDRAW, _withdrawFrequency);
-        StepInterface(getComponentByName(STEP)).setMaxCalls(WITHDRAW,  10);
-        StepInterface(getComponentByName(STEP)).setMaxCalls(GETETH,  5);
+        uint[] memory _maxSteps = new uint[](4);
+        bytes32[] memory _categories = new bytes32[](4);
+        _maxSteps[0] = 10;
+        _maxSteps[1] = 5;
+        _categories[0] = WITHDRAW;
+        _categories[1] = GETETH;
+        StepInterface(getComponentByName(STEP)).setMultipleMaxCalls(_categories, _maxSteps);
+   
         status = DerivativeStatus.Active;
-        emit FundStatusChanged(status);
 
         accumulatedFee = accumulatedFee.add(msg.value);
     }
@@ -168,7 +174,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         require(_status != DerivativeStatus.New && status != DerivativeStatus.New);
         require(status != DerivativeStatus.Closed && _status != DerivativeStatus.Closed);
         status = _status;
-        emit FundStatusChanged(status);
         return true;
     }
 
@@ -181,7 +186,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             return false;
         }
         status = DerivativeStatus.Closed;
-        emit FundStatusChanged(status);
         reimburse();
         return true;
     }
@@ -246,11 +250,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
 
-    // solhint-disable-next-line
-    function getManagementFee() external view returns(uint) {
-        return ChargeableInterface(getComponentByName(FEE)).getFeePercentage();
-    }
-
     // ----------------------------- WITHDRAW -----------------------------
     // solhint-disable-next-line
     function requestWithdraw(uint amount)
@@ -259,13 +258,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
         {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
-    }
-
-
-    // solhint-disable-next-line
-    function totalWithdrawPending() external view returns(uint) {
-        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
-        return withdrawProvider.getTotalWithdrawAmount();
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
@@ -465,7 +457,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
                 activeTokens[_tokenAddress] = true;
                 continue;
             }
-            emit TokenUpdated(_tokenAddress, amounts[_tokenAddress]);
         }
         return true;
     }

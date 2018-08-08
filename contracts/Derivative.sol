@@ -30,7 +30,6 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     bytes32 public constant STEP = "StepProvider";
     bytes32 public constant LOCKER = "LockerProvider";
     bytes32 public constant GETETH = "GetEth";
-    bytes32 public constant TOKENBROKEN = "TokenBroken";
 
     uint public pausedTime;
     uint public pausedCycle;
@@ -76,8 +75,6 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         excludedComponents.push(MARKET);
         excludedComponents.push(STEP);
         excludedComponents.push(LOCKER);
-        excludedComponents.push(TOKENBROKEN);
-
     }
 
     function updateComponent(bytes32 _name) public onlyOwner returns (address) {
