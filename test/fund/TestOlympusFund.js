@@ -43,6 +43,7 @@ const toTokenWei = amount => {
 
 contract("Fund", accounts => {
   let fund;
+  let fund2;
   let market;
   let mockKyber;
   let tokens;
@@ -456,7 +457,22 @@ contract("Fund", accounts => {
  
   });
 
-  it.skip("Shall be able to dispatch a broken token", async () => {});
+  it("Shall be able to dispatch a broken token", async () => {
+
+    await mockKyber.toggleSimulatePriceZero(true);
+
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+
+    await calc.assertReverts(async () => await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0])), "Shall not buy");
+    
+    await mockKyber.toggleSimulatePriceZero(false);
+
+    assert.equal(await fund.tokenBrokens(0), tokens[0], 'Token A is broken');
+
+  });
 
   it("Shall be able to change the status", async () => {
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, "Status Is active");
