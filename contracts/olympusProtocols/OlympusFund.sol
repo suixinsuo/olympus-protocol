@@ -29,6 +29,7 @@ contract OlympusFund is FundInterface, Derivative {
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
+    address[] public tokenBrokens;
 
    uint public accumulatedFee = 0;
 
@@ -115,8 +116,9 @@ contract OlympusFund is FundInterface, Derivative {
         require(getETHBalance() >= totalEthRequired);
 
         if(!OlympusExchangeInterface(getComponentByName(EXCHANGE)).buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)){
-            //uint[] memory _failedTimes = new uint[](_tokens.length);
-            //_failedTimes = OlympusExchangeInterface(getComponentByName(EXCHANGE)).getFailedTradesArray(_tokens);
+           
+            checkBrokenToken(_tokens);
+            
             return false;
         }
         updateTokens(_tokens);
@@ -136,8 +138,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
-            uint[] memory _failedTimes = new uint[](_tokens.length);
-            _failedTimes = exchange.getFailedTradesArray(_tokens);
+            checkBrokenToken(_tokens);
             return false;
         }
         updateTokens(_tokens);
@@ -422,6 +423,18 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
+    function checkBrokenToken(ERC20Extended[] _tokens) view internal returns(bool success){
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        uint[] memory _failedTimes = new uint[](_tokens.length);
+        _failedTimes = exchange.getFailedTradesArray(_tokens);
+        for(uint t = 0;t < _tokens.length; t++){
+            if((_failedTimes[t]) >= 1 ){
+                tokenBrokens.push(_tokens[t]);
+            }
+        }
+        return true;
+    }
+
 
     // solhint-disable-next-line
     function reimburse() private {
@@ -429,7 +442,6 @@ contract OlympusFund is FundInterface, Derivative {
         accumulatedFee = accumulatedFee.sub(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
-
     function approveComponents() private {
         approveComponent(EXCHANGE);
         approveComponent(WITHDRAW);
