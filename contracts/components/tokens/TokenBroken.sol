@@ -21,18 +21,18 @@ contract TokenBroken is TokenBrokenInterface {
     function calculateBalanceByInvestor(ERC20Extended _token) external view returns(uint[]) {
         address[] memory _investors = MappeableDerivative(msg.sender).getActiveInvestors();
         uint[] memory _balances = new uint[](_investors.length);
-        uint _tokenDecimals = _token.decimals();
 
         // Precision means already premultiploed by token deciamls, saving gas on the loop
-        uint _totalSupplyPrecision = ERC20Extended(msg.sender).totalSupply().mul(_tokenDecimals);
-        uint _tokenAmountPrecision = _token.balanceOf(address(msg.sender)).mul(_tokenDecimals);
+        uint _totalSupply = ERC20Extended(msg.sender).totalSupply();
+        uint _tokenAmount = _token.balanceOf(address(msg.sender));
 
         for (uint i = 0; i < _investors.length; i++) {
-          // (derivative/totalSupply) * tokenAmount) --> ( derivativeAmount * amount / totalSupply)
-          _balances[i] = ERC20Extended(msg.sender)
-            .balanceOf(_investors[i])
-            .mul(_tokenAmountPrecision)
-            .div(_totalSupplyPrecision);
+            // The basic idea is get the %(derivative/totalSupply) of the fun holder, and
+            // multiply per the total amount of token. Dividing at last provides result and avoid decimal issues.
+            _balances[i] = ERC20Extended(msg.sender)
+                .balanceOf(_investors[i])
+                .mul(_tokenAmount)
+                .div(_totalSupply);
         }
 
         return _balances;
