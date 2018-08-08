@@ -470,7 +470,7 @@ contract("Fund", accounts => {
     
     await mockKyber.toggleSimulatePriceZero(false);
 
-    bug
+    //TODO: bug
     //assert.equal(await fund.tokenBrokens(), tokens, 'Token A is broken');
 
   });
