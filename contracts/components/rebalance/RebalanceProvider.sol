@@ -13,7 +13,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
     PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
 
     string public name = "Rebalance";
-    string public description ="Help to rebalance quantity of tokens depending of the weight assigned in the derivative";
+    string public description = "Help to rebalance quantity of tokens depending of the weight assigned in the derivative";
     string public category = "Rebalance";
     string public version = "v1.0";
 

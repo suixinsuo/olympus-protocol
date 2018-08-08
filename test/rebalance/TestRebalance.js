@@ -76,25 +76,31 @@ contract("MockRebalanceIndex", accounts => {
   });
 
   it("MockRebalanceIndex should not use cached price if timeout is exceeded.", async () => {
+    // Set timeout to zero, so cached prices will never work
     await rebalanceProvider.updateCachedPriceTimeout(0);
+    // Simulate a broken exchange/token
     await mockKyberNetwork.toggleSimulatePriceZero(true);
     const erc20Token1 = await ERC20Extended.at(tokens[0]);
     const erc20Token2 = await ERC20Extended.at(tokens[1]);
     const beforeBalance1 = (await erc20Token1.balanceOf(mockRebalanceIndex.address)).toNumber();
     const beforeBalance2 = (await erc20Token2.balanceOf(mockRebalanceIndex.address)).toNumber();
     try {
+      // Try to execute the rebalance where cached prices are older than the cacheTimeout
       await mockRebalanceIndex.rebalance();
-      assert.ok(false);
+      assert.ok(false, "Rebalance should revert");
     } catch (e) {
-      assert.ok(true);
+      assert.ok(true, "Rebalance should revert");
     }
+
+    // Get the balance of the tokens
     const afterBalance1 = (await erc20Token1.balanceOf(mockRebalanceIndex.address)).toNumber();
     const afterBalance2 = (await erc20Token2.balanceOf(mockRebalanceIndex.address)).toNumber();
-    // Should have sold exactly half of our tokens
-    assert.equal(afterBalance1, beforeBalance1);
-    // Should have received some tokens, rates can vary
-    assert.equal(afterBalance2, beforeBalance2);
+    assert.equal(afterBalance1, beforeBalance1, "No tokens have been sold");
+    assert.equal(afterBalance2, beforeBalance2, "No tokens have been sold");
+
+    // Disable the broken exchange simulation, enable next tests to get the prices again.
     await mockKyberNetwork.toggleSimulatePriceZero(false);
+    // Update the cache timeout back to the default value (6 hours)
     await rebalanceProvider.updateCachedPriceTimeout(3600 * 6);
   });
 
