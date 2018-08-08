@@ -27,7 +27,7 @@ contract TokenBroken is TokenBrokenInterface {
         uint _tokenAmount = _token.balanceOf(address(msg.sender));
 
         for (uint i = 0; i < _investors.length; i++) {
-            // The basic idea is get the %(derivative/totalSupply) of the fun holder, and
+            // The basic idea is get the %(derivative/totalSupply) of the fund holder, and
             // multiply per the total amount of token. Dividing at last provides result and avoid decimal issues.
             _balances[i] = ERC20Extended(msg.sender)
                 .balanceOf(_investors[i])
