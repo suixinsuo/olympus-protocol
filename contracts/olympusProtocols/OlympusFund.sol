@@ -57,9 +57,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // ----------------------------- CONFIG -----------------------------
     // One time call
     function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) external onlyOwner payable {
-        require(_componentList != 0x0, "Component list not null");
-        require(status == DerivativeStatus.New,"Status is new");
-        require(msg.value > 0,"ETH investment on initialize"); // Require some balance for internal opeations as reimbursable
+        require(_componentList != 0x0);
+        require(status == DerivativeStatus.New);
+        require(msg.value > 0); // Require some balance for internal opeations as reimbursable
 
         // Set PausedCycle
         pausedCycle = 365 days;
@@ -105,17 +105,15 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
             require(
-                !hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i]),
-                "Transaction with risk"
+                !hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i])
             );
             totalEthRequired = totalEthRequired.add(_amounts[i]);
         }
-        require(getETHBalance() >= totalEthRequired, "Enough ETH balance");
+        require(getETHBalance() >= totalEthRequired);
 
         require(
             OlympusExchangeInterface(getComponentByName(EXCHANGE))
-            .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId),
-            "Buy tokens"
+            .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)
         );
         updateTokens(_tokens);
         return true;
@@ -128,12 +126,12 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < tokens.length; i++) {
-            require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]),"Without risk");
+            require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
 
-        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId), "Sell tokens");
+        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId));
         updateTokens(_tokens);
         return true;
     }
@@ -145,8 +143,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
         whenNotPaused
       returns(bool) {
-        require(status == DerivativeStatus.Active, "The Fund is not active");
-        require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
+        require(status == DerivativeStatus.Active);
+        require(msg.value >= 10**15);
          // Current value is already added in the balance, reduce it
         uint _sharePrice = INITIAL_VALUE;
 
@@ -169,7 +167,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function close() public OnlyOwnerOrPausedTimeout returns(bool success) {
-        require(status != DerivativeStatus.New,"Status is not new");
+        require(status != DerivativeStatus.New);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
 
         if(!getETHFromTokens(DENOMINATOR)){
@@ -225,7 +223,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
-        require(accumulatedFee >= _amount, "Enought fee to withdraw");
+        require(accumulatedFee >= _amount);
         accumulatedFee = accumulatedFee.sub(_amount);
         // Exchange to MOT
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -396,11 +394,11 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             _tokensThisStep[sellIndex] = _tokensToSell[i];
             _amounts[sellIndex] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
-            require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0),"Without risk");
+            require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, 0);
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, _amounts[sellIndex]);
         }
-        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0),"Sell tokens");
+        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
 
         if(i == tokens.length) {
             updateTokens(_tokensToSell); // Must update tokens at the end to keep _tokensToSell freeze
