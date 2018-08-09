@@ -129,4 +129,25 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
     function isValidAdapter(address _adapter) external view returns (bool) {
         return adapters[_adapter] > 0;
     }
+
+    function removeExchangeAdapter(bytes32 _exchangeId) external onlyOwner returns (bool) {
+        uint indexToRemove;
+        bool included;
+        uint i;
+        for (i = 0; i < exchanges.length; i++) {
+            if (exchanges[i] == _exchangeId) {
+                included = true;
+                indexToRemove = i;
+                break;
+            }
+        }
+        if (!included) return false;
+        if (indexToRemove >= exchanges.length) return false;
+
+        for (i = indexToRemove; i < exchanges.length-1; i++) {
+            exchanges[i] = exchanges[i+1];
+        }
+        exchanges.length--;
+        return true;
+    }
 }
