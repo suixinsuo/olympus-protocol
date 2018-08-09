@@ -11,6 +11,8 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     using SafeMath for uint256;
 
     address public exchangeAdapterManager;
+    address public exchangeProvider;
+
     bytes32 public exchangeId;
     bytes32 public name;
     ERC20Extended public constant ETH_TOKEN_ADDRESS = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
@@ -22,7 +24,9 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     bool public adapterEnabled;
 
     modifier checkArrayLengths(address[] tokenAddresses, BancorConverterInterface[] converterAddresses, address[] relayAddresses) {
-        require(tokenAddresses.length == converterAddresses.length && relayAddresses.length == converterAddresses.length);
+        require(
+            tokenAddresses.length == converterAddresses.length && relayAddresses.length == converterAddresses.length,
+            "Arrays are not the same length");
         _;
     }
 
@@ -32,22 +36,28 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         _;
     }
 
-    constructor (address _exchangeAdapterManager, address[] _tokenAddresses,
+    constructor (address _exchangeAdapterManager, address _exchangeProvider, address[] _tokenAddresses,
     BancorConverterInterface[] _converterAddresses, address[] _relayAddresses)
     checkArrayLengths(_tokenAddresses, _converterAddresses, _relayAddresses) public {
         updateSupportedTokenList(_tokenAddresses, _converterAddresses, _relayAddresses);
         exchangeAdapterManager = _exchangeAdapterManager;
+        exchangeProvider = _exchangeProvider;
         adapterEnabled = true;
     }
 
     modifier onlyExchangeAdapterManager() {
-        require(msg.sender == address(exchangeAdapterManager));
+        require(msg.sender == address(exchangeAdapterManager), "Transaction sender is not the adapter manager");
         _;
     }
 
+    function setExchangeProvider(address _exchangeProvider) external onlyOwner{
+        exchangeProvider = _exchangeProvider;
+    }
+
     function updateSupportedTokenList(address[] _tokenAddresses, BancorConverterInterface[] _converterAddresses, address[] _relayAddresses)
+    public onlyOwner
     checkArrayLengths(_tokenAddresses, _converterAddresses, _relayAddresses)
-    public onlyOwner returns (bool success) {
+    returns (bool success) {
         for(uint i = 0; i < _tokenAddresses.length; i++){
             tokenToConverter[_tokenAddresses[i]] = _converterAddresses[i];
             tokenToRelay[_tokenAddresses[i]] = _relayAddresses[i];
@@ -63,7 +73,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
 
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount)
     external view returns(uint expectedRate, uint slippageRate) {
-        require(_amount > 0);
+        require(_amount > 0, "Can not get the price for amount zero");
         bool isBuying = _sourceAddress == ETH_TOKEN_ADDRESS;
         ERC20Extended targetToken = isBuying ? _destAddress : _sourceAddress;
         BancorConverterInterface BNTConverter = tokenToConverter[address(bancorToken)];
@@ -77,22 +87,22 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         // Bancor is a special case, it's their token
         if (targetToken == bancorToken){
             if(isBuying) {
-                rate = ((ETHToBNTRate * 10**18) / _amount);
+                rate = ETHToBNTRate.mul(10**18).div(_amount);
             } else {
                 rate = BNTConverter.getReturn(bancorToken, bancorETHToken, _amount);
-                rate = ((rate * 10**_sourceAddress.decimals()) / _amount);
+                rate = rate.mul(10**_sourceAddress.decimals()).div(_amount);
             }
         } else {
             if(isBuying){
                 // Get amount of tokens for the amount of BNT for amount ETH
                 rate = targetTokenConverter.getReturn(bancorToken, targetToken, ETHToBNTRate);
                 // Convert rate to 1ETH to token or token to 1 ETH
-                rate = ((rate * 10**18) / _amount);
+                rate = rate.mul(10**18).div(_amount);
             } else {
                 uint targetTokenToBNTRate = targetTokenConverter.getReturn(targetToken, bancorToken, 10**targetToken.decimals());
                 rate = BNTConverter.getReturn(bancorToken, bancorETHToken, targetTokenToBNTRate);
                 // Convert rate to 1ETH to token or token to 1 ETH
-                rate = ((rate * 10**_sourceAddress.decimals()) / _amount);
+                rate = rate.mul(10**_sourceAddress.decimals()).div(_amount);
             }
         }
 
@@ -160,17 +170,17 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         }
 
         if(isBuying){
-            return (_amount * 10**18) / _minimumRate;
+            return _amount.mul(10**18).div(_minimumRate);
         }
 
-        return (_amount * 10**_token.decimals()) / _minimumRate;
+        return _amount.mul(10**_token.decimals()).div(_minimumRate);
     }
 
     function sellToken
     (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
-    ) checkTokenSupported(_token) external returns(bool success) {
+    ) external checkTokenSupported(_token) returns(bool success) {
         require(_token.balanceOf(address(this)) >= _amount, "Balance of token is not sufficient in adapter");
         ERC20Extended[] memory internalPath;
         ERC20Extended[] memory path;
@@ -196,7 +206,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     function buyToken (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
-    ) checkTokenSupported(_token) external payable returns(bool success){
+    ) external payable checkTokenSupported(_token) returns(bool success){
         require(msg.value == _amount, "Amount of Ether sent is not the same as the amount parameter");
         ERC20Extended[] memory internalPath;
         ERC20Extended[] memory path;
@@ -244,5 +254,11 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     external view returns(bytes32 _name, bool _enabled)
     {
         return (name, adapterEnabled);
+    }
+
+    function approveToken(ERC20Extended _token) external returns(bool success){
+        ERC20NoReturn(_token).approve(exchangeProvider,0);
+        ERC20NoReturn(_token).approve(exchangeProvider,2**255);
+        return true;
     }
 }

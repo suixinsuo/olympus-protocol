@@ -12,7 +12,7 @@ let AsyncWithdraw = artifacts.require("AsyncWithdraw");
 let Locker = artifacts.require("Locker");
 let SimpleWithdraw = artifacts.require("SimpleWithdraw");
 let Reimbursable = artifacts.require("Reimbursable");
-
+let TokenBroken = artifacts.require("TokenBroken");
 let PercentageFee = artifacts.require("PercentageFee");
 let ComponentList = artifacts.require("ComponentList");
 
@@ -21,7 +21,7 @@ let RiskControl = artifacts.require("RiskControl");
 let WhitelistProvider = artifacts.require("WhitelistProvider");
 
 let MockToken = artifacts.require("MockToken");
-let mockTokenSupply =  10 ** 9 * 10 ** 18;
+let mockTokenSupply = 10 ** 9 * 10 ** 18;
 let RebalanceProvider = artifacts.require("RebalanceProvider");
 
 let StepProvider = artifacts.require("StepProvider");
@@ -38,6 +38,10 @@ function deployWithdraw(deployer, network) {
 
 function deployWhitelist(deployer, network) {
   deployer.deploy([WhitelistProvider]);
+}
+
+function deployTokenBroken(deployer, network) {
+  deployer.deploy([TokenBroken]);
 }
 function deployStep(deployer, network) {
   const MockStepContract = artifacts.require("MockStepContract");
@@ -71,8 +75,8 @@ function deployExchange(deployer, network) {
         devTokens = await mockKyberNetwork.supportedTokens();
         await kyberNetworkAdapter.configAdapter(mockKyberNetwork.address, 0x0);
         const mot = await MockToken.deployed();
-         // Send MOT for mock kyber so can trade it
-        mot.transfer(mockKyberNetwork.address, mockTokenSupply /2 );
+        // Send MOT for mock kyber so can trade it
+        mot.transfer(mockKyberNetwork.address, mockTokenSupply / 2);
       }
       await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
       return deployer;
@@ -155,6 +159,7 @@ function deployOnDev(deployer, num) {
         ComponentList,
         StepProvider,
         Locker,
+        TokenBroken,
         [MockToken, "", "MOT", 18, mockTokenSupply]
       ])
     )
@@ -174,6 +179,7 @@ function deployOnKovan(deployer, num) {
     .then(() => deployer.deploy(Reimbursable))
     .then(() => deployer.deploy(WhitelistProvider))
     .then(() => deployer.deploy(ComponentList))
+    .then(() => deployer.deploy(TokenBroken))
     .then(() => deployExchange(deployer, "kovan"))
     .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
 }

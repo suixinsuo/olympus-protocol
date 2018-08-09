@@ -24,7 +24,7 @@ contract MockIndex is IndexInterface, MockDerivative {
       checkLength(_tokens, _weights) public {
 
         name = _name;
-        totalSupply = 0;
+        totalSupply_ = 0;
         decimals = _decimals;
         description = _description;
         category = _category;
@@ -84,7 +84,7 @@ contract MockIndex is IndexInterface, MockDerivative {
         //mock 1 eth to 1 token
         return 10 ** 18;
     }
-    
+
     function buyTokens() external returns(bool) {
         return true; // Not in the scope of this mockup
     }
