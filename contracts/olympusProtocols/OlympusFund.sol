@@ -26,7 +26,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     uint public constant DENOMINATOR = 10000;
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
-    event LogO(address);
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
@@ -446,8 +445,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         for(uint t = 0;t < _tokens.length; t++){
             if((_failedTimes[t]) >= 1 ){
                 tokensBroken.push(_tokens[t]);
-                emit LogO(_tokens[t]);
-
             }
         }
         return true;
