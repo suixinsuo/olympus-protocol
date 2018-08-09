@@ -62,8 +62,6 @@ contract TokenBroken is TokenBrokenInterface {
 
     // Once this function is called, the amount is reduced from the provider
     function withdraw(address _token, address _investor) external returns(uint) {
-        require(tokenBalances[msg.sender][_token][_investor] > 0, "User has balance to withdraw");
-
         // reset the data
         balancePendingLength[msg.sender][_token] --;
         tokenBalances[msg.sender][_token][_investor] = 0;
