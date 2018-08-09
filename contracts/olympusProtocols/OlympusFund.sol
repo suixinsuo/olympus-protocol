@@ -117,7 +117,7 @@ contract OlympusFund is FundInterface, Derivative {
 
         if(!OlympusExchangeInterface(getComponentByName(EXCHANGE)).buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)){
            
-            checkBrokenToken(_tokens);
+            checkBrokenTokens(_tokens);
             
             return false;
         }
@@ -138,7 +138,7 @@ contract OlympusFund is FundInterface, Derivative {
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
-            checkBrokenToken(_tokens);
+            checkBrokenTokens(_tokens);
             return false;
         }
         updateTokens(_tokens);
@@ -423,7 +423,7 @@ contract OlympusFund is FundInterface, Derivative {
         return true;
     }
 
-    function checkBrokenToken(ERC20Extended[] _tokens) view internal returns(bool success){
+    function checkBrokenTokens(ERC20Extended[] _tokens) view internal returns(bool success){
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         uint[] memory _failedTimes = new uint[](_tokens.length);
         _failedTimes = exchange.getFailedTradesArray(_tokens);
