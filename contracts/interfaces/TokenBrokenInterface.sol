@@ -20,7 +20,7 @@ interface TokenBrokenInterface {
      * @param _investor User address that is being queried
      * @return Current balance
      */
-      function tokenBalanceOf(address _derivative, address _token, address _investor) public returns(uint);
+      function tokenBalanceOf(address _derivative, address _token, address _investor) external view returns(uint);
 
     /**
      * @dev  Return the token balances to withdraw or 0.
@@ -31,7 +31,7 @@ interface TokenBrokenInterface {
      * @return List of the balances mapping the index with the _tokens array, having
      *      value 0 the tokens with no balance
      */
-    function tokenBalancesOf(address [] _tokens, address _investor) external returns(uint[]);
+    function tokenBalancesOf(address[] _tokens, address _investor) external returns(uint[]);
 
 
     /**

@@ -49,7 +49,7 @@ contract TokenBroken is TokenBrokenInterface {
         return _balances;
     }
 
-    function tokenBalanceOf(address _derivative, address _token, address _investor) public view returns(uint) {
+    function tokenBalanceOf(address _derivative, address _token, address _investor) external view returns(uint) {
         return tokenBalances[_derivative][_token][_investor];
     }
 
