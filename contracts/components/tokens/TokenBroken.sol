@@ -49,6 +49,10 @@ contract TokenBroken is TokenBrokenInterface {
         return _balances;
     }
 
+    function tokenBalanceOf(address _derivative, address _token, address _investor) public view returns(uint) {
+        return tokenBalances[_derivative][_token][_investor];
+    }
+
     // For single balance, you can query the public mapping. That support avoid several
     // calls for several balances
     function tokenBalancesOf(address[] _tokens, address _investor) external returns(uint[]) {
@@ -67,6 +71,7 @@ contract TokenBroken is TokenBrokenInterface {
         tokenBalances[msg.sender][_token][_investor] = 0;
         return  balancePendingLength[msg.sender][_token];
     }
+
 
 
 

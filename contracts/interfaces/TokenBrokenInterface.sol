@@ -9,7 +9,7 @@ interface TokenBrokenInterface {
      * @param _token Token ERC20Extended address
      * @return The list of balances. This information also gets saved internally in a mapping
      */
-    
+
     function calculateBalanceByInvestor(ERC20Extended _token) external returns(uint[]);
 
   /**
@@ -20,8 +20,7 @@ interface TokenBrokenInterface {
      * @param _investor User address that is being queried
      * @return Current balance
      */
-     // TODO : not working the function to getter
-    // function tokenBalances(address _derivative, address _token, address _investor) public returns(uint);
+      function tokenBalanceOf(address _derivative, address _token, address _investor) public returns(uint);
 
     /**
      * @dev  Return the token balances to withdraw or 0.
@@ -34,10 +33,10 @@ interface TokenBrokenInterface {
      */
     function tokenBalancesOf(address [] _tokens, address _investor) external returns(uint[]);
 
-     
+
     /**
      * @dev Returns the amount to withdraw of the investor and reduces it from the provider.
-     * Will revert if the balance to reduce is 0. 
+     * Will revert if the balance to reduce is 0.
      * If you call twice this function, first time it will set to 0, second will revert.
      * In order only to query the balance use balancesOf
      * @param _token token address
