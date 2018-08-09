@@ -449,23 +449,23 @@ contract("Fund", accounts => {
   });
 
   it("Shall be able to dispatch a broken token", async () => {
-
+    await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
 
     await mockKyber.toggleSimulatePriceZero(true);
 
     
     const rates = await Promise.all(
-      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.1, "ether")))
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
     );
-    const amounts = [web3.toWei(0.1, "ether"), web3.toWei(0.1, "ether")];
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
 
-    await calc.assertReverts(async () => await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0])), "Shall not buy");
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
     
-    await mockKyber.toggleSimulatePriceZero(false);
+     await mockKyber.toggleSimulatePriceZero(false);
 
     //TODO: bug
-    //assert.equal(await fund.tokenBrokens(), tokens, 'Token A is broken');
-    //assert.equal((await fund.tokensBroken(0)), tokens[0], 'Tokens brokens contains the broken token');
+
+    assert.equal((await fund.tokensBroken(0)), tokens[0], 'Tokens brokens contains the broken token');
 
   });
 
@@ -477,7 +477,7 @@ contract("Fund", accounts => {
     let token0_erc20 = await ERC20.at(await fund.tokens(0));
     let token1_erc20 = await ERC20.at(await fund.tokens(1));
 
-    await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
+    //await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
     const initialBalance = (await fund.getETHBalance()).toNumber();
     assert.equal((await fund.balanceOf(investorC)).toNumber(), toTokenWei(1.8), "C has invested with fee");
 
