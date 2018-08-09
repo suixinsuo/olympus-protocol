@@ -449,6 +449,42 @@ contract("Fund", accounts => {
   });
 
   it("Shall be able to dispatch a broken token", async () => {
+    
+    assert.equal((await fund.totalSupply()).toNumber(), 0, "Fund starts empty");
+    await fund.setManagementFee(0);
+
+    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+
+    // Buy
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+
+    const motAmount = 10 ** 21;
+    await mockMOT.transfer(fund.address, motAmount); // Transfer 1000 MOT
+    await fund.setBrokenToken(mockMOT.address);
+
+    assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1));
+
+    // Investor A withdraws
+    await fund.requestWithdraw(toTokenWei(1), { from: investorA });
+
+    const investorBeforeBalance = await calc.ethBalance(investorA);
+
+    // On withdraw he will get the tokens brokens
+    await fund.withdraw();
+
+    const investorAfterBalance = await calc.ethBalance(investorA);
+    assert(await calc.inRange(investorAfterBalance, investorBeforeBalance + 1, 0.001), 'Investor A receives no ETH');
+    // TODO: Change this for the tokens, not the MOT
+    assert.equal((await mockMOT.balanceOf(investorA)).toNumber(), motAmount, 'Investor gets all token broken');
+    await calc.assertInvalidOpCode(async () => await fund.tokensBroken(0), "Array is empty");
+
+  });
+  
+  it("Shall be able to dispatch a broken token", async () => {
     await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
 
     await mockKyber.toggleSimulatePriceZero(true);
