@@ -20,5 +20,6 @@ module.exports = {
     LOCKER: "LockerProvider",
     GETETH: "GetEth",
     TOKENBROKEN: "TokenBroken",
+    BUYTOKENS: "BuyTokens",
   }
 };
