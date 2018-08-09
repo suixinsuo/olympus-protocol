@@ -324,7 +324,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return _tokensWithAmount;
     }
 
-    function getETHFromTokens(uint _tokenPercentage) public onlyOwner returns(bool success) {
+    function getETHFromTokens(uint _tokenPercentage) internal returns(bool success) {
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
