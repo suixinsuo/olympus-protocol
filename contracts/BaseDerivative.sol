@@ -39,14 +39,14 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer, StandardToke
         // approve if it's not included in excluded components.
         bool requireApproval = true;
         for (uint i = 0; i < excludedComponents.length; i++) {
-          if (_name == excludedComponents[i]) {
-              requireApproval = false;
-              break;
-          }
+            if (_name == excludedComponents[i]) {
+                requireApproval = false;
+                break;
+            }
         }
 
         if (requireApproval) {
-          approveComponent(_name);
+            approveComponent(_name);
         }
 
         // return latest address.

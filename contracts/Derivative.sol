@@ -30,6 +30,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     bytes32 public constant STEP = "StepProvider";
     bytes32 public constant LOCKER = "LockerProvider";
     bytes32 public constant GETETH = "GetEth";
+
     uint public pausedTime;
     uint public pausedCycle;
 
