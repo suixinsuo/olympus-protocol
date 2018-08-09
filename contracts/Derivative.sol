@@ -42,7 +42,7 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         require((msg.sender == owner)||((paused==true)&&((pausedTime+pausedCycle)<=now)));
         _;
     }
-    
+
     enum WhitelistKeys { Investment, Maintenance, Admin }
 
     bytes32[] internal excludedComponents;

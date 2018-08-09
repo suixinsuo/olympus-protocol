@@ -45,8 +45,8 @@ contract Locker is ComponentInterface, LockerInterface, Ownable  {
     }
 
     function setMultipleTimeIntervals(bytes32[] _categories, uint[] _secondsList) external {
-        for(uint i = 0; i < _categories.length; i++) {
-            timeInterval[msg.sender][_categories[i]] =  _secondsList[i] ;
+        for (uint i = 0; i < _categories.length; i++) {
+            timeInterval[msg.sender][_categories[i]] = _secondsList[i];
         }
     }
 }
