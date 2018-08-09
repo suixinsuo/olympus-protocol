@@ -455,9 +455,9 @@ contract("Fund", accounts => {
 
     
     const rates = await Promise.all(
-      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.1, "ether")))
     );
-    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+    const amounts = [web3.toWei(0.1, "ether"), web3.toWei(0.1, "ether")];
 
     await calc.assertReverts(async () => await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0])), "Shall not buy");
     
