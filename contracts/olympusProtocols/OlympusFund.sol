@@ -393,8 +393,13 @@ contract OlympusFund is FundInterface, Derivative {
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, 0);
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, _amounts[sellIndex]);
         }
-        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
-
+        if(!exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0)){
+                   
+            checkBrokenTokens(_tokensThisStep);
+            
+            return false;
+        }
+        
         if(i == tokens.length) {
             updateTokens(_tokensToSell); // Must update tokens at the end to keep _tokensToSell freeze
             stepProvider.finalize(GETETH);
