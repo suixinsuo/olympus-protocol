@@ -84,13 +84,7 @@ contract("MockRebalanceIndex", accounts => {
     const erc20Token2 = await ERC20Extended.at(tokens[1]);
     const beforeBalance1 = (await erc20Token1.balanceOf(mockRebalanceIndex.address)).toNumber();
     const beforeBalance2 = (await erc20Token2.balanceOf(mockRebalanceIndex.address)).toNumber();
-    try {
-      // Try to execute the rebalance where cached prices are older than the cacheTimeout
-      await mockRebalanceIndex.rebalance();
-      assert.ok(false, "Rebalance should revert");
-    } catch (e) {
-      assert.ok(true, "Rebalance should revert");
-    }
+    await calc.assertReverts(async () => await mockRebalanceIndex.rebalance(), "Rebalance should revert");
 
     // Get the balance of the tokens
     const afterBalance1 = (await erc20Token1.balanceOf(mockRebalanceIndex.address)).toNumber();
