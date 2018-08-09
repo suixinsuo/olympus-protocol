@@ -8,54 +8,52 @@ contract MockMappeableDerivative is MockDerivative , MappeableDerivative {
 
     // ------------  MAPPEABLE (Copy this section in your derivative) ------------
 
-    mapping (address => uint) activeInvestorIndex; // Starts from 1 (0 is not existing)
-    address[] activeInvestors; // Start in 0
+    mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
+    address[] public activeInvestors; // Start in 0
 
     function addInvestor(address investor) internal {
-       if (activeInvestorIndex[investor] == 0) {
-        uint index = activeInvestors.push(investor);
-        activeInvestorIndex[investor] = index;
-      }
+        if (activeInvestorIndex[investor] == 0) {
+            uint index = activeInvestors.push(investor);
+            activeInvestorIndex[investor] = index;
+        }
     }
 
     function removeInvestor(address investor) internal {
 
-      if (balances[investor] > 0) {return;}
+        if (balances[investor] > 0) {return;}
 
-      // activeInvestorIndex starts in 1. We iterate until one before the last
-      for (uint i = activeInvestorIndex[investor] - 1; i + 1 < activeInvestors.length; i++) {
-        activeInvestors[i] = activeInvestors[i+1];
-        activeInvestorIndex[activeInvestors[i+1]] -= 1;
-      }
-      activeInvestorIndex[investor] = 0; // Removed
-      activeInvestors.length -= 1;
+        // activeInvestorIndex starts in 1. We iterate until one before the last
+        for (uint i = activeInvestorIndex[investor] - 1; i + 1 < activeInvestors.length; i++) {
+            activeInvestors[i] = activeInvestors[i+1];
+            activeInvestorIndex[activeInvestors[i+1]] -= 1;
+        }
+        activeInvestorIndex[investor] = 0; // Removed
+        activeInvestors.length -= 1;
     }
 
     function getActiveInvestors() external view returns(address[]) {
-      return activeInvestors;
+        return activeInvestors;
     }
 
     // ------------  DERIVATIVE  (How to use Mappeable) ------------
     function invest() public payable returns(bool success) {
 
-      // Map investor
-      addInvestor(msg.sender);
+        // Map investor (do it at starting)
+        addInvestor(msg.sender);
 
-      balances[msg.sender] = msg.value;
-      totalSupply_ += msg.value;
-      return true;
+        balances[msg.sender] = msg.value;
+        totalSupply_ += msg.value;
+        return true;
     }
 
     function requestWithdraw(uint _amount) external {
-        require(balances[msg.sender] >= _amount);
-
-
+        require(balances[msg.sender] >= _amount, "Require balance to withdraw");
 
         msg.sender.transfer(_amount); // Mock up, price is constant
         balances[msg.sender] -= _amount;
         totalSupply_ -= _amount;
 
-        // Unmap investor
+        // Unmap investor (do it at the end)
         removeInvestor(msg.sender);
 
     }

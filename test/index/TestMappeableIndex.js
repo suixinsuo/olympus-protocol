@@ -8,12 +8,13 @@ const {
   DerivativeType
 } = require("../utils/constants");
 
-const BasicIndex = artifacts.require("OlympusBasicIndex");
+const MappeableIndex = artifacts.require("OlympusMappeableIndex");
 const Rebalance = artifacts.require("RebalanceProvider");
 const Marketplace = artifacts.require("Marketplace");
 const Withdraw = artifacts.require("AsyncWithdraw");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
+const TokenBroken = artifacts.require("TokenBroken");
 
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
@@ -21,8 +22,8 @@ const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exc
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
 
 const indexData = {
-  name: "BasicIndex",
-  symbol: "BasicIndex",
+  name: "MappeableIndex",
+  symbol: "MappeableIndex",
   description: "Sample of real index",
   category: "Index",
   decimals: 18,
@@ -41,7 +42,7 @@ const expectedTokenAmount = (balance, rates, tokenIndex) => {
   return (balance * (indexData.weights[tokenIndex] / 100) * rates[0][tokenIndex].toNumber()) / 10 ** 18;
 };
 
-contract("Basic Index", accounts => {
+contract("Mappeable Index", accounts => {
 
   let index;
   let market;
@@ -52,6 +53,7 @@ contract("Basic Index", accounts => {
   let rebalance;
   let tokens;
   let componentList;
+  let tokenBroken;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -67,6 +69,7 @@ contract("Basic Index", accounts => {
     asyncWithdraw = await Withdraw.deployed();
     rebalance = await Rebalance.deployed();
     componentList = await ComponentList.deployed();
+    tokenBroken = await TokenBroken.deployed();
 
     await exchange.setMotAddress(mockMOT.address);
     await asyncWithdraw.setMotAddress(mockMOT.address);
@@ -76,12 +79,14 @@ contract("Basic Index", accounts => {
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchange.address);
     componentList.setComponent(DerivativeProviders.WITHDRAW, asyncWithdraw.address);
     componentList.setComponent(DerivativeProviders.REBALANCE, rebalance.address);
+    componentList.setComponent(DerivativeProviders.TOKENBROKEN, tokenBroken.address);
+
   });
 
   it("Required same tokens as weights on create", async () =>
     await calc.assertReverts(
       async () =>
-        await BasicIndex.new(
+        await MappeableIndex.new(
           indexData.name,
           indexData.symbol,
           indexData.description,
@@ -94,7 +99,7 @@ contract("Basic Index", accounts => {
     ));
 
   it("Create a index", async () => {
-    index = await BasicIndex.new(
+    index = await MappeableIndex.new(
       indexData.name,
       indexData.symbol,
       indexData.description,
@@ -171,6 +176,10 @@ contract("Basic Index", accounts => {
 
     tx = await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
     tx = await index.invest({ value: web3.toWei(1, "ether"), from: investorB });
+    // Mapped investor
+    const activeInvestors = await index.getActiveInvestors();
+    assert.equal(activeInvestors[0], investorA, 'Investor A is active');
+    assert.equal(activeInvestors[1], investorB, 'Investor B is active');
 
     assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     // Price is the same, as no Token value has changed
@@ -205,9 +214,12 @@ contract("Basic Index", accounts => {
     // Request
     tx = await index.withdraw({ from: investorA });
     assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
+    assert.equal((await index.activeInvestors(0)), investorB, 'Investor B is still active');
 
     tx = await index.withdraw({ from: investorB });
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
+    assert.equal((await index.getActiveInvestors()).length, 0, 'No more active investors')
+
   });
 
 
@@ -255,9 +267,54 @@ contract("Basic Index", accounts => {
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant");
   });
 
+  it("Shall be able to detect a broken token", async () => {
+    assert.equal((await index.totalSupply()).toNumber(), 0, "index starts empty");
+    // Invest
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
+
+    // Buy
+    // TODO: set some value to 0 and try to   sell them , making both tokens broken
+    await index.buyTokens();
+    // TODO: Price is 0, token is broken
+
+    // TODO: Remove this mock when merge with Orange
+    // index does not really contain MOT, but as we marked like broken, will be send to users
+    const motAmount = 10 ** 21;
+    await mockMOT.transfer(index.address, motAmount); // Transfer 1000 MOT
+    await index.setBrokenToken(mockMOT.address);
+
+    // TODO check thet tokensBrokens contain both
+    assert.equal((await index.tokensBroken(0)), mockMOT.address, 'TokensBroken contain the broken token');
+
+
+  });
+
+  it("Shall be able to dispatch a broken token", async () => {
+    assert.equal((await index.balanceOf(investorA)).toNumber(), toTokenWei(1));
+    const motAmount = 10 ** 21;
+
+    // Investor A withdraws
+
+    const investorBeforeBalance = await calc.ethBalance(investorA);
+
+    // Withdraw all investorA; On withdraw he will get the tokens brokens
+    await index.withdraw({ from: investorA });
+
+    const investorAfterBalance = await calc.ethBalance(investorA);
+    // TODO: after and Balance shall be the same (no ETH Return just tokens)
+    // when merged with orange
+    assert(await calc.inRange(investorAfterBalance, investorBeforeBalance + 1, 0.001), 'Investor A receives no ETH');
+    // TODO: Change this for the tokens, not the MOT
+    assert.equal((await mockMOT.balanceOf(investorA)).toNumber(), motAmount, 'Investor gets all token broken');
+    await calc.assertInvalidOpCode(async () => await index.tokensBroken(0), "Array is empty");
+  });
+
+
   it("Shall be able to rebalance", async () => {
     let tx;
     let tokenAmounts;
+    assert.equal((await index.totalSupply()).toNumber(), 0, 'Starts clean');
+
     // Invest and get initial data
     await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
     const initialIndexBalance = (await web3.eth.getBalance(index.address)).toNumber();
