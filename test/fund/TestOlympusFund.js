@@ -63,6 +63,7 @@ contract("Fund", accounts => {
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
+  const investorD = accounts[4];
   before("Set Component list", async () => {
     mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
@@ -449,8 +450,10 @@ contract("Fund", accounts => {
 
   it("Shall be able to dispatch a broken token", async () => {
 
+
     await mockKyber.toggleSimulatePriceZero(true);
 
+    
     const rates = await Promise.all(
       tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
     );
@@ -462,60 +465,9 @@ contract("Fund", accounts => {
 
     //TODO: bug
     //assert.equal(await fund.tokenBrokens(), tokens, 'Token A is broken');
+    assert.equal((await fund.tokensBroken(0)), tokens[0], 'Tokens brokens contains the broken token');
 
   });
-
-  it("Shall be able to detect a broken token", async () => {
-    assert.equal((await fund.totalSupply()).toNumber(), 0, "Fund starts empty");
-    await fund.setManagementFee(0);
-    // Invest
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
-
-    // Buy
-    const rates = await Promise.all(
-      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
-    );
-    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
-    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
-    // TODO: set some value to 0 and try to   sell them , making both tokens broken
-    // TODO: Price is 0, token is broken
-
-    // TODO: Remove this mock when merge with Orange
-    // Fund does not really contain MOT, but as we marked like broken, will be send to users
-    const motAmount = 10 ** 21;
-    await mockMOT.transfer(fund.address, motAmount); // Transfer 1000 MOT
-    await fund.setBrokenToken(mockMOT.address);
-
-    // TODO check thet tokensBroken contain both
-    assert.equal((await fund.tokensBroken(0)), mockMOT.address, 'Tokens brokens contains the broken token');
-
-
-  });
-
-  it("Shall be able to dispatch a broken token", async () => {
-    assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1));
-    const motAmount = 10 ** 21;
-
-
-    // Investor A withdraws
-    await fund.requestWithdraw(toTokenWei(1), { from: investorA });
-
-    const investorBeforeBalance = await calc.ethBalance(investorA);
-
-    // On withdraw he will get the tokens brokens
-    await fund.withdraw();
-
-    const investorAfterBalance = await calc.ethBalance(investorA);
-    // TODO: after and Balance shall be the same (no ETH Return just tokens)
-    // when merged with orange
-    assert(await calc.inRange(investorAfterBalance, investorBeforeBalance + 1, 0.001), 'Investor A receives no ETH');
-    // TODO: Change this for the tokens, not the MOT
-    assert.equal((await mockMOT.balanceOf(investorA)).toNumber(), motAmount, 'Investor gets all token broken');
-    await calc.assertInvalidOpCode(async () => await fund.tokensBroken(0), "Array is empty");
-
-
-  });
-
 
   it("Shall be able to close (by step) a fund", async () => {
     await fund.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing

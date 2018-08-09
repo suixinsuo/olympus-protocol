@@ -481,13 +481,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
-    // ----------------------------- MAPPEABLE -----------------------------
-
-    // TODO: Remove after merge with orange
-    function setBrokenToken(ERC20Extended _token) external returns(uint[]) {
-        TokenBrokenInterface(getComponentByName(TOKENBROKEN)).calculateBalanceByInvestor(_token);
-        tokensBroken.push(address(_token));
-    }
+    // ----------------------------- MAPPEABLE ----------------------------
 
     function addInvestor(address investor) internal {
         if (activeInvestorIndex[investor] == 0) {
