@@ -113,7 +113,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         if(!OlympusExchangeInterface(getComponentByName(EXCHANGE)).buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)){
            
-            checkBrokenTokens(_tokens);
+            updateTokens(checkBrokenTokens(_tokens));
             
             return false;
         }
@@ -134,7 +134,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
-            checkBrokenTokens(_tokens);
+            updateTokens(checkBrokenTokens(_tokens));
             return false;
         }
         updateTokens(_tokens);
@@ -438,16 +438,20 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
-    function checkBrokenTokens(ERC20Extended[] _tokens) view internal returns(bool success){
+    function checkBrokenTokens(ERC20Extended[] _tokens) view internal returns(ERC20Extended[]){
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         uint[] memory _failedTimes = new uint[](_tokens.length);
         _failedTimes = exchange.getFailedTradesArray(_tokens);
+        ERC20Extended[] memory _successtokens  = new ERC20Extended[](_tokens.length);
         for(uint t = 0;t < _tokens.length; t++){
             if((_failedTimes[t]) >= 1 ){
                 tokensBroken.push(_tokens[t]);
+            }else{
+                _successtokens[t] =_tokens[t];
             }
         }
-        return true;
+        return _successtokens;
+       
     }
 
 
@@ -469,12 +473,14 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {
         ERC20 _tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
-            _tokenAddress = _updatedTokens[i];
-            amounts[_tokenAddress] = _tokenAddress.balanceOf(this);
-            if (amounts[_tokenAddress] > 0 && !activeTokens[_tokenAddress]) {
-                tokens.push(_tokenAddress);
-                activeTokens[_tokenAddress] = true;
-                continue;
+            if(_updatedTokens[i] !=address(0)){
+                _tokenAddress = _updatedTokens[i];
+                amounts[_tokenAddress] = _tokenAddress.balanceOf(this);
+                if (amounts[_tokenAddress] > 0 && !activeTokens[_tokenAddress]) {
+                    tokens.push(_tokenAddress);
+                    activeTokens[_tokenAddress] = true;
+                    continue;
+                }
             }
         }
         return true;
