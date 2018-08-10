@@ -14,7 +14,7 @@ constructor (
       uint _decimals,
       address[] _tokens,
       uint[] _weights)
-      public checkLength(_tokens, _weights) checkWeights(_weights)
+      public checkLength(_tokens, _weights) checkWeights(_weights);
 ```
 
 #### &emsp;Parameters
@@ -144,7 +144,7 @@ indexContract.decimals((err,decimals)=>{
 #### 1. initialize
 
 ```javascript
-function initialize(address _componentList, uint _rebalanceDeltaPercentage) external onlyOwner
+function initialize(address _componentList, uint _rebalanceDeltaPercentage) external onlyOwner;
 ```
 
 #### &emsp;Description
@@ -152,7 +152,7 @@ function initialize(address _componentList, uint _rebalanceDeltaPercentage) exte
 
 #### &emsp;Parameters
 > _componentList: address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
-  _rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:</br>
+> _rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:</br>
     1 = 0.01%</br>
     10 = 0.1%</br>
     100 = 1%</br>
@@ -178,7 +178,7 @@ indexContract.initialize(_componentList, _rebalanceDeltaPercentage, {from: web3.
 #### 2. invest
 
 ```javascript
-function invest() public payable returns(bool)
+function invest() public payable returns(bool);
 ```
 
 #### &emsp;Description
@@ -205,7 +205,7 @@ indexContract.invest({value: investAmount}, (err, result) => {
 #### 3. buyTokens
 
 ```javascript
-function buyTokens() external returns(bool)
+function buyTokens() external returns(bool);
 ```
 
 #### &emsp;Description
@@ -232,7 +232,7 @@ indexContract.buyTokens((err, result) => {
 #### 4. rebalance
 
 ```javascript
-function rebalance() public  returns (bool success)
+function rebalance() public  returns (bool success);
 ```
 
 #### &emsp;Description
@@ -274,11 +274,14 @@ rebalance((err,result)=>{
 #### 5. withdraw
 
 ```javascript
-function withdraw() external returns(bool)
+function withdraw() external returns(bool);
 ```
 
 #### &emsp;Description
 > This function is for investors to withdraw all their investment.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -298,11 +301,14 @@ indexContract.withdraw((err, result) => {
 #### 6. close
 
 ```javascript
-function close() public onlyOwner returns(bool success)
+function close() public onlyOwner returns(bool success);
 ```
 
 #### &emsp;Description
 > Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment.)
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
