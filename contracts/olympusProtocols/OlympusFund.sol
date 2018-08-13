@@ -448,7 +448,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
-    function checkBrokenTokens(ERC20Extended[] _tokens) view internal returns(ERC20Extended[]){
+    function checkBrokenTokens(ERC20Extended[] _tokens) internal returns(ERC20Extended[]){
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         TokenBrokenInterface  tokenBrokenProvider = TokenBrokenInterface(getComponentByName(TOKENBROKEN));
 
