@@ -10,4 +10,5 @@ contract OlympusExchangeAdapterManagerInterface is Ownable {
     function isValidAdapter(address _adapter) external view returns(bool);
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId)
         external view returns(uint expectedRate, uint slippageRate);
+    function removeExchangeAdapter(bytes32 _exchangeId) external returns (bool);
 }

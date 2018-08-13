@@ -243,10 +243,25 @@ contract("Olympus Index", accounts => {
     tokenAmounts[1].forEach(amount => assert.equal(amount, 0, "Amount is 0"));
   });
 
+
   it("Can't rebalance so frequently", async () => {
     await calc.assertReverts(async () => await index.rebalance(), "Should be reverted");
     // disable the lock
     await index.setMultipleTimeIntervals([await index.REBALANCE()], [0]);
+  });
+
+  it("Buy Tokens works with no ETH", async () => {
+    let tx;
+
+    tx = await index.buyTokens();
+    assert.ok(tx);
+    const status = await stepProvider.status(index.address, DerivativeProviders.BUYTOKENS);
+    const functionStep = await stepProvider.currentFunctionStep(index.address, DerivativeProviders.BUYTOKENS);
+    const callStep = await stepProvider.currentCallStep(index.address, DerivativeProviders.BUYTOKENS);
+    assert.equal(status.toNumber(), 0, 'Buy tokens finish correctly: status');
+    assert.equal(callStep.toNumber(), 0, 'Buy tokens finish correctly: call step');
+    assert.equal(functionStep.toNumber(), 0, 'Buy tokens finish correctly: Call function step');
+
   });
 
   it("Shall be able to request and withdraw", async () => {

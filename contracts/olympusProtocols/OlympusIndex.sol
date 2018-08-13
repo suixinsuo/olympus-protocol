@@ -324,7 +324,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return _tokensWithAmount;
     }
 
-    function getETHFromTokens(uint _tokenPercentage) public onlyOwner returns(bool success) {
+    function getETHFromTokens(uint _tokenPercentage) internal returns(bool success) {
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
@@ -365,9 +365,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
-        uint currentStep = stepProvider.initializeOrContinue(BUYTOKENS);
         // Start?
-        if (currentStep == 0) {
+        if (stepProvider.getStatus(BUYTOKENS) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(BUYTOKENS);
             if (tokens.length == 0 || getETHBalance() == 0) {
                 reimburse();
@@ -375,6 +374,8 @@ contract OlympusIndex is IndexInterface, Derivative {
             }
             freezeBalance = getETHBalance();
         }
+        uint currentStep = stepProvider.initializeOrContinue(BUYTOKENS);
+
         // Check the length of the array
         uint arrayLength =   getNextArrayLength(stepProvider, BUYTOKENS, currentStep);
 

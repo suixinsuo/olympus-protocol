@@ -1,6 +1,5 @@
 pragma solidity 0.4.24;
 
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../interfaces/RebalanceInterface.sol";
 import "../../interfaces/IndexInterface.sol";
@@ -14,12 +13,13 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
     PriceProviderInterface private priceProvider = PriceProviderInterface(0x0);
 
     string public name = "Rebalance";
-    string public description ="Help to rebalance quantity of tokens depending of the weight assigned in the derivative";
+    string public description = "Help to rebalance quantity of tokens depending of the weight assigned in the derivative";
     string public category = "Rebalance";
     string public version = "v1.0";
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
     uint private constant RECALCULATION_PERCENTAGE_DENOMINATOR = 10**18;
+    uint private priceTimeout = 6 hours;
 
     address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     enum RebalanceStatus { Initial, Calculated, Recalculated }
@@ -40,6 +40,10 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         return true;
     }
 
+    function updateCachedPriceTimeout(uint _newTimeout) public onlyOwner {
+        priceTimeout = _newTimeout;
+    }
+
     function rebalanceGetTokensToSellAndBuy(uint _rebalanceDeltaPercentage) external returns
     (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues) {
         if(rebalanceStatus[msg.sender] == RebalanceStatus.Calculated || rebalanceStatus[msg.sender] == RebalanceStatus.Recalculated) {
@@ -51,7 +55,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
                 tokensWithPriceIssues[msg.sender]
             );
         }
-        require(payFee(0));
+        require(payFee(0), "Fee cannot be paid");
 
         uint i;
         address[] memory indexTokenAddresses;
@@ -60,7 +64,8 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         for(i = 0; i < indexTokenAddresses.length; i++) {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
-            (ETHTokenPrice,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
+            (ETHTokenPrice,,) = priceProvider.getPriceOrCacheFallback(
+                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "", priceTimeout);
 
             if (ETHTokenPrice == 0) {
                 tokensWithPriceIssues[msg.sender].push(indexTokenAddresses[i]);
@@ -160,13 +165,14 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         return true;
     }
 
-    function getTotalIndexValue() public view returns (uint totalValue){
+    function getTotalIndexValue() public returns (uint totalValue){
         uint price;
         address[] memory indexTokenAddresses;
         (indexTokenAddresses, ) = IndexInterface(msg.sender).getTokens();
 
         for(uint i = 0; i < indexTokenAddresses.length; i++) {
-            (price,) = priceProvider.getPrice(ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
+            (price,,) = priceProvider.getPriceOrCacheFallback(
+                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0, priceTimeout);
             totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)).mul(
             10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(price));
         }
