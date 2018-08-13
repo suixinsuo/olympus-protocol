@@ -392,7 +392,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
-        emit LogN(_tokensToSell.length,"TokensWith Amount");
         if(_tokensToSell.length == 0) {return true;}
 
         uint currentStep = stepProvider.initializeOrContinue(GETETH);
