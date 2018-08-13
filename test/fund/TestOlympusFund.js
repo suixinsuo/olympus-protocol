@@ -44,7 +44,6 @@ const toTokenWei = amount => {
 
 contract("Fund", accounts => {
   let fund;
-  let fund2;
   let market;
   let mockKyber;
   let tokens;
