@@ -460,15 +460,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         accumulatedFee = accumulatedFee.sub(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
-    function approveComponents() private {
-        approveComponent(EXCHANGE);
-        approveComponent(WITHDRAW);
-        approveComponent(RISK);
-        approveComponent(WHITELIST);
-        approveComponent(FEE);
-        approveComponent(REIMBURSABLE);
-    }
-
+    
     function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {
         ERC20 _tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
