@@ -13,7 +13,7 @@ constructor (
       uint _decimals,
       address[] _tokens,
       uint[] _weights)
-      checkLength(_tokens, _weights) public ;
+      checkLength(_tokens, _weights) public;
 ```
 #### &emsp;Parameters
 > _name: Index name</br>
@@ -22,7 +22,7 @@ constructor (
   _category: Index category</br>
   _decimals: Index decimals (normally it should be 18)</br>
   _tokens: The token addresses that the index can buy, sell and rebalance</br>
-  _wights: the weights of token</br>
+  _weights: the weights of token</br>
 
 #### &emsp;Example code
 ```javascript
@@ -150,8 +150,13 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 
 #### &emsp;Parameters
 > _componentList: address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
-  _initialFundFee: management fee of index
-  value: the initial balance of the index
+> _rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:</br>
+    1 = 0.01%</br>
+    10 = 0.1%</br>
+    100 = 1%</br>
+    1000 = 10%</br>
+    10000 = 100%</br>
+> _initialFundFee: the initial balance of the index
 
 #### &emsp;Example code
 
@@ -163,8 +168,8 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 const _componentList = '0x...';
 const _initialFundFee = '0x...';
-const initialBalance = 1 ** 17
-indexContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accounts[0],value: initialBalance}, (err) => {
+const _rebalanceDeltaPercentage = 1000;
+indexContract.initialize(_componentList, _rebalanceDeltaPercentage, _initialFundFee, {from: web3.eth.accounts[0],value: initialBalance}, (err) => {
   if (err) {
     return console.error(err);
   }
@@ -178,7 +183,7 @@ function invest() public payable
      whenNotPaused
      whitelisted(WhitelistKeys.Investment)
      withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
-     returns(bool) ;
+     returns(bool);
 ```
 
 #### &emsp;Description
@@ -207,6 +212,7 @@ indexContract.invest({value: investAmount}, (err, result) => {
 ```javascript
 function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
 ```
+
 #### &emsp;Description
 > Index manager execute the function to buy tokens that are defined in index using the investor's investment.
 
@@ -387,7 +393,7 @@ indexContract.withdrawFee(amount, (err, result) => {
 #### 9. enableWhitelist
 
 ```javascript
-function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
+function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool);
 ```
 
 #### &emsp;Description
@@ -427,7 +433,7 @@ indexContract.enableWhitelist(key, (err, result) => {
 #### 10. setAllowed
 
 ```javascript
-function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
+function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool);
 ```
 
 #### &emsp;Description
@@ -499,6 +505,9 @@ function close() public onlyOwner returns(bool success);
 
 #### &emsp;Description
 > Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment and index managers can also withdraw their management fee.)
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.

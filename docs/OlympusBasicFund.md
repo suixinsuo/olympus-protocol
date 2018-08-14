@@ -13,7 +13,7 @@ constructor(
       string _description,
       string _category,
       uint _decimals
-    ) public
+    ) public;
 ```
 
 #### &emsp;Parameters
@@ -132,7 +132,7 @@ fundContract.decimals((err,decimals)=>{
 
 #### 1. initialize
 ```javascript
-function initialize(address _componentList) external onlyOwner
+function initialize(address _componentList) external onlyOwner;
 ```
 
 #### &emsp;Description
@@ -190,7 +190,7 @@ fundContract.invest({value: investAmount}, (err, result) => {
 
 ```javascript
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
-    public onlyOwner returns(bool)
+    public onlyOwner returns(bool);
 ```
 
 #### &emsp;Description
@@ -228,7 +228,7 @@ fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, resu
 
 ```javascript
 function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
-      public onlyOwner returns (bool)
+      public onlyOwner returns (bool);
 ```
 
 #### &emsp;Description
@@ -265,11 +265,14 @@ fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, res
 #### 5. withdraw
 
 ```javascript
-function withdraw() external returns(bool)
+function withdraw() external returns(bool);
 ```
 
 #### &emsp;Description
 > This function is for investors to withdraw all their investment.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -294,6 +297,9 @@ function close() public onlyOwner returns(bool success);
 
 #### &emsp;Description
 > Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back. (Note: After closing the fund, investors can still withdraw their investment.)
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.

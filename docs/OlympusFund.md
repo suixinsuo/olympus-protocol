@@ -84,6 +84,7 @@ web3.eth.contract(abi).new(
 
 ### Basic info
 > The code below shows how to get fund's basic information, including fund's name, symbol, category and decimals.
+
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
@@ -93,7 +94,7 @@ fundContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(name)
+  conosle.log(name);
 })
 // Symbol
 fundContract.symbol((err,symbol)=>{
@@ -166,7 +167,7 @@ function invest() public payable
      whenNotPaused
      whitelisted(WhitelistKeys.Investment)
      withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
-     returns(bool) ;
+     returns(bool);
 ```
 
 #### &emsp;Description
@@ -230,20 +231,20 @@ fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, resu
 
 ```javascript
 function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
-      public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool)
+      public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool);
 ```
 
 #### &emsp;Description
 > Call the function for fund manager or whitelisted fund administrator to sell any combination of tokens that are available in the fund.
-
-#### &emsp;Returns
-> Whether the function executed successfully or not.
 
 #### &emsp;Parameters
 > _exchangeId: You can choose which exchange will be used to trade.</br>
   _tokens: Tokens to sell.
   _amounts: The corresponding amount of tokens to sell.
   _minimumRates: The minimum amount of tokens per ETH in wei.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -328,8 +329,9 @@ fundContract.requestWithdraw(amount, (err, result) => {
 #### 7. withdraw
 
 ```javascript
-function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool)
+function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
 ```
+
 #### &emsp;Description
 > This function is for fund's manager. Investors that has requested to withdraw their investment will get their investment back after the fund's management executes this function.
 
@@ -377,7 +379,7 @@ fundContract.withdrawFee(amount, (err, result) => {
 #### 9. enableWhitelist
 
 ```javascript
-function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
+function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool);
 ```
 #### &emsp;Description
 > Owner of the fund can enable a category of whitelist to protect the fund.
@@ -391,7 +393,8 @@ If type 2 Admin whitelist is enabled, only users' addresses that have been added
 to buy and sell tokens for the fund; otherwise, only owner of the fund can buy and sell tokens.
 
 #### &emsp;Parameters
-> \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:</br>
+> \_key: A specific category of whitelist to be enabled for the fund. </br>
+The following three keys are available:</br>
 0: Investment</br>
 1: Maintenance </br>
 2: Admin</br>
@@ -487,6 +490,9 @@ function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
 > Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back.(Note: After closing the fund, investors can still withdraw their investment and fund managers can also withdraw their management fee.)
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
