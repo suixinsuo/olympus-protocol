@@ -84,8 +84,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         require(contracts[msg.sender].withdrawRequestLock == false);
         contracts[msg.sender].withdrawRequestLock = true;
         contracts[msg.sender].price = DerivativeInterface(msg.sender).getPrice();
-        require(contracts[msg.sender].price > 0);
-    }
+     }
 
     function finalize() external {
         contracts[msg.sender].withdrawRequestLock = false;

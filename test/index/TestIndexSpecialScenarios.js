@@ -114,7 +114,7 @@ contract("Olympus Index Special Scenarios", accounts => {
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
   });
 
-  it("Olympus Index Special Cases", async () => {
+  it("Create the index", async () => {
     index = await OlympusIndex.new(
       indexData.name,
       indexData.symbol,

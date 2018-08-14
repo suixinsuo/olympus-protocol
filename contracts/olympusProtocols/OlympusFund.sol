@@ -26,11 +26,12 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     uint public constant DENOMINATOR = 10000;
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
-
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
     address[] public tokensBroken;
+    mapping(address=> uint) public tokensBrokenIndex; // Starts from 1
+
     uint public accumulatedFee = 0;
 
     // Mappeable
@@ -101,6 +102,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
 
+
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
@@ -111,14 +113,19 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
         require(getETHBalance() >= totalEthRequired);
 
-        require(
-            OlympusExchangeInterface(getComponentByName(EXCHANGE))
-            .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)
-        );
+        if(!OlympusExchangeInterface(getComponentByName(EXCHANGE)).buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)){
+
+            updateTokens(checkBrokenTokens(_tokens));
+
+            return false;
+        }
         updateTokens(_tokens);
         return true;
 
     }
+
+    event LogN(uint number, string text);
+    event LogA(address _address, string text);
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
@@ -131,7 +138,11 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
 
-        require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId));
+        if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
+            updateTokens(checkBrokenTokens(_tokens));
+            return false;
+        }
+
         updateTokens(_tokens);
         return true;
     }
@@ -264,7 +275,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
 
-
    // solhint-disable-next-line
     function withdraw()
         external
@@ -308,7 +318,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             balances[_requests[i]] = balances[_requests[i]].sub(_tokenAmount);
             totalSupply_ = totalSupply_.sub(_tokenAmount);
-            address(_requests[i]).transfer(_eth);
+            // Can be 0 in case all tokens are broken
+            if(_eth > 0 ) {
+                address(_requests[i]).transfer(_eth);
+            }
             // Unmap investor (do it at the end)
             removeInvestor(_requests[i]);
         }
@@ -321,7 +334,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         reimburse();
         return i == _requests.length; // True if completed
     }
-
 
     function handleTokensBroken(address _investor) internal returns(bool) {
 
@@ -339,6 +351,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             // Remove token broken completed
             if(requestPending == 0) {
+                  tokensBrokenIndex[tokensBroken[i]] = 0;
+
                 if (tokensBroken.length > 1) { // Swap the last one with the index, remove last element
                     tokensBroken[i] = tokensBroken[tokensBroken.length-1];
                     _tokenBalances[i] = _tokenBalances[tokensBroken.length-1]; // Also change the mapping
@@ -356,14 +370,15 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         // First check the length
         uint length = 0;
         for (uint i = 0; i < tokens.length; i++) {
-            if (amounts[tokens[i]] > 0) {length++;}
+            // Has balance and is NOT broken
+            if (tokensBrokenIndex[tokens[i]] == 0 && amounts[tokens[i]] > 0 ) {length++;}
         }
 
         ERC20Extended[] memory _tokensWithAmount = new ERC20Extended[](length);
         // Then create they array
         uint index = 0;
         for (uint j = 0; j < tokens.length; j++) {
-            if (amounts[tokens[j]] > 0) {
+            if (tokensBrokenIndex[tokens[j]] == 0 && amounts[tokens[j]] > 0) {
                 _tokensWithAmount[index] = ERC20Extended(tokens[j]);
                 index++;
             }
@@ -376,11 +391,12 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
+        ERC20Extended[] memory _tokensToSell = tokensWithAmount();
+        if(_tokensToSell.length == 0) {return true;}
+
         uint currentStep = stepProvider.initializeOrContinue(GETETH);
         uint i; // Current step to tokens.length
         uint arrayLength = stepProvider.getMaxCalls(GETETH);
-        ERC20Extended[] memory _tokensToSell = tokensWithAmount();
-
         if(arrayLength + currentStep >= _tokensToSell.length ) {
             arrayLength = tokens.length - currentStep;
         }
@@ -398,7 +414,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, 0);
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, _amounts[sellIndex]);
         }
-        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
+        if(!exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0)){
+            checkBrokenTokens(_tokensThisStep);
+            return false;
+        }
 
         if(i == tokens.length) {
             updateTokens(_tokensToSell); // Must update tokens at the end to keep _tokensToSell freeze
@@ -428,6 +447,31 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
+    function checkBrokenTokens(ERC20Extended[] _tokens) internal returns(ERC20Extended[]){
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        TokenBrokenInterface  tokenBrokenProvider = TokenBrokenInterface(getComponentByName(TOKENBROKEN));
+
+        uint[] memory _failedTimes = new uint[](_tokens.length);
+        _failedTimes = exchange.getFailedTradesArray(_tokens);
+        ERC20Extended[] memory _successtokens = new ERC20Extended[](_tokens.length);
+
+        for(uint t = 0;t < _tokens.length; t++) {
+
+            // Is successfull
+            if((_failedTimes[t]) <= 0 ){
+                _successtokens[t] = _tokens[t];
+                continue;
+            }
+            // Is broken, check if has balance to distribute
+            if(_tokens[t].balanceOf(address(this)) > 0) {
+                tokensBrokenIndex[_tokens[t]] = tokensBroken.push(_tokens[t]);
+                tokenBrokenProvider.calculateBalanceByInvestor(_tokens[t]);
+            }
+        }
+        return _successtokens;
+
+    }
+
 
     // solhint-disable-next-line
     function reimburse() private {
@@ -439,6 +483,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {
         ERC20 _tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
+            if(_updatedTokens[i] == address(0)){continue;}
+
             _tokenAddress = _updatedTokens[i];
             amounts[_tokenAddress] = _tokenAddress.balanceOf(this);
             if (amounts[_tokenAddress] > 0 && !activeTokens[_tokenAddress]) {
@@ -446,17 +492,12 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
                 activeTokens[_tokenAddress] = true;
                 continue;
             }
+
         }
         return true;
     }
 
-    // ----------------------------- MAPPEABLE -----------------------------
-
-    // TODO: Remove after merge with orange
-    function setBrokenToken(ERC20Extended _token) external returns(uint[]) {
-        TokenBrokenInterface(getComponentByName(TOKENBROKEN)).calculateBalanceByInvestor(_token);
-        tokensBroken.push(address(_token));
-    }
+    // ----------------------------- MAPPEABLE ----------------------------
 
     function addInvestor(address investor) internal {
         if (activeInvestorIndex[investor] == 0) {
