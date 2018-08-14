@@ -1,7 +1,7 @@
-# ProductList
+# Product List
 
 ### Decription
-ProductList is a storage that stores all funds and indices. The fund or index will be stored to the ProductList while executing the initialize function.
+ProductList is a storage that stores all funds and indices. The fund or index will be stored to the ProductList while executing the initialize function. The document serves as guideline to add tokenized cryptocurrency financial products to broaden your application’s product offerings.
 
 ### Get the productlistAddress
 > To use Product List, first of all, you will have to get the productlistAddress from ComponentList contract.
@@ -22,11 +22,13 @@ componentListContract.getComponentByName(productlistName,(err, address)=>{
 ```
 
 ### Interface
+
 #### 1. getAllProducts
 
 ```javascript
 function getAllProducts() external view returns (address[] allProducts);
 ```
+
 #### &emsp;Description
 > Call this function to get all products (including fund and index) that are in the product list.
 
@@ -50,11 +52,11 @@ productListContract.getAllProducts((err,productAddresses) => {
         return console.error(err);
       }
       if(fundType == 0){
-        // this is an index address.
+        // This is an index address.
       }else if (fundType == 1){
-        // this is a fund address.
+        // This is a fund address.
       }else{
-        // unexpected result.
+        // Handle unexpected result.
       }
 
   })
@@ -65,37 +67,13 @@ productListContract.getAllProducts((err,productAddresses) => {
         return console.error(err);
       }
       if(fundType == 0){
-        // this is an index address.
+        // This is an index address.
       }else if (fundType == 1){
-        // this is a fund address.
+        // This is a fund address.
       }else{
-        // unexpected result.
+        // Handle unexpected result.
       }
   })
-});
-```
-
-#### 2. getOwnProducts
-
-```javascript
-function getOwnProducts() external view returns (address[] addresses) ;
-```
-#### &emsp;Description
-> Call this function to get your own products (including fund and index) that are in the product list.
-
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
-
-```javascript
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const productListContract = web3.eth.contract(abi).at(address);
-
-productListContract.getOwnProducts((err,productAddresses) => {
-  if (err) {
-    return console.error(err);
-  }
-  console.log(productAddresses);
 });
 ```
 
