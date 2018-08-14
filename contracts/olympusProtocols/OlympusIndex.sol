@@ -80,6 +80,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(_componentList != 0x0);
         require(_rebalanceDeltaPercentage <= DENOMINATOR);
 
+        pausedCycle = 365 days;
+
         rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super._initialize(_componentList);
         bytes32[10] memory names = [
@@ -121,7 +123,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function close() public onlyOwner returns(bool success) {
+    function close() public OnlyOwnerOrWhitelistOrPausedTimeout(WhitelistKeys.Maintenance) returns(bool success) {
         require(status != DerivativeStatus.New);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
 
@@ -132,6 +134,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
         // emit ChangeStatus(status);
         reimburse();
+        closing = 1;
         return _completed;
     }
 

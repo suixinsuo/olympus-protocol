@@ -85,7 +85,7 @@ contract MockFund is FundInterface, Derivative {
         return true;
     }
 
-    function close() public OnlyOwnerOrPausedTimeout returns(bool success) {
+    function close() public OnlyOwnerOrWhitelistOrPausedTimeout(WhitelistKeys.Maintenance) returns(bool success) {
         require(status != DerivativeStatus.New);
 
         status = DerivativeStatus.Closed;
