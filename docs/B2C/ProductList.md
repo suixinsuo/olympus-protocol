@@ -1,7 +1,7 @@
 # Product List
 
 ### Decription
-ProductList is a storage that stores all funds and indices. The fund or index will be stored to the ProductList while executing the initialize function. The document serves as guideline to add tokenized cryptocurrency financial products to broaden your application’s product offerings.
+ProductList is a storage that stores all funds and indices. The document serves as guideline to add tokenized cryptocurrency financial products to broaden your application’s product offerings.
 
 ### Get the productlistAddress
 > To use Product List, first of all, you will have to get the productlistAddress from ComponentList contract.
