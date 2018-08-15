@@ -219,7 +219,8 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         }
 
         uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_minimumRate,_amount,true);
-        uint returnedAmountOfTokens = tokenToConverter[address(_token)].quickConvert.value(_amount)(path,_amount,minimumReturn);
+        //Always use the bancor converter, because we are always buying with ETH first through this method
+        uint returnedAmountOfTokens = tokenToConverter[address(bancorToken)].quickConvert.value(_amount)(path,_amount,minimumReturn);
         require(returnedAmountOfTokens > 0, "BancorConverter did not return any tokens");
         ERC20NoReturn(_token).transfer(_depositAddress, returnedAmountOfTokens);
         return true;
