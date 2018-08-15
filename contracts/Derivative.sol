@@ -33,7 +33,6 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
 
     uint public pausedTime;
     uint public pausedCycle;
-    uint public closing = 0 ;
 
     function pause() onlyOwner whenNotPaused public {
         paused = true;

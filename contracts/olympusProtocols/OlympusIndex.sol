@@ -134,7 +134,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
         // emit ChangeStatus(status);
         reimburse();
-        closing = 1;
+        status = DerivativeStatus.Closing;
         return _completed;
     }
 
@@ -235,7 +235,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
     }
 
-  function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
+    function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
         if(stepProvider.getStatus(GETETH) == 0) {
@@ -244,7 +244,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 return true;
             }
             // tokenPercentToSell must be freeze as class variable
-           freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
+            freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
         }
         return getETHFromTokens(freezeBalance);
     }
@@ -273,10 +273,10 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         if (_transfers == 0){
             if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){
-              reimburse();
-              return false;
+                reimburse();
+                return false;
             }
-           withdrawProvider.freeze();
+            withdrawProvider.freeze();
         }
 
         for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
@@ -395,7 +395,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             _amounts[_buyIndex] = freezeBalance.mul(weights[i]).div(100);
             _tokensErc20[_buyIndex] = ERC20Extended(tokens[i]);
             (, _rates[_buyIndex] ) = exchange.getPrice(ETH, _tokensErc20[_buyIndex], _amounts[_buyIndex], 0x0);
-             _totalAmount = _totalAmount.add(_amounts[_buyIndex]);
+            _totalAmount = _totalAmount.add(_amounts[_buyIndex]);
         }
 
         require(exchange.buyTokens.value(_totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0));

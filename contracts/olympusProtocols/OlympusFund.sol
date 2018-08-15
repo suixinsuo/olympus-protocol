@@ -124,9 +124,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     }
 
-    event LogN(uint number, string text);
-    event LogA(address _address, string text);
-
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
 
@@ -183,7 +180,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         if(!getETHFromTokens(DENOMINATOR)){
             reimburse();
-            closing = 1;
+            status = DerivativeStatus.Closing;
             return false;
         }
         status = DerivativeStatus.Closed;
@@ -352,7 +349,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             // Remove token broken completed
             if(requestPending == 0) {
-                  tokensBrokenIndex[tokensBroken[i]] = 0;
+                tokensBrokenIndex[tokensBroken[i]] = 0;
 
                 if (tokensBroken.length > 1) { // Swap the last one with the index, remove last element
                     tokensBroken[i] = tokensBroken[tokensBroken.length-1];
