@@ -118,7 +118,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function getTokens() public view returns (address[] _tokens, uint[] _weights) {
         return (tokens, weights);
-    }
+  }
 
     // solhint-disable-next-line
     function close() public onlyOwner returns(bool success) {

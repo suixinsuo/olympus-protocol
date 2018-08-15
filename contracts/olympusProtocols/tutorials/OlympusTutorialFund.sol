@@ -9,7 +9,7 @@ import "../../interfaces/LockerInterface.sol";
 import "../../libs/ERC20NoReturn.sol";
 
 
-contract OlympusBasicFund is FundInterface, BaseDerivative {
+contract OlympusTutorialFund is FundInterface, BaseDerivative {
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH
@@ -31,7 +31,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
     uint public MAX_INVESTORS;
     uint public currentNumberOfInvestors;
 
-    uint public constant TRADE_INTERVAL = 7 days;
+    uint public constant TRADE_INTERVAL = 0 seconds;
     bytes32 public constant LOCKER = "LockerProvider";
 
     constructor(
@@ -60,6 +60,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
         super._initialize(_componentList);
         bytes32[4] memory names = [MARKET, EXCHANGE, WITHDRAW, LOCKER];
+        excludedComponents.push(LOCKER);
 
         for (uint i = 0; i < names.length; i++) {
             // updated component and approve MOT for charging fees
@@ -117,7 +118,6 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
             lockerProvider.checkLockerByTime(bytes32(address(_tokens[i])));
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
-
         }
 
         require(exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId));
@@ -129,7 +129,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
     function invest() public payable returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
-        require(currentNumberOfInvestors < MAX_INVESTORS, "Only limited number can invest");
+        require(balances[msg.sender] > 0 || currentNumberOfInvestors < MAX_INVESTORS, "Only limited number can invest");
 
          // Current value is already added in the balance, reduce it
         uint _sharePrice;

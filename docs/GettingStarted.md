@@ -171,11 +171,15 @@ Here we have made three changes:
 
 3. Now we need to keep track of the number of investors and check if it reaches the maximum when investing.
 
+> balances[msg.sender] > 0 currentNumberOfInvestors < MAX_INVESTORS
+
+We will allow you to invest either if you are a current investor ` balances[msg.sender] > 0 ` OR there is room for new investors `currentNumberOfInvestors < MAX_INVESTORS`
+
 ```javascript
 function invest() public payable returns(bool) {
     require(status == DerivativeStatus.Active, "The Fund is not active");
     require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
-    require(currentNumberOfInvestors < max_investors, "Only limited number can invest"); // New line
+    require(balances[msg.sender] > 0 currentNumberOfInvestors < MAX_INVESTORS, "Only limited number can invest"); // New line
 
     /// Current code
 
@@ -226,7 +230,209 @@ _ Testing it on Kovan testnet.
 
 ## Adding test cases.
 
-[TBD]
+Several test cases has been already created for all our functionalities. You can run with the alias
+
+> `npm run test`
+
+that will test all the testcases. This is not optimum when creating test cases, we want to run only the test we are creating.
+Run in one terminal the command
+
+> './node_modules/.bin/testrpc-sc -l 1e8'
+
+to start the ganache server. You will see that this server starts with 9 different accounts which hold ether. Then, in another terminal we can run
+
+> truffle test
+
+that will test all files, or specify test file.
+
+> truffle test test/fund/TestBasicfund.js
+
+Run the command and observe that all basic fund test cases are succeeding.
+
+In order to create the test cases we dont need neither to start from zero. As we copied the `OlympusBasicFund.sol` we
+are going to start from the basic. Copy the test file of `test/funds/TestBasicFund` to your own test folder `test/myTests`.
+
+```
+test
+    funds
+        TestBasicFund.sol <-- Copy this
+    myTests
+        TestMyBasicFund.sol  <-- In your own folder
+```
+
+We will customize the test to cover the new situations we have added.
+
+
+ 1. Import the correct fund Modify the initialize function
+
+Despite we copied the fund test, the test is still utilizing the `OlympusBasicFund`.
+
+```javascript
+//Find this line
+const Fund = artifacts.require("OlympusBasicFund");
+// Replace for the name you gave to the fund
+const Fund = artifacts.require("MyBasicFund");
+```
+
+We can change also the name of the test
+
+```javascript
+contract("My Basic Fund test", accounts => {
+```
+
+In the previous function we have modify the initialize function, if we now try to run test cases it will fail with an error
+
+> Error: Invalid number of arguments to Solidity function
+
+What is worst as the result of a test case affects the other test of the flow, all test will probably fail. (Don't panic down)
+Lets add the default value, first add a line to the dummy data
+
+```javascript
+const fundData = {
+  name: "OlympusBasicFund",
+  symbol: "MBF",
+  category: "Tests",
+  description: "Sample of base fund",
+  decimals: 18,
+  maxInvestors: 2  // Add this line
+};
+```
+
+Modify the create fund test.
+
+```javascript
+  it("Create a fund", async () => {
+    // Find initialize line and add the parametter
+    await fund.initialize(componentList.address, indexData.maxInvestors);
+
+  });
+
+```
+There is a second test case checking that we can't initialize twice(it means it will revert the second time we call). But now will provide the Invalid number of arguments error, instead of a revert error.
+
+
+```javascript
+  it("Cant call initialize twice ", async () => {
+    await calc.assertReverts(async () => {
+      await fund.initialize(componentList.address, fundData.maxInvestors);
+    }, "Shall revert");
+  });
+```
+
+Now all tests are passing.
+
+2. Add conditions to check number of investors.
+
+We need to understand that the result of one test will affect the other one
+
+>   it("Fund shall allow investment", async () => {
+
+In this test we are investing twice (in the margin!)
+
+>   it("Shall be able to request and withdraw", async () => {
+
+  In the next test we are withdrawing twice. So the counter shall reduce and allow investment agian.
+
+>  it("Shall be able to invest", async () => {
+
+  In the final test we are investing again twice.
+  So that mins the counter has being reseted.
+
+  What is missing?
+  - We need to add test to check the counter
+  value is as expected.
+  - We need to force the situation a third
+  investor test and it will revert.
+
+  Lets start checking in the create index test that
+  the `MAX_INVESTORS` variable is initialize correctly.
+
+```javascript
+
+  assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
+  // Add this line below
+  assert.equal((await fund.MAX_INVESTORS()).toNumber(), fundData.maxInvestors, 'Max Investors is correctly initialized');
+
+```
+
+`MAX_INVESTORS` is a public constant, solidity
+creates automatically getters to the public function of the contract. The result is provided into javascript as `BigNumber` object, which is able to codify numbers much bigger than a number variable can store. But in order to compare we put it back `.toNumber()`.
+
+Also realize that every time that we call a function in the fund we use the `await` key word. calling a function in the block chain is slow (in main net can take even minutes or hours). The result of the function will return a promise to be satisfy in the future. Using the command `await` we communicate that the function shall wait until the result is confirmed.
+
+In the test "Shall be able to invest" lets renamed to "Shall be able to invest until maximum investors" and  add a
+check for the counter.
+
+```javascript
+    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
+    await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
+```
+
+as well that gets reduced on withdraw
+
+```javascript
+  await fund.withdraw({ from: investorA });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
+```
+
+```javascript
+  await fund.withdraw({ from: investorB });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 0);
+```
+
+In the test cases are more investments and withdraws, but is enough to check it once.
+
+2. Checking the special scenarios
+
+Only two investors are allowed at the same time,
+but we wanted to allow to a current investor keep investing.
+
+In the test we invest 1 ETH, lets do it in two
+parts, invest 0.5 ETH twice. (So will start withdraw 1 ETH at the end of the code)
+
+
+```javascript
+
+    // Invest allowed
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
+
+    // Actual investors can invest again
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
+
+```
+
+The old investors can keep investing, but a new investorC shall not. We are going to use our own implementation of assertReverts (that requires await as is asynchronous, and accept and asynchronous function as parameter)
+
+```javascript
+    await calc.assertReverts(async () =>
+      await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorC }),
+      'Third investor can`t invest'
+    );
+```
+
+When calling a function from test cases to solidity, we need to add the same name of arguments than required, plus we have and extra argument to allow to customize the call. Invest in ded requires 0 arguments plus the customization:
+
+ > {from: address, value: valueInWei}
+
+If from is not set, will be called by default from accounts[0], which in our test is the account that has created all components and derivatives.
+
+Value serves us to set the ETH that the function will accept. Only payable function require value to have `a value` and the rest non payable will revert if value parameter is used.
+
+Now our test is covering the main features of
+our customized derivative. As a homewokr, you
+can also verify that initialize with `MAX_INVESTORS` to zero will revert. As you can't initialize twice, you shall test it before the succesfull initialization.
+
+Troublesome:
+> TypeError: msg.replace is not a function
+
+This exception is produced by a calc.assertReverts that it hasn't eventually reverted.
 
 ## Testing on Kovan using Remix.
 
@@ -256,6 +462,68 @@ This creates the concatenated contracts in `/build/` folder which can be used in
 
 If the compilation of remix is successfully you can go to the run tab, and you will find all the list of contracts compiled in the current file. Choose the MyProduct in the list and click `create` or `deploy` to deploy to the selected network according to your metamask (Kovan testnet in this case).
 
-After it's deployed, the contract will be showing at the bottom, by expanding it, you can execute the functions according to the flow we described above. Test the functions one by one and make sure they all pass before you release it.
+Remix allows one single line input, separated by comas, or you can click in the arrow to fill input by input. After you submit remix will clear out your input, so we recommend to copy the "collapsed" in one line and copy in a notebook, will make your life easier to repeat the tests.
+
+For example you can add this to deploy a index
+> "Sample Fund","SFP","Testing fund","Funds","18"
+
+After it's deployed, the contract will be showing at the bottom, by expanding it, you can execute the functions according to the flow we described above. The pink functions will create transactions that we need to approve in metamask, while the blue are view functions that will retrieve directly the storage value.
+
+After that we will need to initialize the index
+
+> "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e", 5
+
+The entry will use our olympus component list deployed in kovan and 5 as maximum investors.
+
+Once the fund is initalized, we can invest. Invest requires no parameter but some ETH. Realize in the top of the right column there is information of the address you are using and also the value send to the contract. (You can select the unit ether or wei as you requires)
+
+> For example, initalize 0.05 ETH in the fund.
+
+A continuation you can use the view (blue) functions to check your balance of Fund Token, utilizing the address you invested as parameter.
+
+You can check the counter of investors value and try to withdraw your tokens.
+
+Other way to know the balance of your fund token
+is to add the fund address to metamask. The derivative follows ERC20 standard and willa appear as one more of your collection.
+
+Test the functions one by one and make sure they all pass before you release it.
+
+Copy the address of your deployed testing derivative, it will remain in the chain forever!
+Next time you want to use it, you can utilize the function contract at (the address of your contract) and the derivative will appear again in your remix. (For example, required if you reload the page).
+
+## Trouble some in remix
+
+> errored: Error encoding arguments: Error: invalid address (arg="", type="string", value="")
+
+Your parameters are wrong, or you miss one
+Addresses must start with 0x and be full address.
+Array of addresses or long numbers shall enclose their value between "" ["address","address"].
+bytes32 you can chose 0x0 for example.
+
+> Out of gas on deployment:
+The contract byte code is too big, you shall optimize the code and reduce the byte size to deploy. The maximum size allowed is determined by the blocks, at the time of this tutorial 7 million gas approximately.
+
+> View (blue buttons) are not giving response.
+
+Make sure that the file open in the editor is the same of the contract you are trying to check the view functions.
+
+> All function suddenly reverts:
+
+Reload remix.
+
+> Metamask launch the transaction but it fails as out of gas:
+
+Functions that use reimbursable require little more of gas than default proposed. Increase the amount manually in metamask.
+
+> Revert:
+
+Before metamask opens a error that transaction will appear will revert. 90% of the cases is true, 10% may still succeed the transaction, but that will be more special issue.
+
+If you need to debug a revert try to:
+ - Reproduce the issue in test cases first.
+ - Check the view values (make all attributes of contract public), make manually step by step in a paper to find out what is the issue.
+ - Copy the function is reverting and make copies of it (func2, func3, func4) connecting a line in each version. So you can figuerout which line and why is reverting.
+
+Testing revert on remix can get tiresome if you have many steps before the issue happen, try to create shortcuts and simplify your code to make remix testing easier.
 
 For more information on Remix, check the [Complete Manual](https://remix.readthedocs.io/en/latest/).

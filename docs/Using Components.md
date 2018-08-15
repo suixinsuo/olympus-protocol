@@ -1,10 +1,12 @@
-## 7. Using Olympus components.
+## Using Olympus components.
+
+[This is second part of GetStarted tutorial and we use same files]
 
 Olympus offer a great variety of components that allow us to increase the capability of the fund with only a few lines. In this scenario we want to give some guarantee to our investors that his money is not going to be wasted in buy/sell transactions by the owner. We will allow the owner only to make operations on a concrete token once every 1 week.
 
 In order to accomplish that, we need a set of new variables and logics, hopefully, we can also use the interface `LockerContainer` that will allow us to create any kind of timers in our fund. You can check [LockerProvider ABI](http://broken-link) in the documentation.
 
-We import the Locker interface
+1. We import the Locker interface
 
 ```
 import "../../interfaces/LockerInterface.sol";
@@ -12,7 +14,7 @@ import "../../interfaces/LockerInterface.sol";
 
 Make sure we import the interface in the top of the contract, together the other imports.
 
-We create component identifier.
+2. We create component identifier.
 
 ```
    bytes32 public constant LOCKER = "LockerProvider";
@@ -23,7 +25,7 @@ We create a constant that will represent the locker component in our component l
 Realize we set bytes32 instead of string. In the code both looks the same but in solidity bytes32 utilize much less memory making a big difference of gas while deploying the contract. (As our team experienced in the code optimization phases).
 We set a constant of 7 days between operations.
 
-We initialize the component
+3. We initialize the component
 
 `````
   function initialize(address _componentList, uint _maxInvestors) external onlyOwner {
@@ -32,6 +34,7 @@ We initialize the component
        super._initialize(_componentList);
 	// We just add LOCKER to the array.
        bytes32[4] memory names = [MARKET, EXCHANGE, WITHDRAW, LOCKER];
+        excludedComponents.push(LOCKER); // Add this line
 
        for (uint i = 0; i < names.length; i++) {
            // updated component and approve MOT for charging fees
@@ -42,12 +45,17 @@ We initialize the component
         // REST OF CODE
    }
 	````
-We don’t need a new parametters to set the component. Realize that initialize takes `ComponentList` address as parametter. You shall utilize the active Olympus Component List, then you have inmediately access to all our components, including the capability to update to the latests version once your fund is published.
-We add LOCKER to the name list (and increase the size of the list to 4). LOCKER already contains the same name that Locker component holds in our component list, so will be automatically selected.
-updateComponent inside the loop will chose the latest version of the LockerProvider as well as approve this component to take MOT from the fund. Most of components of our providers are fee, but some of them may have a fee charge in MOT. For this reason, is important to encourage to the owner to keep certain quantity of MOT in his fund.
-`````
+a) We don’t need a new parameters to set the component. Realize that initialize takes `ComponentList` address as parameter.
 
-Initialize locker
+b) You shall utilize the active Olympus Component List, then you have immediately access to all our components, including the capability to update to the latests version once your fund is published.
+
+c) Exclude Locker, locker is not fee chargeable so is not required to approve MOT for its use.
+
+> excludedComponents.push(LOCKER);
+
+c) We add LOCKER to the name list (and increase the size of the list to 4). LOCKER already contains the same name that Locker component holds in our component list, so will be automatically selected updateComponent inside the loop will chose the latest version of the LockerProvider as well as approve this component to take MOT from the fund. Most of components of our providers are fee, but some of them may have a fee charge in MOT. For this reason, is important to encourage to the owner to keep certain quantity of MOT in his fund.
+
+5. Initialize locker
 
 In this case, we don’t have a unique interval, but a interval for each token. We need to initialize each interval the first time a new token is added into the fund. No worries, that logic is already present:
 
@@ -110,7 +118,9 @@ In case is the first time we buy a token, the current value of the interval will
 There is a small issue, the interval won’t apply til the second purchase. You can think how to apply the interval from the first moment in a optimum way as a challenge.
 
 5.  Add the interval check in sell tokens
-    function sellTokens(bytes32 \_exchangeId, ERC20Extended[] \_tokens, uint[] \_amounts, uint[] \_rates)
+
+```javascript
+    function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _rates)
     public onlyOwner returns (bool) {
 
            LockerInterface lockerProvider = LockerInterface(getComponentByName(LOCKER));
@@ -130,6 +140,55 @@ There is a small issue, the interval won’t apply til the second purchase. You 
            return true;
 
 }
+
+```
 Similar code as before, we get the component, and in the same loop we are giving approval to the exchange provider to exchange the token, we check the locker provider.
 If the timer is not initialize will be initialize while using updateTokens internal function.
 Remember the checkInterval will revert if any of the tokens delay hasn’t pass, reverting the full selling transaction.
+
+## Testing
+
+We recover the test file that we have utilized to test our own fund, and we will add the required modifications to test this new functionality.
+
+1. First, enable Locker component.
+
+In kovan or mainnet the component list is already setted and the providers updated. But in local we need to set this manually.
+
+```javascript
+const LockerProvider = artifacts.require("Locker");
+```
+
+First import the LockerProvider.
+Then in the `before(` function we set the component as the other providers
+
+```javascript
+  let asyncWithdraw;
+  let componentList;
+  let LockerProvider; // <-- Add this line
+```
+
+```javascript
+ exchange = await ExchangeProvider.deployed();
+    asyncWithdraw = await AsyncWithdraw.deployed();
+    lockerProvider = await LockerProvider.deployed(); // <-- Add this line
+ ```
+
+```javascript
+componentList.setComponent(DerivativeProviders.WITHDRAW, asyncWithdraw.address);
+    componentList.setComponent(DerivativeProviders.LOCKER, lockerProvider.address);
+  // <-- Add this line
+```
+
+We are declaring the variable, initializing the locker (deployed), and setting it in our component list.
+
+We can observe the next interesting function in the test
+
+```javascript
+    await exchange.setMotAddress(mockMOT.address);
+```
+Some providers are chargable by Olympus, I mean, the fund manager is required to pay to Olympus small quantity of MOT for calling this function.
+
+The MOT address is hardcore in the code and belongs to the real MOT mainnet address. But in the scenarios of Kovan or test cases, we need to set the mot address manually.
+  > In kovan set MOT kovan address.
+  > In test cases, use the mockMOT which is a contract created as a mock to pretend the behaviour of the MOT coin.
+

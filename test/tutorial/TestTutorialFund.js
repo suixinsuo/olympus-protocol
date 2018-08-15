@@ -1,11 +1,12 @@
 const log = require("../utils/log");
 const calc = require("../utils/calc");
 const { DerivativeProviders, ethToken, DerivativeStatus, DerivativeType } = require("../utils/constants");
-const Fund = artifacts.require("OlympusBasicFund");
+const Fund = artifacts.require("OlympusTutorialFund");
 const AsyncWithdraw = artifacts.require("components/widrwaw/AsyncWithdraw");
 const Marketplace = artifacts.require("Marketplace");
 const MockToken = artifacts.require("MockToken");
 const ComponentList = artifacts.require("ComponentList");
+const LockerProvider = artifacts.require("Locker");
 
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
@@ -18,13 +19,14 @@ const fundData = {
   category: "Tests",
   description: "Sample of base fund",
   decimals: 18,
+  maxInvestors: 2,
 };
 
 const toTokenWei = amount => {
   return amount * 10 ** fundData.decimals;
 };
 
-contract("BasicFund", accounts => {
+contract("Tutorial Fund", accounts => {
   let fund;
   let market;
   let mockKyber;
@@ -33,10 +35,14 @@ contract("BasicFund", accounts => {
   let exchange;
   let asyncWithdraw;
   let componentList;
+  let lockerProvider;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
+
+  // ----------------------------- REQUIRED FOR CREATION ----------------------
+
   before("Set Component list", async () => {
     mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
@@ -44,6 +50,7 @@ contract("BasicFund", accounts => {
     tokens = await mockKyber.supportedTokens();
     exchange = await ExchangeProvider.deployed();
     asyncWithdraw = await AsyncWithdraw.deployed();
+    lockerProvider = await LockerProvider.deployed();
     componentList = await ComponentList.deployed();
 
     await exchange.setMotAddress(mockMOT.address);
@@ -52,7 +59,10 @@ contract("BasicFund", accounts => {
     componentList.setComponent(DerivativeProviders.MARKET, market.address);
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchange.address);
     componentList.setComponent(DerivativeProviders.WITHDRAW, asyncWithdraw.address);
+    componentList.setComponent(DerivativeProviders.LOCKER, lockerProvider.address);
+
   });
+
 
   it("Create a fund", async () => {
     fund = await Fund.new(
@@ -66,7 +76,7 @@ contract("BasicFund", accounts => {
 
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
 
-    await fund.initialize(componentList.address);
+    await fund.initialize(componentList.address, fundData.maxInvestors);
     const myProducts = await market.getOwnProducts();
 
     assert.equal(myProducts.length, 1);
@@ -74,11 +84,14 @@ contract("BasicFund", accounts => {
     assert.equal((await fund.status()).toNumber(), 1); // Active
     // The fee send is not taked in account in the price but as a fee
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
+    assert.equal((await fund.MAX_INVESTORS()).toNumber(), fundData.maxInvestors, 'Max Investors is correctly initialized');
+
   });
+  // ----------------------------- CONFIG TEST  ----------------------
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
-      await fund.initialize(componentList.address);
+      await fund.initialize(componentList.address, fundData.maxInvestors);
     }, "Shall revert");
   });
 
@@ -105,6 +118,8 @@ contract("BasicFund", accounts => {
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
 
+  // ----------------------------- INVESTMENT AND WITHDRAW ----------------------
+  // This two test are depending on each other
   it("Fund shall allow investment", async () => {
     let tx;
     // With 0 supply price is 1 eth
@@ -137,20 +152,37 @@ contract("BasicFund", accounts => {
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
   });
 
-  it("Shall be able to invest", async () => {
+  // ----------------------------- MAXIMUM INVESTORS ----------------------
+
+  it("Shall be able to invest until maximum investors", async () => {
     let tx;
 
-    // invest allowed
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
+    // Invest allowed
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
 
+    // // Actual investors can invest again
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
+
+    await calc.assertReverts(
+      async () => { await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorC }) },
+      'Third investor can`t invest'
+    );
     // Request always allowed
     await fund.withdraw({ from: investorA });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
 
     await fund.withdraw({ from: investorB });
+    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 0);
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, " B has withdrawn");
   });
+
+  // ----------------------------- BUY TOKENS ----------------------
 
   it("Buy tokens fails if ether required is not enough", async () => {
     // invest allowed
@@ -167,7 +199,7 @@ contract("BasicFund", accounts => {
 
     await calc.assertReverts(
       async () => await fund.buyTokens(0x0, tokens, amounts, rates.map(rate => rate[0])),
-      "reverte if fund balance is not enough"
+      "revert if fund balance is not enough"
     );
   });
 
@@ -200,6 +232,8 @@ contract("BasicFund", accounts => {
     assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(0.8, "ether"), "ETH balance reduced");
   });
 
+  // ----------------------------- SELL TOKENS ----------------------
+  // Depend on the tokens buy in previous section
   it("Shall be able to sell tokens", async () => {
     let tx;
     // From the preivus test we got 1.8 ETH
@@ -262,6 +296,8 @@ contract("BasicFund", accounts => {
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
   });
+  // At the end of this section all tokens has been sold and withdraw
+  // ----------------------------- CLOSE A FUND ----------------------
 
   it("Shall be able to change the status", async () => {
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Active, "Status Is active");
@@ -321,4 +357,8 @@ contract("BasicFund", accounts => {
     await fund.withdraw({ from: investorC });
     assert.equal((await fund.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
   });
+
+  // ----------------------------- END ----------------------
+  // We can't add more test after the fund is closed
+
 });

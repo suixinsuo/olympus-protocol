@@ -137,7 +137,7 @@ contract("Fund", accounts => {
 
     //buy token0 normally
     await fund.buyTokens("", [tokens[0]], [amounts[0]], [rates.map(rate => rate[0])[0]]);
-    //set all broken 
+    //set all broken
     await mockKyber.toggleSimulatePriceZero(true);
     //buy token0 broken
     await fund.buyTokens("", [tokens[0]], [amounts[0]], [rates.map(rate => rate[0])[0]]);
@@ -157,7 +157,7 @@ contract("Fund", accounts => {
     assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0, "1st token");
     assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 500000000000000000000, "2st token");
 
-    
+
     // 2 Users Invest
     // Buy tokens successfully
     // 2 Users request withdraw
@@ -178,7 +178,7 @@ contract("Fund", accounts => {
     );
     const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
     await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0])); //buy token normally
-    
+
     assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 500000000000000000000, "1st token");
 
 
@@ -195,7 +195,7 @@ contract("Fund", accounts => {
 
     const investorAToken0 = (await token0_erc20.balanceOf(investorA)).toNumber();
     const investorAToken1 = (await token1_erc20.balanceOf(investorA)).toNumber();
-    //from the first test we get 0.5eth of token 
+    //from the first test we get 0.5eth of token
     assert.equal(investorAToken0, 500000000000000000000*2, 'Token 0 amount broken withdrawed');
     assert.equal(investorAToken1, 500000000000000000000, 'Token 1 amount broken withdrawed');
     await calc.assertInvalidOpCode(async () => await fund.tokensBroken(0), "Array is empty");
