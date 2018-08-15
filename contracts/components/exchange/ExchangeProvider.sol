@@ -164,12 +164,18 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         require(totalValue == msg.value, "msg.value is not the same as total value");
     }
 
-    function getFailedTradesArray(ERC20Extended[] _tokens) private view returns (uint[] memory failedTimes) {
+    function getFailedTradesArray(ERC20Extended[] _tokens) public view returns (uint[] memory failedTimes) {
         failedTimes = new uint[](_tokens.length);
         for(uint i = 0; i < _tokens.length; i++){
-            failedTimes[i] = amountOfTradeFailures[msg.sender][address(ETH)][address(_tokens[i])];
+            failedTimes[i] = amountOfTradeFailures[msg.sender][address(ETH)][address(_tokens[i])] +
+            amountOfTradeFailures[msg.sender][address(_tokens[i])][address(ETH)];
         }
         return failedTimes;
+    }
+    function getFailedTrade(address _token) public view returns (uint failedTimes) {
+
+        return amountOfTradeFailures[msg.sender][address(ETH)][address(_token)];
+
     }
 
     function buyTokens
@@ -180,6 +186,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         failureFeeToDeduct = 0;
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         uint i;
+
         OlympusExchangeAdapterInterface adapter;
         bool completeSuccess = true;
 
@@ -213,6 +220,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         address _depositAddress, bytes32 _exchangeId
         ) external returns(bool success) {
         sellMultipleTokenFee = 0;
+        functionCompleteSuccess = true;
         require(_tokens.length == _amounts.length && _amounts.length == _minimumRates.length, "Arrays are not the same lengths");
         OlympusExchangeAdapterInterface adapter;
         uint i;

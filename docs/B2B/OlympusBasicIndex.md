@@ -1,7 +1,7 @@
-# Index
+# Basic Index
 
 ### Introduction
-An index is an indicator or measure of something, and in finance, it typically refers to a statistical measure of change in a securities market. In the case of financial markets, stock and bond market indexes consist of a hypothetical portfolio of securities representing a particular market or a segment of it. Olympus Basic Index contains basic interfaces that an index needs.
+An index is an indicator or measure of something, and in finance, it typically refers to a statistical measure of change in a securities market. In the case of financial markets, stock and bond market indexes consist of a hypothetical portfolio of securities representing a particular market or a segment of it. Olympus Basic Index contains basic interfaces that an index needs. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
 ### Constructor
 
@@ -14,7 +14,7 @@ constructor (
       uint _decimals,
       address[] _tokens,
       uint[] _weights)
-      public checkLength(_tokens, _weights) checkWeights(_weights)
+      public checkLength(_tokens, _weights) checkWeights(_weights);
 ```
 
 #### &emsp;Parameters
@@ -96,7 +96,7 @@ web3.eth.contract(abi).new(
 ```
 
 ### Basic info
-> The code below shows how to get index's basic information, including fund's name, symbol, category and decimals.
+> The code below shows how to get index's basic information, including index's name, symbol, description, category and decimals.
 
 ```javascript
 const Web3 = require("web3");
@@ -144,7 +144,7 @@ indexContract.decimals((err,decimals)=>{
 #### 1. initialize
 
 ```javascript
-function initialize(address _componentList, uint _rebalanceDeltaPercentage) external onlyOwner
+function initialize(address _componentList, uint _rebalanceDeltaPercentage) external onlyOwner;
 ```
 
 #### &emsp;Description
@@ -152,7 +152,7 @@ function initialize(address _componentList, uint _rebalanceDeltaPercentage) exte
 
 #### &emsp;Parameters
 > _componentList: address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
-  _rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:</br>
+> _rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:</br>
     1 = 0.01%</br>
     10 = 0.1%</br>
     100 = 1%</br>
@@ -175,37 +175,10 @@ indexContract.initialize(_componentList, _rebalanceDeltaPercentage, {from: web3.
 });
 ```
 
-#### 2. invest
+#### 2. buyTokens
 
 ```javascript
-function invest() public payable returns(bool)
-```
-
-#### &emsp;Description
-> Invest in the index by calling the invest function while sending Ether to the index fund.
-
-#### &emsp;Returns
-> Whether the function executed successfully or not.
-
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
-
-```javascript
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-const investAmount = 1 ** 17;
-indexContract.invest({value: investAmount}, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
-});
-```
-
-#### 3. buyTokens
-
-```javascript
-function buyTokens() external returns(bool)
+function buyTokens() external returns(bool);
 ```
 
 #### &emsp;Description
@@ -229,10 +202,10 @@ indexContract.buyTokens((err, result) => {
 });
 ```
 
-#### 4. rebalance
+#### 3. rebalance
 
 ```javascript
-function rebalance() public  returns (bool success)
+function rebalance() public  returns (bool success);
 ```
 
 #### &emsp;Description
@@ -271,14 +244,17 @@ rebalance((err,result)=>{
 });
 ```
 
-#### 5. withdraw
+#### 4. withdraw
 
 ```javascript
-function withdraw() external returns(bool)
+function withdraw() external returns(bool);
 ```
 
 #### &emsp;Description
 > This function is for investors to withdraw all their investment.
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -295,14 +271,17 @@ indexContract.withdraw((err, result) => {
 });
 ```
 
-#### 6. close
+#### 5. close
 
 ```javascript
-function close() public onlyOwner returns(bool success)
+function close() public onlyOwner returns(bool success);
 ```
 
 #### &emsp;Description
 > Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment.)
+
+#### &emsp;Returns
+> Whether the function executed successfully or not.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -324,6 +303,3 @@ indexContract.close((err, result) => {
 
 ### bytecode
 > You can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
-
-### Olympus componentList address
-> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
