@@ -196,7 +196,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
 
         ERC20NoReturn(_token).approve(address(bancorConverter), 0);
         ERC20NoReturn(_token).approve(address(bancorConverter), _amount);
-        uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, false);
+        uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_minimumRate,_amount,false);
         uint returnedAmountOfETH = bancorConverter.quickConvert(path,_amount,minimumReturn);
         require(returnedAmountOfETH > 0, "BancorConverter did not return any ETH");
         address(_depositAddress).transfer(returnedAmountOfETH);
@@ -217,7 +217,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
             path[i] = internalPath[i];
         }
 
-        uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, true);
+        uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_minimumRate,_amount,true);
         uint returnedAmountOfTokens = tokenToConverter[address(_token)].quickConvert.value(_amount)(path,_amount,minimumReturn);
         require(returnedAmountOfTokens > 0, "BancorConverter did not return any tokens");
         ERC20NoReturn(_token).transfer(_depositAddress, returnedAmountOfTokens);
