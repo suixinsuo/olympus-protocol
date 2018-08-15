@@ -180,7 +180,8 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
-    ) external checkTokenSupported(_token) returns(bool success) {
+    ) external returns(bool success) {
+        require(address(tokenToConverter[_token]) != 0x0, "Token not supported");
         require(_token.balanceOf(address(this)) >= _amount, "Balance of token is not sufficient in adapter");
         ERC20Extended[] memory internalPath;
         ERC20Extended[] memory path;
@@ -197,7 +198,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         ERC20NoReturn(_token).approve(address(bancorConverter), 0);
         ERC20NoReturn(_token).approve(address(bancorConverter), _amount);
         uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_minimumRate,_amount,false);
-        uint returnedAmountOfETH = bancorConverter.quickConvert(path,_amount,minimumReturn);
+        uint returnedAmountOfETH = bancorConverter.quickConvert.value(0)(path,_amount,minimumReturn);
         require(returnedAmountOfETH > 0, "BancorConverter did not return any ETH");
         address(_depositAddress).transfer(returnedAmountOfETH);
         return true;
