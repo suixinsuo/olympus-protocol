@@ -2,7 +2,7 @@
 
 ### Introduction
 
-An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares.
+An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
 ### Constructor
 
@@ -83,7 +83,7 @@ web3.eth.contract(abi).new(
 ```
 
 ### Basic info
-> The code below shows how to get fund's basic information, including fund's name, symbol, category and decimals.
+> The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
 
 ```javascript
 const Web3 = require("web3");
@@ -160,37 +160,7 @@ fundContract.initialize(_componentList, _initialFundFee, {from: web3.eth.account
 });
 ```
 
-#### 2. invest
-
-```javascript
-function invest() public payable
-     whenNotPaused
-     whitelisted(WhitelistKeys.Investment)
-     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
-     returns(bool);
-```
-
-#### &emsp;Description
-> Invest in the fund by calling the invest function while sending Ether to the fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
-#### &emsp;Returns
-> Whether the function executed successfully or not.
-
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
-
-```javascript
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const fundContract = web3.eth.contract(abi).at(address);
-const investAmount = 1 ** 17;
-fundContract.invest({value: investAmount}, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
-});
-```
-
-#### 3. buyTokens
+#### 2. buyTokens
 
 ```javascript
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool);
@@ -227,7 +197,7 @@ fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, resu
 });
 ```
 
-#### 4. sellTokens
+#### 3. sellTokens
 
 ```javascript
 function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
@@ -265,7 +235,7 @@ fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, res
 });
 ```
 
-#### 5. setManagementFee
+#### 4. setManagementFee
 
 ```javascript
 function setManagementFee(uint _fee) external onlyOwner;
@@ -297,36 +267,7 @@ fundContract.setManagementFee(_fee, (err, result) => {
 });
 ```
 
-#### 6. requestWithdraw
-
-```javascript
-function requestWithdraw(uint amount) external
-      whenNotPaused
-      withoutRisk(msg.sender, address(this), address(this), amount, getPrice());
-```
-
-#### &emsp;Description
-> Request withdraw of specific amount of investment for an investor.(Note: The investment will be withdraw after the fund's manager execute the withdraw function.)
-
-#### &emsp;Parameters
-> amount: Amount of ETH the investor would like to withdraw.
-
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
-
-```javascript
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const fundContract = web3.eth.contract(abi).at(address);
-const amount = 10 ** 17;
-fundContract.requestWithdraw(amount, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
-});
-```
-
-#### 7. withdraw
+#### 5. withdraw
 
 ```javascript
 function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
@@ -350,7 +291,7 @@ fundContract.withdraw((err, result) => {
 });
 ```
 
-#### 8. withdrawFee
+#### 6. withdrawFee
 
 ```javascript
 function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool);
@@ -376,7 +317,7 @@ fundContract.withdrawFee(amount, (err, result) => {
 });
 ```
 
-#### 9. enableWhitelist
+#### 7. enableWhitelist
 
 ```javascript
 function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool);
@@ -417,7 +358,7 @@ fundContract.enableWhitelist(key, (err, result) => {
 });
 ```
 
-#### 10. setAllowed
+#### 8. setAllowed
 
 ```javascript
 function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
@@ -450,7 +391,7 @@ fundContract.setAllowed(accounts, key, allowed, (err, result) => {
 });
 ```
 
-#### 11. disableWhitelist
+#### 9. disableWhitelist
 
 ```javascript
 function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
@@ -483,7 +424,7 @@ fundContract.disableWhitelist(key, (err, result) => {
 });
 ```
 
-#### 12. close
+#### 10. close
 
 ```javascript
 function close() public onlyOwner returns(bool success);
@@ -514,6 +455,3 @@ fundContract.close((err, result) => {
 
 ### bytecode
 > You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API
-
-### componentList address
-> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
