@@ -58,6 +58,8 @@ contract("Fund", accounts => {
   let locker;
   let stepProvider;
   let tokenBroken;
+  let token0_erc20;
+  let token1_erc20;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -95,9 +97,10 @@ contract("Fund", accounts => {
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
     componentList.setComponent(DerivativeProviders.LOCKER, locker.address);
     componentList.setComponent(DerivativeProviders.TOKENBROKEN, tokenBroken.address);
-
+    token0_erc20 = await ERC20.at(await tokens[0]);
+    token1_erc20 = await ERC20.at(await tokens[1]);
   });
-
+  // ----------------------------- REQUIRED FOR CREATION ----------------------
   it("Create a fund", async () => {
     fund = await Fund.new(
       fundData.name,
@@ -112,15 +115,18 @@ contract("Fund", accounts => {
     await fund.initialize(componentList.address, fundData.initialManagementFee, fundData.withdrawInterval, {
       value: web3.toWei(fundData.ethDeposit, "ether")
     });
-    // const myProducts = await market.getOwnProducts();
+    const myProducts = await market.getOwnProducts();
 
-    // assert.equal(myProducts.length, 1);
-    // assert.equal(myProducts[0], fund.address);
-    // assert.equal((await fund.status()).toNumber(), 1); // Active
-    // // The fee send is not taked in account in the price but as a fee
-    // assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
-    // assert.equal((await fund.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
+    assert.equal(myProducts.length, 1);
+    assert.equal(myProducts[0], fund.address);
+    assert.equal((await fund.status()).toNumber(), 1); // Active
+    // The fee send is not taked in account in the price but as a fee
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
+    assert.equal((await fund.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
   });
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- CONFIG TEST  -------------------------------
 
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
@@ -129,6 +135,8 @@ contract("Fund", accounts => {
       });
     }, "Shall revert");
   });
+
+
 
   it("Update component shall approve MOT ", async () => {
     // Set new market place
@@ -152,6 +160,9 @@ contract("Fund", accounts => {
     assert.equal(await fund.version(), "1.0");
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- BASIC INVESTMENT ---------------------------
 
   it("Fund shall allow investment", async () => {
     let tx;
@@ -206,6 +217,10 @@ contract("Fund", accounts => {
     await fund.setMaxSteps(DerivativeProviders.WITHDRAW, fundData.maxTransfers); // Restore
   });
 
+  // --------------------------------------------------------------------------
+  // ----------------------------- WHITELIST INVESTMENT -----------------------
+  // Will enable whitelist for investment and maintenance
+
   it("Shall be able to invest with whitelist enabled", async () => {
     let tx;
     // Invest Not allowed
@@ -258,6 +273,10 @@ contract("Fund", accounts => {
     await fund.disableWhitelist(WhitelistType.Maintenance);
   });
 
+  // --------------------------------------------------------------------------
+  // ----------------------------- TIMER INVESTMENT ----------------------------
+  // Will enable the timer
+
   it("Shall be able to withdraw only after frequency", async () => {
     let tx;
     const interval = 5; //5 seconds frequency
@@ -286,6 +305,10 @@ contract("Fund", accounts => {
     tx = await fund.withdraw(); // This withdraw has the previus time lock , but will set a new one with 0
     assert.ok(tx);
   });
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- MANAGEMENT FEE  ----------------------------
+  // Will enable managment fee
 
   it("Manager shall be able to collect fee from investment and withdraw it", async () => {
     const motRatio = await mockKyber.getExpectedRate(ethToken, mockMOT.address, web3.toWei(1, "ether"));
@@ -319,10 +342,19 @@ contract("Fund", accounts => {
     assert(ownerBalanceAfter < ownerBalanceInital, "Owner dont receive ether as fee"); // Pay gas, just reduced
     const expectedAmountMOT = motRatio[0].mul(withdrawETHAmount).div(10 ** 18).toString();
     assert.equal(expectedAmountMOT, MOTAfter.sub(MOTBefore).toString(), 'Owner recieve MOT as fee');
+    await fund.setManagementFee(0); // Reset
+
   });
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- BUY/SELL TOKENS -----------------------------
+  // Fee is enabled in this section,  also step provider
 
   it("Buy tokens fails if ether required is not enough", async () => {
     const balance = (await fund.getETHBalance()).toNumber();
+    const denominator = (await percentageFee.DENOMINATOR()).toNumber();
+
+    await fund.setManagementFee(fundData.managmentFee * denominator);
 
     assert.equal(balance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     const amounts = [web3.toWei(1, "ether"), web3.toWei(1, "ether")];
@@ -399,8 +431,6 @@ contract("Fund", accounts => {
 
   it("Shall be able to sell tokens (by step) to get enough eth for withdraw", async () => {
 
-    let token0_erc20 = await ERC20.at(await fund.tokens(0));
-    let token1_erc20 = await ERC20.at(await fund.tokens(1));
     await fund.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
 
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
@@ -443,43 +473,69 @@ contract("Fund", accounts => {
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
     await fund.setMaxSteps(DerivativeProviders.GETETH, 4); // Reset
+    await fund.setManagementFee(0);
 
   });
 
-  it("Shall be able to detect a broken token", async () => {
-    assert.equal((await fund.totalSupply()).toNumber(), 0, "Fund starts empty");
-    await fund.setManagementFee(0);
-    // Invest
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+  // --------------------------------------------------------------------------
+  // ----------------------------- TOKEN BROKEN --------------------------------
 
-    // Buy
+  it("Shall not be able to buy a broken token", async () => {
+    const investAmount = web3.toWei(1, "ether");
+    await fund.setManagementFee(0); // To simplify
+
+    assert.equal((await fund.totalSupply()).toNumber(), 0, "Starting supply is 0");
+    // Invest 1 ETH
+    await fund.invest({ value: investAmount, from: investorA });
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+    // I try to buy tokens broken
+    await mockKyber.toggleSimulatePriceZero(true);
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    await mockKyber.toggleSimulatePriceZero(false);
+    // They are not bought, but not added to broenToen list
+    await calc.assertInvalidOpCode(async () => await fund.tokensBroken(0), "Array is empty");
+    assert.equal(await token0_erc20.balanceOf(fund.address), 0, 'Token A not buyed');
+    assert.equal(await token1_erc20.balanceOf(fund.address), 0, 'Token B not buyed');
+    assert.equal((await fund.getAssetsValue()).toNumber(), 0, "Assets value is 0");
+  });
+
+  it("Shall mark a broken token while selling", async () => {
+    assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1));
+    // We buy tokens
     const rates = await Promise.all(
       tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
     );
     const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
     await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
-    // TODO: set some value to 0 and try to   sell them , making both tokens broken
-    // TODO: Price is 0, token is broken
+    // Prepare to sell
+    let fundTokensAndBalance = await fund.getTokens();
+    const balances = fundTokensAndBalance[1].map(tokenBalance => tokenBalance.toNumber());
+    const sellRates = await Promise.all(
+      tokens.map(async (token, index) => await mockKyber.getExpectedRate(token, ethToken, balances[index]))
+    );
+    fundTokensAndBalance = await fund.getTokens();
 
-    // TODO: Remove this mock when merge with Orange
-    // Fund does not really contain MOT, but as we marked like broken, will be send to users
-    const motAmount = 10 ** 21;
-    await mockMOT.transfer(fund.address, motAmount); // Transfer 1000 MOT
-    await fund.setBrokenToken(mockMOT.address);
-
-    // TODO check thet tokensBrokens contain both
-    assert.equal((await fund.tokensBroken(0)), mockMOT.address, 'Tokens brokens contains the broken token');
-
-
+    // We sell all but are broken
+    await mockKyber.toggleSimulatePriceZero(true);
+    tx = await fund.sellTokens("", fundTokensAndBalance[0], balances, sellRates.map(rate => rate[0]));
+    // Check the fund is broken
+    assert.equal((await fund.tokensBroken(0)), tokens[0], 'Tokens brokens contains token A');
+    assert.equal((await fund.tokensBroken(1)), tokens[1], 'Tokens brokens contains token B');
+    assert.equal((await fund.getPrice()).toNumber(), 0, "price is 0");
   });
+
 
   it("Shall be able to dispatch a broken token", async () => {
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1));
-    const motAmount = 10 ** 21;
+    const investedAmount = toTokenWei(1);
+    let fundTokensAndBalance = await fund.getTokens();
+    const balances = fundTokensAndBalance.map((_tokenBalance, index) => fundTokensAndBalance[1][index].toNumber());
 
-
-    // Investor A withdraws
-    await fund.requestWithdraw(toTokenWei(1), { from: investorA });
+    // Investor A withdraw
+    await fund.requestWithdraw(investedAmount, { from: investorA });
 
     const investorBeforeBalance = await calc.ethBalance(investorA);
 
@@ -487,24 +543,27 @@ contract("Fund", accounts => {
     await fund.withdraw();
 
     const investorAfterBalance = await calc.ethBalance(investorA);
-    // TODO: after and Balance shall be the same (no ETH Return just tokens)
-    // when merged with orange
-    assert(await calc.inRange(investorAfterBalance, investorBeforeBalance + 1, 0.001), 'Investor A receives no ETH');
-    // TODO: Change this for the tokens, not the MOT
-    assert.equal((await mockMOT.balanceOf(investorA)).toNumber(), motAmount, 'Investor gets all token broken');
+
+    assert(await calc.inRange(investorAfterBalance, investorBeforeBalance, 0.001), 'Investor A receives no ETH');
+    // Investor A withdraws all token
+    const investorAToken0 = (await token0_erc20.balanceOf(investorA)).toNumber();
+    const investorAToken1 = (await token1_erc20.balanceOf(investorA)).toNumber();
+    assert.equal(investorAToken0, balances[0], 'Token 0 amount broken withdrawed');
+    assert.equal(investorAToken1, balances[1], 'Token 1 amount broken withdrawed');
+    // Broken token withdrawed and removed
     await calc.assertInvalidOpCode(async () => await fund.tokensBroken(0), "Array is empty");
 
-
+    await mockKyber.toggleSimulatePriceZero(false); // Reset
   });
 
+  // --------------------------------------------------------------------------
+  // ----------------------------- CLOSE A TOKEN ------------------------------
+  // Uses managment fee and step provider
 
   it("Shall be able to close (by step) a fund", async () => {
     await fund.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
     const denominator = (await percentageFee.DENOMINATOR()).toNumber();
     await fund.setManagementFee(fundData.managmentFee * denominator); // Make sure the fee is as per requirements
-
-    let token0_erc20 = await ERC20.at(await fund.tokens(0));
-    let token1_erc20 = await ERC20.at(await fund.tokens(1));
 
     await fund.invest({ value: web3.toWei(2, "ether"), from: investorC });
     const initialBalance = (await fund.getETHBalance()).toNumber();
@@ -515,7 +574,6 @@ contract("Fund", accounts => {
     );
     const amounts = [web3.toWei(0.9, "ether"), web3.toWei(0.9, "ether")];
     await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
-
     // ETH balance is reduced
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "ETH balance reduced");
 
@@ -524,10 +582,10 @@ contract("Fund", accounts => {
     // So that we check directly the balance of erc20
     assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0, "First step sell 1st token");
     assert.isAbove((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "First step dont sell 2nd token");
+
     // Second time complete sell tokens and withdraw at once
     await fund.close();
     assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "Second step sell 2nd token");
-
 
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
 
@@ -554,4 +612,9 @@ contract("Fund", accounts => {
     await fund.withdraw();
     assert.equal((await fund.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
   });
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- FUND IS CLOSE ------------------------------
+  // Only add more test cases afte the fund is close. Fund cant reopen
+
 });
