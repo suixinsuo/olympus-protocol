@@ -1,3 +1,5 @@
+[TOC]
+
 # Getting Started
 
 Welcome to Olympus API, the cryptocurrency financial product protocol powering fintech DApp ecosystem. In this document we are going to present you the Olympus protocols and the basic steps get the development work on Olympus Platform started.
@@ -20,7 +22,7 @@ In this documentation, we try to separate to two parts, for creating portals/too
 
 For getting started for either of them, we need to have some common steps to follow.
 
-## Fork/clone the Olympus project.
+## Fork/clone the Olympus project
 
 Olympus Protocol is a fullly open-sourced project, whose repository can be found here from [Github](https://github.com/Olympus-Labs/olympus-protocol).
 
@@ -28,7 +30,7 @@ You can start by forking the repository or simply clone it if you only want to t
 
 > $ git clone https://github.com/Olympus-Labs/olympus-protocol.git
 
-## Environment preparation.
+## Environment preparation
 
 In order to start to work we need to all the neccessary support tools/libraries are installed in the system.
 
@@ -48,7 +50,7 @@ or for yarn
 
 > $ yarn
 
-## Folder structure introduction.
+## Folder structure introduction
 
 Once the project is cloned into local, you can open the project in vscode. Let's go through the structure to have a better understanding of the folders.
 
@@ -66,7 +68,7 @@ Once the project is cloned into local, you can open the project in vscode. Let's
   - olympusProtocols: Where all the templates and olympus products ready to be edited and customized.
   - libs: Some basic solidity libraries for common purposes.
 
-## Create your first derivate product template.
+## Create your first derivate product template
 
 To get yourself warmed up, the best way is always by doing of how to create and customize your own template with a basic example.
 
@@ -132,7 +134,7 @@ function close() public onlyOwner returns(bool success);
 
 For the complete documentation of the BasicFund, please refer to [OlympusBasicFund.sol](./OlympusBasicFund).
 
-## Customize our template.
+## Customize our template
 
 Let’s suppose we are going to launch a new fund which only accepts the maximum 100 lucky investors. It will only accept new investors when the current holder quits it it reaches the maximum.
 
@@ -198,7 +200,7 @@ We also need to decrease the counter on redeem, allowing new investors when the 
 
 In this basic implementation the investor can only redeem all his investment at once. In the more complex situation, we need to decrease the counter when the balance becomes zero.
 
-# Compile the new derivative.
+# Compile the new derivative
 
 We have just made a new fund with new functions and now we need to get it ready for publishing. We have set some helper functions that you can find in our `packages.json` file.
 
@@ -222,9 +224,11 @@ To cover the changes we've made, we need to:
 _ Adding test cases.
 _ Testing it on kovan testnet.
 
-### Adding test cases.
+##Adding test cases.
 
-### Testing on Kovan using Remix.
+[TBD]
+
+##Testing on Kovan using Remix.
 
 Test cases are important but testing on testnet is also a must. We will use Remix for this which is online and free.
 
@@ -255,3 +259,4 @@ If the compilation of remix is successfull you can go to the run tab, and you wi
 After it's deployed, the contract will be showing at the bottom, by expanding it, you can execute the functions according to the flow we described above. Test the functions one by one and make sure the all pass before you release it.
 
 For more information of Remix, check the [Complete Manual](https://remix.readthedocs.io/en/latest/).
+
