@@ -527,3 +527,16 @@ If you need to debug a revert try to:
 Testing revert on remix can get tiresome if you have many steps before the issue happen, try to create shortcuts and simplify your code to make remix testing easier.
 
 For more information on Remix, check the [Complete Manual](https://remix.readthedocs.io/en/latest/).
+
+
+## After this tutorial
+
+- You can find all tutorial files as part of the repository, with the name of OlympusTutorial Fund.
+
+- You can continue reading the ABI documentation.
+
+- You can try to add new features to your fund:
+  a) Select how much a user withdraw.
+  b) Implement whitelist component to allow only concrete users to invest.
+  c) Add new features to OlympusBasicIndex
+  d) Take a look to our complete and real derivatives implementations.
