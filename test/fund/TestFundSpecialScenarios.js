@@ -191,9 +191,7 @@ contract("Fund", accounts => {
     assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][0], "1st token got skiped on sell");
     assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][1], "2st token got skiped on sell");
 
-
   });
-
 
   it("Shall mark a broken token while selling and withdraw them as token not ETH", async () => {
     const fund = await createNewFund(componentList);

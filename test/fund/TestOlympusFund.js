@@ -224,7 +224,7 @@ contract("Fund", accounts => {
   it("Shall be able to invest with whitelist enabled", async () => {
     let tx;
     // Invest Not allowed
-    await fund.enableWhitelist(WhitelistType.Investment);
+    await fund.enableWhitelist(WhitelistType.Investment, true);
     await calc.assertReverts(
       async () => await fund.invest({ value: web3.toWei(0.2, "ether"), from: investorA }),
       "Is not allowed to invest"
@@ -245,7 +245,7 @@ contract("Fund", accounts => {
 
     // Reset permissions and disable, so anyone could invest again
     await fund.setAllowed([investorA, investorB], WhitelistType.Investment, false);
-    await fund.disableWhitelist(WhitelistType.Investment);
+    await fund.enableWhitelist(WhitelistType.Investment, false);
   });
 
   // In this scenario, there are not request, but is enought to check the modifier
@@ -257,7 +257,7 @@ contract("Fund", accounts => {
     await calc.assertReverts(async () => await fund.withdraw({ from: bot }), "Is not allowed to withdraw (only owner)");
 
     // Withdraw allowed
-    await fund.enableWhitelist(WhitelistType.Maintenance);
+    await fund.enableWhitelist(WhitelistType.Maintenance, true);
 
     // // Not whitelisted
     await calc.assertReverts(async () => await fund.withdraw({ from: bot }), "Is not allowed to withdraw (only owner)");
@@ -270,7 +270,7 @@ contract("Fund", accounts => {
     await calc.assertReverts(async () => await fund.withdraw({ from: bot }), "Is not allowed to withdraw");
 
     //Reset
-    await fund.disableWhitelist(WhitelistType.Maintenance);
+    await fund.enableWhitelist(WhitelistType.Maintenance, false);
   });
 
   // --------------------------------------------------------------------------
