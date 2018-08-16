@@ -174,7 +174,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
-    function close() public OnlyOwnerOrWhitelistOrPausedTimeout(WhitelistKeys.Maintenance) returns(bool success) {
+    function close() public returns(bool success) {
         require(status != DerivativeStatus.New);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
 

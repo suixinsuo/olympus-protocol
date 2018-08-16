@@ -123,7 +123,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function close() public OnlyOwnerOrWhitelistOrPausedTimeout(WhitelistKeys.Maintenance) returns(bool success) {
+    function close() public returns(bool success) {
         require(status != DerivativeStatus.New);
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
 
@@ -132,7 +132,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         if(_completed){
             status = DerivativeStatus.Closed;
         }
-        // emit ChangeStatus(status);
         reimburse();
         status = DerivativeStatus.Closing;
         return _completed;

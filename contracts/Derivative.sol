@@ -39,19 +39,6 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         pausedTime = now;
     }
 
-    modifier OnlyOwnerOrWhitelistOrPausedTimeout(WhitelistKeys _key) {
-        if(paused == true && (pausedTime + pausedCycle) <= now){
-            _;
-        } else if(msg.sender == owner){
-            _;
-        } else {
-            require(closing == 1 && status != DerivativeStatus.Closed);
-            WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
-            require(whitelist.enabled(address(this), uint(_key)) && whitelist.isAllowed(uint(_key), msg.sender));
-            _;
-        }
-    }
-
     enum WhitelistKeys { Investment, Maintenance, Admin }
 
     bytes32[] internal excludedComponents;
