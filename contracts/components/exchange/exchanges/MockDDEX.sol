@@ -15,11 +15,10 @@ contract MockDDEX {
     address ETH_ADDRESS = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
 
     Token[] public supportedTokens;
-    constructor (uint total,uint _decimals) public {
-        require(total <= 50 && total > 0);
-        for (uint i = 0; i < total; i++) {
+    constructor (address[] _tokens) public {
+        for (uint i = 0; i < _tokens.length; i++) {
             supportedTokens.push(Token({
-                token: new SimpleERC20Token(_decimals),
+                token: SimpleERC20Token(_tokens[i]),
                 slippageRate:10**18*500
             }));
         }
