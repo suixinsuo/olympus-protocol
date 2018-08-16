@@ -125,6 +125,134 @@ contract("Fund Special Scenarios", accounts => {
     assert.equal((await fund.status()).toNumber(), 1); // Active
   });
 
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- TOKEN BROKEN --------------------------------
+  // Once a token is broken, can be buy/sold again, making a block end. Thats why is tested
+  // in FundSpecial scenarios
+
+  it("Shall not be able to buy a broken token", async () => {
+    const fund = await createNewFund(componentList);
+    const investAmount = web3.toWei(1, "ether");
+    // Invest 1 ETH
+    await fund.invest({ value: investAmount, from: investorA });
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+    // I try to buy tokens broken
+    await mockKyber.toggleSimulatePriceZero(true);
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    await mockKyber.toggleSimulatePriceZero(false);
+    // They are not bought, but not added to brokenToken list
+    await calc.assertInvalidOpCode(async () => await fund.tokensToRelease(0), "Array to release keeps empty");
+    assert(await fund.isBrokenToken(tokens[0]), "Token A is mark as broken");
+    assert(await fund.isBrokenToken(tokens[1]), "Token B is mark as broken");
+
+    assert.equal(await token0_erc20.balanceOf(fund.address), 0, 'Token A not buyed');
+    assert.equal(await token1_erc20.balanceOf(fund.address), 0, 'Token B not buyed');
+    assert.equal((await fund.getAssetsValue()).toNumber(), 0, "Assets value is 0");
+  });
+
+
+  it("Shall filter buy and sell token brokens", async () => {
+    const fund = await createNewFund(componentList);
+    const investAmount = web3.toWei(2, "ether"); // We invest 2 eth, 1 will success, 1 will be already broken
+    // Invest 1 ETH and success
+    await fund.invest({ value: investAmount, from: investorA });
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+
+    assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][0], "1st token");
+    assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][1], "2st token");
+
+    // I mark tokens as broken
+    await mockKyber.toggleSimulatePriceZero(true);
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    await mockKyber.toggleSimulatePriceZero(false);
+
+    // Tokens are mark as broken forever and will be skipped
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][0], "1st token got skiped on buy");
+    assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][1], "2st token got skiped on buy");
+
+    // Prepare to sell
+    let fundTokensAndBalance = await fund.getTokens();
+    let balancesToSell = fundTokensAndBalance[1].map(tokenBalance => tokenBalance.toNumber());
+    const sellRates = await Promise.all(
+      tokens.map(async (token, index) => await mockKyber.getExpectedRate(token, ethToken, balancesToSell[index]))
+    );
+
+    // We sell all but are broken
+    tx = await fund.sellTokens("", fundTokensAndBalance[0], balancesToSell, sellRates.map(rate => rate[0]));
+    assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][0], "1st token got skiped on sell");
+    assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][1], "2st token got skiped on sell");
+
+  });
+
+  it("Shall mark a broken token while selling and withdraw them as token not ETH", async () => {
+    const fund = await createNewFund(componentList);
+    const investAmount = web3.toWei(1, "ether"); // Eth
+    const investedAmount = toTokenWei(1); // Fund Token
+
+    await fund.invest({ value: investAmount, from: investorA });
+
+    // We buy tokens successfully
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    // Prepare to sell
+    let fundTokensAndBalance = await fund.getTokens();
+    const balancesToSell = fundTokensAndBalance[1].map(tokenBalance => tokenBalance.toNumber());
+    const sellRates = await Promise.all(
+      tokens.map(async (token, index) => await mockKyber.getExpectedRate(token, ethToken, balancesToSell[index]))
+    );
+    fundTokensAndBalance = await fund.getTokens();
+
+    // We sell all but are broken
+    await mockKyber.toggleSimulatePriceZero(true);
+
+    tx = await fund.sellTokens("", fundTokensAndBalance[0], balancesToSell, sellRates.map(rate => rate[0]));
+
+    // Check the fund is broken
+    assert.equal((await fund.tokensToRelease(0)), tokens[0], 'Tokens to release contains token A');
+    assert.equal((await fund.tokensToRelease(1)), tokens[1], 'Tokens to release contains token B');
+    assert.equal((await fund.getPrice()).toNumber(), 0, "price is 0");
+    assert(await fund.isBrokenToken(tokens[0]), "Token A is mark as broken");
+    assert(await fund.isBrokenToken(tokens[1]), "Token B is mark as broken");
+
+    // Prepare to withdraw
+    fundTokensAndBalance = await fund.getTokens();
+    const balances = fundTokensAndBalance.map((_tokenBalance, index) => fundTokensAndBalance[1][index].toNumber());
+    const investorBeforeBalance = await calc.ethBalance(investorA);
+
+    // Investor A requests withdraw
+    await fund.requestWithdraw(investedAmount, { from: investorA });
+    // On withdraw he will get the tokens brokens
+    await fund.withdraw();
+    const investorAfterBalance = await calc.ethBalance(investorA);
+
+    assert(await calc.inRange(investorAfterBalance, investorBeforeBalance, 0.001), 'Investor A receives no ETH');
+    // Investor A withdraws all token
+    const investorAToken0 = (await token0_erc20.balanceOf(investorA)).toNumber();
+    const investorAToken1 = (await token1_erc20.balanceOf(investorA)).toNumber();
+    assert.equal(investorAToken0, balances[0], 'Token 0 amount broken withdrawed');
+    assert.equal(investorAToken1, balances[1], 'Token 1 amount broken withdrawed');
+    // Broken token withdrawed and removed
+    await calc.assertInvalidOpCode(async () => await fund.tokensToRelease(0), "Array is empty");
+
+    // Reset
+    await mockKyber.toggleSimulatePriceZero(false);
+    token0_erc20.transfer(mockKyber.address, await token0_erc20.balanceOf(investorA), { from: investorA });
+    token1_erc20.transfer(mockKyber.address, await token1_erc20.balanceOf(investorA), { from: investorA });
+
+  });
+
   it("Token broken while sell ETH when withdrawing returns part ETH part token broken", async () => {
     const fund = await createNewFund(componentList);
     const investAmount = web3.toWei(2, "ether");
@@ -145,19 +273,19 @@ contract("Fund Special Scenarios", accounts => {
     await mockKyber.toggleSimulatePriceZero(false);
     //buy token1 normally
     await fund.buyTokens("", [tokens[1]], [amounts[1]], [rates.map(rate => rate[0])[1]]);
-    assert.equal((await fund.tokensBroken(0)), tokens[0], 'Tokens brokens contains token A');
+    assert.equal((await fund.tokensToRelease(0)), tokens[0], 'Tokens brokens contains token A');
     //withdraw
     //token0 is broken , token1 is not.
     await fund.requestWithdraw(web3.toWei(1, "ether"), { from: investorA });
     const investorBeforeBalance = await calc.ethBalance(investorA);
     await fund.withdraw();
     const investorAfterBalance = await calc.ethBalance(investorA);
-    console.log(investorAfterBalance, investorBeforeBalance)
     assert(await calc.inRange(investorAfterBalance, investorBeforeBalance, 1.001), 'Investor A receives no ETH');
     assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0, "1st token");
-    assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 500000000000000000000, "2st token");
+    assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][1], "2st token");
 
-
+    // Reset
+    token0_erc20.transfer(mockKyber.address, await token0_erc20.balanceOf(investorA), { from: investorA });
     // 2 Users Invest
     // Buy tokens successfully
     // 2 Users request withdraw
@@ -168,40 +296,46 @@ contract("Fund Special Scenarios", accounts => {
 
   it("Token with balance gets broken in second buy action", async () => {
     const fund = await createNewFund(componentList);
-    assert.equal((await fund.status()).toNumber(), 1); // Active
-
+    // Invest
     const investAmount = web3.toWei(2, "ether");
-    assert.equal((await fund.status()).toNumber(), 1); // Active
     await fund.invest({ value: investAmount, from: investorA });
+    // Buy successfull
     const rates = await Promise.all(
       tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
     );
     const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
     await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0])); //buy token normally
 
-    assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 500000000000000000000, "1st token");
+    assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0.5 * rates[0][0], "1st token");
 
 
+    // Buy broken token
     await mockKyber.toggleSimulatePriceZero(true);
     await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
-    assert.equal((await fund.tokensBroken(0)), tokens[0], 'Tokens brokens contains token A');
-    assert.equal((await fund.tokensBroken(1)), tokens[1], 'Tokens brokens contains token B');
-    await fund.requestWithdraw(investAmount, { from: investorA });
+    assert.equal((await fund.tokensToRelease(0)), tokens[0], 'Tokens brokens contains token A');
+    assert.equal((await fund.tokensToRelease(1)), tokens[1], 'Tokens brokens contains token B');
+    // Withdraw
     const investorBeforeBalance = await calc.ethBalance(investorA);
+    await fund.requestWithdraw(investAmount, { from: investorA });
     await fund.withdraw();
     const investorAfterBalance = await calc.ethBalance(investorA);
-    assert(await calc.inRange(investorAfterBalance, investorBeforeBalance, 1.001), 'Investor A receives no ETH');
-
+    // Check returns
+    assert(await calc.inRange(investorAfterBalance, investorBeforeBalance, 1.001), 'Investor A receives 1 ETH');
 
     const investorAToken0 = (await token0_erc20.balanceOf(investorA)).toNumber();
     const investorAToken1 = (await token1_erc20.balanceOf(investorA)).toNumber();
     //from the first test we get 0.5eth of token
-    assert.equal(investorAToken0, 500000000000000000000 * 2, 'Token 0 amount broken withdrawed');
-    assert.equal(investorAToken1, 500000000000000000000, 'Token 1 amount broken withdrawed');
-    await calc.assertInvalidOpCode(async () => await fund.tokensBroken(0), "Array is empty");
+    assert.equal(investorAToken0, 0.5 * rates[0][0], 'Token 0 amount broken withdrawed');
+    assert.equal(investorAToken1, 0.5 * rates[0][1], 'Token 1 amount broken withdrawed');
+    await calc.assertInvalidOpCode(async () => await fund.tokensToRelease(0), "Array is empty");
     // Buy tokens successfully
     // Buy same tokens with issue
     // token broken list update
     // withdraw token broken accordingly
   });
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- OTHER TEST --------------------------------
+  // Add other integration or road-end test here
+
 });

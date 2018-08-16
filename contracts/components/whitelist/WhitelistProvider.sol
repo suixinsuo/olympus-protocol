@@ -10,12 +10,8 @@ contract WhitelistProvider is WhitelistInterface, FeeCharger {
     string public category="Whitelist";
     string public version="1.0";
 
-    function enable(uint _key) external {
-        enabled[msg.sender][_key] = true;
-    }
-
-    function disable(uint _key) external {
-        enabled[msg.sender][_key] = false;
+    function setStatus(uint _key, bool enable) external {
+        enabled[msg.sender][_key] = enable;
     }
 
     function setAllowed(address[] accounts, uint _key,  bool allowed) external returns(bool){
