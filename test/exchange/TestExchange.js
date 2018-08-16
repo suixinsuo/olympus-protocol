@@ -227,20 +227,6 @@ contract("ExchangeProvider", accounts => {
     }
     await mockKyberNetwork.toggleSimulatePriceZero(false);
   });
-  it("Should not be able to get the price from 2rd exchanges", async () => {
-    await calc.waitSeconds(1);
-    let exchangeprice;
-    let exchangeprice2;
-
-    let AdapterManager = await ExchangeAdapterManager.deployed();
-    let mockddexadapter = await MockDDEXAdapter.deployed();
-    await AdapterManager.addExchange("ddex", mockddexadapter.address);
-    let exchangeidtwo = await AdapterManager.exchanges(1);
-    exchangeprice = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), exchangeidtwo);
-    exchangeprice2 = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), "");
-    assert.equal(exchangeprice[0].toNumber(),10**14,`MockDDEXRate`);
-    //assert.equal(exchangeprice2[0].toNumber(),10**15,`BestRate`);
-  });
   it("OlympusExchange should be able to sell multiple tokens.", async () => {
     const amounts = [];
     const rates = [];
@@ -317,9 +303,13 @@ contract("ExchangeProvider", accounts => {
     await AdapterManager.addExchange("ddex", mockddexadapter.address);
     let exchangeidtwo = await AdapterManager.exchanges(1);
     exchangeprice = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), exchangeidtwo);
+
     exchangeprice2 = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), "");
+
     assert.equal(exchangeprice[0].toNumber(),10**14,`MockDDEXRate`);
+
     assert.equal(exchangeprice2[0].toNumber(),10**15,`BestRate`);
+
     await AdapterManager.removeExchangeAdapter(exchangeidtwo);
   });
 });
