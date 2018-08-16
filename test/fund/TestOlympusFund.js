@@ -95,7 +95,7 @@ contract("Fund", accounts => {
     componentList.setComponent(DerivativeProviders.WHITELIST, whitelist.address);
     componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
-    componentList.setComponent(DerivativeProviders.LOCKaER, locker.address);
+    componentList.setComponent(DerivativeProviders.LOCKER, locker.address);
     componentList.setComponent(DerivativeProviders.TOKENBROKEN, tokenBroken.address);
     token0_erc20 = await ERC20.at(await tokens[0]);
     token1_erc20 = await ERC20.at(await tokens[1]);
