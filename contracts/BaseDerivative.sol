@@ -26,7 +26,6 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer, StandardToke
         require(_componentList != 0x0);
         componentList = ComponentListInterface(_componentList);
         excludedComponents.push(MARKET);
-
     }
 
     function updateComponent(bytes32 _name) public onlyOwner returns (address) {

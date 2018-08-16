@@ -20,10 +20,10 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
     // Current balance of each investor
     mapping(address => uint) public investors;
     // Relation between tokens and amounts storage in this contract.
-    // This information could be taken directly from ERC20, here we mantain a local copy.
+    // This information could be taken directly from ERC20, here we maintain a local copy.
     mapping(address => uint) public amounts;
-    // The tokens that are holding balance now.
-    // If the amount is 0 and activeTokens is false the token was never bought, not belong to the fund.
+    // The tokens of which there is a balance in this contract.
+    // If the amount is 0 and activeTokens is false the token was never bought, it does not belong to the fund.
     // If the amount is 0 and activeToken is true, the token has been bought but sold afterwards.
     mapping(address => bool) public activeTokens;
 
@@ -63,7 +63,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
         excludedComponents.push(LOCKER);
 
         for (uint i = 0; i < names.length; i++) {
-            // updated component and approve MOT for charging fees
+            // update component and approve MOT for charging fees
             updateComponent(names[i]);
         }
 
@@ -91,7 +91,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
         // Get the component
         LockerInterface lockerProvider = LockerInterface(getComponentByName(LOCKER));
 
-         // Check we have the ethAmount required
+        // Check whether or not we have the required ethAmount
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
             lockerProvider.checkLockerByTime(bytes32(address(_tokens[i])));
@@ -131,10 +131,11 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
         require(balances[msg.sender] > 0 || currentNumberOfInvestors < MAX_INVESTORS, "Only limited number can invest");
 
-         // Current value is already added in the balance, reduce it
+
         uint _sharePrice;
 
         if (totalSupply_ > 0) {
+            // The ETH value of the current transaction is already added in the balance, substract it to get the current price
             _sharePrice = getPrice().sub((msg.value.mul(10**decimals)).div(totalSupply_));
          } else {
             _sharePrice = INITIAL_VALUE;
@@ -161,7 +162,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
 
     function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
-        getETHFromTokens(DENOMINATOR); // 100% all the tokens
+        getETHFromTokens(DENOMINATOR); // Denominator equals to 100%, so we sell all the tokens in the fund
         status = DerivativeStatus.Closed;
         emit FundStatusChanged(status);
         return true;
@@ -214,7 +215,8 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
     {
         require(balances[msg.sender] > 0, "Insufficient balance");
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
-        withdrawProvider.request(msg.sender, balances[msg.sender]); // _amount is not used in simple withdraw.
+        // In our case, the second parameter of request() is not used. This parameter is used if we choose a more advanced withdraw component.
+        withdrawProvider.request(msg.sender, balances[msg.sender]);
 
         guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount());
         withdrawProvider.freeze();
@@ -228,7 +230,9 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
         msg.sender.transfer(ethAmount);
         withdrawProvider.finalize();
 
-        // We withdraw all the amount, so the investor counter gets reduced.
+        // This withdraw implementation withdraws all the tokens for the investor that requested to withdraw
+        // So each of those investors will have zero tokens left after the withdraw
+        // Which is why we now deduct one from the current number of investors
         currentNumberOfInvestors--;
 
         return true;
@@ -243,7 +247,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
         }
 
         ERC20Extended[] memory _tokensWithAmount = new ERC20Extended[](length);
-        // Then create they array
+        // Then create the array
         uint index = 0;
         for (uint j = 0; j < tokens.length; j++) {
             if (amounts[tokens[j]] > 0) {
