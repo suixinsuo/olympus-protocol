@@ -88,7 +88,6 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
                 continue;
             }
 
-            // TODO: fix it
             if (resultRate < int(_rate)) {
                 continue;
             }
