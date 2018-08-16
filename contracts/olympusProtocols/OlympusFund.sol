@@ -29,8 +29,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
-    address[] public tokensBroken;
-    mapping(address=> uint) public tokensBrokenIndex; // Starts from 1
+    address[] public tokensToRelease; // List of tokens brokens with balance to release
+    mapping(address=> bool) public isBrokenToken; // Starts from 1
 
     uint public accumulatedFee = 0;
 
@@ -102,30 +102,33 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
 
-
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
-        for (uint i = 0; i < _amounts.length; i++) {
+        for (uint i = 0; i < _tokens.length; i++) {
+            // Setting amount to 0
+            if (isBrokenToken[_tokens[i]]) {
+                _amounts[i] = 0;
+                continue;
+            }
             require(
                 !hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i])
             );
             totalEthRequired = totalEthRequired.add(_amounts[i]);
         }
+
         require(getETHBalance() >= totalEthRequired);
 
-        if(!OlympusExchangeInterface(getComponentByName(EXCHANGE)).buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)){
-
-            updateTokens(checkBrokenTokens(_tokens));
-
+        if (!OlympusExchangeInterface(getComponentByName(EXCHANGE))
+            .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)) {
+            checkBrokenTokens(_tokens);
+            updateTokens(_tokens);
             return false;
         }
+
         updateTokens(_tokens);
         return true;
 
     }
-
-    event LogN(uint number, string text);
-    event LogA(address _address, string text);
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
@@ -133,13 +136,20 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < tokens.length; i++) {
+            // Setting amount to 0 skips the sell
+            if (isBrokenToken[_tokens[i]]) {
+                _amounts[i] = 0;
+                continue;
+            }
+
             require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
-            updateTokens(checkBrokenTokens(_tokens));
+            checkBrokenTokens(_tokens);
+            updateTokens(_tokens);
             return false;
         }
 
@@ -214,7 +224,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         uint _balance;
 
         for (uint16 i = 0; i < tokens.length; i++) {
-            _balance = ERC20(tokens[i]).balanceOf(address(this));
+            _balance = amounts[tokens[i]];
             if (_balance == 0) {continue;}
 
             (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
@@ -312,7 +322,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
 
-            handleTokensBroken(_requests[i]); // Investors
+            releaseTokensBroken(_requests[i]); // Investors
             (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
             if (_tokenAmount == 0) {continue;}
 
@@ -335,31 +345,27 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return i == _requests.length; // True if completed
     }
 
-    function handleTokensBroken(address _investor) internal returns(bool) {
+    function releaseTokensBroken(address _investor) internal returns(bool) {
 
-        if(tokensBroken.length == 0) {return true;}
+        if(tokensToRelease.length == 0) {return true;}
         TokenBrokenInterface tokenBrokenProvider = TokenBrokenInterface(getComponentByName(TOKENBROKEN));
-        uint[] memory  _tokenBalances = tokenBrokenProvider.tokenBalancesOf(tokensBroken, _investor);
+        uint[] memory  _tokenBalances = tokenBrokenProvider.tokenBalancesOf(tokensToRelease, _investor);
         uint i;
         uint requestPending;
-        for(i = 0; i < tokensBroken.length; i++) {
+        for(i = 0; i < tokensToRelease.length; i++) {
             if(_tokenBalances[i] == 0) {continue;}
 
-            requestPending = tokenBrokenProvider.withdraw(tokensBroken[i], _investor);
+            requestPending = tokenBrokenProvider.withdraw(tokensToRelease[i], _investor);
 
-            ERC20Extended(tokensBroken[i]).transfer(_investor,_tokenBalances[i]);
+            ERC20Extended(tokensToRelease[i]).transfer(_investor,_tokenBalances[i]);
 
             // Remove token broken completed
             if(requestPending == 0) {
-                  tokensBrokenIndex[tokensBroken[i]] = 0;
-
-                if (tokensBroken.length > 1) { // Swap the last one with the index, remove last element
-                    tokensBroken[i] = tokensBroken[tokensBroken.length-1];
-                    _tokenBalances[i] = _tokenBalances[tokensBroken.length-1]; // Also change the mapping
-                    delete(tokensBroken[tokensBroken.length-1]);
-                }
+                tokensToRelease[i] = tokensToRelease[tokensToRelease.length-1];
+                _tokenBalances[i] = _tokenBalances[tokensToRelease.length-1]; // Also change the mapping
+                delete(tokensToRelease[tokensToRelease.length-1]);
                 i--;
-                tokensBroken.length--;
+                tokensToRelease.length--;
             }
         }
         return true;
@@ -371,20 +377,22 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         uint length = 0;
         for (uint i = 0; i < tokens.length; i++) {
             // Has balance and is NOT broken
-            if (tokensBrokenIndex[tokens[i]] == 0 && amounts[tokens[i]] > 0 ) {length++;}
+            if (isBrokenToken[tokens[i]] == false && amounts[tokens[i]] > 0 ) {length++;}
         }
 
         ERC20Extended[] memory _tokensWithAmount = new ERC20Extended[](length);
         // Then create they array
         uint index = 0;
         for (uint j = 0; j < tokens.length; j++) {
-            if (tokensBrokenIndex[tokens[j]] == 0 && amounts[tokens[j]] > 0) {
+            if (isBrokenToken[tokens[j]] == false && amounts[tokens[j]] > 0) {
                 _tokensWithAmount[index] = ERC20Extended(tokens[j]);
                 index++;
             }
         }
         return _tokensWithAmount;
     }
+
+
 
     // solhint-disable-next-line
     function getETHFromTokens(uint _tokenPercentage) internal returns(bool success) {
@@ -408,7 +416,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         for(i = currentStep;i < _tokensToSell.length && stepProvider.goNextStep(GETETH); i++){
             uint sellIndex = i.sub(currentStep);
             _tokensThisStep[sellIndex] = _tokensToSell[i];
-            _amounts[sellIndex] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
+            _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div(DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, 0);
@@ -430,14 +438,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
-    function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
-        WhitelistInterface(getComponentByName(WHITELIST)).enable(uint(_key));
-        return true;
-    }
-
-    // solhint-disable-next-line
-    function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool) {
-        WhitelistInterface(getComponentByName(WHITELIST)).disable(uint(_key));
+    function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner returns(bool) {
+        WhitelistInterface(getComponentByName(WHITELIST)).setStatus(uint(_key), enable);
         return true;
     }
 
@@ -447,29 +449,23 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
-    function checkBrokenTokens(ERC20Extended[] _tokens) internal returns(ERC20Extended[]){
-        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+    function checkBrokenTokens(ERC20Extended[] _tokens) internal {
         TokenBrokenInterface  tokenBrokenProvider = TokenBrokenInterface(getComponentByName(TOKENBROKEN));
-
         uint[] memory _failedTimes = new uint[](_tokens.length);
-        _failedTimes = exchange.getFailedTradesArray(_tokens);
-        ERC20Extended[] memory _successtokens = new ERC20Extended[](_tokens.length);
+        _failedTimes = OlympusExchangeInterface(getComponentByName(EXCHANGE)).getFailedTradesArray(_tokens);
 
         for(uint t = 0;t < _tokens.length; t++) {
-
-            // Is successfull
-            if((_failedTimes[t]) <= 0 ){
-                _successtokens[t] = _tokens[t];
+            // Is successfull or already broken
+            if((_failedTimes[t]) <= 0 || isBrokenToken[_tokens[t]]) {
                 continue;
             }
+            isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
             // Is broken, check if has balance to distribute
-            if(_tokens[t].balanceOf(address(this)) > 0) {
-                tokensBrokenIndex[_tokens[t]] = tokensBroken.push(_tokens[t]);
+            if(amounts[_tokens[t]] > 0) {
+                tokensToRelease.push(_tokens[t]);
                 tokenBrokenProvider.calculateBalanceByInvestor(_tokens[t]);
             }
         }
-        return _successtokens;
-
     }
 
 

@@ -29,12 +29,12 @@ contract MockWhitelistClient is MockDerivative {
     }
 
     function enableWhitelist() external onlyOwner returns(bool) {
-        whitelistProvider.enable(CATEGORY_BALANCE);
+        whitelistProvider.setStatus(CATEGORY_BALANCE,true);
         return true;
     }
 
     function disableWhitelist() external onlyOwner returns(bool) {
-        whitelistProvider.disable(CATEGORY_BALANCE);
+        whitelistProvider.setStatus(CATEGORY_BALANCE, false);
         return true;
     }
 
