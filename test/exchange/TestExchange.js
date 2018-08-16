@@ -63,22 +63,6 @@ contract("ExchangeProvider", accounts => {
       });
   });
 
-  it("Should not be able to get the price from 2rd exchanges", async () => {
-    await calc.waitSeconds(1);
-    let exchangeprice;
-    let exchangeprice2;
-
-    let AdapterManager = await ExchangeAdapterManager.deployed();
-    let mockddexadapter = await MockDDEXAdapter.deployed();
-    await AdapterManager.addExchange("ddex", mockddexadapter.address);
-    let exchangeidtwo = await AdapterManager.exchanges(1);
-    exchangeprice = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), exchangeidtwo);
-    exchangeprice2 = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), "");
-    assert.equal(exchangeprice[0].toNumber(),10**14,`MockDDEXRate`);
-    assert.equal(exchangeprice2[0].toNumber(),10**15,`BestRate`);
-    await AdapterManager.removeExchangeAdapter(exchangeidtwo);
-  });
-
   it("OlympusExchange should be able to buy single token.", async () => {
     const srcAmountETH = 1;
 
@@ -320,5 +304,22 @@ contract("ExchangeProvider", accounts => {
     assert.equal(result[0].toNumber(), 0, `ExpectedRate is zero`);
     assert.equal(result[1].toNumber(), 0, `SlippageRate is zero`);
     assert.equal(result[2], false, `ExpectedRate should not come from cache`); // Didn't come from cache, because there is none for the specified maxAge
+    await mockKyberNetwork.toggleSimulatePriceZero(false);//reset
+  });
+
+  it("Should not be able to get the price from 2rd exchanges", async () => {
+    await calc.waitSeconds(1);
+    let exchangeprice;
+    let exchangeprice2;
+
+    let AdapterManager = await ExchangeAdapterManager.deployed();
+    let mockddexadapter = await MockDDEXAdapter.deployed();
+    await AdapterManager.addExchange("ddex", mockddexadapter.address);
+    let exchangeidtwo = await AdapterManager.exchanges(1);
+    exchangeprice = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), exchangeidtwo);
+    exchangeprice2 = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), "");
+    assert.equal(exchangeprice[0].toNumber(),10**14,`MockDDEXRate`);
+    assert.equal(exchangeprice2[0].toNumber(),10**15,`BestRate`);
+    await AdapterManager.removeExchangeAdapter(exchangeidtwo);
   });
 });
