@@ -1,7 +1,7 @@
 # Index
 
 ### Introduction
-An index is an indicator or measure of something, and in finance, it typically refers to a statistical measure of change in a securities market. In the case of financial markets, stock and bond market indexes consist of a hypothetical portfolio of securities representing a particular market or a segment of it.
+An index is an indicator or measure of something, and in finance, it typically refers to a statistical measure of change in a securities market. In the case of financial markets, stock and bond market indexes consist of a hypothetical portfolio of securities representing a particular market or a segment of it. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
 ### Constructor
 ```javascript
@@ -94,7 +94,7 @@ web3.eth.contract(abi).new(
 ```
 
 ### Basic info
-> The code below shows how to get index's basic information, including fund's name, symbol, category and decimals.
+> The code below shows how to get index's basic information, including index's name, symbol, description, category and decimals.
 
 ```javascript
 const Web3 = require("web3");
@@ -176,21 +176,19 @@ indexContract.initialize(_componentList, _rebalanceDeltaPercentage, _initialFund
 });
 ```
 
-#### 2. invest
+#### 2. setMultipleTimeIntervals
 
 ```javascript
-function invest() public payable
-     whenNotPaused
-     whitelisted(WhitelistKeys.Investment)
-     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
-     returns(bool);
+function setMultipleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner;
 ```
 
 #### &emsp;Description
-> Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if your address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
+> Index manager can config the withdraw frequency, buy token frequency and rebalance frequency for Index. By setting up the frequency, bot system will execute withdraw/buy token and rebalance on the configed freqency basis.
 
-#### &emsp;Returns
-> Whether the function executed successfully or not.
+#### &emsp;Parameters
+> timerNames: Array of the byte32 code of the frequency names: RedeemFrequency, BuyTokensFrequency and RebalanceFrequency.
+> _secondsList: array of how frequent the index will redeem, buy tokens and rebalance, should be converted to use second as unit of time.
+
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -199,15 +197,82 @@ function invest() public payable
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-const investAmount = 1 ** 17;
-indexContract.invest({value: investAmount}, (err, result) => {
+const timerNames: string[] = [
+  // RedeemFrequency's name of byte32
+  '0x576974686472617750726f7669646572',
+  // BuyTokensFrequency's name of byte32
+  '0x427579546f6b656e73',
+  // RebalanceFrequency's name of byte32
+  '0x526562616c616e636550726f7669646572',
+];
+
+const redeemFrequencyInDays = 1;
+const buyTokensFrequencyInDays = 2;
+const rebalanceFrequencyInDays = 1;
+
+const secondsList = [
+  //Convert days to seconds
+  redeemFrequencyInDays * 60 * 60 * 24,
+  buyTokensFrequencyInDays * 60 * 60 * 24,
+  rebalanceFrequencyInDays * 60 * 60 * 24,
+];
+
+indexContract.setMultipleTimeIntervals(timerNames, secondsList, (err, result) => {
   if (err) {
     return console.log(err)
   }
 });
 ```
 
-#### 3. buyTokens
+#### 3. invest
+
+```javascript
+function setMultipleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner;
+```
+
+#### &emsp;Description
+> Index manager can config the withdraw frequency, buy token frequency and rebalance frequency for Index. By setting up the frequency, bot system will execute withdraw/buy token and rebalance on the configed freqency basis.
+
+#### &emsp;Parameters
+> timerNames: Array of the byte32 code of the frequency names: RedeemFrequency, BuyTokensFrequency and RebalanceFrequency.
+> _secondsList: array of how frequent the index will redeem, buy tokens and rebalance, should be converted to use second as unit of time.
+
+
+#### &emsp;Example code
+> The code below shows how to call this function with Web3.
+
+```javascript
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+const timerNames: string[] = [
+  // RedeemFrequency's name of byte32
+  '0x576974686472617750726f7669646572',
+  // BuyTokensFrequency's name of byte32
+  '0x427579546f6b656e73',
+  // RebalanceFrequency's name of byte32
+  '0x526562616c616e636550726f7669646572',
+];
+
+const redeemFrequencyInDays = 1;
+const buyTokensFrequencyInDays = 2;
+const rebalanceFrequencyInDays = 1;
+
+const secondsList = [
+  //Convert days to seconds
+  redeemFrequencyInDays * 60 * 60 * 24,
+  buyTokensFrequencyInDays * 60 * 60 * 24,
+  rebalanceFrequencyInDays * 60 * 60 * 24,
+];
+
+indexContract.setMultipleTimeIntervals(timerNames, secondsList, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+
+#### 4. buyTokens
 
 ```javascript
 function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
@@ -235,7 +300,7 @@ indexContract.buyTokens((err, result) => {
 });
 ```
 
-#### 4. rebalance
+#### 5. rebalance
 
 ```javascript
 function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
@@ -280,7 +345,7 @@ rebalance((err,result)=>{
 });
 ```
 
-#### 5. setManagementFee
+#### 6. setManagementFee
 
 ```javascript
 function setManagementFee(uint _fee) external onlyOwner;
@@ -312,7 +377,7 @@ indexContract.setManagementFee(_fee, (err, result) => {
 });
 ```
 
-#### 6. requestWithdraw
+#### 7. requestWithdraw
 
 ```javascript
 function requestWithdraw(uint amount) external
@@ -341,7 +406,7 @@ indexContract.requestWithdraw(amount, (err, result) => {
 });
 ```
 
-#### 7. withdraw
+#### 8. withdraw
 
 ```javascript
 function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
@@ -364,7 +429,7 @@ indexContract.withdraw((err, result) => {
 });
 ```
 
-#### 8. withdrawFee
+#### 9. withdrawFee
 
 ```javascript
 function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool);
@@ -390,7 +455,7 @@ indexContract.withdrawFee(amount, (err, result) => {
 });
 ```
 
-#### 9. enableWhitelist
+#### 10. enableWhitelist
 
 ```javascript
 function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool);
@@ -430,7 +495,7 @@ indexContract.enableWhitelist(key, (err, result) => {
 });
 ```
 
-#### 10. setAllowed
+#### 11. setAllowed
 
 ```javascript
 function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool);
@@ -464,7 +529,7 @@ indexContract.setAllowed(accounts, key, allowed, (err, result) => {
 });
 ```
 
-#### 11. disableWhitelist
+#### 12. disableWhitelist
 
 ```javascript
 function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
@@ -497,7 +562,7 @@ indexContract.disableWhitelist(key, (err, result) => {
 });
 ```
 
-#### 12. close
+#### 13. close
 
 ```javascript
 function close() public onlyOwner returns(bool success);
@@ -529,6 +594,3 @@ indexContract.close((err, result) => {
 
 ### bytecode
 > You can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
-
-### Olympus componentList address
-> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API

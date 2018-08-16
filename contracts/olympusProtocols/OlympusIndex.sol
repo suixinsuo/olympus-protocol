@@ -472,12 +472,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
     function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner returns(bool) {
-        WhitelistInterface whitelist = WhitelistInterface(getComponentByName(WHITELIST));
-        if(enable) {
-            whitelist.enable(uint(_key));
-        } else {
-            whitelist.disable(uint(_key));
-        }
+        WhitelistInterface(getComponentByName(WHITELIST)).setStatus(uint(_key), enable);
         return true;
     }
 

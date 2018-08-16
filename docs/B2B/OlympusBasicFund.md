@@ -1,8 +1,8 @@
-# Fund
+# Basic Fund
 
 ### Introduction
 
-An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. The Olympus Basic Fund contains basic interfaces that a fund needs.
+An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. The Olympus Basic Fund contains basic interfaces that a fund needs. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
 ### Constructor
 
@@ -85,7 +85,7 @@ web3.eth.contract(abi).new(
 ```
 
 ### Basic info
-> The code below shows how to get fund's basic information, including fund's name, symbol, category and decimals.
+> The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
 
 ```javascript
 const Web3 = require("web3");
@@ -131,6 +131,7 @@ fundContract.decimals((err,decimals)=>{
 ### Interface
 
 #### 1. initialize
+
 ```javascript
 function initialize(address _componentList) external onlyOwner;
 ```
@@ -157,36 +158,7 @@ fundContract.initialize(_componentList, {from: web3.eth.accounts[0]}, err => {
 });
 ```
 
-#### 2. invest
-
-```javascript
-function invest() public
-        payable
-      returns(bool)
-```
-
-#### &emsp;Description
-> Invest in the fund by calling the invest function while sending Ether to the fund.
-
-#### &emsp;Returns
-> Whether the function executed successfully or not.
-
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
-
-```javascript
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const fundContract = web3.eth.contract(abi).at(address);
-const investAmount = 1 ** 17;
-fundContract.invest({value: investAmount}, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
-});
-```
-
-#### 3. buyTokens
+#### 2. buyTokens
 
 ```javascript
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
@@ -224,7 +196,7 @@ fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, resu
 });
 ```
 
-#### 4. sellTokens
+#### 3. sellTokens
 
 ```javascript
 function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
@@ -262,7 +234,7 @@ fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, res
 });
 ```
 
-#### 5. withdraw
+#### 4. withdraw
 
 ```javascript
 function withdraw() external returns(bool);
@@ -321,6 +293,3 @@ fundContract.close((err, result) => {
 
 ### bytecode
 > You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API
-
-### componentList address
-> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API

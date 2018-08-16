@@ -191,6 +191,9 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         bool completeSuccess = true;
 
         for (i = 0; i < _tokens.length; i++ ) {
+
+            if(_amounts[i] == 0) {continue;} // Skip token
+
             adapter = OlympusExchangeAdapterInterface(
                 exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
                 exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
@@ -225,6 +228,9 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         OlympusExchangeAdapterInterface adapter;
         uint i;
         for (i = 0; i < _tokens.length; i++ ) {
+
+            if(_amounts[i] == 0) {continue;} // Skip token
+
             adapter = OlympusExchangeAdapterInterface(
                 exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
                 exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
