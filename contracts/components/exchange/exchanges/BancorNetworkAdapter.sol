@@ -123,7 +123,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
             path = new ERC20Extended[](pathLength);
 
             for (uint i = 0; i < pathLength; i++) {
-                path[i] = bancorConverter.quickBuyPath(i);
+                path[i] = ERC20Extended(bancorConverter.quickBuyPath(i));
             }
             return (path, pathLength);
         }
