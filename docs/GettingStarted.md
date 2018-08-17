@@ -12,7 +12,7 @@ Olympus Protocol is a set of protocols that support developers in creating finan
 
 Olympus Protocols are based on three levels:
 
-- The core components: Those can be utilized for making any customized financial derivative product much easier. The core is part of the Olympus environment and uses MOT ([Mountain Olympus Token](https://etherscan.io/token/0x263c618480dbe35c300d8d5ecda19bbb986acaed)) as an internal fuel for concrete transactions.
+- The core components: Those can be utilized for making any customized financial derivative product much easier. The core is part of the Olympus environment and uses MOT ([Mount Olympus Token](https://etherscan.io/token/0x263c618480dbe35c300d8d5ecda19bbb986acaed)) as an internal fuel for concrete transactions.
 
 - Financial product templates: Those can be used as bases to create your own financial derivatives by connecting to different chosen core components and are already ready to deliver. It has different variations based on different use cases.
 
