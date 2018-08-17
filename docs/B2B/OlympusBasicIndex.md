@@ -19,12 +19,12 @@ constructor (
 
 #### &emsp;Parameters
 > _name: Index name </br>
-  _symbol: Index symbol (The derivative is ERC20 compatible, so it follow the rules of ERC20. For example: the symbol length can be any, but it's better to keep it from 2 - 5) </br>
+  _symbol: Index symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying) </br>
   _description: Index description </br>
   _category: Index category </br>
   _decimals: Index decimals (normally it should be 18) </br>
-  _tokens: The token addresses that the index can buy, sell and rebalance </br>
-  _wights: the weights of token </br>
+  _tokens: The token addresses that the index will buy, sell and rebalance </br>
+  _weights: The weights of the tokens </br>
 
 #### &emsp;Example code
 ```javascript
@@ -96,7 +96,7 @@ web3.eth.contract(abi).new(
 ```
 
 ### Basic info
-> The code below shows how to get index's basic information, including index's name, symbol, description, category and decimals.
+> The code below shows how to get index' basic information, including index' name, symbol, description, category and decimals.
 
 ```javascript
 const Web3 = require("web3");
@@ -107,35 +107,35 @@ indexContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(name)
+  console.log(name)
 })
 // Symbol
 indexContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(symbol)
+  console.log(symbol)
 })
 // Description
 indexContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(description)
+  console.log(description)
 })
 // Category
 indexContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(category)
+  console.log(category)
 })
 // Decimals
 indexContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(decimals)
+  console.log(decimals)
 })
 ```
 
@@ -148,10 +148,10 @@ function initialize(address _componentList, uint _rebalanceDeltaPercentage) exte
 ```
 
 #### &emsp;Description
-> Initialize the Index then you can find it from olympus marketplace and you can invest it.
+> Initialize the Index, after which it is listed in the Olympus Product List and opened up for investment.
 
 #### &emsp;Parameters
-> _componentList: address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
+> _componentList: address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)</br>
 > _rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:</br>
     1 = 0.01%</br>
     10 = 0.1%</br>
@@ -182,7 +182,7 @@ function buyTokens() external returns(bool);
 ```
 
 #### &emsp;Description
-> Index manager executes the function to buy the tokens that are defined in the index
+> Index manager or bot system executes the function to allocate the Ether, accumulated through investment, to the tokens defined in the index.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -209,7 +209,7 @@ function rebalance() public  returns (bool success);
 ```
 
 #### &emsp;Description
-> Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the complete asset value in the value might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased.
+> Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the total asset value in the fund might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -251,7 +251,7 @@ function withdraw() external returns(bool);
 ```
 
 #### &emsp;Description
-> This function is for investors to withdraw all their investment.
+> This function is for investors to withdraw their investment.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -278,7 +278,7 @@ function close() public onlyOwner returns(bool success);
 ```
 
 #### &emsp;Description
-> Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment.)
+> Close the index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment)
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -299,7 +299,7 @@ indexContract.close((err, result) => {
 ```
 
 ### abi
-> You can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) from our API
+> You can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) from our API.
 
 ### bytecode
-> You can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
+> You can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API.
