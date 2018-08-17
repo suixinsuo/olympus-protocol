@@ -58,7 +58,7 @@ const createNewFund = async (componentList) => {
   return fund;
 }
 
-contract("Fund", accounts => {
+contract("Fund Special Scenarios", accounts => {
 
   let market;
   let mockKyber;
@@ -325,8 +325,8 @@ contract("Fund", accounts => {
     const investorAToken0 = (await token0_erc20.balanceOf(investorA)).toNumber();
     const investorAToken1 = (await token1_erc20.balanceOf(investorA)).toNumber();
     //from the first test we get 0.5eth of token
-    assert.equal(investorAToken0, 500000000000000000000, 'Token 0 amount broken withdrawed');
-    assert.equal(investorAToken1, 500000000000000000000, 'Token 1 amount broken withdrawed');
+    assert.equal(investorAToken0, 0.5 * rates[0][0], 'Token 0 amount broken withdrawed');
+    assert.equal(investorAToken1, 0.5 * rates[0][1], 'Token 1 amount broken withdrawed');
     await calc.assertInvalidOpCode(async () => await fund.tokensToRelease(0), "Array is empty");
     // Buy tokens successfully
     // Buy same tokens with issue
