@@ -12,7 +12,7 @@ Olympus Protocol is a set of protocols that support developers in creating finan
 
 Olympus Protocols are based on three levels:
 
-- The core components: Those can be utilized for making any customized financial derivative product much easier. The core is part of the Olympus environment and uses MOT ([Mount Olympus Token](https://etherscan.io/token/0x263c618480dbe35c300d8d5ecda19bbb986acaed)) as an internal fuel for concrete transactions.
+- The core components: Those can be utilized for making any customized financial derivative product much easier. The core is part of the Olympus environment and uses MOT ([Mountain Olympus Token](https://etherscan.io/token/0x263c618480dbe35c300d8d5ecda19bbb986acaed)) as an internal fuel for concrete transactions.
 
 - Financial product templates: Those can be used as bases to create your own financial derivatives by connecting to different chosen core components and are already ready to deliver. It has different variations based on different use cases.
 
@@ -125,7 +125,7 @@ function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amount
 function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success); // internal function to update the underlying tokens after each buy/sell operation
 ```
 
-If, for whatever reason, the fund manager decides not to continue with this fund anymore, the manager can choose to close the fund, after which it will start the closing procedures (sell all the underlying tokens so that the investors can redeem their belongings back in Ether).
+If for whatever reason, the fund manager decides not to continue with this fund anymore, the manager can choose to close the fund, after which it will start the closing procedures (sell all the underlying tokens so that the investors can redeem their belongings back in Ether).
 
 ```javascript
 function changeStatus(DerivativeStatus _status) public onlyOwner returns(bool);
@@ -143,11 +143,11 @@ First, create contract level variables for the maximum number of investors and t
 ```javascript
 mapping(address => bool) public activeTokens;
 // Add this lines into the activeTokens
-uint public max_investors;
+uint public maxInvestors;
 uint public currentNumberOfInvestors;
 ```
 
-`max_investors` will be a number selected on creation on the fund, that should not be changed later on. `currentNumberOfInvestors` is a counter that keeps track of the number of investors. (As we can not get the length of the mapping `activeInvestors`).
+`maxInvestors` will be a number selected on creation on the fund, that should not be changed later on. `currentNumberOfInvestors` is a counter that keeps track of the number of investors. (As we can not get the length of the mapping `activeInvestors`).
 
 After creating these initial variables, we can modify the initialize function.
 
@@ -159,7 +159,7 @@ function initialize(address _componentList, uint _maxInvestors) external onlyOwn
 
         /// Current code
         // …
-        max_investors = _maxInvestors; // New Line
+        maxInvestors = _maxInvestors; // New Line
 }
 ```
 
@@ -167,19 +167,19 @@ In this initialize function we have made three changes:
 
 - Add the `uint _maxInvestors` parameter to the function.
 - Under the other checks, we added a check to make sure the \_maxInvestors value is higher than 0. (Otherwise no one would be able to invest!). The checks should always be done at the top of the function in order to save investors' gas use, by preventing code execution if there is anything wrong.
-- At the end of the function, we added `max_investors = _maxInvestors;`, this sets the contract level variable using the function parameter we added earlier. We don’t need to initialize `currentNumberOfInvestors` as by default it is assigned to 0.
+- At the end of the function, we added `maxInvestors = _maxInvestors;`, this sets the contract level variable using the function parameter we added earlier. We don’t need to initialize `currentNumberOfInvestors` as by default it is assigned to 0.
 
 Now we need to keep track of the number of investors and check if it reaches the maximum when investing.
 
-> balances[msg.sender] > 0 currentNumberOfInvestors < MAX_INVESTORS
+> balances[msg.sender] > 0 currentNumberOfInvestors < maxInvestors
 
-We will allow you to invest either if you are a current investor ` balances[msg.sender] > 0 ` OR if there is room for new investors `currentNumberOfInvestors < MAX_INVESTORS`
+We will allow you to invest either if you are a current investor ` balances[msg.sender] > 0 ` OR if there is room for new investors `currentNumberOfInvestors < maxInvestors`
 
 ```javascript
 function invest() public payable returns(bool) {
     require(status == DerivativeStatus.Active, "The Fund is not active");
     require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
-    require(balances[msg.sender] > 0 currentNumberOfInvestors < MAX_INVESTORS, "Only limited number can invest"); // New line
+    require(balances[msg.sender] > 0 currentNumberOfInvestors < maxInvestors, "Only limited number can invest"); // New line
 
     /// Current code
 
@@ -226,7 +226,7 @@ Security is an important concern in the blockchain due to the fact that deployed
 
 To cover the changes we've made, we need to:
 _ Add test cases.
-_ Test it on a testnet, for example Kovan.
+_ Test it on a testnet, for example, Kovan.
 
 ## Adding test cases.
 
@@ -234,14 +234,14 @@ We have already created several test cases for all our functionalities. You can 
 
 > `npm run test`
 
-This command will test all the testcases. This is not optimal when creating test cases, we want to run only the test we are creating.
+This command will test all the test cases. This is not optimal when creating test cases, we want to run only the test we are creating.
 Run in one terminal the command
 
-> './node_modules/.bin/testrpc-sc'
+>$ './node_modules/.bin/testrpc-sc'
 
-to start the ganache server. You will see that this server starts with 9 different accounts which hold ether. Then, in another terminal we can run
+to start the ganache server. You will see that this server starts with 9 different accounts which hold Ethers. Then, in another terminal, we can run
 
-> truffle test
+>$ truffle test
 
 that will test all files, or to specify a single test file:
 
@@ -249,7 +249,7 @@ that will test all files, or to specify a single test file:
 
 Run the command and observe that all basic fund test cases are succeeding.
 
-In order to create the test cases we dont need to start from zero. As we copied the `OlympusBasicFund.sol` we
+To create the test case, we don't need to start from zero. As we copied the `OlympusBasicFund.sol` we
 are going to start from the basic. Copy the test file of `test/funds/TestBasicFund.js` to your own test folder `test/myTests`.
 
 ```
@@ -274,18 +274,18 @@ const Fund = artifacts.require("OlympusBasicFund");
 const Fund = artifacts.require("MyBasicFund");
 ```
 
-We can change also the name of the test
+We can change the name of the test as well.
 
 ```javascript
 contract("My Basic Fund test", accounts => {
 ```
 
-In the previous function we modified the initialize function, if we try to run the test cases now, it will fail with an error.
+In the previous function we modified the initialize function, if we try to run the test case now, it will fail with an error.
 
 > Error: Invalid number of arguments to Solidity function
 
-The worst part of a failing test is that the result of a test case affects the other test of the flow, so all tests will probably fail. (Don't panic)
-Lets add the default value, first add a line to the dummy data
+The worst part of a failing test is that the result of a test case affects the other test of the flow, so all tests will probably fail (don't panic).
+Let's add the default value first by adding a line to the dummy data
 
 ```javascript
 const fundData = {
@@ -298,7 +298,7 @@ const fundData = {
 };
 ```
 
-Modify the create fund test.
+Modify the test of creating the fund.
 
 ```javascript
   it("Create a fund", async () => {
@@ -343,40 +343,40 @@ What is missing?
 - We need to force a situation, using a third investor to invest, and the transaction should revert.
 
 Let's start checking in the create index test that
-the `MAX_INVESTORS` variable is initialized correctly.
+the `maxInvestors` variable is initialized correctly.
 
 ```javascript
 
-  assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
-  // Add this line below
-  assert.equal((await fund.MAX_INVESTORS()).toNumber(), fundData.maxInvestors, 'Max Investors is correctly initialized');
+assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
+// Add this line below
+assert.equal((await fund.maxInvestors()).toNumber(), fundData.maxInvestors, 'Max Investors is correctly initialized');
 
 ```
 
-`MAX_INVESTORS` is a public constant variable, solidity
-automatically creates getters to the public variables of the contract. The result is provided in javascript as `BigNumber` object, which is able to encode numbers much bigger than a number variable can store. But in order to compare we put it back `.toNumber()`.
+`maxInvestors` is a public  variable, solidity
+automatically creates getters to the public variables of the contract. The result is provided in javascript as `[BigNumber](https://github.com/MikeMcl/bignumber.js/)` object. In order to compare we need to put it back `.toNumber()`.
 
 Also important to know is that every time that we call a function in the fund we use the `await` keyword. Calling a function in the blockchain is slow (in the main Ethereum network it can take even minutes or hours). The result of the function will return a promise to be satisfied in the future. Using the command `await` we communicate that the function shall wait until the result is confirmed.
 
 Let's rename the test "Shall be able to invest" to "Shall be able to invest until maximum investors" and add a check for the currentNumberOfInvestors counter.
 
 ```javascript
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
-    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
-    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
+await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
+await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
+assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
 ```
 
 Add a check as well that the counter gets reduced on withdrawing.
 
 ```javascript
-  await fund.withdraw({ from: investorA });
-    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
+await fund.withdraw({ from: investorA });
+assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
 ```
 
 ```javascript
-  await fund.withdraw({ from: investorB });
-    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 0);
+await fund.withdraw({ from: investorB });
+assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 0);
 ```
 
 In the test cases, there are more investments and withdrawals, but it is enough to check the counter only once.
@@ -391,26 +391,26 @@ parts, investing 0.5 ETH twice. (So will start withdrawing 1 ETH at the end of t
 
 ```javascript
 
-    // Invest allowed
-    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
-    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
-    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
-    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
+// Invest allowed
+await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
+assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
+await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
+assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
 
-    // Actual investors can invest again
-    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
-    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
-    assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
+// Actual investors can invest again
+await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
+await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
+assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
 
 ```
 
 The active investors can keep investing, but a new, third investor, investorC can not. We are going to use our own implementation of assertReverts (that requires await is asynchronous, and accepts an asynchronous function as the parameter)
 
 ```javascript
-    await calc.assertReverts(async () =>
-      await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorC }),
-      'Third investor can`t invest'
-    );
+await calc.assertReverts(async () =>
+    await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorC }),
+    'Third investor can`t invest'
+);
 ```
 
 When calling a function from test cases to solidity, we need to add the same number of arguments as required, plus we have an extra argument to allow to customize the transaction. Invest requires 0 arguments plus the customization:
@@ -421,7 +421,7 @@ If from is not set, will be called by default from accounts[0], which in our tes
 
 Value serves us to set the ETH that the function will accept. Only payable functions require the value field to have `a value`. Non-payable functions will revert if value parameter is used.
 
-Now our test is covering the main features of our customized derivative. As homework, you can also verify that initialize with `MAX_INVESTORS` to zero will revert. As you can't initialize twice, you need to test it before the successful initialization.
+Now our test is covering the main features of our customized derivative. As homework, you can also verify that initialize with `maxInvestors` to zero will revert. As you can't initialize twice, you need to test it before the successful initialization.
 
 Troublesome:
 > TypeError: msg.replace is not a function
@@ -438,7 +438,7 @@ You need to be sure that you have metamask installed in your browser for Firefox
 
 > https://metamask.io/
 
-You can import your own testing account or create one within your metamask. After that you will need some testing ether that you can either get in the faucet gitter channel or the faucet of the kovan network from Parity:
+You can import your own testing account or create one within your metamask. After that you will need some testing ether that you can either get in the faucet gitter channel or the faucet of the Kovan network from Parity:
 
 > https://gitter.im/kovan-testnet/faucet
 > https://faucet.kovan.network/
@@ -470,7 +470,7 @@ After deploying, we need to initialize the index.
 
 The entry will use our Olympus component list deployed in kovan and 5 as maximum investors.
 
-Once the fund is initialized, we can invest. Invest requires no parameter but does require some ETH. In the top of the right column there is information of the address you are using and also the value to send to the contract. (You can select the unit ether or wei, whichever you prefer)
+Once the fund is initialized, we can invest. Invest requires no parameter but does require some ETH. In the top of the right column, there is information of the address you are using and also the value to send to the contract. (You can select the unit ether or wei, whichever you prefer)
 
 > For example, invest 0.05 ETH in the fund.
 
@@ -486,13 +486,13 @@ Test the functions one by one and make sure they all pass before you release it.
 Copy the address of your deployed testing derivative, it will remain in the chain forever!
 Next time you want to use it, you can utilize the Remix function "At Address" (the address of your contract) and the derivative will appear in the bottom right of your Remix again. (For example, required if you reload the page).
 
-## Troublesome in remix
+## Troublesome in Remix
 
 > errored: Error encoding arguments: Error: invalid address (arg="", type="string", value="")
 
 Your parameters are wrong, or you miss one
-Addresses must start with 0x and be a full valid address.
-Array of addresses or long numbers shall enclose their value between "" ["address","address"].
+An address must start with 0x and be a full valid address.
+An array of addresses or long numbers shall enclose their value between "" ["address","address"].
 bytes32 you can choose 0x0 for example.
 
 > Out of gas on deployment:
