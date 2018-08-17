@@ -123,7 +123,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
             path = new ERC20Extended[](pathLength);
 
             for (uint i = 0; i < pathLength; i++) {
-                path[i] = bancorConverter.quickBuyPath(i);
+                path[i] = ERC20Extended(bancorConverter.quickBuyPath(i));
             }
             return (path, pathLength);
         }
@@ -180,7 +180,8 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
     (
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
-    ) external checkTokenSupported(_token) returns(bool success) {
+    ) external returns(bool success) {
+        require(address(tokenToConverter[_token]) != 0x0, "Token not supported");
         require(_token.balanceOf(address(this)) >= _amount, "Balance of token is not sufficient in adapter");
         ERC20Extended[] memory internalPath;
         ERC20Extended[] memory path;
@@ -196,8 +197,8 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
 
         ERC20NoReturn(_token).approve(address(bancorConverter), 0);
         ERC20NoReturn(_token).approve(address(bancorConverter), _amount);
-        uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, false);
-        uint returnedAmountOfETH = bancorConverter.quickConvert(path,_amount,minimumReturn);
+        uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_minimumRate,_amount,false);
+        uint returnedAmountOfETH = bancorConverter.quickConvert.value(0)(path,_amount,minimumReturn);
         require(returnedAmountOfETH > 0, "BancorConverter did not return any ETH");
         address(_depositAddress).transfer(returnedAmountOfETH);
         return true;
@@ -217,8 +218,9 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
             path[i] = internalPath[i];
         }
 
-        uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_amount,_minimumRate, true);
-        uint returnedAmountOfTokens = tokenToConverter[address(_token)].quickConvert.value(_amount)(path,_amount,minimumReturn);
+        uint minimumReturn = convertMinimumRateToMinimumReturn(_token,_minimumRate,_amount,true);
+        //Always use the bancor converter, because we are always buying with ETH first through this method
+        uint returnedAmountOfTokens = tokenToConverter[address(bancorToken)].quickConvert.value(_amount)(path,_amount,minimumReturn);
         require(returnedAmountOfTokens > 0, "BancorConverter did not return any tokens");
         ERC20NoReturn(_token).transfer(_depositAddress, returnedAmountOfTokens);
         return true;
