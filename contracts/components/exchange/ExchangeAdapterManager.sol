@@ -66,6 +66,7 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
     function pickExchange(ERC20Extended _token, uint _amount, uint _rate, bool _isBuying) public view returns (bytes32 exchangeId) {
 
         int maxRate = -1;
+        bytes32 bestRateID;
         for (uint i = 0; i < exchanges.length; i++) {
 
             bytes32 id = exchanges[i];
@@ -87,17 +88,16 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
                 continue;
             }
 
-            // TODO: fix it
             if (resultRate < int(_rate)) {
                 continue;
             }
 
             if (resultRate >= maxRate) {
                 maxRate = resultRate;
-                return id;
+                bestRateID = id;
             }
         }
-        return 0x0;
+        return bestRateID;
     }
 
     function supportsTradingPair(address _srcAddress, address _destAddress, bytes32 _exchangeId) external view returns (bool) {

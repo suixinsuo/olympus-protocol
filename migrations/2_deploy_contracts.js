@@ -6,6 +6,8 @@ let ExchangeProvider = artifacts.require("ExchangeProvider");
 let ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 let KyberNetworkAdapter = artifacts.require("../contracts/components/exchange/exchanges/KyberNetworkAdapter.sol");
 let MockKyberNetwork = artifacts.require("MockKyberNetwork");
+let MockDDEXAdapter = artifacts.require("MockDDEXAdapter");
+let MockDDEX = artifacts.require("MockDDEX");
 
 let MarketplaceProvider = artifacts.require("Marketplace");
 let AsyncWithdraw = artifacts.require("AsyncWithdraw");
@@ -61,22 +63,33 @@ function deployExchange(deployer, network) {
     })
     .then(() => deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address))
     .then(() => deployer.deploy(KyberNetworkAdapter, kyberAddress, ExchangeAdapterManager.address, ExchangeProvider.address))
+    .then(() => deployer.deploy(MockDDEXAdapter, kyberAddress, ExchangeAdapterManager.address, ExchangeProvider.address))
     .then(() => {
       if (network === "development") {
         return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18);
       }
-    })
+    }).then(async () =>{
+      let mockNetwork = await MockKyberNetwork.deployed();
+      devTokens = await mockNetwork.supportedTokens();
+      return deployer.deploy(MockDDEX,devTokens);
+      }
+    )
     .then(async () => {
       let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
       let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
 
       if (network === "development") {
         let mockKyberNetwork = await MockKyberNetwork.deployed();
-        devTokens = await mockKyberNetwork.supportedTokens();
+        let mockddexadapter = await MockDDEXAdapter.deployed();
+        let mockddex =  await MockDDEX.deployed();
+        
         await kyberNetworkAdapter.configAdapter(mockKyberNetwork.address, 0x0);
+        await mockddexadapter.configAdapter(mockddex.address, 0x0);
         const mot = await MockToken.deployed();
         // Send MOT for mock kyber so can trade it
         mot.transfer(mockKyberNetwork.address, mockTokenSupply / 2);
+        
+      //await exchangeAdapterManager.addExchange("ddex", mockddexadapter.address);
       }
       await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
       return deployer;
