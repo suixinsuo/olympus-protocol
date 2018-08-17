@@ -39,14 +39,14 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         pausedTime = now;
     }
 
-    modifier OnlyOwnerOrPausedTimeout() {
-        require((msg.sender == owner)||((paused==true)&&((pausedTime+pausedCycle)<=now)));
-        _;
-    }
-
     enum WhitelistKeys { Investment, Maintenance, Admin }
 
-    bytes32[] internal excludedComponents;
+    mapping(bytes32 => bool) internal excludedComponents;
+
+    modifier OnlyOwnerOrPausedTimeout() {
+        require( (msg.sender == owner) || ( paused == true && (pausedTime+pausedCycle) <= now ) );
+        _;
+    }
 
     // If whitelist is disabled, that will become onlyOwner
     modifier onlyOwnerOrWhitelisted(WhitelistKeys _key) {
@@ -72,9 +72,9 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
     function _initialize (address _componentList) internal {
         require(_componentList != 0x0);
         componentList = ComponentListInterface(_componentList);
-        excludedComponents.push(MARKET);
-        excludedComponents.push(STEP);
-        excludedComponents.push(LOCKER);
+        excludedComponents[MARKET] = true;
+        excludedComponents[STEP] = true;
+        excludedComponents[LOCKER] = true;
     }
 
     function updateComponent(bytes32 _name) public onlyOwner returns (address) {
@@ -82,17 +82,12 @@ contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
         if (super.getComponentByName(_name) == componentList.getLatestComponent(_name)) {
             return super.getComponentByName(_name);
         }
-
-        // changed.
+        // Changed.
         require(super.setComponent(_name, componentList.getLatestComponent(_name)));
-        // Check if approval is not required
-        for (uint i = 0; i < excludedComponents.length; i++) {
-            if (_name == excludedComponents[i]) {
-                return super.getComponentByName(_name);
-            }
+        // Check if approval is required
+        if(!excludedComponents[_name]) {
+            approveComponent(_name);
         }
-        // Approve first
-        approveComponent(_name);
         return super.getComponentByName(_name);
     }
 

@@ -524,6 +524,8 @@ contract("Olympus Index", accounts => {
 
 
   it("Shall be able to close (by step) a index", async () => {
+    const bot = investorA;
+
     await index.invest({ value: web3.toWei(2, "ether"), from: investorC });
     await index.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
 
@@ -539,14 +541,31 @@ contract("Olympus Index", accounts => {
     assert.ok(priceInRange, "C has invested with fee");
 
     await index.buyTokens();
+    // Cant sellOnClosedFund if is not closed
+    await calc.assertReverts(
+      async () => await index.sellAllTokensOnClosedFund(), "Index is not closed"
+    );
 
-    await index.close();
+    await index.close(); // Thats only closing, not selling tokens
+
+    await index.sellAllTokensOnClosedFund(); // Owner can sell tokens after close
     // getTokens will return amounts, but they are not updated til the steps are finished.
     // So that we check directly the balance of erc20
     assert.equal((await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
     assert.isAbove((await token1_erc20.balanceOf(index.address)).toNumber(), 0, "First step dont sell 2nd token");
+
+    // Check whitelist for bot to sell tokens after close
+    await calc.assertReverts(
+      async () => await index.sellAllTokensOnClosedFund({ from: bot }),
+      "Bot is not whitelisted"
+    );
+    // Whitelist bot
+    await index.enableWhitelist(WhitelistType.Maintenance, true);
+    await index.setAllowed([bot], WhitelistType.Maintenance, true);
+
     // Second time complete sell tokens and withdraw at once
-    await index.close();
+    await index.sellAllTokensOnClosedFund({ from: bot });
+
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
     // TODO VERIFY TOKENS ARE SOLD (refactor with getTokensAndAmounts())
     for (let i = 0; i < indexData.tokensLenght; i++) {

@@ -480,9 +480,10 @@ contract("Fund", accounts => {
 
   // --------------------------------------------------------------------------
   // ----------------------------- CLOSE A TOKEN ------------------------------
-  // Uses managment fee and step provider
+  // Uses managment fee and step provider, whitelist
 
   it("Shall be able to close (by step) a fund", async () => {
+    const bot = investorA;
     await fund.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
     const denominator = (await percentageFee.DENOMINATOR()).toNumber();
     await fund.setManagementFee(fundData.managmentFee * denominator); // Make sure the fee is as per requirements
@@ -499,14 +500,29 @@ contract("Fund", accounts => {
     // ETH balance is reduced
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "ETH balance reduced");
 
-    await fund.close();
+    await calc.assertReverts(
+      async () => await fund.sellAllTokensOnClosedFund(), "Fund is not closed"
+    );
+
+    await fund.close(); // Just set to close but not sell
+
+    await fund.sellAllTokensOnClosedFund(); // Owner can sell tokens after close
     // getTokens will return amounts, but they are not updated til the steps are finished.
     // So that we check directly the balance of erc20
     assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0, "First step sell 1st token");
     assert.isAbove((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "First step dont sell 2nd token");
 
+    // Check whitelist for bot to sell tokens after close
+    await calc.assertReverts(
+      async () => await fund.sellAllTokensOnClosedFund({ from: bot }),
+      "Bot is not whitelisted"
+    );
+    // Whitelist bot
+    await fund.enableWhitelist(WhitelistType.Maintenance, true);
+    await fund.setAllowed([bot], WhitelistType.Maintenance, true);
+
     // Second time complete sell tokens and withdraw at once
-    await fund.close();
+    await fund.sellAllTokensOnClosedFund({ from: bot });
     assert.equal((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "Second step sell 2nd token");
 
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
@@ -517,7 +533,10 @@ contract("Fund", accounts => {
 
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance returned");
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Cant change to active ");
-    await fund.setMaxSteps(DerivativeProviders.GETETH, 4); // reset
+    // reset
+    await fund.setMaxSteps(DerivativeProviders.GETETH, 4);
+    await fund.enableWhitelist(WhitelistType.Maintenance, false);
+    await fund.setAllowed([bot], WhitelistType.Maintenance, false);
 
   });
 

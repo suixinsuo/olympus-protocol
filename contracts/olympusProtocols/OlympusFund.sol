@@ -66,7 +66,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         pausedCycle = 365 days;
 
         super._initialize(_componentList);
-        excludedComponents.push(TOKENBROKEN);
+        excludedComponents[TOKENBROKEN] = true;
 
         bytes32[10] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP, TOKENBROKEN];
 
@@ -143,8 +143,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             }
 
             require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
-            ERC20NoReturn(_tokens[i]).approve(exchange, 0);
-            ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
+            approveExchange(_tokens[i],  _amounts[i]);
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
@@ -187,17 +186,18 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
-    function close() public OnlyOwnerOrPausedTimeout returns(bool success) {
+    function close() OnlyOwnerOrPausedTimeout public returns(bool success) {
         require(status != DerivativeStatus.New);
-        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
-
-        if(!getETHFromTokens(DENOMINATOR)){
-            reimburse();
-            return false;
-        }
         status = DerivativeStatus.Closed;
-        reimburse();
         return true;
+    }
+
+    function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
+        require(status == DerivativeStatus.Closed);
+        startGasCalculation();
+        bool result = !getETHFromTokens(DENOMINATOR);
+        reimburse();
+        return result;
     }
 
     function getPrice() public view returns(uint) {
@@ -292,7 +292,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         whenNotPaused
         returns(bool)
     {
-        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+        startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         StepInterface stepProvider = StepInterface(getComponentByName(STEP));
 
@@ -419,8 +419,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div(DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
-            ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, 0);
-            ERC20NoReturn(_tokensThisStep[sellIndex]).approve(exchange, _amounts[sellIndex]);
+            approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
         }
         if(!exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0)){
             checkBrokenTokens(_tokensThisStep);
@@ -493,6 +492,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
+    function startGasCalculation() internal {
+        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+    }
     // ----------------------------- MAPPEABLE ----------------------------
 
     function addInvestor(address investor) internal {
@@ -516,4 +518,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function getActiveInvestors() external view returns(address[]) {
         return activeInvestors;
     }
+    function approveExchange(address _token, uint amount) internal {
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        ERC20NoReturn(_token).approve(exchange, 0);
+        ERC20NoReturn(_token).approve(exchange, amount);
+    }
+
 }
