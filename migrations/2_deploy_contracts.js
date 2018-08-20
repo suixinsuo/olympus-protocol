@@ -38,6 +38,17 @@ function deployWithdraw(deployer, network) {
   deployer.deploy([AsyncWithdraw, SimpleWithdraw]);
 }
 
+function deployTutorial(deployer, network) {
+  deployer.deploy([
+    Locker,
+    MarketplaceProvider,
+    ComponentList,
+    AsyncWithdraw,
+    [MockToken, "", "MOT", 18, mockTokenSupply],
+  ]);
+  deployExchange(deployer, network);
+}
+
 function deployWhitelist(deployer, network) {
   deployer.deploy([WhitelistProvider]);
 }
@@ -68,11 +79,12 @@ function deployExchange(deployer, network) {
       if (network === "development") {
         return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18);
       }
-    }).then(async () =>{
+    }).then(async () => {
+      console.log('Deploying!!!');
       let mockNetwork = await MockKyberNetwork.deployed();
       devTokens = await mockNetwork.supportedTokens();
-      return deployer.deploy(MockDDEX,devTokens);
-      }
+      return deployer.deploy(MockDDEX, devTokens);
+    }
     )
     .then(async () => {
       let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
@@ -81,15 +93,15 @@ function deployExchange(deployer, network) {
       if (network === "development") {
         let mockKyberNetwork = await MockKyberNetwork.deployed();
         let mockddexadapter = await MockDDEXAdapter.deployed();
-        let mockddex =  await MockDDEX.deployed();
-        
+        let mockddex = await MockDDEX.deployed();
+
         await kyberNetworkAdapter.configAdapter(mockKyberNetwork.address, 0x0);
         await mockddexadapter.configAdapter(mockddex.address, 0x0);
         const mot = await MockToken.deployed();
         // Send MOT for mock kyber so can trade it
         mot.transfer(mockKyberNetwork.address, mockTokenSupply / 2);
-        
-      //await exchangeAdapterManager.addExchange("ddex", mockddexadapter.address);
+
+        //await exchangeAdapterManager.addExchange("ddex", mockddexadapter.address);
       }
       await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
       return deployer;

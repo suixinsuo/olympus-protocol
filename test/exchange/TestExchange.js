@@ -302,13 +302,13 @@ contract("ExchangeProvider", accounts => {
     let mockddexadapter = await MockDDEXAdapter.deployed();
     await AdapterManager.addExchange("ddex", mockddexadapter.address);
     let exchangeidtwo = await AdapterManager.exchanges(1);
-    exchangeprice = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), exchangeidtwo);
+    exchangeprice = await AdapterManager.getPrice.call(tokens[0], ethToken, web3.toWei(1, "ether"), exchangeidtwo);
 
-    exchangeprice2 = await AdapterManager.getPrice.call(tokens[0],ethToken ,web3.toWei(1, "ether"), "");
+    exchangeprice2 = await AdapterManager.getPrice.call(tokens[0], ethToken, web3.toWei(1, "ether"), "");
 
-    assert.equal(exchangeprice[0].toNumber(),10**14,`MockDDEXRate`);
+    assert.equal(exchangeprice[0].toNumber(), 10 ** 14, `MockDDEXRate`);
 
-    assert.equal(exchangeprice2[0].toNumber(),10**15,`BestRate`);
+    assert.equal(exchangeprice2[0].toNumber(), 10 ** 15, `BestRate`);
 
     await AdapterManager.removeExchangeAdapter(exchangeidtwo);
   });

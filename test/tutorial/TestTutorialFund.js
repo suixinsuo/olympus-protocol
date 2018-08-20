@@ -1,7 +1,7 @@
 const log = require("../utils/log");
 const calc = require("../utils/calc");
 const { DerivativeProviders, ethToken, DerivativeStatus, DerivativeType } = require("../utils/constants");
-const Fund = artifacts.require("OlympusTutorialFund");
+const Fund = artifacts.require("OlympusTutorialFundStub");
 const AsyncWithdraw = artifacts.require("components/widrwaw/AsyncWithdraw");
 const Marketplace = artifacts.require("Marketplace");
 const MockToken = artifacts.require("MockToken");
@@ -265,6 +265,10 @@ contract("Tutorial Fund", accounts => {
     assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(1.8, "ether"), "ETH balance reduced");
   });
 
+  it('Shall revert in a buy/sell operation before the timeout range', async () => {
+
+  });
+
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
     const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
@@ -296,6 +300,9 @@ contract("Tutorial Fund", accounts => {
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
   });
+
+
+
   // At the end of this section all tokens has been sold and withdraw
   // ----------------------------- CLOSE A FUND ----------------------
 
@@ -361,4 +368,65 @@ contract("Tutorial Fund", accounts => {
   // ----------------------------- END ----------------------
   // We can't add more test after the fund is closed
 
+  // ----------------------------- LOCKER CONDITIONS ----------------------
+  // We crate a new contract with the token timer initialized.
+  it("Create a fund with locker interval", async () => {
+    fund = await Fund.new(
+      fundData.name,
+      fundData.symbol,
+      fundData.description,
+      fundData.category,
+      fundData.decimals
+    );
+    await fund.initialize(componentList.address, fundData.maxInvestors);
+
+    await fund.setTradeInterval(2);
+    assert.equal((await fund.status()).toNumber(), 1); // new
+  });
+
+  it("Buy tokens revert before time out", async () => {
+    let tx;
+    // Investors
+    tx = await fund.invest({ value: web3.toWei(1.5, "ether"), from: investorA });
+    tx = await fund.invest({ value: web3.toWei(1.5, "ether"), from: investorB });
+    // Prepare buy tokens
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+    // First time will initialize the locker
+    tx = await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+
+    // Second time will set the timer
+    tx = await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    // Third time shall revert
+    await calc.assertReverts(
+      async () => await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0])),
+      'Buy shall revert before timeout'
+    );
+
+    await calc.waitSeconds(2); // Make sure next test start fresh
+
+
+  });
+
+  it('Sell tokens shall revert before timeout', async () => {
+
+    // Prepare sell tokens
+    const fundTokensAndBalance = await fund.getTokens();
+    const balances = fundTokensAndBalance[1];
+    const sellRates = await Promise.all(
+      tokens.map(async (token, index) => await mockKyber.getExpectedRate(token, ethToken, balances[index]))
+    );
+    // We sell half by half
+    // First shall succeed after timeout
+    tx = await fund.sellTokens("", fundTokensAndBalance[0], balances.map((balance) => balance / 2), sellRates.map(rate => rate[0]));
+    // Second shall fail
+    await calc.assertReverts(
+      async () => fund.sellTokens("", fundTokensAndBalance[0], balances.map((balance) => balance / 2), sellRates.map(rate => rate[0])),
+      'Cant sell before timeout'
+    );
+  });
 });
+
+
