@@ -44,7 +44,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         priceTimeout = _newTimeout;
     }
 
-    function needsRebalance(uint _rebalanceDeltaPercentage, address _targetAddress) external returns (bool _needsRebalance) {
+    function needsRebalance(uint _rebalanceDeltaPercentage, address _targetAddress) external view returns (bool _needsRebalance) {
         if(rebalanceStatus[_targetAddress] != RebalanceStatus.Initial) {
             return true;
         }

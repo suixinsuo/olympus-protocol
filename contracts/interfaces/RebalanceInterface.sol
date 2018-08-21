@@ -10,5 +10,5 @@ contract RebalanceInterface is ComponentInterface {
         (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues);
     function finalize() external returns(bool success);
     function getRebalanceInProgress() external returns (bool inProgress);
-    function needsRebalance(uint _rebalanceDeltaPercentage, address _targetAddress) external returns (bool _needsRebalance);
+    function needsRebalance(uint _rebalanceDeltaPercentage, address _targetAddress) external view returns (bool _needsRebalance);
 }
