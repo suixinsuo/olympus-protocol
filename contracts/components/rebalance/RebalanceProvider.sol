@@ -44,6 +44,40 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         priceTimeout = _newTimeout;
     }
 
+    function needsRebalance(uint _rebalanceDeltaPercentage, address _targetAddress) external returns (bool _needsRebalance) {
+        if(rebalanceStatus[_targetAddress] != RebalanceStatus.Initial) {
+            return true;
+        }
+
+        uint i;
+        address[] memory indexTokenAddresses;
+        uint[] memory indexTokenWeights;
+        bool itemsToBuy = false;
+        bool itemsToSell = false;
+        (indexTokenAddresses, indexTokenWeights) = IndexInterface(_targetAddress).getTokens();
+        for(i = 0; i < indexTokenAddresses.length; i++) {
+            // Get the amount of tokens expected for 1 ETH
+            uint ETHTokenPrice;
+            (ETHTokenPrice,,) = priceProvider.getPriceOrCacheFallback(
+                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "", priceTimeout);
+            uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(_targetAddress)); //
+            uint shouldHaveAmountOfTokensInETH = (getTotalIndexValue().mul(indexTokenWeights[i])).div(100);
+            uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18);
+            uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
+            if (shouldHaveAmountOfTokens < currentTokenBalance.sub(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
+                itemsToSell = true;
+            } else if (shouldHaveAmountOfTokens > currentTokenBalance.add(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
+                itemsToBuy = true;
+            }
+        }
+
+        if(itemsToBuy && itemsToSell){
+            return true;
+        }
+
+        return false;
+    }
+
     function rebalanceGetTokensToSellAndBuy(uint _rebalanceDeltaPercentage) external returns
     (address[] _tokensToSell, uint[] _amountsToSell, address[] _tokensToBuy, uint[] _amountsToBuy, address[] _tokensWithPriceIssues) {
         if(rebalanceStatus[msg.sender] == RebalanceStatus.Calculated || rebalanceStatus[msg.sender] == RebalanceStatus.Recalculated) {
