@@ -55,7 +55,7 @@ contract OlympusMappeableIndex is IndexInterface, BaseDerivative, MappeableDeriv
       address[] _tokens,
       uint[] _weights)
       public checkLength(_tokens, _weights) checkWeights(_weights) {
-
+        require(0<=_decimals&&_decimals<=18);
         name = _name;
         symbol = _symbol;
         totalSupply_ = 0;

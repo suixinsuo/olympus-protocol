@@ -45,6 +45,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
       string _category,
       uint _decimals
      ) public {
+        require(0<=_decimals&&_decimals<=18);
         name = _name;
         symbol = _symbol;
         category = _category;
