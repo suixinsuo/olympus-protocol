@@ -11,4 +11,5 @@ contract RebalanceInterface is ComponentInterface {
     function finalize() external returns(bool success);
     function getRebalanceInProgress() external returns (bool inProgress);
     function needsRebalance(uint _rebalanceDeltaPercentage, address _targetAddress) external view returns (bool _needsRebalance);
+    function getTotalIndexValueWithoutCache() public view returns (uint totalValue);
 }
