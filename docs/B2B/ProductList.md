@@ -1,23 +1,23 @@
 # ProductList
 
-### Decription
-ProductList is a storage that stores all funds and indices. The fund or index will be stored to the ProductList while executing the initialize function. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
+### Description
+ProductList is a storage smart contract that stores the addresses of all initialized funds and indices. Funds and indexes will be stored in the ProductList when the initialize function is executed. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
-### Get the productlistAddress
-> To use Product List, first of all, you will have to get the productlistAddress from ComponentList contract.
+### Get the productListAddress
+> To use the Product List, first of all, you will have to get the productListAddress from the ComponentList contract.
 
 #### &emsp;Example code
-> The code below shows how to get the productlistAddress with Web3.
+> The code below shows how to get the productListAddress with Web3.
 
 ```javascript
-const productlistName = web3.fromAscii('Marketplace');
+const productListName = web3.fromAscii('Marketplace');
 const componentListContract = web3.eth.contract(abi).at(componentListAddress);
-const productlistAddress;
-componentListContract.getComponentByName(productlistName,(err, address)=>{
+const productListAddress;
+componentListContract.getComponentByName(productListName,(err, address)=>{
    if (err) {
         return console.error(err);
     }
-  productlistAddress = address;
+  productListAddress = address;
 });
 ```
 
@@ -30,7 +30,7 @@ function getAllProducts() external view returns (address[] allProducts);
 ```
 
 #### &emsp;Description
-> Call this function to get all products (including fund and index) that are in the product list.
+> Call this function to get all products (including funds and indexes) that are in the product list.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -38,25 +38,25 @@ function getAllProducts() external view returns (address[] allProducts);
 ```javascript
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const productListContract = web3.eth.contract(abi).at(productlistAddress);
+const productListContract = web3.eth.contract(abi).at(productListAddress);
 
 productListContract.getAllProducts((err,productAddresses) => {
   if (err) {
     return console.error(err);
   }
   console.log(productAddresses);
-  // We can use the following code to distinguish which is index address or fund address.
+  // We can use the following code to distinguish between index and fund addresses.
   const indexContract = web3.eth.contract(indexAbi).at(productAddresses[0])
   indexContract.fundType((err,fundType)=>{
       if (err) {
         return console.error(err);
       }
       if(fundType == 0){
-        // this is an index address.
+        // This is an index address.
       }else if (fundType == 1){
-        // this is a fund address.
+        // This is a fund address.
       }else{
-        // unexpected result.
+        // Unexpected result.
       }
 
   })
@@ -67,11 +67,11 @@ productListContract.getAllProducts((err,productAddresses) => {
         return console.error(err);
       }
       if(fundType == 0){
-        // this is an index address.
+        // This is an index address.
       }else if (fundType == 1){
-        // this is a fund address.
+        // This is a fund address.
       }else{
-        // unexpected result.
+        // Unexpected result.
       }
   })
 });
@@ -84,7 +84,7 @@ function getOwnProducts() external view returns (address[] addresses) ;
 ```
 
 #### &emsp;Description
-> Call this function to get creator's products (including fund and index) that are in the product list.
+> Call this function to get a creator's products (including fund and index) that are in the product list.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -103,7 +103,7 @@ productListContract.getOwnProducts((err,productAddresses) => {
 ```
 
 ### abi
-> You can get the [abi](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
+> You can get the [abi](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API.
 
 ### componentList address
-> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API
+> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API.

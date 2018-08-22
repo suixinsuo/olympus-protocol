@@ -2,7 +2,7 @@
 
 ### Introduction
 
-An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. The Olympus Basic Fund contains basic interfaces that a fund needs. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
+An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of their own shares. The Olympus Basic Fund contains basic interfaces that a fund needs. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
 ### Constructor
 
@@ -18,7 +18,7 @@ constructor(
 
 #### &emsp;Parameters
 
-> \_name: Fund name</br> > \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of ERC20. For example: the symbol length can be any, but it's better to keep in from 2 - 5)</br> > \_description: Fund description</br> > \_category: Fund category</br> > \_decimals: Fund decimals (normally it should be 18)</br>
+> \_name: Fund name</br> > \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)</br> > \_description: Fund description</br> > \_category: Fund category</br> > \_decimals: Fund decimals (normally it should be 18)</br>
 
 #### &emsp;Example code
 
@@ -85,7 +85,7 @@ web3.eth.contract(abi).new(
 ```
 
 ### Basic info
-> The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
+> The code below shows how to get a fund's basic information, including the fund's name, symbol, description, category and decimals.
 
 ```javascript
 const Web3 = require("web3");
@@ -96,35 +96,35 @@ fundContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(name)
+  console.log(name)
 })
 // Symbol
 fundContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(symbol)
+  console.log(symbol)
 })
 // Description
 fundContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(description)
+  console.log(description)
 })
 // Category
 fundContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(category)
+  console.log(category)
 })
 // Decimals
 fundContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(decimals)
+  console.log(decimals)
 })
 ```
 
@@ -140,7 +140,7 @@ function initialize(address _componentList) external onlyOwner;
 > Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
 
 #### &emsp;Parameters
-> \_componentList: Address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
+> \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)</br>
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -172,10 +172,10 @@ function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts
 > Whether the function executed successfully or not.
 
 #### &emsp;Parameters
-> _exchangeId: You can choose which exchange will be used to trade.</br>
-  _tokens: Tokens to buy.</br>
+> _exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.</br>
+  _tokens: ERC20 addresses of the tokens to buy.</br>
   _amounts: The corresponding amount of tokens to buy.</br>
-  _minimumRates: The minimum amount of tokens per ETH in wei.</br>
+  _minimumRates: The minimum return amount of tokens per ETH in wei.</br>
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -204,16 +204,16 @@ function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amount
 ```
 
 #### &emsp;Description
-> Call the function for fund manager to sell any combination of tokens that are available in the fund.
+> Call the function to sell any combination of tokens that are available in the fund.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
 
 #### &emsp;Parameters
-> _exchangeId: You can choose which exchange will be used to trade.</br>
-  _tokens: Tokens to sell.</br>
+> _exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.</br>
+  _tokens: ERC20 addresses of the tokens to sell.</br>
   _amounts: The corresponding amount of tokens to sell.</br>
-  _minimumRates: The minimum amount of tokens per ETH in wei.</br>
+  _minimumRates: The minimum return amount of ETH per token in wei.</br>
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -241,7 +241,7 @@ function withdraw() external returns(bool);
 ```
 
 #### &emsp;Description
-> This function is for investors to withdraw all their investment.
+> This function is for investors to withdraw their investment in Ether.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -289,7 +289,7 @@ fundContract.close((err, result) => {
 ```
 
 ### abi
-> You can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API
+> You can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API.
 
 ### bytecode
-> You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API
+> You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API.
