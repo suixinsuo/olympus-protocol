@@ -151,6 +151,44 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
         return true;
     }
 
+    function tokenExchange(ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _minimumRate, address _depositAddress)
+    external payable returns(bool success)
+    {
+        if(_src == ETH_TOKEN_ADDRESS){
+            require(msg.value == _amount);
+            if (address(this).balance < _amount) {
+                return false;
+            }
+            uint beforeTokenBalance = _dest.balanceOf(_depositAddress);
+
+        }else if(_dest == ETH_TOKEN_ADDRESS){
+            ERC20NoReturn(_src).approve(address(kyber), 0);
+            ERC20NoReturn(_src).approve(address(kyber), _amount);
+        }
+        uint slippageRate;
+        (,slippageRate) = kyber.getExpectedRate(_src, _dest, _amount);
+
+        if(slippageRate < _minimumRate){
+            return false;
+        }
+        slippageRate = _minimumRate;
+
+        kyber.trade(
+            _src,
+            _amount,
+            _dest,
+            _depositAddress,
+            2**256 - 1,
+            slippageRate,
+            walletId);
+        if(_src == ETH_TOKEN_ADDRESS){
+            require(_dest.balanceOf(_depositAddress) > beforeTokenBalance);
+        }
+        // require(_token.balanceOf(this) < beforeTokenBalance);
+        // require((beforeTokenBalance - _token.balanceOf(this)) == _amount);
+
+        return true;
+    }
     function approveToken(ERC20Extended _token) external returns(bool success){
         ERC20NoReturn(_token).approve(exchangeProvider,0);
         ERC20NoReturn(_token).approve(exchangeProvider,2**255);
