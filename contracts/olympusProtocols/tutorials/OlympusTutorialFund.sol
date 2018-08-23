@@ -31,7 +31,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
     uint public MAX_INVESTORS;
     uint public currentNumberOfInvestors;
 
-    uint public constant TRADE_INTERVAL = 0 seconds;
+    uint public TRADE_INTERVAL = 7 days; // Is constant but needs to be overridden for testing
     bytes32 public constant LOCKER = "LockerProvider";
 
     constructor(
