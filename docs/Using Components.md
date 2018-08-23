@@ -193,11 +193,11 @@ The MOT address is hardcoded in the code and belongs to the real MOT mainnet add
 
 
 
-2. Why do our test still fail?
+2. Why do our tests still fail?
 
 In the new derivative, we have added a limitation not to operate the same token more than once every 7 days. Let's make a trace of the lock provider:
 
-```javascript
+```
  State: Token A Lock Delay 0, next call 0.
  + Test buyTokens
     - Check Lock next before 0, OK. Set next call to  (now+0 delay) = now
@@ -224,7 +224,7 @@ The first option is to initialize a value in the initialize function (which coul
 
 No worries, we still have a solution, we can mockup the derivative. Create a new mockup file in `myOwnContracts/MyContractStub.sol`. In this file we will inherit from our derivative, but override the declaration of the interval to zero seconds. Furthermore, we need to override the constructor.
 
-After you change the derivative's name to you own chosen name, the code should look similar to this:
+After you change the derivative's name to your own chosen name, the code should look similar to this:
 
 ```javascript
 
@@ -357,7 +357,7 @@ You can also try to check the value in lockerProvider (timeInterval and unlock t
 4. Migrations
 
 
-In the file `/migrations/2_deploy_contracts.js` we can find the scrip which is running the contracts into the blockchain.
+In the file `/migrations/2_deploy_contracts.js` we can find the script which is deploying the contracts on the blockchain.
 a) It deploys and configures all required contracts each test run (which takes time).
 b) It can be run with a valid private key onto any configured network. You can check the command we created npm run `testKovan` in `package.json`.
 
@@ -389,7 +389,7 @@ function deployTutorial(deployer, network) {
 }
 }
 ```
-a) You can see that the the function receives a deployer object that can deploy the contracts [Check Documentation](https://truffleframework.com/docs/truffle/testing/testing-your-contracts)and information of the network that we are deploying on. You can use this information to further customize your deployment function.
+a) You can see that the the function receives a deployer object that can deploy the contracts [Check Documentation](https://truffleframework.com/docs/truffle/testing/testing-your-contracts) and information of the network that we are deploying on. You can use this information to further customize your deployment function.
 
 b) Finally, we only need to deploy the Locker, MarketPlaceProvider and ComponentList and MockToken, for our test.There is a slight difference in the syntax for deploying contracts with parameters and deploying contracts without. An example of a contract that does need parameters can be found in the `deployExchange` function.
 
