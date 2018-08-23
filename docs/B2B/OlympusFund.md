@@ -2,7 +2,7 @@
 
 ### Introduction
 
-An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
+An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of their own shares. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
 ### Constructor
 
@@ -17,7 +17,7 @@ constructor(
 ```
 
 #### &emsp;Parameters
-> \_name: Fund name</br> > \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of ERC20. For example: the symbol length can be any, but it's better to keep in from 2 - 5)</br> > \_description: Fund description</br> > \_category: Fund category</br> > \_decimals: Fund decimals (normally it should be 18)</br>
+> \_name: Fund name</br> > \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)</br> > \_description: Fund description</br> > \_category: Fund category</br> > \_decimals: Fund decimals (normally it should be 18)</br>
 
 #### &emsp;Example code
 ```javascript
@@ -94,35 +94,35 @@ fundContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(name);
+  console.log(name);
 })
 // Symbol
 fundContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(symbol)
+  console.log(symbol)
 })
 // Description
 fundContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(description)
+  console.log(description)
 })
 // Category
 fundContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(category)
+  console.log(category)
 })
 // Decimals
 fundContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(decimals)
+  console.log(decimals)
 })
 ```
 
@@ -138,7 +138,7 @@ function initialize(address _componentList, uint _initialFundFee) onlyOwner exte
 > Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
 
 #### &emsp;Parameters
-> \_componentList: Address of the Olympus componentlist (The deployed componentlist address can be retrieved by clicking on the link at the end of the doc)</br>
+> \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)</br>
   \_initialFundFee: The fee that the owner will take from the investments. Must be based on DENOMINATOR, so 1% is 1000 </br>
 > value: The initial balance of the fund
 
@@ -173,8 +173,8 @@ function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts
 > Whether the function executed successfully or not.
 
 #### &emsp;Parameters
-> _exchangeId: You can choose which exchange will be used to trade.</br>
-  _tokens: Tokens to buy.</br>
+> _exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.</br>
+  _tokens: ERC20 addresses of the tokens to buy.</br>
   _amounts: The corresponding amount of tokens to buy.</br>
   _minimumRates: The minimum amount of tokens per ETH in wei.</br>
 
@@ -208,10 +208,10 @@ function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amount
 > Call the function for fund manager or whitelisted fund administrator to sell any combination of tokens that are available in the fund.
 
 #### &emsp;Parameters
-> _exchangeId: You can choose which exchange will be used to trade.</br>
-  _tokens: Tokens to sell.
+> _exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.</br>
+  _tokens: ERC20 addresses of the tokens to sell.
   _amounts: The corresponding amount of tokens to sell.
-  _minimumRates: The minimum amount of tokens per ETH in wei.
+  _minimumRates: The minimum amount of ETH per token in wei.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -242,7 +242,7 @@ function setManagementFee(uint _fee) external onlyOwner;
 ```
 
 #### &emsp;Description
-> Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. Usually, funds should not have a 100% fee, but this is only restricted to be equal to or under 100% (10000). The following example values correspond to the following percentages:</br>
+> Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. This is only restricted to be less than 100% (10000). The following example values correspond to the following percentages:</br>
 1 = 0.01% fee</br>
 10 = 0.1% fee</br>
 100 = 1% fee</br>
@@ -250,7 +250,7 @@ function setManagementFee(uint _fee) external onlyOwner;
 10000 = 100% fee</br>
 
 #### &emsp;Parameters
-> _fee: The percentage of investor's investment, that will be as management fee (Note: _fee must equal to or bigger than 0 and less than 10000)
+> _fee: The percentage of investor's investment, that will be taken as management fee (Note: _fee must be equal to or bigger than 0 and less than 10000)
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -274,7 +274,7 @@ function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) w
 ```
 
 #### &emsp;Description
-> This function is for fund's manager. Investors that has requested to withdraw their investment will get their investment back after the fund's management executes this function.
+> This function is for fund's manager. Investors that have requested to withdraw their investment will get their investment back after the fund's manager or bot system has executed this function.
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -323,7 +323,7 @@ fundContract.withdrawFee(amount, (err, result) => {
 function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool);
 ```
 #### &emsp;Description
-> Owner of the fund can enable a category of whitelist to protect the fund.
+> Owner of the fund can enable a category of whitelist to facilitate access control for the fund.
 The following three categories of whitelist are available:</br>
 0: Investment</br>
 1: Maintenance </br>
@@ -331,7 +331,7 @@ The following three categories of whitelist are available:</br>
 If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the fund.
 If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process; otherwise, only the owner of the fund can trigger the withdraw process.
 If type 2 Admin whitelist is enabled, only users' addresses that have been added to the whitelist are allowed
-to buy and sell tokens for the fund; otherwise, only owner of the fund can buy and sell tokens.
+to buy and sell tokens for the fund; otherwise, only the owner of the fund can buy and sell tokens.
 
 #### &emsp;Parameters
 > \_key: A specific category of whitelist to be enabled for the fund. </br>
@@ -364,7 +364,7 @@ fundContract.enableWhitelist(key, (err, result) => {
 function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
 ```
 #### &emsp;Description
-> After enabling a specific category of whitelist, the owner of the fund can add/remove accounts from the whitelist.
+> After enabling a specific category of whitelist, the owner of the fund can add and remove accounts from the whitelist.
 
 #### &emsp;Parameters
 > accounts: Array of addresses</br>
@@ -430,7 +430,7 @@ fundContract.disableWhitelist(key, (err, result) => {
 function close() public onlyOwner returns(bool success);
 ```
 #### &emsp;Description
-> Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back.(Note: After closing the fund, investors can still withdraw their investment and fund managers can also withdraw their management fee.)
+> Close the fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back. (Note: After closing the fund, investors can still withdraw their investment and fund managers can also withdraw their management fee.)
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
@@ -451,7 +451,7 @@ fundContract.close((err, result) => {
 ```
 
 ### abi
-> You can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API
+> You can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API.
 
 ### bytecode
-> You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API
+> You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API.

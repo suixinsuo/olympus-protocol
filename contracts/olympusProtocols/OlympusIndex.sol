@@ -45,7 +45,7 @@ contract OlympusIndex is IndexInterface, Derivative {
       address[] _tokens,
       uint[] _weights)
       public {
-
+        require(0<=_decimals&&_decimals<=18);
         require(_tokens.length == _weights.length);
         uint _totalWeight;
 
