@@ -265,10 +265,6 @@ contract("Tutorial Fund", accounts => {
     assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(1.8, "ether"), "ETH balance reduced");
   });
 
-  it('Shall revert in a buy/sell operation before the timeout range', async () => {
-
-  });
-
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
     const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
@@ -384,7 +380,7 @@ contract("Tutorial Fund", accounts => {
     assert.equal((await fund.status()).toNumber(), 1); // new
   });
 
-  it("Buy tokens revert before time out", async () => {
+  it("Buy tokens reverts before time out", async () => {
     let tx;
     // Investors
     tx = await fund.invest({ value: web3.toWei(1.5, "ether"), from: investorA });

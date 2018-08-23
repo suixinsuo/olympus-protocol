@@ -27,7 +27,7 @@ We set a constant of 7 days between operations.
 
 3. We initialize the component
 
-````javascript
+```javascript
   function initialize(address _componentList, uint _maxInvestors) external onlyOwner {
       // REST OF CODE
 
@@ -43,8 +43,9 @@ We set a constant of 7 days between operations.
 
       // REST OF CODE
    }
-````
-a) We don’t need new parameters to set the component. This is because of initializing taking the `ComponentList` address as the parameter. This component list is aware of the LOCKER address.
+```
+
+a) We don’t need new parameters to set the component. This is because of initializing taking the `ComponentList` address as a parameter. This component list is aware of the LOCKER address.
 
 b) You should utilize the active Olympus Component List, then you have immediate access to all our components, including the capability to update to the latest versions once your fund is published.
 
@@ -69,8 +70,10 @@ In this case, we don’t have a unique interval, but an interval for each token.
            if (amounts[_tokenAddress] > 0 && !activeTokens[_tokenAddress]) {
                tokens.push(_tokenAddress);
                activeTokens[_tokenAddress] = true;
-                // Add this line
+
+               // Add this line
                lockerProvider.setTimeInterval(bytes32(address(_tokenAddress)),TRADE_INTERVAL);
+
                continue;
            }
            emit TokenUpdated(_tokenAddress, amounts[_tokenAddress]);
@@ -112,7 +115,7 @@ Calling setTimeInterval we initialize the timer to 7 days value stored in TRADE_
 ```
 
 We get the lockerProvider in the same way as in the step before.
-The buy tokens function checks the total amount of ETH required to buy all the tokens. We take advantage of this loop and also check the interval (avoiding to create a second loop).
+The buyTokens function checks the total amount of ETH required to buy all the tokens. We take advantage of this loop and also check the interval (avoiding to create a second loop).
 If it is the first time we buy a token, the current value of the interval will be 0. (So the token will be purchased). After the purchase, the updateTokens function will initialize the interval to 7 days. The second time we trade with this token the interval will apply.
 There is a small issue, the interval won’t apply until the second purchase. You can think about how to apply the interval from the first moment, in an optimal way, as a challenge.
 
@@ -184,20 +187,19 @@ We can observe the next interesting function in the test:
 ```
 For some providers, the fund manager is required to pay a small amount of MOT for calling functions.
 
-The MOT address is hardcoded in the code and belongs to the real MOT main net address. But in the scenarios of Kovan or test cases, we need to set the MOT address manually.
+The MOT address is hardcoded in the code and belongs to the real MOT mainnet address. But in the scenarios of Kovan or test cases, we need to set the MOT address manually.
   > In kovan set the MOT kovan address.
   > In test cases, use the mockMOT which is a contract created as a mock to mock the behavior of the MOT coin (a "normal" ERC20 token).
 
 
 
-2. Why our test still fail?
+2. Why do our test still fail?
 
-In the new derivative, we have added a limitation not to operate the same token more than once every 7 days. Let's make a trace
-of the lock provider:
+In the new derivative, we have added a limitation not to operate the same token more than once every 7 days. Let's make a trace of the lock provider:
 
 ```javascript
  State: Token A Lock Delay 0, next call 0.
- + Test buy tokens
+ + Test buyTokens
     - Check Lock next before 0, OK. Set next call to  (now+0 delay) = now
     - Initialize delay to 7 days.
  State: Token A Lock delay 7 days next call: now
@@ -205,28 +207,24 @@ of the lock provider:
     - Check lock before now, OK. Set next call before (now+7 days) = in 7 days.
     - No require to initialize delay.
  State: Token A Lock delay in 7 days, call in 7 days.
-  + Sell ETH on withdrawing (This test will buy tokens before withdraw and will revert )
+  + Sell ETH on withdrawing (This test will buyTokens before withdraw and will revert )
  ```
 
- We can appreciate that the initialization takes part after the first token is sold, and the delay is applied after next time the locker component is check. Here we find three problems
+ We can see that the initialization takes part after the first token is sold, and the delay is applied after next time the locker component is checked. In this situation, we encounter next problems
 
- a) We need to add a test to check the delay is working and function reverting.
+ a) We need to add a test to check whether or not the delay is working and the function is reverting.
  b) If we are gonna test any other operation we will not be able to test, because test cases would need to wait around 7 days to complete the check.
 
 3. Introduction to stubs
 
-One easy solution is to make the delay time configurable, so we can just configure to few seconds for the test cases. But for
-the trust of the investors, we want this number to be fixed and not modifiable, or the fund manager could modify it to his own
+One easy solution is to make the delay time configurable, so we can just change the configuration to a few seconds for the test cases. But for the trust of the investors, we want this number to be fixed and not modifiable, or the fund manager could modify it to his own
 advantage.
 
-We can initialize a value in the initialize function (which could be a reasonable solution). Though imagine that we need
-to assure the value is the same for all this types or fund.
+The first option is to initialize a value in the initialize function (which could be a reasonable solution). However, we need to be sure that the value is the same for all the instances of this fund.
 
-No worries, still we have a solution, we can mockup the derivative. Create a new mockup file in `myOwnContracts/MyContractStub.sol`. In which we will inheritance our derivative but override the declaration
-of the constant to a 0 seconds. Also, we need to override the constructor.
+No worries, we still have a solution, we can mockup the derivative. Create a new mockup file in `myOwnContracts/MyContractStub.sol`. In this file we will inherit from our derivative, but override the declaration of the interval to zero seconds. Furthermore, we need to override the constructor.
 
-After you change derivatives name to your own chosen names, the code shall look similar to this one.
-
+After you change the derivative's name to you own chosen name, the code should look similar to this:
 
 ```javascript
 
@@ -250,19 +248,19 @@ contract OlympusTutorialFundStub is OlympusTutorialFund {
 ```
 
   > Why not override TRADE_INTERVAL in the derivative `uint public TRADE_INTERVAL = 0 seconds`?
-    The reason is that even if we override the value with a new variable, the call of the parent functions buy tokens and sell tokens will be still accessing the super.TRADE_INTERVAL which is 7 days and fail.
+    The reason is that even if we override the value with a new variable, the call of the parent functions buyTokens and sell tokens will be still accessing the super.TRADE_INTERVAL which is 7 days and fail.
 
-And in the test cases, we will require to use the stub
+And in the test cases, we will require to use the stub:
 
 ```javascript
 const Fund = artifacts.require("OlympusTutorialFundStub");
 ```
 
-That will be enough to pass again the test cases.
+This will be enough to pass the test cases again.
 
 3. Test the special scenario
 
-Let's add a config function to our Stub. This stub is only being used in tests, and not to be utilized in reality.
+Let's add a config function to our Stub. This stub is only being used in tests, and should not be used in reality.
 
 ```javascript
 function setTradeInterval(uint _seconds) external {
@@ -270,12 +268,12 @@ function setTradeInterval(uint _seconds) external {
     }
 ```
 
-In the previous flow, the tokens get initialized with 0 seconds interval first time they are operated.
-The easiest is to create a new derivative. We can do this at the end of the test.
+In the previous flow, the tokens were initialized with a zero second interval when they are operated for the first time.
+The easiest method is to create a new derivative. We can do this at the end of the test.
 
 ```javascript
 // ----------------------------- LOCKER CONDITIONS ----------------------
-  // We crate a new contract with the token timer initialized.
+  // We create a new contract with the token timer initialized.
   it("Create a fund with locker interval", async () => {
     fund = await Fund.new(
       fundData.name,
@@ -285,23 +283,22 @@ The easiest is to create a new derivative. We can do this at the end of the test
       fundData.decimals
     );
     await fund.initialize(componentList.address, fundData.maxInvestors);
-    // Remember To set the trade interval
+    // Remember to set the trade interval
     await fund.setTradeInterval(2); // Two seconds
     assert.equal((await fund.status()).toNumber(), 1); // Keep some condition to check creation is correct
   });
 ```
 
-
-Now we can add and scenario for buy
+Now, we can add a scenario for buying tokens:
 
 ```javascript
 
-  it("Buy tokens revert before time out", async () => {
+  it("Buy tokens reverts before time out", async () => {
     let tx;
     // Investors
     tx = await fund.invest({ value: web3.toWei(1.5, "ether"), from: investorA });
     tx = await fund.invest({ value: web3.toWei(1.5, "ether"), from: investorB });
-    // Prepare buy tokens
+    // Prepare to buy tokens
     const rates = await Promise.all(
       tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
     );
@@ -323,7 +320,7 @@ a) First, we invest some ether. Will invest 3ETH and try to buy 3 times tokens.
 b) Then we check the rates and prepare the amounts array. The rates are provided by the exchange provider
 from real tokens price. In the local test, we can call our mockupKyber which will provide us the mock rates for the tokens.
 We will set the amounts array to 0.5eth for each token (1 ETH in total)
-c) The first time we buy, token get initialize and the trading interval initialized. The second time the trading interval gets
+c) The first time we buy, the trading interval gets initialized for each token. The second time the trading interval gets
 added (so it shall also succeed). Finally, the third trial shall revert.
 d) We add `calc.waitSeconds` to make sure we can operate with the token within the next test.
 
@@ -351,24 +348,20 @@ Sell Token test
 
 
 a) getTokens is returning `[tokens[], balances[]]` so we keep the balances only. While rates are returning `Array<[basePrice, slippagePrice]>` so we get the slippage rate only.
-b) we sell tokens half by half (otherwise next sell have nothing to sell). The first time, it will work, as the last operation was more than 1 second ago. Second sell token will revert.
+b) We sell the tokens half by half (otherwise the next sell transaction does not have any tokens to sell). The first time, it will work, as the last operation was more than 1 second ago. Second sell token will revert.
 
-We can complicate more the test cases, add more checks, or create the last scenario to withdraw and close
-this newly created fund.
+To continue we this, we can make the test cases more complicated, add more assert statements, or create the last scenarios for the withdraw and close features.
 
-You can also try to check the value of stepProvider (timeInterval and unlock time), using `lockProvider` and
-checking the value of his public mapping attribute.
+You can also try to check the value in lockerProvider (timeInterval and unlock time). In the initialization we have set the variable `lockerProvider = await LockerProvider.deployed();` that will allow you to query directly the public mapping attributes of the provider.
 
 4. Migrations
 
 
 In the file `/migrations/2_deploy_contracts.js` we can find the scrip which is running the contracts into the blockchain.
-a) It deploys and config all required contracts each test run (which takes time).
-b) It can be run with the proper private key into Kovan or main net, where it will deploy also the contracts. You can check
-`package.json` `testKovan` option.
+a) It deploys and configures all required contracts each test run (which takes time).
+b) It can be run with a valid private key onto any configured network. You can check the command we created npm run `testKovan` in `package.json`.
 
-In our case, test cases, it takes a long time to deploy all contracts which more are not required in our
-test. In order to optimize it, we have created the concept of the suit, one attribute that will allow us
+In our case, it takes a long time to deploy all contracts, many of which are most of the time not required for a specific test case. In order to optimize it, we have created the suite concept, one attribute that will allow us
 to select which kind of contracts we want to deploy. You can find it at the end of the migrations file
 
 ```javascript
@@ -378,7 +371,7 @@ if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {
 ```
 
 It means, if we run the test with a suit name `--suite=MyDerivative`, the code will find a function
-call `deployMyDerivative` and run it (instead to run `deploy()` or `deployOnKovan()`).
+called `deployMyDerivative` and run it (instead of running `deploy()` or `deployOnKovan()`).
 
 Let's create a suite function for our test
 
@@ -396,17 +389,14 @@ function deployTutorial(deployer, network) {
 }
 }
 ```
-a) You can see that the function receives deployer object that can deploy the contracts [Check Documentation](https://truffleframework.com/docs/truffle/testing/testing-your-contracts) and network with information
-of the network that we are running. You can use this objects to customize in higher level your deployment function.
+a) You can see that the the function receives a deployer object that can deploy the contracts [Check Documentation](https://truffleframework.com/docs/truffle/testing/testing-your-contracts)and information of the network that we are deploying on. You can use this information to further customize your deployment function.
 
-b) Finally, we only need to deploy the Locker, MarketPlaceProvider and ComponentList and MockToken, for our test. You
-can check the different syntaxis for a provider that doesn't need parameters and the one it needs (MockToken) Also the exchange provider, which is a complex set of functions already customized in `deployExchange` function.
+b) Finally, we only need to deploy the Locker, MarketPlaceProvider and ComponentList and MockToken, for our test.There is a slight difference in the syntax for deploying contracts with parameters and deploying contracts without. An example of a contract that does need parameters can be found in the `deployExchange` function.
 
-Changing the names to your own file, I'm running the line like:
+Changing the filenames to your own filenames, we can run the command like this:
 
   > truffle  test--suite=Tutorial  test/tutorial/TestTutorialFund.js
 
-You will see still al components get to compile, though not deployed.
-
+We will still see that all the components get compiled, but they will not be deployed.
 
 
