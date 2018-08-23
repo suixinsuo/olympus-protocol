@@ -160,6 +160,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         totalSupply_ = totalSupply_.add(_investorShare);
 
         // emit Invested(msg.sender, _investorShare);
+        emit Transfer(owner, msg.sender, _investorShare); // ERC20 Required event
         return true;
     }
 
@@ -280,6 +281,8 @@ contract OlympusIndex is IndexInterface, Derivative {
             if (_tokenAmount == 0) {continue;}
 
             balances[_requests[i]] =  balances[_requests[i]].sub(_tokenAmount);
+            emit Transfer(msg.sender, owner, _tokenAmount); // ERC20 Required event
+
             totalSupply_ = totalSupply_.sub(_tokenAmount);
             address(_requests[i]).transfer(_eth);
             _transfers++;

@@ -171,7 +171,10 @@ contract("Fund", accounts => {
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
     tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    assert.ok(calc.getEvent(tx, 'Transfer'));
     tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
+    assert.ok(calc.getEvent(tx, 'Transfer'));
+
     // Mapped investor
     const activeInvestors = await fund.getActiveInvestors();
     assert.equal(activeInvestors[0], investorA, 'Investor A is active');
@@ -198,6 +201,7 @@ contract("Fund", accounts => {
 
     // Withdraw max transfers is set to 1
     tx = await fund.withdraw();
+    assert.ok(calc.getEvent(tx, 'Transfer'));
 
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
@@ -211,6 +215,7 @@ contract("Fund", accounts => {
 
     // Second withdraw succeeds
     tx = await fund.withdraw();
+    assert.ok(calc.getEvent(tx, 'Transfer'));
 
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
     assert.equal((await fund.getActiveInvestors()).length, 0, 'No more active investors')
