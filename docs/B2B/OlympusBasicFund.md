@@ -1,4 +1,7 @@
-# Basic Fund
+Basic Fund
+==========
+
+[TOC]
 
 ### Introduction
 
@@ -6,25 +9,30 @@ An investment fund is a supply of capital belonging to numerous investors used t
 
 ### Constructor
 
-```javascript
+``` {.sourceCode .javascript}
 constructor(
-      string _name,
-      string _symbol,
-      string _description,
-      string _category,
-      uint _decimals
-    ) public;
+  string _name,
+  string _symbol,
+  string _description,
+  string _category,
+  uint _decimals
+) public;
 ```
 
-#### &emsp;Parameters
+####  Parameters
 
-> \_name: Fund name</br> > \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)</br> > \_description: Fund description</br> > \_category: Fund category</br> > \_decimals: Fund decimals (normally it should be 18)</br>
+> 1.  \_name: Fund name
+> 2.  \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 3.  \_description: Fund description
+> 4.  \_category: Fund category
+> 5.  \_decimals: Fund decimals (normally it should be 18)
 
-#### &emsp;Example code
+####  Example code
 
-```javascript
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 
 const name = "YH";
 const symbol = "YH";
@@ -34,10 +42,11 @@ const decimals = 18;
 
 // Get gas price
 const gasPrice
-web3.eth.getGasPrice((err, price)=>{
-  if (err) {
-    return console.error(err);
-  }
+web3.eth.getGasPrice
+  ((err, price)=>{
+    if (err) {
+      return console.error(err);
+    }
   gasPrice = price;
 })
 
@@ -55,41 +64,43 @@ const data = web3.eth.contract(abi).new.getData({
 })
 web3.eth.estimateGas(data,(err,gas)=>{
   if (err) {
-   return console.error(err);
+    return console.error(err);
   }
   gasLimit = gas;
 })
 
 // Deploy and get fund contract address
 web3.eth.contract(abi).new(
-      name,
-      symbol,
-      description,
-      category,
-      decimals,
-      {
-        from: web3.eth.accounts[0],
-        data: new Buffer(bytecode, 'utf8'),
-        gas: gasLimit,
-        gasPrice: gasPrice,
-      },
-      (err: Error, newFund: any) => {
-        if (err) {
-          return console.error(err);
-        }
-        if (newFund && newFund.address) {
-          // Now the fund is deployed, you can get the fund contract address.
-          console.log(newFund.address)
-        }
-      }));
+  name,
+  symbol,
+  description,
+  category,
+  decimals,
+  {
+    from: web3.eth.accounts[0],
+    data: new Buffer(bytecode, 'utf8'),
+    gas: gasLimit,
+    gasPrice: gasPrice,
+  },
+  (err: Error, newFund: any) => {
+    if (err) {
+      return console.error(err);
+    }
+    if (newFund && newFund.address) {
+      // Now the fund is deployed, you can get the fund contract address.
+      console.log(newFund.address)
+    }
+}));
 ```
 
 ### Basic info
-> The code below shows how to get a fund's basic information, including the fund's name, symbol, description, category and decimals.
 
-```javascript
+The code below shows how to get a fund's basic information, including the fund's name, symbol, description, category and decimals.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 // Name
 fundContract.name((err,name)=>{
@@ -130,128 +141,157 @@ fundContract.decimals((err,decimals)=>{
 
 ### Interface
 
-#### 1. initialize
+1. initialize
+-------------
 
-```javascript
+``` {.sourceCode .javascript}
 function initialize(address _componentList) external onlyOwner;
 ```
 
-#### &emsp;Description
-> Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
+####  Description
 
-#### &emsp;Parameters
-> \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)</br>
+Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Parameters
 
-```javascript
+> \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 
 const fundContract = web3.eth.contract(abi).at(address);
 const _componentList = "0x...";
-fundContract.initialize(_componentList, {from: web3.eth.accounts[0]}, err => {
+fundContract.initialize(_componentList, {from: web3.eth.accounts[0]},
+ err => {
   if (err) {
     return console.error(err);
   }
 });
 ```
 
-#### 2. buyTokens
+2. buyTokens
+------------
 
-```javascript
-function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
+``` {.sourceCode .javascript}
+function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
+  uint[] _amounts, uint[] _minimumRates)
     public onlyOwner returns(bool);
 ```
 
-#### &emsp;Description
-> Call the function to buy any combination of tokens.
+####  Description
 
-#### &emsp;Returns
+Call the function to buy any combination of tokens.
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Parameters
-> _exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.</br>
-  _tokens: ERC20 addresses of the tokens to buy.</br>
-  _amounts: The corresponding amount of tokens to buy.</br>
-  _minimumRates: The minimum return amount of tokens per ETH in wei.</br>
+####  Parameters
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+> 1.  exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  tokens: ERC20 addresses of the tokens to buy.
+> 3.  amounts: The corresponding amount of tokens to buy.
+> 4.  minimumRates: The minimum return amount of tokens per ETH in wei.
 
-```javascript
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const _exchangeId = 0x0;
-const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
+  "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
 const _amounts = [10**17,10**17];
 const _minimumRates = [0,0];
 
-fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
+fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates,
+  (err, result) => {
+    if (err) {
+      return console.log(err)
+    }
 });
 ```
 
-#### 3. sellTokens
+3. sellTokens
+-------------
 
-```javascript
-function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
-      public onlyOwner returns (bool);
+``` {.sourceCode .javascript}
+function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
+  uint[] _amounts, uint[]  _rates)
+    public onlyOwner returns (bool);
 ```
 
-#### &emsp;Description
-> Call the function to sell any combination of tokens that are available in the fund.
+####  Description
 
-#### &emsp;Returns
+Call the function to sell any combination of tokens that are available in the fund.
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Parameters
-> _exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.</br>
-  _tokens: ERC20 addresses of the tokens to sell.</br>
-  _amounts: The corresponding amount of tokens to sell.</br>
-  _minimumRates: The minimum return amount of ETH per token in wei.</br>
+####  Parameters
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+> 1.  exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  tokens: ERC20 addresses of the tokens to sell.
+> 3.  amounts: The corresponding amount of tokens to sell.
+> 4.  minimumRates: The minimum return amount of ETH per token in wei.
 
-```javascript
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const _exchangeId = 0x0;
-const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
+  "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
 const _amounts = [10**17,10**17];
 const _minimumRates = [0,0];
 
-fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
+fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates,
+  (err, result) => {
+    if (err) {
+      return console.log(err)
+    }
 });
 ```
 
-#### 4. withdraw
+4. withdraw
+-----------
 
-```javascript
+``` {.sourceCode .javascript}
 function withdraw() external returns(bool);
 ```
 
-#### &emsp;Description
-> This function is for investors to withdraw their investment in Ether.
+####  Description
 
-#### &emsp;Returns
+This function is for investors to withdraw their investment in Ether.
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Example code
 
-```javascript
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 
 fundContract.withdraw((err, result) => {
@@ -261,24 +301,29 @@ fundContract.withdraw((err, result) => {
 });
 ```
 
-#### 5. close
+5. close
+--------
 
-```javascript
+``` {.sourceCode .javascript}
 function close() public onlyOwner returns(bool success);
 ```
 
-#### &emsp;Description
-> Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back. (Note: After closing the fund, investors can still withdraw their investment.)
+####  Description
 
-#### &emsp;Returns
+Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back. (Note: After closing the fund, investors can still withdraw their investment.)
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Example code
 
-```javascript
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 
 fundContract.close((err, result) => {
@@ -288,8 +333,6 @@ fundContract.close((err, result) => {
 });
 ```
 
-### abi
-> You can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API.
+### abi & bytecode
 
-### bytecode
-> You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API.
+> You can get the [abi & bytecode](../contracts/templateList.json) from our API.

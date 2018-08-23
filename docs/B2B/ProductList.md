@@ -1,23 +1,27 @@
-# ProductList
+ProductList
+===========
 
-### Description
+[TOC]
+
 ProductList is a storage smart contract that stores the addresses of all initialized funds and indices. Funds and indexes will be stored in the ProductList when the initialize function is executed. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
 ### Get the productListAddress
+
 > To use the Product List, first of all, you will have to get the productListAddress from the ComponentList contract.
 
-#### &emsp;Example code
+####  Example code
+
 > The code below shows how to get the productListAddress with Web3.
 
-```javascript
+``` {.sourceCode .javascript}
 const productListName = web3.fromAscii('Marketplace');
 const componentListContract = web3.eth.contract(abi).at(componentListAddress);
 const productListAddress;
 componentListContract.getComponentByName(productListName,(err, address)=>{
-   if (err) {
+    if (err) {
         return console.error(err);
     }
-  productListAddress = address;
+    productListAddress = address;
 });
 ```
 
@@ -25,85 +29,91 @@ componentListContract.getComponentByName(productListName,(err, address)=>{
 
 #### 1. getAllProducts
 
-```javascript
+``` {.sourceCode .javascript}
 function getAllProducts() external view returns (address[] allProducts);
 ```
 
-#### &emsp;Description
+####  Description
+
 > Call this function to get all products (including funds and indexes) that are in the product list.
 
-#### &emsp;Example code
+####  Example code
+
 > The code below shows how to call this function with Web3.
 
-```javascript
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const productListContract = web3.eth.contract(abi).at(productListAddress);
 
 productListContract.getAllProducts((err,productAddresses) => {
-  if (err) {
+    if (err) {
     return console.error(err);
-  }
-  console.log(productAddresses);
-  // We can use the following code to distinguish between index and fund addresses.
-  const indexContract = web3.eth.contract(indexAbi).at(productAddresses[0])
-  indexContract.fundType((err,fundType)=>{
-      if (err) {
+    }
+    console.log(productAddresses);
+    // We can use the following code to distinguish between index and fund addresses.
+    const indexContract = web3.eth.contract(indexAbi).at(productAddresses[0])
+    indexContract.fundType((err,fundType)=>{
+        if (err) {
         return console.error(err);
-      }
-      if(fundType == 0){
+        }
+        if(fundType == 0){
         // This is an index address.
-      }else if (fundType == 1){
+        }else if (fundType == 1){
         // This is a fund address.
-      }else{
+        }else{
         // Unexpected result.
-      }
+        }
 
-  })
-  // Or
-  const fundContract = web3.eth.contract(fundAbi).at(productAddresses[0])
-  fundContract.fundType((err,fundType)=>{
-      if (err) {
+    })
+    // Or
+    const fundContract = web3.eth.contract(fundAbi).at(productAddresses[0])
+    fundContract.fundType((err,fundType)=>{
+        if (err) {
         return console.error(err);
-      }
-      if(fundType == 0){
+        }
+        if(fundType == 0){
         // This is an index address.
-      }else if (fundType == 1){
+        }else if (fundType == 1){
         // This is a fund address.
-      }else{
+        }else{
         // Unexpected result.
-      }
-  })
+        }
+    })
 });
 ```
 
 #### 2. getOwnProducts
 
-```javascript
+``` {.sourceCode .javascript}
 function getOwnProducts() external view returns (address[] addresses) ;
 ```
 
-#### &emsp;Description
+####  Description
+
 > Call this function to get a creator's products (including fund and index) that are in the product list.
 
-#### &emsp;Example code
+####  Example code
+
 > The code below shows how to call this function with Web3.
 
-```javascript
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const productListContract = web3.eth.contract(abi).at(address);
 
 productListContract.getOwnProducts((err,productAddresses) => {
-  if (err) {
+    if (err) {
     return console.error(err);
-  }
-  console.log(productAddresses);
+    }
+    console.log(productAddresses);
 });
 ```
 
-### abi
-> You can get the [abi](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API.
+### abi & bytecode
 
-### componentList address
-> You can get the [componentListAddress](http://www.olympus.io/olympusProtocols/marketplace/abi) from our API.
+> You can get the [abi & bytecode](../contracts/templateList.json) from our API.
+
+### component list address
+
+> You can get the [componentListAddress](../pages/deployedAddress.html) from the deployed productAddresses
