@@ -1,4 +1,7 @@
-# Fund
+Fund
+====
+
+[TOC]
 
 ### Introduction
 
@@ -6,23 +9,30 @@ An investment fund is a supply of capital belonging to numerous investors used t
 
 ### Constructor
 
-```javascript
+``` {.sourceCode .javascript}
 constructor(
-    string _name,
-    string _symbol,
-    string _description,
-    string _category,
-    uint _decimals
-    ) public;
+  string _name,
+  string _symbol,
+  string _description,
+  string _category,
+  uint _decimals
+  ) public;
 ```
 
-#### &emsp;Parameters
-> \_name: Fund name</br> > \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)</br> > \_description: Fund description</br> > \_category: Fund category</br> > \_decimals: Fund decimals (normally it should be 18)</br>
+####  Parameters
 
-#### &emsp;Example code
-```javascript
+> 1.  \_name: Fund name
+> 2.  \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 3.  \_description: Fund description
+> 4.  \_category: Fund category
+> 5.  \_decimals: Fund decimals (normally it should be 18)
+
+####  Example code
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 
 const name = "YH";
 const symbol = "YH";
@@ -53,42 +63,45 @@ const data = web3.eth.contract(abi).new.getData({
 })
 web3.eth.estimateGas(data,(err,gas)=>{
   if (err) {
-   return console.error(err);
+    return console.error(err);
   }
   gasLimit = gas;
 })
 
 // Deploy and get fund address
 web3.eth.contract(abi).new(
-      name,
-      symbol,
-      description,
-      category,
-      decimals,
-      {
-        from: web3.eth.accounts[0],
-        data: new Buffer(bytecode, 'utf8'),
-        gas: gasLimit,
-        gasPrice: gasPrice,
-      },
-      (err: Error, newFund: any) => {
-        if (err) {
-          return console.error(err);
-        }
-        if (newFund && newFund.address) {
-          // Now the fund is deployed, you can get the fund contract address.
-          console.log(newFund.address)
-        }
-      }));
+  name,
+  symbol,
+  description,
+  category,
+  decimals,
+  {
+    from: web3.eth.accounts[0],
+    data: new Buffer(bytecode, 'utf8'),
+    gas: gasLimit,
+    gasPrice: gasPrice,
+  },
+  (err: Error, newFund: any) => {
+    if (err) {
+      return console.error(err);
+    }
+    if (newFund && newFund.address) {
+      // Now the fund is deployed, you can get the fund contract address.
+      console.log(newFund.address)
+    }
+}));
 ```
 
 ### Basic info
-> The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
 
-```javascript
+The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const fundContract = web3.eth.contract(abi).at(address); // address: deployed fund contract address
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+// address: deployed fund contract address
+const fundContract = web3.eth.contract(abi).at(address);
 // Name
 fundContract.name((err,name)=>{
   if (err) {
@@ -128,136 +141,165 @@ fundContract.decimals((err,decimals)=>{
 
 ### Interface
 
-#### 1. initialize
+1. initialize
+-------------
 
-```javascript
-function initialize(address _componentList, uint _initialFundFee) onlyOwner external payable;
+``` {.sourceCode .javascript}
+function initialize(address _componentList, uint _initialFundFee)
+  onlyOwner external payable;
 ```
 
-#### &emsp;Description
-> Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
+####  Description
 
-#### &emsp;Parameters
-> \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)</br>
-  \_initialFundFee: The fee that the owner will take from the investments. Must be based on DENOMINATOR, so 1% is 1000 </br>
-> value: The initial balance of the fund
+Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Parameters
 
-```javascript
+> 1.  \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
+> 2.  \_initialFundFee: The fee that the owner will take from the investments. Must be based on DENOMINATOR, so 1% is 1000
+> 3.  value: The initial balance of the fund
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 
 const fundContract = web3.eth.contract(abi).at(address);
 const _componentList = "0x...";
 const _initialFundFee = "0x...";
 const initialBalance = 1 ** 17
-fundContract.initialize(_componentList, _initialFundFee, {from: web3.eth.accounts[0],value: initialBalance}, err => {
+fundContract.initialize(_componentList, _initialFundFee,
+  {from: web3.eth.accounts[0],value: initialBalance}, err => {
   if (err) {
     return console.error(err);
   }
 });
 ```
 
-#### 2. buyTokens
+2. buyTokens
+------------
 
-```javascript
-function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates) public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool);
+``` {.sourceCode .javascript}
+function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
+  uint[] _amounts, uint[] _minimumRates)
+    public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool);
 ```
 
-#### &emsp;Description
-> Call the function to buy any combination of tokens.
+####  Description
 
-#### &emsp;Returns
+Call the function to buy any combination of tokens.
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Parameters
-> _exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.</br>
-  _tokens: ERC20 addresses of the tokens to buy.</br>
-  _amounts: The corresponding amount of tokens to buy.</br>
-  _minimumRates: The minimum amount of tokens per ETH in wei.</br>
+####  Parameters
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+> 1.  exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  tokens: ERC20 addresses of the tokens to buy.
+> 3.  amounts: The corresponding amount of tokens to buy.
+> 4.  minimumRates: The minimum amount of tokens per ETH in wei.
 
-```javascript
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const _exchangeId = 0x0;
-const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
+  "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
 const _amounts = [10**17,10**17];
 const _minimumRates = [0,0];
 
-fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
+fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates,
+  (err, result) => {
+    if (err) {
+      return console.log(err)
+    }
 });
 ```
 
-#### 3. sellTokens
+3. sellTokens
+-------------
 
-```javascript
-function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
-      public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool);
+``` {.sourceCode .javascript}
+function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
+  uint[] _amounts, uint[]  _rates)
+    public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool);
 ```
 
-#### &emsp;Description
-> Call the function for fund manager or whitelisted fund administrator to sell any combination of tokens that are available in the fund.
+####  Description
 
-#### &emsp;Parameters
-> _exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.</br>
-  _tokens: ERC20 addresses of the tokens to sell.
-  _amounts: The corresponding amount of tokens to sell.
-  _minimumRates: The minimum amount of ETH per token in wei.
+Call the function for fund manager or whitelisted fund administrator to sell any combination of tokens that are available in the fund.
 
-#### &emsp;Returns
+####  Parameters
+
+> 1.  exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  tokens: ERC20 addresses of the tokens to sell. amounts: The corresponding amount of tokens to sell. minimumRates: The minimum amount of ETH per token in wei.
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Example code
 
-```javascript
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const _exchangeId = 0x0;
-const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
+  "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
 const _amounts = [10**17,10**17];
 const _minimumRates = [0,0];
 
-fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
+fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates,
+  (err, result) => {
+    if (err) {
+      return console.log(err)
+    }
 });
 ```
 
-#### 4. setManagementFee
+4. setManagementFee
+-------------------
 
-```javascript
+``` {.sourceCode .javascript}
 function setManagementFee(uint _fee) external onlyOwner;
 ```
 
-#### &emsp;Description
-> Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. This is only restricted to be less than 100% (10000). The following example values correspond to the following percentages:</br>
-1 = 0.01% fee</br>
-10 = 0.1% fee</br>
-100 = 1% fee</br>
-1000 = 10% fee</br>
-10000 = 100% fee</br>
+####  Description
 
-#### &emsp;Parameters
-> _fee: The percentage of investor's investment, that will be taken as management fee (Note: _fee must be equal to or bigger than 0 and less than 10000)
+Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. This is only restricted to be less than 100% (10000). The following example values correspond to the following percentages:
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+-   1 = 0.01%
+-   100 = 1%
+-   1000 = 10%
+-   10000 = 100%
 
-```javascript
+####  Parameters
+
+> fee: The percentage of investor's investment, that will be taken as management fee (Note: fee must be equal to or bigger than 0 and less than 10000)
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const _fee = 100;
 fundContract.setManagementFee(_fee, (err, result) => {
@@ -267,21 +309,26 @@ fundContract.setManagementFee(_fee, (err, result) => {
 });
 ```
 
-#### 5. withdraw
+5. withdraw
+-----------
 
-```javascript
-function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool);
+``` {.sourceCode .javascript}
+function withdraw() external onlyOwnerOrWhitelisted
+  (WhitelistKeys.Maintenance) whenNotPaused returns(bool);
 ```
 
-#### &emsp;Description
-> This function is for fund's manager. Investors that have requested to withdraw their investment will get their investment back after the fund's manager or bot system has executed this function.
+####  Description
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+This function is for fund's manager. Investors that have requested to withdraw their investment will get their investment back after the fund's manager or bot system has executed this function.
 
-```javascript
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 
 fundContract.withdraw((err, result) => {
@@ -291,23 +338,30 @@ fundContract.withdraw((err, result) => {
 });
 ```
 
-#### 6. withdrawFee
+6. withdrawFee
+--------------
 
-```javascript
-function withdrawFee(uint amount) external onlyOwner whenNotPaused returns(bool);
+``` {.sourceCode .javascript}
+function withdrawFee(uint amount)
+  external onlyOwner whenNotPaused returns(bool);
 ```
-#### &emsp;Description
-> This function is for fund's manager to withdraw fund management fee.
 
-#### &emsp;Parameters
+####  Description
+
+This function is for fund's manager to withdraw fund management fee.
+
+####  Parameters
+
 > amount: Amount of management fee the fund manager would like to withdraw.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Example code
 
-```javascript
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const amount = 10 ** 17;
 fundContract.withdrawFee(amount, (err, result) => {
@@ -317,38 +371,44 @@ fundContract.withdrawFee(amount, (err, result) => {
 });
 ```
 
-#### 7. enableWhitelist
+7. enableWhitelist
+------------------
 
-```javascript
-function enableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool);
+``` {.sourceCode .javascript}
+function enableWhitelist(WhitelistKeys _key) external onlyOwner
+  returns(bool);
 ```
-#### &emsp;Description
-> Owner of the fund can enable a category of whitelist to facilitate access control for the fund.
-The following three categories of whitelist are available:</br>
-0: Investment</br>
-1: Maintenance </br>
-2: Admin</br>
-If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the fund.
-If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process; otherwise, only the owner of the fund can trigger the withdraw process.
-If type 2 Admin whitelist is enabled, only users' addresses that have been added to the whitelist are allowed
-to buy and sell tokens for the fund; otherwise, only the owner of the fund can buy and sell tokens.
 
-#### &emsp;Parameters
-> \_key: A specific category of whitelist to be enabled for the fund. </br>
-The following three keys are available:</br>
-0: Investment</br>
-1: Maintenance </br>
-2: Admin</br>
+####  Description
 
-#### &emsp;Returns
+Owner of the fund can enable a category of whitelist to facilitate access control for the fund. The following three categories of whitelist are available:
+
+-   0: Investment
+-   1: Maintenance
+-   2: Admin
+
+If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the fund. If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process; otherwise, only the owner of the fund can trigger the withdraw process. If type 2 Admin whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to buy and sell tokens for the fund; otherwise, only the owner of the fund can buy and sell tokens.
+
+####  Parameters
+
+> \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:
+>
+> -   0: Investment
+> -   1: Maintenance
+> -   2: Admin
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Example code
 
-```javascript
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const key = 0; // To enable the Investment whitelist
 fundContract.enableWhitelist(key, (err, result) => {
@@ -358,30 +418,38 @@ fundContract.enableWhitelist(key, (err, result) => {
 });
 ```
 
-#### 8. setAllowed
+8. setAllowed
+-------------
 
-```javascript
+``` {.sourceCode .javascript}
 function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
 ```
-#### &emsp;Description
-> After enabling a specific category of whitelist, the owner of the fund can add and remove accounts from the whitelist.
 
-#### &emsp;Parameters
-> accounts: Array of addresses</br>
-> \_key: A specific category of whitelist to be enabled for the fund</br>
-> allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
+####  Description
 
-#### &emsp;Returns
+After enabling a specific category of whitelist, the owner of the fund can add and remove accounts from the whitelist.
+
+####  Parameters
+
+> 1.  accounts: Array of addresses
+> 2.  \_key: A specific category of whitelist to be enabled for the fund
+> 3.  allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Example code
 
-```javascript
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
-const accounts = ['0x7b990738012Dafb67FEa47EC0137842cB582AD71','0x1cD5Fcc6d1d3A2ECdd71473d2FCFE49769643CF2']
+const accounts = ['0x7b990738012Dafb67FEa47EC0137842cB582AD71',
+  '0x1cD5Fcc6d1d3A2ECdd71473d2FCFE49769643CF2']
 const key = 0; // Investment whitelist
 const allowed = true;
 fundContract.setAllowed(accounts, key, allowed, (err, result) => {
@@ -391,30 +459,38 @@ fundContract.setAllowed(accounts, key, allowed, (err, result) => {
 });
 ```
 
-#### 9. disableWhitelist
+9. disableWhitelist
+-------------------
 
-```javascript
-function disableWhitelist(WhitelistKeys _key) external onlyOwner returns(bool)
+``` {.sourceCode .javascript}
+function disableWhitelist(WhitelistKeys _key)
+  external onlyOwner returns(bool)
 ```
 
-#### &emsp;Description
-> Owner of the fund can disable a category of whitelist that has been enabled before.
+####  Description
 
-#### &emsp;Parameters
-> \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:</br>
-0: Investment</br>
-1: Maintenance </br>
-2: Admin</br>
+Owner of the fund can disable a category of whitelist that has been enabled before.
 
-#### &emsp;Returns
+####  Parameters
+
+> \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:
+>
+> -   0: Investment
+> -   1: Maintenance
+> -   2: Admin
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Example code
 
-```javascript
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const key = 0; // To disable the Investment whitelist
 fundContract.disableWhitelist(key, (err, result) => {
@@ -424,23 +500,29 @@ fundContract.disableWhitelist(key, (err, result) => {
 });
 ```
 
-#### 10. close
+10. close
+---------
 
-```javascript
+``` {.sourceCode .javascript}
 function close() public onlyOwner returns(bool success);
 ```
-#### &emsp;Description
-> Close the fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back. (Note: After closing the fund, investors can still withdraw their investment and fund managers can also withdraw their management fee.)
 
-#### &emsp;Returns
+####  Description
+
+Close the fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back. (Note: After closing the fund, investors can still withdraw their investment and fund managers can also withdraw their management fee.)
+
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
-> The code below shows how to call this function with Web3.
+####  Example code
 
-```javascript
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 
 fundContract.close((err, result) => {
@@ -450,8 +532,6 @@ fundContract.close((err, result) => {
 });
 ```
 
-### abi
-> You can get the [abi](http://www.olympus.io/olympusProtocols/fund/abi) from our API.
+### abi & bytecode
 
-### bytecode
-> You can get the [bytecode](http://www.olympus.io/olympusProtocols/fund/bytecode) from our API.
+> You can get the [abi & bytecode](../contracts/templateList.json) from our API.
