@@ -53,9 +53,9 @@ c) Exclude Locker, Locker is not Fee Chargeable so it is not required to approve
 
 > excludedComponents.push(LOCKER);
 
-c) We add LOCKER to the name list (and increase the size of the list to 4). LOCKER already contains the same name that the Locker component holds in our component list, so it will be automatically selected. UpdateComponent inside the loop will choose the latest version of the LockerProvider. Most of the core components of Olympus are free, but some of them have a fee charge in MOT. For this reason, it is important to encourage to the fund owner to keep a certain amount of MOT in his fund.
+d) We add LOCKER to the name list (and increase the size of the list to 4). LOCKER already contains the same name that the Locker component holds in our component list, so it will be automatically selected. UpdateComponent inside the loop will choose the latest version of the LockerProvider. Most of the core components of Olympus are free, but some of them have a fee charge in MOT. For this reason, it is important to encourage to the fund owner to keep a certain amount of MOT in his fund.
 
-5. Initialize locker
+4. Initialize locker
 
 In this case, we don’t have a unique interval, but an interval for each token. We need to initialize each interval the first time a new token is added into the fund. No worries, that logic is already present:
 
