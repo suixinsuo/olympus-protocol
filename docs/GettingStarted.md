@@ -3,50 +3,49 @@
 Getting Started
 ===============
 
-Welcome to Olympus API, the cryptocurrency financial product protocol powering fintech DApp ecosystem. In this document, we are going to present you the Olympus protocols and the basic steps to get the development work on Olympus Platform started.
+Welcome to the Olympus Labs Open API, powering your application with cryptocurrency financial protocols and tokenized financial products. In this document, we are going to introduce the Olympus protocol and walk you through the basic steps to get started on working with the Olympus Protocol.
 
 Olympus Derivative Protocols
 ----------------------------
+Blockchain technology traces its roots back to Bitcoin, a cryptocurrency designed as an alternative to fiat currencies. It is therefore unsurprising that blockchain technology and cryptocurrencies should have an outsized impact on the financial industry. Yet the overall cryptocurrency marketplace is in its nascent stages and needs to mature in order to fulfill the vision of a decentralized and democratized financial future. One of the key developments necessary for such a future to become reality is the creation of a broad set of cryptocurrency financial products. That is why we have built the Olympus Protocol, and we invite you to work with us to usher in a new financial revolution.
 
-The technology of blockchain opens a gate to a lot of new distributed and secured cryptocurrencies that have become more popular. However, the nature of this world is still in a very early stage, with high rises and fallings of values. The market must maturate, part of the process of maturation is the creation of more complex and developed tools allowing investors to create security in their own assets.
+Olympus Protocol is a set of protocols that support developers in creating tokenized cryptocurrency financial products and financial applications.
 
-Olympus Protocol is a set of protocols that support developers in creating financial products and alongside that also supports the process of doing so.
+The Olympus Protocol can be broken down into three layers:
 
-Olympus Protocols are based on three levels:
+-   Core components: Core components form the foundation of the Olympus Protocol. These are functional modules, with each component serving a specific function in a financial product. Core components can be assembled to create financial products, drastically reducing development time as developers do not need to build the components. The core components are activated with the native utility token of the Olympus Protocol, MOT ( [Mount Olympus Token](https://etherscan.io/token/0x263c618480dbe35c300d8d5ecda19bbb986acaed)).
 
--   The core components: Those can be utilized for making any customized financial derivative product much easier. The core is part of the Olympus environment and uses MOT ( [Mount Olympus Token](https://etherscan.io/token/0x263c618480dbe35c300d8d5ecda19bbb986acaed)) as an internal fuel for concrete transactions.
+-   Financial product templates: Financial product templates are created by assembling core components. There are also base financial product templates that can serve as the foundation of new financial product templates. Developers can take existing templates and add/modify components and customize features to create their own customized financial product template. These base financial product templates along with core components exponentially reduces the time and cost of developing new financial products.
 
--   Financial product templates: Those can be used as bases to create your own financial derivatives by connecting to different chosen core components and are already ready to deliver. It has different variations based on different use cases.
+-   DApps: Applications (web/mobile apps) that integrate the Olympus Protocol to bring tokenized cryptocurrency financial products to end users.
 
--   The DApps: External applications (web/mobile apps) that use Olympus Protocols in different ways for any financial products.
+We have separated this documentation into two parts; the first part, called [B2B](./B2B), is for applications whose end users are the creators of financial products (e.g., investment managers, product creators, etc.). Such applications allow investment managers to create and manage financial products. The second part, called [B2C](./B2C), is for applications whose end users are cryptocurrency investors. Such applications include wallets, exchanges, portfolio management applications, and more.
 
-We have separated this documentation into two parts; the first part, called [B2B](./B2B), is for creating portals/tools facing fund managers/organizations. The second part, called [B2C](./B2C), is orientated on cryptocurrency investors.
-
-For getting started on either of them, there are some common steps to follow.
+To get started on integrating the Olympus Protocol into your application, please follow the steps below:
 
 Fork/clone the Olympus project
 ------------------------------
 
-Olympus Protocol is a fully open-sourced project, whose repository can be found on [Github](https://github.com/Olympus-Labs/olympus-protocol).
+Olympus Protocol is a fully open-source project, whose repository can be found on [Github](https://github.com/Olympus-Labs/olympus-protocol).
 
-You can start by forking the repository or, if you only want to try it out, by simply cloning it using the command below. (Git is a prerequisite for this command)
+You can start by forking the repository or, if you only want to try it out, by cloning it using the command below. (Git is a prerequisite for this command)
 
 > \$ git clone https://github.com/Olympus-Labs/olympus-protocol.git
 
 Environment preparation
 -----------------------
 
-In order to start to work, we need to have all the necessary supporting tools/libraries installed in the system.
+Before we start, we need to install the  necessary supporting tools/libraries.
 
 Node.JS and npm/yarn.
 
 > https://nodejs.org/en/download/
 
-Your favorite IDE, we recommend Visual Studio Code aka VSCode as most of the Olympus development team is using this one.
+Your favorite IDE. We recommend Visual Studio Code aka VSCode as most of the Olympus development team is using this IDE.
 
 > https://code.visualstudio.com/
 
-After the environment is ready, you can start installing the third-party dependencies by running the command below in the project root folder.
+After the environment is ready, install third-party dependencies by running the command below in the project root folder.
 
 > \$ npm install
 
@@ -57,28 +56,24 @@ or for yarn
 Folder structure introduction
 -----------------------------
 
-Once you have cloned the project onto your own machine, you can open the project in VSCode. Let's go through the structure to have a better understanding of the folders.
+Once you have cloned the project onto your own machine, you can open the project in VSCode. Let's first go through the folder structure.
 
 -   docs: Where this tutorial that you are reading and other documentation is written.
-
--   migrations: This folder contains an only file that helps us to create our contracts in the blockchain (local, Kovan, or mainnet). Setting the components and configuring them correctly.
-
--   scripts: Some Javascript files we created to help the deployment/test process; these can be ignored right now.
-
--   tests: All the protocols are carefully tested and you are recommended to follow the same approach.
-
+-   migrations: This folder contains a file that helps us create smart contracts on the blockchain (local, Kovan, or mainnet) as well as correctly set and configure components.
+-   scripts: Some Javascript files we created to help the deployment/test process; these can be ignored for now.
+-   tests: All parts of the protocol are carefully tested and we recommend that you follow the same approach.
 -   contracts: Where all Solidity code is stored.
--   components: Core components, each of which has different functionalities.
+-   components: Core components, each of which has a different functionality.
 -   interfaces: The abstracted layer for describing a higher level of the contracts.
--   olympusProtocols: Where all the templates and Olympus products are ready to be edited and customized.
+-   olympusProtocols: Where all of the templates and Olympus products are ready to be edited and customized.
 -   libs: Some basic Solidity libraries for common purposes.
 
-Create your first derivate product template
+Create your first financial product template
 -------------------------------------------
 
 To get yourself warmed up, we will walk you through creating and customizing your own template with a basic example.
 
-Firstly, create a new folder in contracts called myProtocols, copy the OlympusBasicFund.sol into it and rename it as MyBasicFund.sol
+First, create a new folder in contracts called myProtocols, copy the OlympusBasicFund.sol into it and rename it as MyBasicFund.sol
 
     contracts
         olympusProtocols
@@ -86,18 +81,18 @@ Firstly, create a new folder in contracts called myProtocols, copy the OlympusBa
         myProtocols
             MyBasicFund.sol
 
-Olympus Basic Fund is a completely functional fund that can directly be deployed and used. However, the implementation is very basic which does not account for many scenarios.
+Olympus Basic Fund is a completely functional fund that can be deployed and used. However, as the name suggests, this implementation has limited basic functionality.
 
-Before starting to create our own customization, let's first go through the process of how a fund is created on the blockchain from a technical perspective.
+Before creating your own customized template, let's first go through the process of how a fund is created on the blockchain from a technical perspective.
 
-When a fund is being deployed to the blockchain, the constructor will be first called with parameters. They are the configurations specified by the fund manager.
+When a fund is being deployed on the blockchain, the constructor will be called with parameters. These parameters are the configurations specified by the fund manager.
 
 ``` {.sourceCode .javascript}
 constructor(string _name, string _symbol,
             string _description, string_category,  uint _decimals) public
 ```
 
-After the fund contract is deployed, an initialization call will be done to connect this newly deployed fund to the Olympus ComponentList and change the fund's status to active, allowing investors to start investing.
+After the fund contract is deployed, an initialization call connects this newly deployed fund to the Olympus ComponentList and changes the fund's status to active, allowing investors to start investing.
 
 ``` {.sourceCode .javascript}
 function initialize(address _componentList) external onlyOwner;
@@ -125,7 +120,7 @@ function tokensWithAmount() public view returns( ERC20Extended[] memory);
 function getAssetsValue() public view returns (uint)
 ```
 
-All derivatives must allow investors to invest and redeem. The basic logic is that when someone requests to redeem, the fund will first check if it has enough Ether otherwise it will start selling tokens in the fund to fulfill the requests. For this reason, we created two helper functions guaranteeLiquidity (Make sure there is enough ETH to redeem), and getETHFromTokens (sell some tokens to get ETH back).
+All financial products must allow investors to invest and redeem. The basic logic is that when someone requests to redeem, the fund will first check if it has enough Ether to fulfill the request; if not, it will sell tokens in the fund to fulfill the requests. For this reason, we created two helper functions guaranteeLiquidity (Make sure there is enough ETH to redeem), and getETHFromTokens (sell some tokens to get ETH).
 
 ``` {.sourceCode .javascript}
 function invest() public;
@@ -144,7 +139,7 @@ function getETHFromTokens(uint _tokenPercentage) internal;
 function guaranteeLiquidity(uint tokenBalance) internal;
 ```
 
-As the basic principle, the owner (Fund manager) should be able to trade tokens in the fund.
+As a basic principle, the owner (Fund manager) should be able to trade tokens in the fund.
 
 ``` {.sourceCode .javascript}
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
@@ -163,7 +158,7 @@ function updateTokens(ERC20Extended[] _updatedTokens)
   private returns(bool success);
 ```
 
-If for whatever reason, the fund manager decides not to continue with this fund anymore, the manager can choose to close the fund, after which it will start the closing procedures (sell all the underlying tokens so that the investors can redeem their belongings back in Ether).
+If the fund manager decides to stop managing his fund, he/she can choose to close the fund, which will trigger the closing procedures (sell all of the tokens in the fund so that the investors can redeem their investment back in Ether).
 
 ``` {.sourceCode .javascript}
 function changeStatus(DerivativeStatus _status)
@@ -173,10 +168,10 @@ function changeStatus(DerivativeStatus _status)
 
 For the complete documentation of the BasicFund, please refer to [OlympusBasicFund.sol](./OlympusBasicFund).
 
-Customize our template
+Customize your template
 ----------------------
 
-Let’s suppose we are going to launch a new fund which only accepts a maximum of 100 lucky investors. It will only accept new investors if a current holder quits when the maximum is reached.
+Let’s suppose we are going to launch a new fund which only accepts a maximum of 100 lucky investors. Once there are 100 investors in the fund, a new investor can only invest if a current investor leaves the fund.
 
 First, create contract level variables for the maximum number of investors and the current number of investors.
 
@@ -187,7 +182,7 @@ uint public maxInvestors;
 uint public currentNumberOfInvestors;
 ```
 
-`maxInvestors` will be a number selected on creation on the fund, that should not be changed later on. `currentNumberOfInvestors` is a counter that keeps track of the number of investors. (As we can not get the length of the mapping `activeInvestors`).
+`maxInvestors` is a number set at the creation of the fund and cannot be changed. `currentNumberOfInvestors` is a counter that keeps track of the number of investors. (As we can not get the length of the mapping `activeInvestors`).
 
 After creating these initial variables, we can modify the initialize function.
 
@@ -208,7 +203,7 @@ function initialize(address _componentList, uint _maxInvestors)
 In this initialize function we have made three changes:
 
 -   Add the `uint _maxInvestors` parameter to the function.
--   Under the other checks, we added a check to make sure the \_maxInvestors value is higher than 0. (Otherwise no one would be able to invest!). The checks should always be done at the top of the function in order to save investors' gas use, by preventing code execution if there is anything wrong.
+-   Along with other checks, we added a check to make sure that the \_maxInvestors value is higher than 0. (Otherwise no one would be able to invest!). The checks should always be done at the top of the function in order to save investors' gas use, by preventing code execution if there is anything wrong.
 -   At the end of the function, we added `maxInvestors = _maxInvestors;`, this sets the contract level variable using the function parameter we added earlier. We don’t need to initialize `currentNumberOfInvestors` as by default it is assigned to 0.
 
 Now we need to keep track of the number of investors and check if it reaches the maximum when investing.
@@ -247,12 +242,12 @@ function withdraw() external returns(bool)  {
 }
 ```
 
-In this basic implementation, the investor can only redeem all his investment at once. In the more complex situation, we need to decrease the counter when the balance becomes zero.
+In this basic implementation, the investor can only redeem all of his investment at once. In a more complex situation, we need to decrease the counter when the balance becomes zero.
 
-Compile the new derivative
+Compile the new template
 ==========================
 
-We have just made a new fund with new functions and now we need to get it ready for publishing. We have set some helper functions that you can find in our `packages.json` file.
+We have just made a new fund with new functions and now we need to get it ready for compilation. We have set some helper functions that you can find in our `packages.json` file.
 
 To compile just run
 
@@ -264,27 +259,27 @@ or by yarn
 
 If you have followed the tutorial above exactly, you should not find any issues or warnings. Otherwise check carefully and fix the compiler messages.
 
-After the command, you can find the compiled results in `/build/contracts` folder. Inside there you can find a JSON file with the same name which includes the ABI and binary code which can be used to deploy directly.
+After the command, you can find the compiled results in the `/build/contracts` folder. Inside there you can find a JSON file with the same name which includes the ABI and binary code which can be used to deploy the template that you've built.
 
 Test the contract
 =================
 
-Security is an important concern in the blockchain due to the fact that deployed code can't be modified and more importantly, we are dealing with investors' funds.
+Security is of utmost importance in blockchain because deployed code can't be modified. This is even more important in our context as investor funds are involved.
 
 To cover the changes we've made, we need to: \_ Add test cases. \_ Test it on a testnet, for example, Kovan.
 
 Adding test cases.
 ------------------
 
-We have already created several test cases for all our functionalities. You can run these test cases with the alias
+We have already created several test cases for all of our functionalities. You can run these test cases with the alias
 
 > npm run test
 
-This command will test all the test cases. This is not optimal when creating test cases, we want to run only the test we are creating. Run in one terminal the command
+This command will test all of the test cases. This is not optimal when creating test cases, as we want to run only the test that we are creating. Run the  following command in one terminal
 
 > \$ './node\_modules/.bin/testrpc-sc'
 
-to start the ganache server. You will see that this server starts with 9 different accounts which hold Ethers. Then, in another terminal, we can run
+to start the ganache server. You will see that this server starts with 9 different accounts which hold Ether. Then, in another terminal, we can run
 
 > \$ truffle test
 
@@ -294,7 +289,7 @@ that will test all files, or to specify a single test file:
 
 Run the command and observe that all basic fund test cases are succeeding.
 
-To create the test case, we don't need to start from zero. As we copied the `OlympusBasicFund.sol` we are going to start from the basic. Copy the test file of `test/funds/TestBasicFund.js` to your own test folder `test/myTests`.
+To create the new test case, we don't need to start from zero. As we copied the `OlympusBasicFund.sol` we are going to start from the basic tests. Copy the test file of `test/funds/TestBasicFund.js` to your own test folder `test/myTests`.
 
     test
         funds
@@ -306,7 +301,7 @@ We will customize the test to cover the new situations we have added.
 
 1.  Import the correct fund and modify the initialize function
 
-After we copied the test, it is still utilizing the `OlympusBasicFund`.
+After we copied the test, it is still utilizing `OlympusBasicFund`.
 
 ``` {.sourceCode .javascript}
 //Find this line
@@ -321,11 +316,11 @@ We can change the name of the test as well.
 contract("My Basic Fund test", accounts => {
 ```
 
-In the previous function we modified the initialize function, if we try to run the test case now, it will fail with an error.
+In the previous function we modified the initialize function. If we try to run the test case now, it will fail with an error.
 
 > Error: Invalid number of arguments to Solidity function
 
-The worst part of a failing test is that the result of a test case affects the other test of the flow, so all tests will probably fail (don't panic). Let's add the default value first by adding a line to the dummy data
+The worst part of a failing test is that the result of a test case affects the following tests, so all tests will probably fail (don't panic). Let's add the default value first by adding a line to the dummy data
 
 ``` {.sourceCode .javascript}
 const fundData = {
@@ -369,7 +364,7 @@ In this test, we are investing twice (within the margin!).
 
 > it("Shall be able to request and withdraw", async () =\> {
 
-In the next test, we are withdrawing twice. So the counter shall reduce and allow investment again.
+In the next test, we are withdrawing twice. So the counter should be reduced and allow investment again.
 
 > it("Shall be able to invest", async () =\> {
 
@@ -386,9 +381,9 @@ assert.equal((await fund.maxInvestors()).toNumber(),
 fundData.maxInvestors, 'Max Investors is correctly initialized');
 ```
 
-`maxInvestors` is a public variable, solidity automatically creates getters to the public variables of the contract. The result is provided in javascript as `[BigNumber](https://github.com/MikeMcl/bignumber.js/)` object. In order to compare we need to put it back `.toNumber()`.
+`maxInvestors` is a public variable, so solidity automatically creates getters to the public variables of the contract. The result is provided in javascript as `[BigNumber](https://github.com/MikeMcl/bignumber.js/)` object. In order to compare we need to put it back `.toNumber()`.
 
-Also important to know is that every time that we call a function in the fund we use the `await` keyword. Calling a function in the blockchain is slow (in the main Ethereum network it can take even minutes or hours). The result of the function will return a promise to be satisfied in the future. Using the command `await` we communicate that the function shall wait until the result is confirmed.
+Also important to know is that every time we call a function in the fund we use the `await` keyword. Calling a function on the blockchain is slow (e.g., on the Ethereum Mainnet, it can take minutes or even hours). The result of the function will return a promise to be satisfied in the future. Using the command `await` we communicate that the function should wait until the result is confirmed.
 
 Let's rename the test "Shall be able to invest" to "Shall be able to invest until maximum investors" and add a check for the currentNumberOfInvestors counter.
 
@@ -413,11 +408,11 @@ assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 0);
 
 In the test cases, there are more investments and withdrawals, but it is enough to check the counter only once.
 
-1.  Checking the special scenarios
+1.  Checking special scenarios
 
 Only two investors are allowed at the same time, but we wanted to allow current investors to keep investing.
 
-In the test above we invested 1 ETH, lets split it into two parts, investing 0.5 ETH twice. (So will start withdrawing 1 ETH at the end of the code)
+In the test above we invested 1 ETH, lets split it into two parts, investing 0.5 ETH twice. (So we will start withdrawing 1 ETH at the end of the code)
 
 ``` {.sourceCode .javascript}
 // Invest allowed
@@ -441,15 +436,15 @@ await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorC }),
 );
 ```
 
-When calling a function from test cases to solidity, we need to add the same number of arguments as required, plus we have an extra argument to allow to customize the transaction. Invest requires 0 arguments plus the customization:
+When calling a function from test cases to solidity, we need to add the same number of arguments as required, plus we have an extra argument to customize the transaction. Invest requires 0 arguments plus the customization:
 
 > {from: address, value: valueInWei}
 
-If from is not set, will be called by default from accounts[0], which in our test is the account that has created all components and derivatives.
+If from is not set, it will be called by default from accounts[0], which in our test is the account that has created all components and templates.
 
-Value serves us to set the ETH that the function will accept. Only payable functions require the value field to have `a value`. Non-payable functions will revert if value parameter is used.
+The value field sets the ETH that the function will accept. Only payable functions require the value field to have `a value`. Non-payable functions will revert if value parameter is used.
 
-Now our test is covering the main features of our customized derivative. As homework, you can also verify that initialize with `maxInvestors` to zero will revert. As you can't initialize twice, you need to test it before the successful initialization.
+Now our test covers the main features of our customized template. As homework, you can also verify that initialize with `maxInvestors` to zero will revert. As you can't initialize twice, you need to test it before the successful initialization.
 
 Troublesome: \> TypeError: msg.replace is not a function
 
@@ -458,7 +453,7 @@ This exception is produced by a calc.assertReverts that it hasn't eventually rev
 Testing on Kovan using Remix.
 -----------------------------
 
-Test cases are important but testing on testnet is also a must. We will use Remix for this which is online and free.
+Test cases are important but testing on testnet is also a must. We will use Remix, which is online and free.
 
 > https://remix.ethereum.org/
 
@@ -466,13 +461,13 @@ You need to be sure that you have metamask installed in your browser for Firefox
 
 > https://metamask.io/
 
-You can import your own testing account or create one within your metamask. After that you will need some testing ether that you can either get in the faucet gitter channel or the faucet of the Kovan network from Parity:
+You can import your own testing account or create one within metamask. After that you will need some testing ether that you can either get in the faucet gitter channel or the faucet of the Kovan network from Parity:
 
 > https://gitter.im/kovan-testnet/faucet https://faucet.kovan.network/
 
-Paste your wallet address and the bot will send to you some KETHs.
+Paste your wallet address and the bot will send you some KETHs.
 
-Once all the setup is done, we are ready to compile our contract and deploy in Kovan. First, you can run in the project command (set in package.json)
+Once all of the setup is done, we are ready to compile our contract and deploy in Kovan. First, you can run in the project command (set in package.json)
 
 > \$ npm run build-contracts
 
@@ -480,11 +475,11 @@ or by yarn
 
 > \$ yarn build-contracts
 
-This creates the concatenated contracts in `/build/` folder which can be used in Remix directly. Copy the content of your file there and create a new file named ‘MyProduct.sol\` in Remix (don’t forget the .sol termination, otherwise, Remix won’t know how to compile it).
+This creates the concatenated contracts in the `/build/` folder which can be used in Remix directly. Copy the content of your file there and create a new file named ‘MyProduct.sol\` in Remix (don’t forget the .sol termination, otherwise, Remix won’t know how to compile it).
 
-If the compilation of Remix is successfully you can go to the run tab, and you will find all the list of contracts compiled in the current file. Choose the MyProduct in the list and click `create` or `deploy` to deploy to the selected network according to your metamask (Kovan testnet in this case).
+If Remix completes successfully, you can go to the run tab, and you will find the list of all contracts compiled in the current file. Choose MyProduct in the list and click `create` or `deploy` to deploy to the selected network according to your metamask (Kovan testnet in this case).
 
-Remix allows one single line input, separated by commas, or you can click on the arrow to fill input by input. After you submit remix will clear out your input, so we recommend to copy the "collapsed" in one line and copy it to somewhere, making it easier to repeat the tests.
+Remix allows one single line input, separated by commas, or you can click on the arrow to fill input by input. After you submit, remix will clear out your input, so we recommend that you copy the "collapsed" in one line and paste it somewhere convenient, making it easier to repeat the tests.
 
 For example, you can add these parameters to deploy an index. \> "Sample Fund","SFP","Testing fund","Funds","18"
 
@@ -494,9 +489,9 @@ After deploying, we need to initialize the index.
 
 > "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e", 5
 
-The entry will use our Olympus component list deployed in kovan and 5 as maximum investors.
+The entry will use our Olympus component list deployed in kovan and 5 as the maximum number of investors.
 
-Once the fund is initialized, we can invest. Invest requires no parameter but does require some ETH. In the top of the right column, there is information of the address you are using and also the value to send to the contract. (You can select the unit ether or wei, whichever you prefer)
+Once the fund is initialized, we can invest. Invest requires no parameter but does require some ETH. On the top of the right column, there is information on the address that you are using and also the value to send to the contract. (You can select the unit ether or wei, whichever you prefer)
 
 > For example, invest 0.05 ETH in the fund.
 
@@ -504,26 +499,26 @@ To continue, you can use the view (blue) functions to check your balance (balanc
 
 You can check the counter of investors value and try to withdraw your tokens.
 
-Another way to know the balance of your fund token is to add the fund address to metamask. The derivative follows the ERC20 standard and will appear as one more of your collection.
+Another way to know the balance of your fund token is to add the fund address to metamask. The token follows the ERC20 standard and will appear as one more of your collection.
 
-Test the functions one by one and make sure they all pass before you release it.
+Test the functions one by one and make sure that they all pass before you release it.
 
-Copy the address of your deployed testing derivative, it will remain in the chain forever! Next time you want to use it, you can utilize the Remix function "At Address" (the address of your contract) and the derivative will appear in the bottom right of your Remix again. (For example, required if you reload the page).
+Copy the address of your deployed testing template; it will remain on the blockchain forever! Next time you want to use it, you can utilize the Remix function "At Address" (the address of your contract) and the template will appear in the bottom right of your Remix again (this is required if you reload the page).
 
-Troublesome in Remix
+Troubleshooting in Remix
 --------------------
 
 > errored: Error encoding arguments: Error: invalid address (arg="", type="string", value="")
 
-Your parameters are wrong, or you miss one An address must start with 0x and be a full valid address. An array of addresses or long numbers shall enclose their value between "" ["address","address"]. bytes32 you can choose 0x0 for example.
+Your parameters are wrong, or you missed one. An address must start with 0x and be a full valid address. An array of addresses or long numbers shall enclose their value between "" ["address","address"]. bytes32 you can choose 0x0 for example.
 
 > Out of gas on deployment: The contract bytecode is too big, you need to optimize the code and reduce the byte size to deploy. The maximum size allowed is determined by the blocks, at the time of this tutorial 7 million gas approximately. Be sure to check if optimization is enabled on the settings tab of Remix.
 
 > View (blue buttons) are not giving a response.
 
-Make sure that the file open in the editor is the same as the contract of which you are trying to check the view functions.
+Make sure that the file open in the editor is the same as the contract for which you are trying to check the view functions.
 
-> All function suddenly reverts:
+> All functions suddenly revert:
 
 Reload remix.
 
@@ -533,18 +528,18 @@ Some functions that use certain components such as the Reimbursable component re
 
 > Revert:
 
-Before metamask opens, an error that the transaction will revert will appear. 90% of the cases this is a correct estimation, but 10% of the time the transaction may still succeed. That will be a more special issue.
+Before metamask opens, an error that the transaction will revert will appear. In 90% of cases, this is a correct estimation, but in 10% of cases the transaction may still succeed. That will be a special issue.
 
-If you need to debug a reverting transaction try to: - Reproduce the issue in unit test cases first. - Check the view values (make all attributes of contract public), manually make the calculation step by step on a paper to find out what the issue is. - Copy the function which is reverting and make copies of it (func2, func3, func4) connecting a line in each version. So you can figure out which line of code is reverting and why.
+If you need to debug a reverting transaction try to: - Reproduce the issue in unit test cases first. - Check the view values (make all attributes of the contract public), manually walk through the calculation step by step on paper to find out what the issue is. - Copy the function which is reverting and make copies of it (func2, func3, func4) connecting a line in each version, so that you can figure out which line of code is reverting and why.
 
-Testing revert on remix can get tiresome if you have many steps before the issue happen, try to create shortcuts and simplify your code to make remix testing easier.
+Testing revert on remix can get tiresome if you have many steps before the issue occurs, so try to create shortcuts and simplify your code to make remix testing easier.
 
 For more information on Remix, check the [Complete Manual](https://remix.readthedocs.io/en/latest/).
 
 After this tutorial
 -------------------
 
--   You can find all the files of this tutorial as part of the repository, with the name of OlympusTutorialFund.
+-   You can find all of the files of this tutorial as part of the repository, with the name of OlympusTutorialFund.
 
 -   You can continue reading the ABI documentation.
 
@@ -553,4 +548,4 @@ After this tutorial
 1.  Select how much a user wants to withdraw.
 2.  Implement the whitelist component to allow only certain users to invest.
 3.  Add new features to the OlympusBasicIndex.
-4.  Take a look at our complete and real derivative implementations.
+4.  Take a look at our complete and real template implementations.
