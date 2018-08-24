@@ -312,4 +312,16 @@ contract("ExchangeProvider", accounts => {
 
     await AdapterManager.removeExchangeAdapter(exchangeidtwo);
   });
+  it("Should support token swap", async () => {
+    const srcAmountETH = 1;
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+    let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
+    console.log(ethToken,tokens[0],amount,rate,deposit);
+    const erc20Token = await ERC20Extended.at(tokens[0]);
+    const beforeBalance = await erc20Token.balanceOf(deposit);
+    await kyberNetworkAdapter.tokenExchange(ethToken,tokens[0],amount,rate,deposit,{value: web3.toWei(srcAmountETH)});
+    const afterBalance = await erc20Token.balanceOf(deposit);
+    assert.equal((afterBalance - beforeBalance), rate , `BestRate`);
+  });
 });
