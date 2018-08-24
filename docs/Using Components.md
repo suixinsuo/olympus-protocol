@@ -1,10 +1,12 @@
-## Using Olympus components.
+# Using Olympus components.
 
 [This is the second part of GetStarted tutorial. We use the same files as in the first part of the tutorial to demonstrate using Olympus components]
 
 Olympus offers a great variety of components that allows us to increase the capability of any fund with only a few lines. In this scenario we want to give some guarantee to our investors that their money is not going to be wasted in buy/sell transactions by the owner. We will allow the owner to only make operations on a concrete token once per week.
 
 In order to accomplish that, we need a set of new variables and logic. We can also use the interface `LockerContainer` that will allow us to create any kind of timers in our fund. You can check the [LockerProvider ABI](http://broken-link) in the documentation.
+
+## Adding a component in the protocol
 
 1. We import the Locker interface
 
@@ -86,7 +88,7 @@ In the case that a token is new `if (amounts[_tokenAddress] > 0 && !activeTokens
 Calling setTimeInterval we initialize the timer to 7 days value stored in TRADE_INTERVAL variable. Realize that we need a name to identify the interval itself, for that we use the same address of the ERC20 token (getting the address and casting it to bytes32 will do the job).
 
 
-4) We check the interval before buying a token.
+5. We check the interval before buying a token.
 
 ```javascript
   function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
@@ -119,7 +121,7 @@ The buyTokens function checks the total amount of ETH required to buy all the to
 If it is the first time we buy a token, the current value of the interval will be 0. (So the token will be purchased). After the purchase, the updateTokens function will initialize the interval to 7 days. The second time we trade with this token the interval will apply.
 There is a small issue, the interval won’t apply until the second purchase. You can think about how to apply the interval from the first moment, in an optimal way, as a challenge.
 
-5.  Add the interval checking for sell tokens
+6.  Add the interval checking for sell tokens
 
 ```javascript
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _rates)
@@ -146,7 +148,7 @@ Similar code as before, we get the component, and in the same loop we are giving
 If the timer is not initialized, it will be initialized through the usage of the updateTokens internal function.
 Remember the checkInterval will revert if any of the token intervals has not passed yet, reverting the complete selling transaction.
 
-## Testing
+## Testing the component
 
 We continue with the test file that we have utilized to test our own fund, and we will add the required modifications to test this new functionality.
 
@@ -258,7 +260,7 @@ const Fund = artifacts.require("OlympusTutorialFundStub");
 
 This will be enough to pass the test cases again.
 
-3. Test the special scenario
+4. Test the special scenario
 
 Let's add a config function to our Stub. This stub is only being used in tests, and should not be used in reality.
 
@@ -354,7 +356,7 @@ To continue we this, we can make the test cases more complicated, add more asser
 
 You can also try to check the value in lockerProvider (timeInterval and unlock time). In the initialization we have set the variable `lockerProvider = await LockerProvider.deployed();` that will allow you to query directly the public mapping attributes of the provider.
 
-4. Migrations
+5. Migrations
 
 
 In the file `/migrations/2_deploy_contracts.js` we can find the script which is deploying the contracts on the blockchain.
@@ -389,6 +391,7 @@ function deployTutorial(deployer, network) {
 }
 }
 ```
+
 a) You can see that the the function receives a deployer object that can deploy the contracts [Check Documentation](https://truffleframework.com/docs/truffle/testing/testing-your-contracts) and information of the network that we are deploying on. You can use this information to further customize your deployment function.
 
 b) Finally, we only need to deploy the Locker, MarketPlaceProvider and ComponentList and MockToken, for our test.There is a slight difference in the syntax for deploying contracts with parameters and deploying contracts without. An example of a contract that does need parameters can be found in the `deployExchange` function.
