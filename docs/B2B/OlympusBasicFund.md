@@ -5,7 +5,7 @@ Basic Fund
 
 ### Introduction
 
-An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of their own shares. The Olympus Basic Fund contains basic interfaces that a fund needs. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
+A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. The Olympus Basic Fund contains basic interfaces that a fund needs. This document walks you through the basic template for a fund.
 
 ### Constructor
 
@@ -22,7 +22,7 @@ constructor(
 ####  Parameters
 
 > 1.  \_name: Fund name
-> 2.  \_symbol: Fund symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 2.  \_symbol: Fund symbol (The fund is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
 > 3.  \_description: Fund description
 > 4.  \_category: Fund category
 > 5.  \_decimals: Fund decimals (normally it should be 18)
@@ -150,7 +150,7 @@ function initialize(address _componentList) external onlyOwner;
 
 ####  Description
 
-Initialize the fund contract that was created before, with the specified configurations. It will also be registered in the Olympus Product List and users can start investing into the fund after calling this function.
+Initialize the fund contract that was created before, with the specified configurations. It will also be registered to the Olympus Product List and users can start investing into the fund after calling this function.
 
 ####  Parameters
 
@@ -310,7 +310,7 @@ function close() public onlyOwner returns(bool success);
 
 ####  Description
 
-Close fund to stop investors from investing on the fund, this function also sells all the tokens to get the ETH back. (Note: After closing the fund, investors can still withdraw their investment.)
+Close the fund to stop investors from investing into the fund. this function also sells all of the tokens for ETH. (Note: After closing the fund, investors can still withdraw their investment.)
 
 ####  Returns
 
