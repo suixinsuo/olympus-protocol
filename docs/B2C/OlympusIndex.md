@@ -89,7 +89,7 @@ function requestWithdraw(uint amount) external
 ```
 
 #### &emsp;Description
-> Investor can use this function to request withdraw certain amount of his investment.(Note: The investment will be withdraw after the index's manager execute the withdraw function.)
+> Investor can use this function to request a withdrawal of a certain amount of his investment. (Note: The investment will be withdrawn after the index's manager or a bot system executes the withdraw function.)
 
 #### &emsp;Parameters
 > amount: Amount of ETH the investor would like to withdraw.
