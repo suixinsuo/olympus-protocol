@@ -1,8 +1,7 @@
 # Basic Fund
 
 ### Introduction
-
-An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. The Olympus Basic Fund contains basic interfaces that a fund needs. The document serves as guideline to add tokenized cryptocurrency financial products to broaden your application’s product offerings.
+A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. The Olympus Basic Fund contains the basic interfaces that a fund needs. This document walks you through the functions of the basic fund (created by the Olympus team) which should be used by investors.
 
 ### Basic info
 > The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
@@ -16,35 +15,35 @@ fundContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(name)
+  console.log(name);
 })
 // Symbol
 fundContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(symbol)
+  console.log(symbol);
 })
 // Description
 fundContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(description)
+  console.log(description);
 })
 // Category
 fundContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(category)
+  console.log(category);
 })
 // Decimals
 fundContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(decimals)
+  console.log(decimals);
 })
 ```
 
@@ -86,7 +85,7 @@ function withdraw() external returns(bool);
 ```
 
 #### &emsp;Description
-> This function is for investors to withdraw all their investment.
+> This function is for investors to withdraw all of their investment.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.
