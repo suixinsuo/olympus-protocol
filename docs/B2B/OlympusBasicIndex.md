@@ -5,7 +5,7 @@ Basic Index
 
 ### Introduction
 
-A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens.  Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the basic template for a fund.
+A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens.  Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the basic template for an index.
 
 ### Constructor
 
