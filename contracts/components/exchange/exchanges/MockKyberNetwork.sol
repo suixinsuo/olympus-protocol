@@ -89,21 +89,18 @@ contract MockKyberNetwork {
             uint destAmount = getExpectAmount(srcAmount, dest.decimals(), expectedRate);
             dest.transfer(destAddress,destAmount);
             return destAmount;
-            emit logA("ETH_ADDRESS");
          } else if(address(dest) == ETH_ADDRESS){
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
             uint ethAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
             destAddress.transfer(ethAmount);
             return ethAmount;
-            emit logA("other");
         }else{
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
             uint tokenAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
             SimpleERC20Token(dest).transfer(destAddress,tokenAmount);
             return tokenAmount;
-            emit logA("other");
         }
     }
 
