@@ -1,5 +1,5 @@
 Basic Index
-===========
+=====
 
 [TOC]
 
@@ -105,7 +105,7 @@ web3.eth.contract(abi).new(
 
 ### Basic info
 
-The code below shows how to get an index's basic information, including index' name, symbol, description, category and decimals.
+The code below shows how to get an index's basic information, including index's name, symbol, description, category and decimals.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");

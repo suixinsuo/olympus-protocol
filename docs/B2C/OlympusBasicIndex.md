@@ -4,7 +4,7 @@
 An index is an indicator or measure of something, and in finance, it typically refers to a statistical measure of change in a securities market. In the case of financial markets, stock and bond market indexes consist of a hypothetical portfolio of securities representing a particular market or a segment of it. Olympus Basic Index contains basic interfaces that an index needs. The document serves as guideline to add tokenized cryptocurrency financial products to broaden your application’s product offerings.
 
 ### Basic info
-> The code below shows how to get index's basic information, including index's name, symbol, description, category and decimals.
+> The code below shows how to get an basic index's information, including the index's name, symbol, description, category and decimals.
 
 ```javascript
 const Web3 = require("web3");
@@ -15,35 +15,35 @@ indexContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(name)
+  console.log(name);
 })
 // Symbol
 indexContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(symbol)
+  console.log(symbol);
 })
 // Description
 indexContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(description)
+  console.log(description);
 })
 // Category
 indexContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(category)
+  console.log(category);
 })
 // Decimals
 indexContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(decimals)
+  console.log(decimals);
 })
 ```
 
@@ -83,7 +83,7 @@ function withdraw() external returns(bool);
 ```
 
 #### &emsp;Description
-> This function is for investors to withdraw all their investment.
+> This function is for investors to withdraw all of their investment.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.

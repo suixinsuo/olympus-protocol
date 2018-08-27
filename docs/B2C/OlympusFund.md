@@ -1,7 +1,7 @@
 # Fund
 
 ### Introduction
-An investment fund is a supply of capital belonging to numerous investors used to collectively purchase securities while each investor retains ownership and control of his own shares. The document serves as guideline to add tokenized cryptocurrency financial products to broaden your application’s product offerings.
+A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. The Olympus Fund contains the interfaces that a fund needs. This document walks you through the basic functions of the customized fund (created by the Olympus team) which are targeted at investors.
 
 ### Basic info
 > The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
@@ -15,35 +15,35 @@ fundContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(name);
+  console.log(name);
 })
 // Symbol
 fundContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(symbol)
+  console.log(symbol);
 })
 // Description
 fundContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(description)
+  console.log(description);
 })
 // Category
 fundContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(category)
+  console.log(category);
 })
 // Decimals
 fundContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
   }
-  conosle.log(decimals)
+  console.log(decimals);
 })
 ```
 
@@ -61,6 +61,7 @@ function invest() public payable
 
 #### &emsp;Description
 > Invest in the fund by calling the invest function while sending Ether to the fund. If the whitelist is enabled, it will check if the investor's address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
+
 #### &emsp;Returns
 > Whether the function executed successfully or not.
 
@@ -74,7 +75,7 @@ const fundContract = web3.eth.contract(abi).at(address);
 const investAmount = 1 ** 17;
 fundContract.invest({value: investAmount}, (err, result) => {
   if (err) {
-    return console.log(err)
+    return console.log(err);
   }
 });
 ```
@@ -88,10 +89,13 @@ function requestWithdraw(uint amount) external
 ```
 
 #### &emsp;Description
-> Investor can use this function to request withdraw certain amount of his investment.(Note: The investment will be withdraw after the fund's manager execute the withdraw function.)
+> Investor can use this function to request withdraw certain amount of his investment.(Note: The investment will be withdrawn after the fund's manager or bot system executes the withdraw function.)
 
 #### &emsp;Parameters
-> amount: Amount of ETH the investor would like to withdraw.
+> amount: Amount of fund tokens the investor would like to withdraw.
+
+#### &emsp;Returns
+> No return
 
 #### &emsp;Example code
 > The code below shows how to call this function with Web3.
@@ -103,7 +107,7 @@ const fundContract = web3.eth.contract(abi).at(address);
 const amount = 10 ** 17;
 fundContract.requestWithdraw(amount, (err, result) => {
   if (err) {
-    return console.log(err)
+    return console.log(err);
   }
 });
 ```
