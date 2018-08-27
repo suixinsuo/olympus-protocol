@@ -98,7 +98,7 @@ contract MockKyberNetwork {
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
             uint tokenAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
-            SimpleERC20Token(dest).transfer(destAddress,tokenAmount);
+            dest.transfer(destAddress,tokenAmount);
             return tokenAmount;
         }
     }
