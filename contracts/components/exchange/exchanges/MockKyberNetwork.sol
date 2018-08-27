@@ -53,12 +53,14 @@ contract MockKyberNetwork {
         if (address(dest) == ETH_ADDRESS) {
             return (10 ** 15, 10 ** 15);
         } else if(address(src) == ETH_ADDRESS){
+            //ETH ----> TOKEN 
             for (uint i = 0; i < supportedTokens.length; i++){
                 if(address(supportedTokens[i].token) == address(dest)){
                     return (supportedTokens[i].slippageRate, supportedTokens[i].slippageRate);
                 }
             }
         }else{
+            //TOKEN ----> TOKEN 
             for (uint t = 0; t < supportedTokens.length; t++){
                 if(address(supportedTokens[t].token) == address(dest)){
                     return (10**18, 10**18);
@@ -84,17 +86,20 @@ contract MockKyberNetwork {
         require(slippageRate >= minConversionRate);
 
         if (address(source) == ETH_ADDRESS) {
+            //ETH ----> TOKEN 
             require(msg.value == srcAmount);
             uint destAmount = getExpectAmount(srcAmount, dest.decimals(), expectedRate);
             dest.transfer(destAddress,destAmount);
             return destAmount;
          } else if(address(dest) == ETH_ADDRESS){
+             //TOKEN ----> ETH
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
             uint ethAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
             destAddress.transfer(ethAmount);
             return ethAmount;
         }else{
+            //TOKEN ----> TOKEN 
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
             uint tokenAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
