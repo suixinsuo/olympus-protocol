@@ -319,6 +319,7 @@ contract("ExchangeProvider", accounts => {
     let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
     const erc20Token = await ERC20Extended.at(tokens[0]);
     const beforeBalance = await erc20Token.balanceOf(deposit);
+    
     await kyberNetworkAdapter.tokenExchange(ethToken,tokens[0],amount,rate,deposit,{value: web3.toWei(srcAmountETH)});
     const afterBalance = await erc20Token.balanceOf(deposit);
     assert.equal((afterBalance - beforeBalance), rate , `BestRate`);
@@ -329,11 +330,14 @@ contract("ExchangeProvider", accounts => {
     const erc20Token2 = await ERC20Extended.at(tokens[1]);
     const beforeBalance = await erc20Token2.balanceOf(deposit);
     await erc20Token.transfer(kyberNetworkAdapter.address, 1000*10**18);
+    const beforeBalance2 = await erc20Token.balanceOf(kyberNetworkAdapter.address);
     /*
     Normally srctoken is approved by exchange provider , but I don't use it, so I send it directly to kyber adapter.
     */
     await kyberNetworkAdapter.tokenExchange(tokens[0],tokens[1],1000*10**18,10**18,deposit);
     const afterBalance = await erc20Token2.balanceOf(deposit);
+    const afterBalance2 = await erc20Token.balanceOf(kyberNetworkAdapter.address);
     assert.equal((afterBalance-beforeBalance), 1000*10**18 , `Success`);
+    assert.equal((beforeBalance2-afterBalance2), 1000*10**18 , `Success`);
   });
 });
