@@ -186,9 +186,6 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
         if(_src == ETH_TOKEN_ADDRESS){
             require(_dest.balanceOf(_depositAddress) > beforeTokenBalance);
         }
-        // require(_token.balanceOf(this) < beforeTokenBalance);
-        // require((beforeTokenBalance - _token.balanceOf(this)) == _amount);
-
         return true;
     }
     function approveToken(ERC20Extended _token) external returns(bool success){
