@@ -79,7 +79,7 @@ contract MockKyberNetwork {
         require(slippageRate >= minConversionRate);
 
         if (address(source) == ETH_ADDRESS) {
-            //require(msg.value == srcAmount);
+            require(msg.value == srcAmount);
             uint destAmount = getExpectAmount(srcAmount, dest.decimals(), expectedRate);
             dest.transfer(destAddress,destAmount);
             return destAmount;

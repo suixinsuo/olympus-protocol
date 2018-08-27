@@ -173,7 +173,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
         }
         slippageRate = _minimumRate;
 
-        kyber.trade(
+        kyber.trade.value(msg.value)(
             _src,
             _amount,
             _dest,
@@ -181,6 +181,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
             2**256 - 1,
             slippageRate,
             walletId);
+
         if(_src == ETH_TOKEN_ADDRESS){
             require(_dest.balanceOf(_depositAddress) > beforeTokenBalance);
         }
