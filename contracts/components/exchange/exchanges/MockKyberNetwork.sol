@@ -68,7 +68,6 @@ contract MockKyberNetwork {
 
         return (10 ** 18 * 1000, 10 ** 18 * 1000);
     }
-    event logA(string log);
     function trade(
         ERC20Extended source,
         uint srcAmount,
