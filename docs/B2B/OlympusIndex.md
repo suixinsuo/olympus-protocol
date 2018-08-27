@@ -4,8 +4,7 @@ Index
 [TOC]
 
 ### Introduction
-
-An index is an indicator or measure of something, and in finance, it typically refers to a statistical measure of change in a securities market. In the case of financial markets, stock and bond market indexes consist of a hypothetical portfolio of securities representing a particular market or a segment of it. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
+A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. This document walks you through the an customized template for an index created by the Olympus team.
 
 ### Constructor
 
@@ -24,7 +23,7 @@ constructor (
 ####  Parameters
 
 > 1.  name: Index name
-> 2.  symbol: Index symbol (The derivative is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 2.  symbol: Index symbol (The index is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
 > 3.  description: Index description
 > 4.  category: Index category
 > 5.  decimals: Index decimals (normally it should be 18)
@@ -106,7 +105,7 @@ web3.eth.contract(abi).new(
 
 ### Basic info
 
-The code below shows how to get the index's basic information, including the index's name, symbol, description, category and decimals.
+The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -263,7 +262,7 @@ function buyTokens() external onlyOwnerOrWhitelisted
 
 ####  Description
 
-Index manager execute the function to buy tokens that are defined in index using the investor's investment.
+Index manager executes the function to buy tokens that are defined in the index using the investor's funds.
 
 ####  Returns
 
@@ -296,11 +295,11 @@ function rebalance() public onlyOwnerOrWhitelisted
 
 ####  Description
 
-Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the complete asset value in the value might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased. As the blockchain limits the number of operations done per transaction, this function has a built-in feature for executing this function over multiple transaction. So to be sure that the function will be completed, as long as the result of the function is false, the function should be called again. Once the rebalance function returns true, the rebalance will be completed, and can only be called again after the interval period has passed.
+Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the complete asset value in the value might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased. As the blockchain limits the number of operations done per transaction, this function has a built-in feature for executing this function over multiple transactions. So to be sure that the function will be completed, as long as the result of the function is false, the function should be called again. Once the rebalance function returns true, the rebalance will be completed, and can only be called again after the interval period has passed.
 
 ####  Returns
 
-> Because we have multiple step support. If it return false when the function needs to execute again until all of steps are finished, and if true the function is finished. If there is any issue, rebalance will revert
+> In cases where there are a lot of tokens in the index, we need to process rebalancing in multiple steps due to gas limits. The function will return false for each step and then return true once all of the steps in the rebalancing are complete. If there are any issues, rebalance will revert.
 
 ####  Example code
 
@@ -344,7 +343,7 @@ function setManagementFee(uint _fee) external onlyOwner;
 
 ####  Description
 
-Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. This value is only restricted to being less than 100% (10000). The following example values correspond to the following percentages:
+Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. This value is only restricted to be less than 100% (10000). The following example values correspond to the following percentages:
 
 -   1 = 0.01%
 -   100 = 1%
@@ -353,7 +352,7 @@ Set the management fee percentage. This is being calculated with a denominator, 
 
 ####  Parameters
 
-> fee: The percentage of investor's investment that will be taken as management fee (Note: fee must be equal to or bigger than 0 and less than 10000)
+> fee: The percentage of investors' funds that will be set aside for management fee (Note: fee must be equal to or bigger than 0 and less than 10000)
 
 ####  Example code
 
@@ -372,41 +371,8 @@ indexContract.setManagementFee(_fee, (err, result) => {
 });
 ```
 
-6. requestWithdraw
-------------------
 
-``` {.sourceCode .javascript}
-function requestWithdraw(uint amount) external
-  whenNotPaused withoutRisk
-    (msg.sender, address(this), address(this), amount, getPrice());
-```
-
-####  Description
-
-Investor can use this function to request to withdraw his investment.(Note: The investment will be withdrawn after the index's manager or the bot system executes the withdraw function.)
-
-####  Parameters
-
-> amount: Amount of index tokens the investor would like to withdraw.
-
-####  Example code
-
-The code below shows how to call this function with Web3.
-
-``` {.sourceCode .javascript}
-const Web3 = require("web3");
-const web3 = new Web3
-  (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-const amount = 10 ** 17;
-indexContract.requestWithdraw(amount, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
-});
-```
-
-7. withdraw
+6. withdraw
 -----------
 
 ``` {.sourceCode .javascript}
@@ -416,7 +382,12 @@ function withdraw() external onlyOwnerOrWhitelisted
 
 ####  Description
 
-This function is for index' manager. Investors that have requested to withdraw their investment will get their investment back after the index's manager or bot system executes this function.
+This function is for the index manager. Investors that have requested to withdraw their investment will get their investment back after the index manager or bot system executes this function.
+
+####  Returns
+
+> Whether the function executed successfully or not.
+
 
 ####  Example code
 
@@ -435,7 +406,7 @@ indexContract.withdraw((err, result) => {
 });
 ```
 
-8. withdrawFee
+7. withdrawFee
 --------------
 
 ``` {.sourceCode .javascript}
@@ -445,7 +416,7 @@ function withdrawFee(uint amount) external onlyOwner
 
 ####  Description
 
-This function is for index's manager to withdraw their accumulated management fee.
+This function is for the index manager to withdraw the index management fee.
 
 ####  Parameters
 
@@ -468,7 +439,7 @@ indexContract.withdrawFee(amount, (err, result) => {
 });
 ```
 
-9. enableWhitelist
+8. enableWhitelist
 ------------------
 
 ``` {.sourceCode .javascript}
@@ -484,11 +455,11 @@ Owner of the Index can enable a category of whitelist to facilitate access contr
 -   1: Maintenance
 -   2: Admin
 
-If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest on the index. If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process, rebalance the tokens or trigger the allocation process; otherwise, only the owner of the index can perform those actions. Type 2 Admin whitelist is not used in the OlympusIndex for now.
+If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest into the index. If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process, rebalance the tokens or trigger the allocation process; otherwise, only the owner of the index can perform those actions. Type 2 Admin whitelist is not used in the OlympusIndex for now.
 
 ####  Parameters
 
-> \_key: A specific category of whitelist to be enabled for the index. Three categories of whitelist are available:
+> \_key: A specific category of whitelist to be enabled for the index. The following three keys are available:
 >
 > -   0: Investment
 > -   1: Maintenance
@@ -515,7 +486,7 @@ indexContract.enableWhitelist(key, (err, result) => {
 });
 ```
 
-10. setAllowed
+9. setAllowed
 --------------
 
 ``` {.sourceCode .javascript}
@@ -557,7 +528,7 @@ indexContract.setAllowed(accounts, key, allowed, (err, result) => {
 });
 ```
 
-11. disableWhitelist
+10. disableWhitelist
 --------------------
 
 ``` {.sourceCode .javascript}
@@ -571,7 +542,7 @@ Owner of the index can disable a category of whitelist that has been enabled bef
 
 ####  Parameters
 
-> \_key: A specific category of whitelist to be enabled for the index. Three categories of whitelist are available:
+> \_key: A specific category of whitelist to be disabled for the index. The following three keys are available:
 >
 > -   0: Investment
 > -   1: Maintenance
@@ -598,7 +569,7 @@ indexContract.disableWhitelist(key, (err, result) => {
 });
 ```
 
-12. close
+11. close
 ---------
 
 ``` {.sourceCode .javascript}
@@ -607,7 +578,7 @@ function close() public onlyOwner returns(bool success);
 
 ####  Description
 
-Close index to stop investors from investing on the index, this function also sells all the tokens to get the ETH back. (Note: After closing the index, investors can still withdraw their investment and index managers can also withdraw their management fee.)
+Close the index to stop investors from investing into the index. This function also sells all of the tokens for ETH. (Note: After closing the index, investors can still withdraw their investment and index managers can also withdraw their management fee.)
 
 ####  Returns
 
