@@ -106,7 +106,7 @@ web3.eth.contract(abi).new(
 
 ### Basic info
 
-The code below shows how to get the index' basic information, including the index' name, symbol, description, category and decimals.
+The code below shows how to get the index's basic information, including the index's name, symbol, description, category and decimals.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -383,7 +383,7 @@ function requestWithdraw(uint amount) external
 
 ####  Description
 
-Investor can use this function to request to withdraw his investment.(Note: The investment will be withdrawn after the index' manager or the bot system executes the withdraw function.)
+Investor can use this function to request to withdraw his investment.(Note: The investment will be withdrawn after the index's manager or the bot system executes the withdraw function.)
 
 ####  Parameters
 
@@ -416,7 +416,7 @@ function withdraw() external onlyOwnerOrWhitelisted
 
 ####  Description
 
-This function is for index' manager. Investors that have requested to withdraw their investment will get their investment back after the index' manager or bot system executes this function.
+This function is for index' manager. Investors that have requested to withdraw their investment will get their investment back after the index's manager or bot system executes this function.
 
 ####  Example code
 
@@ -445,7 +445,7 @@ function withdrawFee(uint amount) external onlyOwner
 
 ####  Description
 
-This function is for index' manager to withdraw their accumulated management fee.
+This function is for index's manager to withdraw their accumulated management fee.
 
 ####  Parameters
 
