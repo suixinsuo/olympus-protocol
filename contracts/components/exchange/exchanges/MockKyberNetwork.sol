@@ -44,7 +44,7 @@ contract MockKyberNetwork {
         return _getExpectedRate(src, dest, srcQty);
     }
 
-    function _getExpectedRate(ERC20Extended /*src*/, ERC20Extended dest, uint) private view
+    function _getExpectedRate(ERC20Extended src, ERC20Extended dest, uint) private view
     returns (uint expectedRate, uint slippageRate)
     {
         if (simulatePriceZero) {
@@ -52,10 +52,16 @@ contract MockKyberNetwork {
         }
         if (address(dest) == ETH_ADDRESS) {
             return (10 ** 15, 10 ** 15);
-        } else {
+        } else if(address(src) == ETH_ADDRESS){
             for (uint i = 0; i < supportedTokens.length; i++){
                 if(address(supportedTokens[i].token) == address(dest)){
                     return (supportedTokens[i].slippageRate, supportedTokens[i].slippageRate);
+                }
+            }
+        }else{
+            for (uint t = 0; t < supportedTokens.length; t++){
+                if(address(supportedTokens[t].token) == address(dest)){
+                    return (10**18, 10**18);
                 }
             }
         }
@@ -84,12 +90,19 @@ contract MockKyberNetwork {
             dest.transfer(destAddress,destAmount);
             return destAmount;
             emit logA("ETH_ADDRESS");
-         } else {
+         } else if(address(dest) == ETH_ADDRESS){
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
             uint ethAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
             destAddress.transfer(ethAmount);
             return ethAmount;
+            emit logA("other");
+        }else{
+            require(msg.value == 0);
+            source.transferFrom(msg.sender, address(this), srcAmount);
+            uint tokenAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
+            SimpleERC20Token(dest).transfer(destAddress,tokenAmount);
+            return tokenAmount;
             emit logA("other");
         }
     }

@@ -161,7 +161,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
             }
             uint beforeTokenBalance = _dest.balanceOf(_depositAddress);
 
-        }else if(_dest == ETH_TOKEN_ADDRESS){
+        }else{
             ERC20NoReturn(_src).approve(address(kyber), 0);
             ERC20NoReturn(_src).approve(address(kyber), _amount);
         }
