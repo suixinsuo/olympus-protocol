@@ -61,8 +61,9 @@ contract MockKyberNetwork {
                     return (supportedTokens[i].slippageRate, supportedTokens[i].slippageRate);
                 }
             }
-        }else{
-            //TOKEN ----> TOKEN Price
+        }
+        //TOKEN ----> TOKEN Price
+        if((address(src) != ETH_ADDRESS)&&(address(dest) != ETH_ADDRESS)){
             for (uint t = 0; t < supportedTokens.length; t++){
                 if(address(supportedTokens[t].token) == address(dest)){
                     return (10**18, 10**18);
