@@ -186,9 +186,7 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
             slippageRate,
             walletId);
 
-        // if(_src == ETH_TOKEN_ADDRESS ){
-        //     require(_dest.balanceOf(_depositAddress) > beforeTokenBalance);
-        // }
+
         if(_dest == ETH_TOKEN_ADDRESS){
             require(_depositAddress.balance > beforeETHBalance);
         }else{
