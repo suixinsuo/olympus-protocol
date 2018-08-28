@@ -17,6 +17,10 @@ contract FutureContract is FutureInterface, Ownable, ComponentContainerInterface
     ERC721Token public shortToken;
     ComponentListInterface public componentList;
 
+    string public name = "Olympus Future";
+    string public description = "Olympus Future";
+
+
     bytes32 public constant MARKET = "MarketProvider";
     bytes32 public constant PRICE = "PriceProvider";
     bytes32 public constant RISK = "RiskProvider";
@@ -56,6 +60,11 @@ contract FutureContract is FutureInterface, Ownable, ComponentContainerInterface
     function() public payable {
         revert();
     }    
+
+    constructor(string _name, string _description) public {
+        name = _name;
+        description = _description;
+    }
 
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) 
     public returns(bool) 
