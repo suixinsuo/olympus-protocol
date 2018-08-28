@@ -24,7 +24,10 @@ contract OlympusExchangeAdapterInterface is Ownable {
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
         ) external payable returns(bool success);
-
+    function tokenExchange
+        (
+        ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _minimumRate, address _depositAddress
+        )external payable returns(bool success);
     function enable() external returns(bool);
     function disable() external returns(bool);
     function isEnabled() external view returns (bool success);
