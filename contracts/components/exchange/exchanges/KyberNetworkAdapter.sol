@@ -159,12 +159,15 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
             if (address(this).balance < _amount) {
                 return false;
             }
-            uint beforeTokenBalance = _dest.balanceOf(_depositAddress);
-
         }else{
             require(msg.value == 0);
             ERC20NoReturn(_src).approve(address(kyber), 0);
             ERC20NoReturn(_src).approve(address(kyber), _amount);
+        }
+        if(_dest == ETH_TOKEN_ADDRESS ){
+            uint beforeETHBalance = _depositAddress.balance;
+        }else{
+            uint beforeTokenBalance = _dest.balanceOf(_depositAddress);
         }
         uint slippageRate;
         (,slippageRate) = kyber.getExpectedRate(_src, _dest, _amount);
@@ -183,9 +186,15 @@ contract KyberNetworkAdapter is OlympusExchangeAdapterInterface{
             slippageRate,
             walletId);
 
-        if(_src == ETH_TOKEN_ADDRESS){
+        // if(_src == ETH_TOKEN_ADDRESS ){
+        //     require(_dest.balanceOf(_depositAddress) > beforeTokenBalance);
+        // }
+        if(_dest == ETH_TOKEN_ADDRESS){
+            require(_depositAddress.balance > beforeETHBalance);
+        }else{
             require(_dest.balanceOf(_depositAddress) > beforeTokenBalance);
         }
+
         return true;
     }
     function approveToken(ERC20Extended _token) external returns(bool success){
