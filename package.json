@@ -7,13 +7,15 @@
   },
   "scripts": {
     "build": "truffle compile  --network development",
-    "test": "./node_modules/.bin/run-with-testrpc --port 8545  --network development 'truffle test'",
+    "test": "./node_modules/.bin/run-with-testrpc --port 8545 --gasLimit 8e6  --network development 'truffle test'",
+    "testKovan": "./node_modules/.bin/run-with-testrpc --port 8545  --network kovan 'truffle test'",
     "testCoverage": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test --network coverage' ",
     "deploy": "./node_modules/.bin/run-with-testrpc --port 8545  --network development 'truffle migrate --reset' ",
     "deploytestnet": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network kovan' ",
     "linting": "#solhint 'contracts/**/*.sol'",
     "coverage": "./node_modules/.bin/solidity-coverage",
-    "version": "truffle version"
+    "version": "truffle version",
+    "build-contracts": "./node_modules/.bin/sol-merger \"./contracts/**/*.sol\" ./build"
   },
   "repository": {
     "type": "git",
@@ -24,9 +26,10 @@
   "devDependencies": {
     "ganache-cli": "^6.1.2",
     "run-with-testrpc": "^0.3.0",
+    "sol-merger": "^0.1.2",
     "solhint": "^1.2.1",
     "solidity-coverage": "^0.5.4",
-    "truffle": "^4.1.7"
+    "truffle": "^4.1.11"
   },
   "dependencies": {
     "aws-sdk": "^2.255.1",

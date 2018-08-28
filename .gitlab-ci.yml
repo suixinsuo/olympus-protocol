@@ -17,18 +17,18 @@ stages:
   - coverage
   - deploy
 
-coverage:
-  stage: coverage
-  only:
-    - production
-  tags: [aireach]
-  script:
-    - npm run coverage
-    - mv coverage/ public/    
-  artifacts:
-    paths:
-      - public
-    expire_in: 30 days  
+# coverage:
+#   stage: coverage
+#   only:
+#     - develop
+#   tags: [aireach]
+#   script:
+#     - npm run coverage
+#     - mv coverage/ public/
+#   artifacts:
+#     paths:
+#       - public
+#     expire_in: 30 days
 
 checkstyle:
   stage: checkstyle
@@ -49,10 +49,10 @@ test:
  stage: test
  tags: [aireach]
  script:
-   - npm test
+    - npm test
 
-deploy:
- stage: deploy
- tags: [aireach]
- script:
-   - npm run deploy
+# deploy:
+#  stage: deploy
+#  tags: [aireach]
+#  script:
+#    - npm run deploy
