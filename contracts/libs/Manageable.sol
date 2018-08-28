@@ -12,7 +12,7 @@ contract Manageable {
     }
 
     function setProvider(uint8 _id, address _providerAddress) public onlyOwner returns (bool success) {
-        require(_providerAddress != address(0));
+        require(_providerAddress != 0x0);
         subContracts[_id] = _providerAddress;
         emit ProviderUpdated(_id, _providerAddress);
 

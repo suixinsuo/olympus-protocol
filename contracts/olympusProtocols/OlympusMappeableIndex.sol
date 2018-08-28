@@ -322,7 +322,7 @@ contract OlympusMappeableIndex is IndexInterface, BaseDerivative, MappeableDeriv
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
         uint[] memory amountsToBuy;
-        uint8 i;
+        uint i;
         uint ETHBalanceBefore = address(this).balance;
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);

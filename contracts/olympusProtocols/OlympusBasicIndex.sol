@@ -257,7 +257,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
         uint ethBalance = address(this).balance;
         uint totalAmount = 0;
 
-        for(uint8 i = 0; i < tokens.length; i++) {
+        for(uint i = 0; i < tokens.length; i++) {
             _amounts[i] = ethBalance.mul(weights[i]).div(100);
             _tokensErc20[i] = ERC20Extended(tokens[i]);
             (, _rates[i] ) = exchange.getPrice(ETH,  _tokensErc20[i],  _amounts[i], 0x0);
@@ -277,7 +277,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
         uint[] memory amountsToSell;
         address[] memory tokensToBuy;
         uint[] memory amountsToBuy;
-        uint8 i;
+        uint i;
         uint ETHBalanceBefore = address(this).balance;
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);

@@ -482,7 +482,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function updateTokens(ERC20Extended[] _updatedTokens) private returns(bool success) {
         ERC20 _tokenAddress;
         for (uint i = 0; i < _updatedTokens.length; i++) {
-            if(_updatedTokens[i] == address(0)){continue;}
+            if(_updatedTokens[i] == 0x0){continue;}
 
             _tokenAddress = _updatedTokens[i];
             amounts[_tokenAddress] = _tokenAddress.balanceOf(this);

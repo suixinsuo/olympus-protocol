@@ -5,7 +5,7 @@ import "../../interfaces/DerivativeInterface.sol";
 contract ComponentContainer is ComponentContainerInterface {
 
     function setComponent(bytes32 _name, address _componentAddress) internal returns (bool success) {
-        require(_componentAddress != address(0));
+        require(_componentAddress != 0x0);
         components[_name] = _componentAddress;
         return true;
     }
