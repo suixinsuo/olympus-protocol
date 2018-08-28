@@ -115,7 +115,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
         LockerInterface lockerProvider = LockerInterface(getComponentByName(LOCKER));
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-        for (uint i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < _tokens.length; i++) {
             lockerProvider.checkLockerByTime(bytes32(address(_tokens[i])));
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
