@@ -19,6 +19,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     uint public registerTradeFailureInterval = 1 days;
     bytes4 public constant BUY_FUNCTION_SELECTOR = bytes4(keccak256("buyToken(address,uint256,uint256,address)"));
     bytes4 public constant SELL_FUNCTION_SELECTOR = bytes4(keccak256("sellToken(address,uint256,uint256,address)"));
+    bytes4 public constant SWAP_FUNCTION_SELECTOR = bytes4(keccak256("tokenExchange(address,address,uint256,uint256,address)"));
+    
     uint public failureFeeToDeduct = 0;
     uint sellMultipleTokenFee = 0; // Used in sellTokens, put as a storage variable because the stack got too deep
     bool functionCompleteSuccess = true;
@@ -146,6 +148,42 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         }
         require(payFee(sellTokenFee(_token,_amount, exchangeId)));
         registerSuccesfullTrade(address(_token), address(ETH));
+
+        return true;
+        //return (true, 0);
+    }
+
+    function tokenExchange
+        (
+        ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _minimumRate,
+        address _depositAddress, bytes32 _exchangeId
+        ) checkAllowance(_src, _amount) external returns(bool success) {
+
+        OlympusExchangeAdapterInterface adapter;
+        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_src, _dest , _amount, _minimumRate) : _exchangeId;
+        if(exchangeId == 0) {
+            // Tokens are not transferred yet, so we don't need to refund.
+            exitTrade(address(_src), address(_dest), _amount, address(adapter), false);
+            return false;
+        }
+
+        adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
+
+        // Let the adapter approve the token for the exchange provider address, so that in the event of a failure, we can return the tokens
+        // This is needed because we use the low level call for function selector, which doesn't propagate the error
+        if (_src.allowance(address(adapter), address(this)) == 0) {
+            adapter.approveToken(_src);
+        }
+        ERC20NoReturn(_src).transferFrom(msg.sender, address(adapter), _amount);
+
+        bool result = address(adapter).call(SWAP_FUNCTION_SELECTOR,_src,_dest,_amount,_minimumRate, _depositAddress);
+        if (!result) {
+            exitTrade(address(_src), address(_dest), _amount, address(adapter), true);
+            return false;
+            //return (false, amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]);
+        }
+        require(payFee(sellTokenFee(_src,_amount, exchangeId)));
+        registerSuccesfullTrade(address(_src), address(_dest));
 
         return true;
         //return (true, 0);
