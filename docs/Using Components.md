@@ -2,7 +2,7 @@
 
 [This is the second part of the GetStarted tutorial. We use the same files as in the first part of the tutorial to demonstrate how to use Olympus components]
 
-Olympus offers a great variety of components that allows us to increase the capability of any fund/index with only a few lines of code. In this scenario we want to give some guarantee to our investors that their money is not going to be wasted in buy/sell transactions by the owner. We will allow the owner to only make transactions on a specific token once per week.
+Olympus offers a great variety of components that allows us to increase the capability of any fund/index with only a few lines of code. In this scenario, we want to give some guarantee to our investors that their money is not going to be wasted in buy/sell transactions by the owner. We will allow the owner to only make transactions on a specific token once per week.
 
 In order to accomplish this, we need a set of new variables and logic. We can also use the interface `LockerContainer` that will allow us to create any kind of timers in our fund. You can check the [LockerProvider ABI](http://broken-link) in the documentation.
 
@@ -24,7 +24,7 @@ Make sure we import the interface at the top of the contract, together with the 
 ```
 
 We create a constant that will represent the locker component in our component list. Every derivative extends from the `ComponentList` base class in the `contracts/components/base` folder. This class allows us to store any kind of provider (Olympus or your own component set). This key LockerProvider is the name that the component is identified in our component list.
-Take note that we use bytes32 instead of string. In the code both look the same but in solidity bytes32 utilizes much less memory making a significant difference of gas usage while deploying the contract. (As our team experienced in the code optimization phases).
+Take note that we use bytes32 instead of string. In the code both look the same but in solidity bytes32 utilizes much less memory making a significant difference in gas usage while deploying the contract. (As our team experienced in the code optimization phases).
 We set a constant of 7 days between operations.
 
 3. We initialize the component
@@ -154,7 +154,7 @@ We continue with the test file that we have utilized to test our own fund, and w
 
 1. First, enable Locker component.
 
-In kovan or mainnet the component list is already set and the providers have already been updated. But in local we need to set this manually.
+In Kovan or Mainnet, the component list is already set and the providers have already been updated. But in local we need to set this manually.
 
 ```javascript
 const LockerProvider = artifacts.require("Locker");
@@ -190,7 +190,7 @@ We can observe the next interesting function in the test:
 For some providers, the fund manager is required to pay a small amount of MOT for calling functions.
 
 The MOT address is hardcoded in the code and belongs to the real MOT mainnet address. But in the scenarios of Kovan or test cases, we need to set the MOT address manually.
-  > In kovan set the MOT kovan address.
+  > In Kovan set the MOT Kovan address.
   > In test cases, use the mockMOT which is a contract created to mock the behavior of MOT (a "normal" ERC20 token).
 
 
@@ -219,11 +219,11 @@ In the new derivative, we have added a limitation not to operate the same token 
 
 3. Introduction to stubs
 
-One easy solution is to make the delay time configurable, so we can just change the configuration to a few seconds for the test cases. However, to gain the trust of the investors, we want this number to be fixed and not modifiable, otherwise the fund manager could modify it to his own advantage.
+One easy solution is to make the delay time configurable, so we can just change the configuration to a few seconds for the test cases. However, to gain the trust of the investors, we want this number to be fixed and not modifiable, otherwise, the fund manager could modify it to his own advantage.
 
 The first option is to initialize a value in the initialize function (which could be a reasonable solution). However, we need to be sure that the value is the same for all instances of this fund.
 
-No worries, we have another solution. We can mockup the derivative. Create a new mockup file in `myOwnContracts/MyContractStub.sol`. In this file we will inherit from our derivative, but override the declaration of the interval to zero seconds. Furthermore, we need to override the constructor.
+No worries, we have another solution. We can mockup the derivative. Create a new mockup file in `myOwnContracts/MyContractStub.sol`. In this file, we will inherit from our derivative, but override the declaration of the interval to zero seconds. Furthermore, we need to override the constructor.
 
 After you change the derivative's name to your own chosen name, the code should look similar to this:
 
