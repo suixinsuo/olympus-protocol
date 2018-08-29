@@ -7,9 +7,11 @@ import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/RebalanceInterface.sol";
 import "../libs/ERC20NoReturn.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 
+import "../libs/ERC20Extended.sol";
 
-contract OlympusBasicIndex is IndexInterface, BaseDerivative {
+contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC20Extended {
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH

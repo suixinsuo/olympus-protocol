@@ -108,6 +108,16 @@ function deployExchange(deployer, network) {
     });
 }
 
+async function deployFuture(deployer, network) {
+  deployer.deploy([
+    Locker,
+    MarketplaceProvider,
+    Reimbursable,
+    ComponentList,
+  ]);
+  await deployExchange(deployer, network);
+}
+
 async function deployMockfund(deployer, network) {
   deployer.deploy([
     SimpleWithdraw // Exchannge Provider

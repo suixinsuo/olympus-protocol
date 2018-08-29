@@ -9,9 +9,10 @@ import "../interfaces/RebalanceInterface.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/MappeableDerivative.sol";
 import "../interfaces/TokenBrokenInterface.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../libs/ERC20Extended.sol";
 
-
-contract OlympusMappeableIndex is IndexInterface, BaseDerivative, MappeableDerivative {
+contract OlympusMappeableIndex is IndexInterface, BaseDerivative, MappeableDerivative, StandardToken, ERC20Extended {
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH
@@ -77,7 +78,7 @@ contract OlympusMappeableIndex is IndexInterface, BaseDerivative, MappeableDeriv
 
         super._initialize(_componentList);
         bytes32[5] memory names = [MARKET, EXCHANGE, WITHDRAW, REBALANCE, TOKENBROKEN];
-        excludedComponents.push(TOKENBROKEN);
+        excludedComponents[TOKENBROKEN] = true;
 
         for (uint i = 0; i < names.length; i++) {
             updateComponent(names[i]);

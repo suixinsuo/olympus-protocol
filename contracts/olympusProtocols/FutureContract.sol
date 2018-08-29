@@ -2,14 +2,19 @@ pragma solidity 0.4.24;
 
 import "../interfaces/ComponentContainerInterface.sol";
 import "../interfaces/FutureInterfaceV1.sol";
+import "../interfaces/LockerInterface.sol";
+import "../libs/ERC20NoReturn.sol";
 import "../interfaces/ComponentListInterface.sol";
+import "../interfaces/ReimbursableInterface.sol";
+import "../interfaces/MarketplaceInterface.sol";
+import "../BaseDerivative.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 
 
-contract FutureContract is FutureInterfaceV1, Ownable, ComponentContainerInterface {
+contract FutureContract is FutureInterfaceV1, Ownable, ComponentContainerInterface, BaseDerivative {
 
-    uint public constant DENOMINATOR = 10000;
+    using SafeMath for uint256;
 
     ERC721Token public longToken;
     ERC721Token public shortToken;
@@ -17,52 +22,130 @@ contract FutureContract is FutureInterfaceV1, Ownable, ComponentContainerInterfa
 
     string public name = "Olympus Future";
     string public description = "Olympus Future";
-    string public version = "Olympus Future";
+    string public version = "v0.1";
+
 
     uint public target;
-    address public targetAddress;    
+    address public targetAddress;
     uint public deliveryDate;
     uint public depositPercentage;
+    uint public maxDepositLost;
+
     uint public amountOfTargetPerShare;
+    uint public accumulatedFee;
 
-    bytes32 public constant MARKET = "MarketProvider";
-    bytes32 public constant PRICE = "PriceProvider";
-    bytes32 public constant FEE = "FeeProvider";
-    bytes32 public constant REIMBURSABLE = "Reimbursable";
-
-
-    mapping(bytes32 => bool) internal excludedComponents;
+    bytes32 public constant CLEAR = "Clear";
 
     enum FutureDirection {
         Long,
         Short
     }
 
-    function() public payable {
-        revert();
-    }    
-
-    constructor(string _name, string _description, string _version) public {
+    constructor(
+      string _name,
+      string _description,
+      uint _target,
+      address _targetAddress,
+      uint _amountOfTargetPerShare,
+      uint _depositPercentage,
+      uint _maxDepositLost
+    ) public {
         name = _name;
         description = _description;
-        version = _version;
+        target = _target;
+        targetAddress = _targetAddress;
+        amountOfTargetPerShare = _amountOfTargetPerShare;
+        depositPercentage = _depositPercentage;
+        maxDepositLost = _maxDepositLost;
+        //
+        status = DerivativeStatus.New;
     }
 
-    function _initialize(
-        address _componentList
-    ) public;
+
+    function initialize(address _componentList, uint _deliveryDate) public payable {
+
+        require(status == DerivativeStatus.New);
+        require(msg.value > 0); // Require some balance for internal opeations as reimbursable
+
+        _initialize(_componentList);
+        bytes32[3] memory _names = [MARKET, LOCKER, REIMBURSABLE];
+
+        for (uint i = 0; i < _names.length; i++) {
+            updateComponent(_names[i]);
+        }
+        deliveryDate = _deliveryDate; // Not sure we need, is hold also in the interval
+        LockerInterface(getComponentByName(LOCKER)).setTimeInterval(CLEAR, _deliveryDate);
+        MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
+
+        // Create here ERC721
+        status = DerivativeStatus.Active;
+        accumulatedFee = accumulatedFee.add(msg.value);
+    }
+
 
     function invest(
-        FutureDirection _direction, // long or short
-        uint _shares // shares of the target.
-    ) external payable returns (bool);
+        uint /*_direction*/, // long or short
+        uint/*_shares*/ // shares of the target.
+        ) external payable returns (bool) {
+        return false;
+    }
 
     // bot system
-    function checkPosition() external returns (bool); // for bot.
-    function clear() external returns (bool);
-    function updateTargetPrice(uint _rateToEther) external returns(bool);
+    function checkPosition() external returns (bool) {
+        return false;
+    }
+
+    // for bot.
+    function clear() external returns (bool) {
+        return false;
+    }
+
+    function updateTargetPrice(uint /*_rateToEther*/) external returns(bool) {
+        return false;
+    }
 
     // helpers
-    function getTotalAssetValue(uint _direction) external view returns (uint);
-    function getMyAssetValue(uint8 _direction) external view returns (uint); // in ETH
+    function getTotalAssetValue(uint /*_direction*/) external view returns (uint) {
+        return 0;
+    }
+    // in ETH
+    function getMyAssetValue(uint8 /*_direction*/) external view returns (uint){
+        return 0;
+    }
+
+    // Getters
+    function getName() external view returns (string) { return name; }
+    function getDescription() external view returns (string) { return description; }
+
+    function getTarget() external view returns (uint) {return target; }// an internal Id
+    function getTargetAddress() external view returns (address) { return targetAddress; } // if it’s ERC20, give it an address, otherwise 0x0
+    function getDeliveryDate() external view returns (uint) { return deliveryDate; } // timestamp
+    function getDepositPercentage() external view returns (uint) {return depositPercentage; }// 100 of 10000
+    function getAmountOfTargetPerShare() external view returns (uint) { return amountOfTargetPerShare;}
+    function getLongToken() external view returns (ERC721) {return longToken; }
+    function getShortToken() external view returns (ERC721) {return shortToken; }
+
+    // Call to other contracts
+    function startGasCalculation() internal {
+        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
+    }
+
+    function reimburse() private {
+        uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
+        accumulatedFee = accumulatedFee.sub(reimbursedAmount);
+        msg.sender.transfer(reimbursedAmount);
+    }
+
+    // Payable
+    function() public payable {
+        revert();
+    }
+
+    // For reiumbursable
+    function addOwnerBalance() external payable onlyOwner {
+        accumulatedFee = accumulatedFee.add(msg.value);
+    }
+
+
+
 }

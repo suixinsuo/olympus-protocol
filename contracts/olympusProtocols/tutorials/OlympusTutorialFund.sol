@@ -7,9 +7,11 @@ import "../../interfaces/WithdrawInterface.sol";
 import "../../interfaces/MarketplaceInterface.sol";
 import "../../interfaces/LockerInterface.sol";
 import "../../libs/ERC20NoReturn.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../../libs/ERC20Extended.sol";
 
 
-contract OlympusTutorialFund is FundInterface, BaseDerivative {
+contract OlympusTutorialFund is FundInterface, BaseDerivative, StandardToken, ERC20Extended {
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH
@@ -55,13 +57,14 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
     // ----------------------------- CONFIG -----------------------------
     // One time call
     function initialize(address _componentList, uint _maxInvestors) external onlyOwner {
+
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(_maxInvestors > 0);
 
         super._initialize(_componentList);
         bytes32[4] memory names = [MARKET, EXCHANGE, WITHDRAW, LOCKER];
-        excludedComponents.push(LOCKER);
+        excludedComponents[LOCKER] = true;
 
         for (uint i = 0; i < names.length; i++) {
             // update component and approve MOT for charging fees
