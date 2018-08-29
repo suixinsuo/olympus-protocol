@@ -76,12 +76,9 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
             }
             uint adapterResultRate;
             uint adapterResultSlippage;
-            if (_src == ETH_TOKEN_ADDRESS){
-                (adapterResultRate,adapterResultSlippage) = adapter.getPrice(ETH_TOKEN_ADDRESS, _dest, _amount);
-            } 
-            if (_dest == ETH_TOKEN_ADDRESS){
-                (adapterResultRate,adapterResultSlippage) = adapter.getPrice(_src, ETH_TOKEN_ADDRESS, _amount);
-            }
+
+            (adapterResultRate,adapterResultSlippage) = adapter.getPrice(_src, _dest, _amount);
+
             int resultRate = int(adapterResultSlippage);
 
 
