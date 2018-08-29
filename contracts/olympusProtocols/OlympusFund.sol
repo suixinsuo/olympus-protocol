@@ -136,7 +136,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-        for (uint i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < _tokens.length; i++) {
             // Setting amount to 0 skips the sell
             if (isBrokenToken[_tokens[i]]) {
                 _amounts[i] = 0;

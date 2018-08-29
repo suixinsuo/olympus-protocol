@@ -130,7 +130,7 @@ There is a small issue, the interval won’t apply until the second purchase. Yo
           LockerInterface lockerProvider = LockerInterface(getComponentByName(LOCKER));
           OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-          for (uint i = 0; i < tokens.length; i++) {
+          for (uint i = 0; i < _tokens.length; i++) {
 
               lockerProvider.checkLockerByTime(bytes32(address(\_tokens[i])));
 
