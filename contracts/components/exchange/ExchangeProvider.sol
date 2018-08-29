@@ -88,7 +88,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
         OlympusExchangeAdapterInterface adapter;
         // solhint-disable-next-line
-        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, true) : _exchangeId;
+        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(ETH, _token, _amount, _minimumRate) : _exchangeId;
         if(exchangeId == 0){
             exitTrade(address(ETH), address(_token), msg.value, address(adapter), true);
             return false;
@@ -122,7 +122,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         ) checkAllowance(_token, _amount) external returns(bool success) {
 
         OlympusExchangeAdapterInterface adapter;
-        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, false) : _exchangeId;
+        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token,ETH , _amount, _minimumRate) : _exchangeId;
         if(exchangeId == 0) {
             // Tokens are not transferred yet, so we don't need to refund.
             exitTrade(address(_token), address(ETH), _amount, address(adapter), false);
@@ -194,9 +194,10 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
             if(_amounts[i] == 0) {continue;} // Skip token
 
-            adapter = OlympusExchangeAdapterInterface(
-                exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
-                exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
+            if(_exchangeId == ""){
+                bytes32 exchangeId = exchangeAdapterManager.pickExchange(ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE), _tokens[i], _amounts[i], _minimumRates[i]);
+            }
+            adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             if(address(adapter) == 0x0) {
                 completeSuccess = false;
                 failureFeeToDeduct += _amounts[i];
@@ -233,7 +234,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
             adapter = OlympusExchangeAdapterInterface(
                 exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
-                exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
+                exchangeAdapterManager.pickExchange(_tokens[i],ETH, _amounts[i], _minimumRates[i]) : _exchangeId));
             if (address(adapter) == 0x0) {
                 functionCompleteSuccess = false;
                 exitTrade(address(_tokens[i]), address(ETH), _amounts[i], address(adapter), false);
