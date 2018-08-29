@@ -340,4 +340,17 @@ contract("ExchangeProvider", accounts => {
     assert.equal((afterBalance-beforeBalance), 1000*10**18 , `Success`);
     assert.equal((beforeBalance2-afterBalance2), 1000*10**18 , `Success`);
   });
+  it("exchange provider should support token to stoken swap", async () => {
+    const erc20Token = await ERC20Extended.at(tokens[0]);
+    const erc20Token2 = await ERC20Extended.at(tokens[1]);
+    const beforeBalance = await erc20Token.balanceOf(deposit);
+    await erc20Token2.approve(exchangeProvider.address, 1000*10**18);
+    const beforeBalance2 = await erc20Token2.balanceOf(accounts[0]);
+
+    await exchangeProvider.tokenExchange(tokens[1],tokens[0],1000*10**18,10**18,deposit,"");
+    const afterBalance = await erc20Token.balanceOf(deposit);
+    const afterBalance2 = await erc20Token2.balanceOf(accounts[0]);
+    assert.equal((afterBalance-beforeBalance), 1000*10**18 , `Success`);
+    assert.equal((beforeBalance2-afterBalance2), 1000*10**18 , `Success`);
+  });
 });
