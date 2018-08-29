@@ -20,7 +20,7 @@ module.exports = {
       assert(false, "Failed: " + message);
     } catch (e) {
       if (!e.message.includes("revert")) {
-        assert(false, e);
+        assert(false, e.message);
         throw e; // Error is not caused by revert but for another reason
       }
       assert(true, message);

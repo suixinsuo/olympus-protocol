@@ -4,6 +4,8 @@ import "../../interfaces/WithdrawInterface.sol";
 import "../../interfaces/DerivativeInterface.sol";
 import "../../components/base/FeeCharger.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../libs/ERC20Extended.sol";
+import "../../interfaces/PriceInterface.sol";
 
 
 contract SimpleWithdraw is FeeCharger, WithdrawInterface {
@@ -34,9 +36,9 @@ contract SimpleWithdraw is FeeCharger, WithdrawInterface {
         require(payFee(0));
         if(contracts[msg.sender].withdrawPending[_requester] == false) {return(0,0);}
 
-        DerivativeInterface derivative = DerivativeInterface(msg.sender);
+        ERC20Extended derivative = ERC20Extended(msg.sender);
         tokens = derivative.balanceOf(_requester);
-        eth = (tokens.mul(derivative.getPrice())).div(10 ** derivative.decimals());
+        eth = (tokens.mul(ERC20PriceInterface(derivative).getPrice())).div(10 ** derivative.decimals());
         emit Withdrawed(_requester, derivative.balanceOf(_requester), eth);
 
         return (eth,tokens);

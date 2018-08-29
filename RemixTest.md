@@ -5,6 +5,15 @@
 - MOT 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a
 - KNC 0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b
 
+# Future
+
+1. Create
+// Direction address is MOT, must be change later on
+`
+  "Test Future", "For testing purposes", 1, 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a,
+  2, 100, 800
+
+`
 # Index
 
 1.  Create
@@ -30,16 +39,21 @@
 2.  Initalize
 
 "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0 // Basic
-"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","1","1296000" // As the portal will do
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","100","1296000" // As the portal will do
 3.  Buy
     // MANA (0.001 ETH)
     `"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["1000000000000000"],[0]`
+    `"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["4000000000000000"],["6872228904967590000000"]`
+
     // MOT (0.001 ETH)
     `"0x0",["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a"],["1000000000000000"],[0]`
 
 4.  Sell MANA (check balance)
 
 `"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["292344449412625772"],[0]`
+`"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["2000000000000000000"],[141218919641028]`
+
+""
 (same on the exchange provider) -- Remember to have tokens and approve before -- And change deposit address
 `["0x965e1449b880ae4e24f8dcd6537d0bef79c7a731"],["292344449412625772"],[0],"0x13a1e7155e4da0aba3e05df8f6b3018666837f4a","0x0000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000"`
 

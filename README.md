@@ -34,6 +34,7 @@ Exchange subcomponent:
   - Locker 0xbf73cf3d850bc021593fa2b70b8782f5678ca8c9 Name: 0x4c6f636b657250726f7669646572
   - Step 0x97a2abb256769450c4cc0a0b72ada72c1998cba8 Name: 0x5374657050726f7669646572
   - TokenBroken 0xed365f7c04877ca18cd33d3dc3e51333eb4d545f Name: 0x546f6b656e42726f6b656e
+  - Buy Tokens name: 0x427579546f6b656e73
 
  # Deployed addresses (Mainnet 13 ,July, 2018)
 
