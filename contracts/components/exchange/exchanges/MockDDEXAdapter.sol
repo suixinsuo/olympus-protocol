@@ -58,7 +58,7 @@ contract MockDDEXAdapter is OlympusExchangeAdapterInterface{
         return Utils.calcDstQty(eth, 18, destDecimals, rate);
     }
 
-    function tokenExchange(ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _minimumRate, address _depositAddress)
+    function tokenExchange(ERC20Extended /*_src*/, ERC20Extended /*_dest*/, uint /*_amount*/, uint /*_minimumRate*/, address /*_depositAddress*/)
     external payable returns(bool success){
         return false;
     }
