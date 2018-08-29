@@ -29,7 +29,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     address public targetAddress;
     uint public deliveryDate;
     uint public depositPercentage;
-    uint public maxDepositLost;
+    uint public forceClosePositionDelta;
 
     uint public amountOfTargetPerShare;
     uint public accumulatedFee;
@@ -48,7 +48,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
       address _targetAddress,
       uint _amountOfTargetPerShare,
       uint _depositPercentage,
-      uint _maxDepositLost
+      uint _forceClosePositionDelta
     ) public {
         name = _name;
         description = _description;
@@ -56,7 +56,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         targetAddress = _targetAddress;
         amountOfTargetPerShare = _amountOfTargetPerShare;
         depositPercentage = _depositPercentage;
-        maxDepositLost = _maxDepositLost;
+        forceClosePositionDelta = _forceClosePositionDelta;
         //
         status = DerivativeStatus.New;
     }
@@ -77,7 +77,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         LockerInterface(getComponentByName(LOCKER)).setTimeInterval(CLEAR, _deliveryDate);
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
 
-        // Create here ERC721
+        // TODO: Create here ERC721
         status = DerivativeStatus.Active;
         accumulatedFee = accumulatedFee.add(msg.value);
     }

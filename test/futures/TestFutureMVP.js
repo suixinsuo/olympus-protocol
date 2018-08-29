@@ -24,7 +24,7 @@ const futureData = {
   clearInterval: 1, // seconds
   amountOfTargetPerShare: 2,
   depositPercentage: 0.1 * 1000, // 1000 DENOMINATOR
-  maxDepositLost: 0.8 * 1000,
+  forceClosePositionDelta: 0.8 * 1000,
   ethDeposit: 0.1, // 'ETHER'
 };
 
@@ -72,7 +72,7 @@ contract("Basic Future", accounts => {
       futureData.amountOfTargetPerShare,
 
       futureData.depositPercentage,
-      futureData.maxDepositLost
+      futureData.forceClosePositionDelta
     );
 
 
@@ -106,7 +106,7 @@ contract("Basic Future", accounts => {
     assert.equal(await future.getTargetAddress(), mockMOT.address);
     assert.equal(await future.getDepositPercentage(), futureData.depositPercentage);
     assert.equal((await future.getAmountOfTargetPerShare()).toNumber(), futureData.amountOfTargetPerShare);
-    assert.equal((await future.maxDepositLost()).toNumber(), futureData.maxDepositLost);
+    assert.equal((await future.forceClosePositionDelta()).toNumber(), futureData.forceClosePositionDelta);
     assert.equal((await future.getDeliveryDate()).toNumber(), futureData.clearInterval);
 
 
