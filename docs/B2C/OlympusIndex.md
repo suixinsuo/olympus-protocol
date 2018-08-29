@@ -1,7 +1,7 @@
 # Index
 
 ### Introduction
-An index is an indicator or measure of something, and in finance, it typically refers to a statistical measure of change in a securities market. In the case of financial markets, stock and bond market indexes consist of a hypothetical portfolio of securities representing a particular market or a segment of it. The document serves as guideline to add tokenized cryptocurrency financial products to broaden your application’s product offerings.
+A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. This document walks you through the functions of the customized index (created by the Olympus team) that are targeted at investors.
 
 ### Basic info
 > The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
@@ -89,7 +89,7 @@ function requestWithdraw(uint amount) external
 ```
 
 #### &emsp;Description
-> Investor can use this function to request a withdrawal of a certain amount of his investment. (Note: The investment will be withdrawn after the index's manager or a bot system executes the withdraw function.)
+> Investors can use this function to request withdrawal of a certain amount of his investment. (Note: The investment will be withdrawn after the index manager or a bot system executes the withdraw function.)
 
 #### &emsp;Parameters
 > amount: Amount of ETH the investor would like to withdraw.
