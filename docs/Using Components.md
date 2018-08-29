@@ -1,10 +1,10 @@
 # Using Olympus components.
 
-[This is the second part of GetStarted tutorial. We use the same files as in the first part of the tutorial to demonstrate using Olympus components]
+[This is the second part of the GetStarted tutorial. We use the same files as in the first part of the tutorial to demonstrate how to use Olympus components]
 
-Olympus offers a great variety of components that allows us to increase the capability of any fund with only a few lines. In this scenario we want to give some guarantee to our investors that their money is not going to be wasted in buy/sell transactions by the owner. We will allow the owner to only make operations on a concrete token once per week.
+Olympus offers a great variety of components that allows us to increase the capability of any fund/index with only a few lines of code. In this scenario we want to give some guarantee to our investors that their money is not going to be wasted in buy/sell transactions by the owner. We will allow the owner to only make transactions on a specific token once per week.
 
-In order to accomplish that, we need a set of new variables and logic. We can also use the interface `LockerContainer` that will allow us to create any kind of timers in our fund. You can check the [LockerProvider ABI](http://broken-link) in the documentation.
+In order to accomplish this, we need a set of new variables and logic. We can also use the interface `LockerContainer` that will allow us to create any kind of timers in our fund. You can check the [LockerProvider ABI](http://broken-link) in the documentation.
 
 ## Adding a component in the protocol
 
@@ -23,7 +23,7 @@ Make sure we import the interface at the top of the contract, together with the 
     uint public OPERATION_DELAY = 7 days;
 ```
 
-We create a constant that will represent the locker component in our component list. Every derivative extends from `ComponentList` base class (in `contracts/components/base` folder. This class allow us to store any kind of provider (Olympus or your own component set). This key LockerProvider is they name in which the component is identified on our component list.
+We create a constant that will represent the locker component in our component list. Every derivative extends from the `ComponentList` base class in the `contracts/components/base` folder. This class allows us to store any kind of provider (Olympus or your own component set). This key LockerProvider is the name that the component is identified in our component list.
 Take note that we use bytes32 instead of string. In the code both look the same but in solidity bytes32 utilizes much less memory making a significant difference of gas usage while deploying the contract. (As our team experienced in the code optimization phases).
 We set a constant of 7 days between operations.
 
@@ -49,13 +49,13 @@ We set a constant of 7 days between operations.
 
 a) We don’t need new parameters to set the component. This is because of initializing taking the `ComponentList` address as a parameter. This component list is aware of the LOCKER address.
 
-b) You should utilize the active Olympus Component List, then you have immediate access to all our components, including the capability to update to the latest versions once your fund is published.
+b) You should utilize the active Olympus Component List, then you have immediate access to all of our components, including the capability to update to the latest versions once your fund is deployed.
 
 c) Exclude Locker, Locker is not Fee Chargeable so it is not required to approve MOT for its use.
 
 > excludedComponents.push(LOCKER);
 
-d) We add LOCKER to the name list (and increase the size of the list to 4). LOCKER already contains the same name that the Locker component holds in our component list, so it will be automatically selected. UpdateComponent inside the loop will choose the latest version of the LockerProvider. Most of the core components of Olympus are free, but some of them have a fee charge in MOT. For this reason, it is important to encourage to the fund owner to keep a certain amount of MOT in his fund.
+d) We add LOCKER to the name list (and increase the size of the list to 4). LOCKER already contains the same name that the Locker component holds in our component list, so it will be automatically selected. UpdateComponent inside the loop will choose the latest version of the LockerProvider. Most of the core components of Olympus are free, but some of them have a fee charge in MOT. For this reason, it is important to encourage the fund/index owner to keep a certain amount of MOT in his fund/index.
 
 4. Initialize locker
 
@@ -83,7 +83,7 @@ In this case, we don’t have a unique interval, but an interval for each token.
        return true;
    }
 ```
-LockerProvider is in our component list, we get the component by the name we provided and cast the address to the locker interface, so Solidity can understand how we want to utilize it.
+LockerProvider is in our component list. We get the component using the name we provided and cast the address to the locker interface so Solidity can understand how we want to utilize it.
 In the case that a token is new `if (amounts[_tokenAddress] > 0 && !activeTokens[_tokenAddress])` we add the line to initialize the timer.
 Calling setTimeInterval we initialize the timer to 7 days value stored in TRADE_INTERVAL variable. Realize that we need a name to identify the interval itself, for that we use the same address of the ERC20 token (getting the address and casting it to bytes32 will do the job).
 
@@ -117,7 +117,7 @@ Calling setTimeInterval we initialize the timer to 7 days value stored in TRADE_
 ```
 
 We get the lockerProvider in the same way as in the step before.
-The buyTokens function checks the total amount of ETH required to buy all the tokens. We take advantage of this loop and also check the interval (avoiding to create a second loop).
+The buyTokens function checks the total amount of ETH required to buy all of the tokens. We take advantage of this loop and also check the interval (avoid creating a second loop).
 If it is the first time we buy a token, the current value of the interval will be 0. (So the token will be purchased). After the purchase, the updateTokens function will initialize the interval to 7 days. The second time we trade with this token the interval will apply.
 There is a small issue, the interval won’t apply until the second purchase. You can think about how to apply the interval from the first moment, in an optimal way, as a challenge.
 
@@ -191,7 +191,7 @@ For some providers, the fund manager is required to pay a small amount of MOT fo
 
 The MOT address is hardcoded in the code and belongs to the real MOT mainnet address. But in the scenarios of Kovan or test cases, we need to set the MOT address manually.
   > In kovan set the MOT kovan address.
-  > In test cases, use the mockMOT which is a contract created as a mock to mock the behavior of the MOT coin (a "normal" ERC20 token).
+  > In test cases, use the mockMOT which is a contract created to mock the behavior of MOT (a "normal" ERC20 token).
 
 
 
@@ -212,19 +212,18 @@ In the new derivative, we have added a limitation not to operate the same token 
   + Sell ETH on withdrawing (This test will buyTokens before withdraw and will revert )
  ```
 
- We can see that the initialization takes part after the first token is sold, and the delay is applied after next time the locker component is checked. In this situation, we encounter next problems
+ We can see that the initialization takes place after the first token is sold, and the delay is applied after the next time that the locker component is checked. In this situation, we encounter new problems.
 
  a) We need to add a test to check whether or not the delay is working and the function is reverting.
- b) If we are gonna test any other operation we will not be able to test, because test cases would need to wait around 7 days to complete the check.
+ b) If we are going to test any other operation, we will not be able to do so because test cases would need to wait around 7 days to complete the check.
 
 3. Introduction to stubs
 
-One easy solution is to make the delay time configurable, so we can just change the configuration to a few seconds for the test cases. But for the trust of the investors, we want this number to be fixed and not modifiable, or the fund manager could modify it to his own
-advantage.
+One easy solution is to make the delay time configurable, so we can just change the configuration to a few seconds for the test cases. However, to gain the trust of the investors, we want this number to be fixed and not modifiable, otherwise the fund manager could modify it to his own advantage.
 
-The first option is to initialize a value in the initialize function (which could be a reasonable solution). However, we need to be sure that the value is the same for all the instances of this fund.
+The first option is to initialize a value in the initialize function (which could be a reasonable solution). However, we need to be sure that the value is the same for all instances of this fund.
 
-No worries, we still have a solution, we can mockup the derivative. Create a new mockup file in `myOwnContracts/MyContractStub.sol`. In this file we will inherit from our derivative, but override the declaration of the interval to zero seconds. Furthermore, we need to override the constructor.
+No worries, we have another solution. We can mockup the derivative. Create a new mockup file in `myOwnContracts/MyContractStub.sol`. In this file we will inherit from our derivative, but override the declaration of the interval to zero seconds. Furthermore, we need to override the constructor.
 
 After you change the derivative's name to your own chosen name, the code should look similar to this:
 
@@ -252,7 +251,7 @@ contract OlympusTutorialFundStub is OlympusTutorialFund {
   > Why not override TRADE_INTERVAL in the derivative `uint public TRADE_INTERVAL = 0 seconds`?
     The reason is that even if we override the value with a new variable, the call of the parent functions buyTokens and sell tokens will be still accessing the super.TRADE_INTERVAL which is 7 days and fail.
 
-And in the test cases, we will require to use the stub:
+And in the test cases, we will need to use the stub:
 
 ```javascript
 const Fund = artifacts.require("OlympusTutorialFundStub");
@@ -262,7 +261,7 @@ This will be enough to pass the test cases again.
 
 4. Test the special scenario
 
-Let's add a config function to our Stub. This stub is only being used in tests, and should not be used in reality.
+Let's add a config function to our stub. This stub is only being used in tests, and should not be used in reality.
 
 ```javascript
 function setTradeInterval(uint _seconds) external {
@@ -318,9 +317,8 @@ Now, we can add a scenario for buying tokens:
   });
 ```
 
-a) First, we invest some ether. Will invest 3ETH and try to buy 3 times tokens.
-b) Then we check the rates and prepare the amounts array. The rates are provided by the exchange provider
-from real tokens price. In the local test, we can call our mockupKyber which will provide us the mock rates for the tokens.
+a) First, we invest some ether. We invest 3ETH and try to buy tokens 3 times.
+b) Then we check the rates and prepare the amounts array. The rates are provided by the exchange provider that gives real tokens price. In the local test, we can call our mockupKyber which will provide us the mock rates for the tokens.
 We will set the amounts array to 0.5eth for each token (1 ETH in total)
 c) The first time we buy, the trading interval gets initialized for each token. The second time the trading interval gets
 added (so it shall also succeed). Finally, the third trial shall revert.
@@ -350,11 +348,11 @@ Sell Token test
 
 
 a) getTokens is returning `[tokens[], balances[]]` so we keep the balances only. While rates are returning `Array<[basePrice, slippagePrice]>` so we get the slippage rate only.
-b) We sell the tokens half by half (otherwise the next sell transaction does not have any tokens to sell). The first time, it will work, as the last operation was more than 1 second ago. Second sell token will revert.
+b) We sell the tokens 50% at a time (otherwise the next sell transaction does not have any tokens to sell). The first time, it will work, as the last operation was more than 1 second ago. The second sell token transaction will revert.
 
-To continue we this, we can make the test cases more complicated, add more assert statements, or create the last scenarios for the withdraw and close features.
+To continue, we can make the test cases more complicated, add more assert statements, or create the last scenarios for the withdraw and close features.
 
-You can also try to check the value in lockerProvider (timeInterval and unlock time). In the initialization we have set the variable `lockerProvider = await LockerProvider.deployed();` that will allow you to query directly the public mapping attributes of the provider.
+You can also try to check the value in lockerProvider (timeInterval and unlock time). In the initialization we have set the variable `lockerProvider = await LockerProvider.deployed();` that will allow you to directly query the public mapping attributes of the provider.
 
 5. Migrations
 
@@ -363,8 +361,7 @@ In the file `/migrations/2_deploy_contracts.js` we can find the script which is 
 a) It deploys and configures all required contracts each test run (which takes time).
 b) It can be run with a valid private key onto any configured network. You can check the command we created npm run `testKovan` in `package.json`.
 
-In our case, it takes a long time to deploy all contracts, many of which are most of the time not required for a specific test case. In order to optimize it, we have created the suite concept, one attribute that will allow us
-to select which kind of contracts we want to deploy. You can find it at the end of the migrations file
+In our case, it takes a long time to deploy all contracts, many of which are not required for a specific test case. In order to optimize it, we have created the suite concept, one attribute that will allow us to select which contracts we want to deploy. You can find it at the end of the migrations file
 
 ```javascript
 if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {
@@ -394,12 +391,12 @@ function deployTutorial(deployer, network) {
 
 a) You can see that the the function receives a deployer object that can deploy the contracts [Check Documentation](https://truffleframework.com/docs/truffle/testing/testing-your-contracts) and information of the network that we are deploying on. You can use this information to further customize your deployment function.
 
-b) Finally, we only need to deploy the Locker, MarketPlaceProvider and ComponentList and MockToken, for our test.There is a slight difference in the syntax for deploying contracts with parameters and deploying contracts without. An example of a contract that does need parameters can be found in the `deployExchange` function.
+b) Finally, we only need to deploy the Locker, MarketPlaceProvider and ComponentList and MockToken for our test.There is a slight difference in the syntax for deploying contracts with parameters and deploying contracts without. An example of a contract that does need parameters can be found in the `deployExchange` function.
 
 Changing the filenames to your own filenames, we can run the command like this:
 
   > truffle  test--suite=Tutorial  test/tutorial/TestTutorialFund.js
 
-We will still see that all the components get compiled, but they will not be deployed.
+We will still see that all of the components get compiled, but they will not be deployed.
 
 
