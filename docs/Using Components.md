@@ -23,7 +23,7 @@ Make sure we import the interface at the top of the contract, together with the 
     uint public OPERATION_DELAY = 7 days;
 ```
 
-We create a constant that will represent the locker component in our component list. Every derivative extends from the `ComponentList` base class in the `contracts/components/base` folder. This class allows us to store any kind of provider (Olympus or your own component set). This key LockerProvider is the name that the component is identified in our component list.
+We create a constant that will represent the locker component in our component list. Every derivative extends from the `ComponentList` base class in the `contracts/components/base` folder. This class allows us to store any kind of provider (Olympus or your own component set). This key `LockerProvider` is the name that the component is identified by in our component list.
 Take note that we use bytes32 instead of string. In the code both look the same but in solidity bytes32 utilizes much less memory making a significant difference in gas usage while deploying the contract. (As our team experienced in the code optimization phases).
 We set a constant of 7 days between operations.
 
@@ -361,7 +361,7 @@ In the file `/migrations/2_deploy_contracts.js` we can find the script which is 
 a) It deploys and configures all required contracts each test run (which takes time).
 b) It can be run with a valid private key onto any configured network. You can check the command we created npm run `testKovan` in `package.json`.
 
-In our case, it takes a long time to deploy all contracts, many of which are not required for a specific test case. In order to optimize it, we have created the suite concept, one attribute that will allow us to select which contracts we want to deploy. You can find it at the end of the migrations file
+In our case, it takes a long time to deploy all contracts, many of which are not required for a specific test case. In order to optimize it, we have created the suite concept, one attribute that will allow us to select which contracts we want to deploy. You can find it at the end of the migrations file.
 
 ```javascript
 if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {
@@ -391,7 +391,7 @@ function deployTutorial(deployer, network) {
 
 a) You can see that the the function receives a deployer object that can deploy the contracts [Check Documentation](https://truffleframework.com/docs/truffle/testing/testing-your-contracts) and information of the network that we are deploying on. You can use this information to further customize your deployment function.
 
-b) Finally, we only need to deploy the Locker, MarketPlaceProvider and ComponentList and MockToken for our test.There is a slight difference in the syntax for deploying contracts with parameters and deploying contracts without. An example of a contract that does need parameters can be found in the `deployExchange` function.
+b) Finally, we only need to deploy the Locker, MarketPlaceProvider and ComponentList and MockToken for our test. There is a slight difference in the syntax for deploying contracts with parameters and deploying contracts without. An example of a contract that does need parameters can be found in the `deployExchange` function.
 
 Changing the filenames to your own filenames, we can run the command like this:
 
