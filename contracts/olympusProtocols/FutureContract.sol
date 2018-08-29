@@ -35,6 +35,7 @@ contract FutureContract is FutureInterfaceV1, Ownable, ComponentContainerInterfa
     uint public accumulatedFee;
 
     bytes32 public constant CLEAR = "Clear";
+    event Transfer(address indexed from, address indexed to, uint tokens);
 
     enum FutureDirection {
         Long,
@@ -81,13 +82,35 @@ contract FutureContract is FutureInterfaceV1, Ownable, ComponentContainerInterfa
         status = DerivativeStatus.Active;
         accumulatedFee = accumulatedFee.add(msg.value);
     }
+    function getTargetPrice() public returns(uint) {
+        return 10**18;
+    }
 
+    // Return the value required to buy a share to a current price
+    function calculateShareDeposit(uint _amountOfShares) public returns(uint) {
+        return _amountOfShares
+            .mul(amountOfTargetPerShare)
+            .mul(getTargetPrice())
+            .mul(depositPercentage)
+            .div(DENOMINATOR);
+    }
 
     function invest(
         uint /*_direction*/, // long or short
         uint/*_shares*/ // shares of the target.
         ) external payable returns (bool) {
-        return false;
+
+        uint _etDeposit = calculateShareDeposit(_shares);
+        require(msg.value >= _etDeposit ); // Enough ETH to buy the share
+
+        // MINT token
+        // token.deposit = _etDeposit;
+        // token.direction = _direction;
+        // token.price = getTargetPrice()
+        // Return maining ETH to the token
+        msg.sender.transfer(msg.value.sub(_ethRequired));
+        emit Transfer(0x0,msg.sender,_shares); // TODO? Do it from here?
+        return true;
     }
 
     // bot system
