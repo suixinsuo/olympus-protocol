@@ -1,10 +1,10 @@
 # Basic Index
 
 ### Introduction
-An index is an indicator or measure of something, and in finance, it typically refers to a statistical measure of change in a securities market. In the case of financial markets, stock and bond market indexes consist of a hypothetical portfolio of securities representing a particular market or a segment of it. Olympus Basic Index contains basic interfaces that an index needs. The document serves as guideline to add tokenized cryptocurrency financial products to broaden your application’s product offerings.
+A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. The Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the functions of the basic index (created by the Olympus team) that are targeted at investors.
 
 ### Basic info
-> The code below shows how to get an basic index's information, including the index's name, symbol, description, category and decimals.
+> The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
 
 ```javascript
 const Web3 = require("web3");
@@ -56,7 +56,7 @@ function invest() public payable returns(bool);
 ```
 
 #### &emsp;Description
-> Invest in the index by calling the invest function while sending Ether to the index fund.
+> Invest in the index by calling the invest function while sending Ether to the index.
 
 #### &emsp;Returns
 > Whether the function executed successfully or not.

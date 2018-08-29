@@ -71,7 +71,7 @@ contract BancorNetworkAdapter is OlympusExchangeAdapterInterface {
         return address(bancorConverter) != 0x0;
     }
 
-    function tokenExchange(ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _minimumRate, address _depositAddress)
+    function tokenExchange(ERC20Extended /*_src*/, ERC20Extended /*_dest*/, uint /*_amount*/, uint /*_minimumRate*/, address /*_depositAddress*/)
     external payable returns(bool success){
         return false;
     }
