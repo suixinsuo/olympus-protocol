@@ -12,7 +12,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 
 
-contract FutureContract is BaseDerivative, FutureInterfaceV1, Ownable, ComponentContainerInterface {
+contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     using SafeMath for uint256;
 
