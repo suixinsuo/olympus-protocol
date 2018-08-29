@@ -100,7 +100,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
-        for (uint i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < _tokens.length; i++) {
             ERC20NoReturn(_tokens[i]).approve(exchange, 0);
             ERC20NoReturn(_tokens[i]).approve(exchange, _amounts[i]);
         }
