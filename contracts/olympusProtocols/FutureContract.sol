@@ -3,8 +3,6 @@ pragma solidity 0.4.24;
 import "../interfaces/ComponentContainerInterface.sol";
 import "../interfaces/FutureInterfaceV1.sol";
 import "../interfaces/ComponentListInterface.sol";
-import "../interfaces/WhitelistInterface.sol";
-import "../interfaces/RiskControlInterface.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 
