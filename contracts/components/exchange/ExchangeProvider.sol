@@ -233,7 +233,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             if(_amounts[i] == 0) {continue;} // Skip token
 
             if(_exchangeId == ""){
-                bytes32 exchangeId = exchangeAdapterManager.pickExchange(ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE), _tokens[i], _amounts[i], _minimumRates[i]);
+                bytes32 exchangeId = exchangeAdapterManager.pickExchange(ETH, _tokens[i], _amounts[i], _minimumRates[i]);
             }
             adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             if(address(adapter) == 0x0) {
