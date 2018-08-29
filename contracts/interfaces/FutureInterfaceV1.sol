@@ -16,12 +16,6 @@ interface FutureInterfaceV1 {
   function getLongToken() external view returns (ERC721);
   function getShortToken() external view returns (ERC721);
 
-  // Has to be internal, last time we added as abstract in a interface which was a contract
-  // Lets discuss
-  // function _initialize(
-  //   address _componentList
-  // ) external;
-
   function invest(
       uint _direction, // long = 0 or short = 1
       uint _shares // shares of the target.
