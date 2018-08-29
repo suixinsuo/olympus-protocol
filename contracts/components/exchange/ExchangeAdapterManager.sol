@@ -52,8 +52,8 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
             return exchangeAdapters[_exchangeId].getPrice(_sourceAddress, _destAddress, _amount);
         }
         bytes32 exchangeId = _sourceAddress == ETH_TOKEN_ADDRESS ?
-        pickExchange(_destAddress, _amount, 0, true) :
-        pickExchange(_sourceAddress, _amount, 0, false);
+        pickExchange(ETH_TOKEN_ADDRESS, _destAddress, _amount, 0) :
+        pickExchange(_sourceAddress, ETH_TOKEN_ADDRESS, _amount, 0);
         if(exchangeId != 0x0) {
             OlympusExchangeAdapterInterface adapter = exchangeAdapters[exchangeId];
             return adapter.getPrice(_sourceAddress, _destAddress, _amount);
@@ -63,7 +63,7 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
 
     /// >0  : found exchangeId
     /// ==0 : not found
-    function pickExchange(ERC20Extended _token, uint _amount, uint _rate, bool _isBuying) public view returns (bytes32 exchangeId) {
+    function pickExchange(ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _rate) public view returns (bytes32 exchangeId) {
 
         int maxRate = -1;
         bytes32 bestRateID;
@@ -76,11 +76,9 @@ contract ExchangeAdapterManager is OlympusExchangeAdapterManagerInterface {
             }
             uint adapterResultRate;
             uint adapterResultSlippage;
-            if (_isBuying){
-                (adapterResultRate,adapterResultSlippage) = adapter.getPrice(ETH_TOKEN_ADDRESS, _token, _amount);
-            } else {
-                (adapterResultRate,adapterResultSlippage) = adapter.getPrice(_token, ETH_TOKEN_ADDRESS, _amount);
-            }
+
+            (adapterResultRate,adapterResultSlippage) = adapter.getPrice(_src, _dest, _amount);
+
             int resultRate = int(adapterResultSlippage);
 
 
