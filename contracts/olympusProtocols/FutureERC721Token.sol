@@ -13,6 +13,10 @@ contract FutureERC721Token is FutureERC721 {
     mapping(uint => uint) public tokenBuyingPrice;
     mapping(uint => uint) public tokenDeposit;
 
+
+    constructor(string _name, string _symbol) public {
+    }
+
     function _setFutureData(uint _tokenId, uint _position, uint _deposit, uint _buyingPrice) internal {
         tokenPosition[_tokenId] = _position;
         tokenBuyingPrice[_tokenId] = _buyingPrice;
