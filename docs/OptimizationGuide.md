@@ -1,12 +1,12 @@
 # Optimization Guide
 
-This is a draft document with the notes of what changes has allowed us
-to optimize the contracts. This is optimization in the binary in order to allow the contract
-to be deployed.
+This is a draft document with the notes of which changes have allowed us
+to optimize the contracts. This document is about optimization in the source code to prevent smart contracts from exceeding the gas limit
+
 
 ## 1. Data types
 
-Every private or public parameter of the contract is using spaces.
+Every private or public parameter of the contract is using storage.
 
 a) Changes the stings to bytes32
  > string public constant A = "A"
@@ -14,21 +14,22 @@ a) Changes the stings to bytes32
 
 b) Reutilize information you have
 
-In the fund we have the mapping of amounts, that holds the actual amount of each token that the
-fund has buy or sell.
+Lets tell a little story:
+In Olympus fund we have the mapping of amounts of the ERC20 tokens purchased by the fund with the current balance.
 
 In order to keep this information each buy/sell operation we update the values as per ERC20 balanceOf function.
 
 Optimization came when in other functions, while wanting to know the ERC20 balanceOf, we were calling the interface of the token (which is costly) instead of using other amounts array.
 
-Try to check that you are not calling to get information that you have already stored somehow.
+In conclusion, try to check that you are not calling to get information that you have already stored somehow.
 
 ## 2. Internal call to another contracts
 
 a) Avoid redundant calls
 
 We have two calls to other contract where it could be done if we change the Whitelist Interface to
-accept a second parametter.
+accept a second parameter.
+
 ```javascript
   function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner returns(bool) {
     if(enable)
@@ -51,15 +52,15 @@ accept a second parametter.
 
   2. Call a contract in only one place.
 
-Before we call in different functions the checkLockerByTime.
+Before, we called the `checkLockerByTime` function in different functions.
 
 ```javascript
   LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
   LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(SELLTOKENS);
   LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(REBALANCE);
 ```
-But was better only to call in one place (so the code that codify the call is not duplicated in
-binary)
+It turns out it is better to only call to external contracts in one place (so that the compiler doesn't duplicate this code in the bytecode)
+
 ```javascript
     function checkLocker(bytes32 category) internal {
         LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(category);
@@ -72,16 +73,16 @@ And call our internal function
    checkLocker(REBALANCE);
 ```
 
-From 6908624 we optimize to 6803419 setting two of this functions.
+This optimization got reduced several 100.000 of gas.
 
 
-3. Remove call to another contracts for a view functions.
+3. Remove call to another contracts for view functions.
 
-Before in the index we had a function `getStep(bytes32 category) public view`, that was calling the StepProvider Interface
+Before in the index we had a function `getStep(bytes32 category) public view`. This value wasn't store in the index,
+but in a StepProvider component. In order to get the value the index was calling him self to the StepProvider.
 to get the value from the provider which is holding it.
 
-Remove this functions, if you need to getStep as external function, then rather call directly StepProvider, getting
-the provider address from `getComponentByName(Step)`. For client side make 2 view transactions has no cost and we save some gas.
+Remove this functions, if you need to use getStep as an from a DAPP, then rather call the StepProvider directly getting the provider address from `getComponentByName(Step)`. For the client side, make two view requests, which do not cost any gas and thus save some money.
 
 
 ## 3 Others
@@ -90,9 +91,8 @@ the provider address from `getComponentByName(Step)`. For client side make 2 vie
 
 > `require(total > 0, "Total higher than 0")`
 
-The editor will complain that the require doesn't have a warning text message. This text messages are really usefull to
-find out why a transaction revert, however etherium chain don't show them yet (so is for no use). And this string is using
-a lot of space (if he have several requires in the code).
+The editor will complain that the require doesn't have a warning text message.
+These text messages are really useful to find out why a transaction reverts, however, it is currently very inconvenient to find these text messages. These strings also use a lot of storage space in the contract.
 
 > `require(total > 0)`
 
