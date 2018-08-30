@@ -2,8 +2,9 @@ pragma solidity 0.4.24;
 
 import "../../interfaces/WithdrawInterface.sol";
 import "../../interfaces/DerivativeInterface.sol";
-import "../../interfaces/WithdrawInterface.sol";
+import "../../interfaces/PriceInterface.sol";
 import "../../components/base/FeeCharger.sol";
+import "../../libs/ERC20Extended.sol";
 
 contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     using SafeMath for uint256;
@@ -12,6 +13,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     string public description = "Withdraw one by one";
     string public category = "Withdraw";
     string public version = "1.0";
+
     struct ContractInfo {
         uint price;
         address[]  userRequests;
@@ -37,7 +39,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     }
 
     function request(address _investor, uint256 _amount) external returns (bool) {
-        DerivativeInterface derivative = DerivativeInterface(msg.sender);
+        ERC20Extended derivative = ERC20Extended(msg.sender);
          // Safe checks
         require(contracts[msg.sender].withdrawRequestLock == false); // Cant request while withdrawing
         require(derivative.totalSupply() >= contracts[msg.sender].totalWithdrawAmount.add(_amount));
@@ -57,12 +59,12 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
 
     function withdraw(address _investor) external returns(uint eth, uint tokens) {
         require(payFee(0));
-
         require(contracts[msg.sender].withdrawRequestLock); // Only withdraw after lock
+
         // Jump the already withdrawed
         if(contracts[msg.sender].amountPerUser[_investor] == 0) {return(0,0);}
 
-        DerivativeInterface derivative = DerivativeInterface(msg.sender);
+        ERC20Extended derivative = ERC20Extended(msg.sender);
 
         tokens = contracts[msg.sender].amountPerUser[_investor];
 
@@ -83,7 +85,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     function freeze() external {
         require(contracts[msg.sender].withdrawRequestLock == false);
         contracts[msg.sender].withdrawRequestLock = true;
-        contracts[msg.sender].price = DerivativeInterface(msg.sender).getPrice();
+        contracts[msg.sender].price = ERC20PriceInterface(msg.sender).getPrice();
      }
 
     function finalize() external {

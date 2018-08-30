@@ -4,21 +4,17 @@ import "zeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 
 
 interface FutureInterfaceV1 {
-  function name() external view returns (string);
-  function description() external view returns (string);
+  function getName() external view returns (string);
+  function getDescription() external view returns (string);
 
-  function target() external view returns (uint); // an internal Id
-  function targetAddress() external view returns (address); // if it’s ERC20, give it an address, otherwise 0x0
-  function deliveryDate() external view returns (uint); // timestamp
-  function depositPercentage() external view returns (uint); // 100 of 10000
-  function amountOfTargetPerShare() external view returns (uint);
+  function getTarget() external view returns (uint); // an internal Id
+  function getTargetAddress() external view returns (address); // if it’s ERC20, give it an address, otherwise 0x0
+  function getDeliveryDate() external view returns (uint); // timestamp
+  function getDepositPercentage() external view returns (uint); // 100 of 10000
+  function getAmountOfTargetPerShare() external view returns (uint);
 
-  function longToken() external view returns (ERC721);
-  function shortToken() external view returns (ERC721);
-
-  function _initialize(
-    address _componentList
-  ) external; 
+  function getLongToken() external view returns (ERC721);
+  function getShortToken() external view returns (ERC721);
 
   function invest(
       uint _direction, // long = 0 or short = 1

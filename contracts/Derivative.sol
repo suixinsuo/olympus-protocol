@@ -11,10 +11,12 @@ import "./interfaces/WhitelistInterface.sol";
 import "./interfaces/RiskControlInterface.sol";
 import "./interfaces/LockerInterface.sol";
 import "./interfaces/StepInterface.sol";
+import "./libs/ERC20Extended.sol";
+
 
 
 // Abstract class that implements the common functions to all our derivatives
-contract Derivative is DerivativeInterface, ComponentContainer, PausableToken {
+contract Derivative is DerivativeInterface, ERC20Extended, ComponentContainer, PausableToken {
 
     ERC20Extended internal constant ETH = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     ComponentListInterface public componentList;
