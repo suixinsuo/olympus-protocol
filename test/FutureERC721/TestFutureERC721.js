@@ -2,7 +2,7 @@ const FutureERC721Token = artifacts.require("FutureERC721Token");
 const futureTokenShort = {
   name: "FutureShortToken",
   symbol: "FTST",
-  direction: 0,
+  direction: -1,
 }
 const futureTokenLong = {
   name: "FutureLongToken",
@@ -12,17 +12,17 @@ const futureTokenLong = {
 
 const depositAmount = 10 ** 18;
 const initialBuyingPrice = 10 ** 19;
-const mainAccountShouldHaveAmountOfTokens = 1;
-const alternativeAccountShouldHaveAmountOfTokens = 10;
+const accountAShouldHaveAmountOfTokens = 1;
+const accountBShouldHaveAmountOfTokens = 10;
 const randomTokenId = Math.floor(Math.random() * 10);
 
 const amountOfTokensToMint = 10;
 contract("FutureERC721Token", accounts => {
   let futureERC721TokenShort;
   let futureERC721TokenLong;
-  const mainAccount = accounts[0];
-  const alternativeAccount = accounts[1];
-  const alternativeAccountTwo = accounts[2];
+  const accountA = accounts[0];
+  const accountB = accounts[1];
+  const accountC = accounts[2];
 
   it("Should be able to deploy short and long position", async () => {
     futureERC721TokenShort = await FutureERC721Token.new(
@@ -44,14 +44,14 @@ contract("FutureERC721Token", accounts => {
   });
 
   it("Should be able to mint a single token", async () => {
-    const mintTx = await futureERC721TokenShort.mint(mainAccount, depositAmount, initialBuyingPrice);
+    const mintTx = await futureERC721TokenShort.mint(accountA, depositAmount, initialBuyingPrice);
     assert.ok(mintTx);
     assert.equal((await futureERC721TokenShort.totalSupply()).toNumber(), 1);
-    assert.equal((await futureERC721TokenShort.balanceOf(mainAccount)).toNumber(), 1);
-    const tokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(mainAccount)).map(id => id.toNumber());
-    assert.equal(tokenIds.length, mainAccountShouldHaveAmountOfTokens);
+    assert.equal((await futureERC721TokenShort.balanceOf(accountA)).toNumber(), 1);
+    const tokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(accountA)).map(id => id.toNumber());
+    assert.equal(tokenIds.length, accountAShouldHaveAmountOfTokens);
     assert.equal((await futureERC721TokenShort.exists(tokenIds[0])), true);
-    assert.equal((await futureERC721TokenShort.ownerOf(tokenIds[0])), mainAccount);
+    assert.equal((await futureERC721TokenShort.ownerOf(tokenIds[0])), accountA);
   });
 
   it("Should be able to mint multiple tokens", async () => {
@@ -61,17 +61,17 @@ contract("FutureERC721Token", accounts => {
       depositArray.push(depositAmount);
       initialPriceArray.push(initialBuyingPrice);
     }
-    const mintMultipleTx = await futureERC721TokenShort.mintMultiple(alternativeAccount, depositArray, initialPriceArray);
+    const mintMultipleTx = await futureERC721TokenShort.mintMultiple(accountB, depositArray, initialPriceArray);
 
     assert.ok(mintMultipleTx);
 
     //This mint gives tokens to the alternative account, so it shouldn't change the main accounts tokens.
-    const mainTokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(mainAccount)).map(id => id.toNumber());
-    assert.equal(mainTokenIds.length, mainAccountShouldHaveAmountOfTokens);
+    const mainTokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(accountA)).map(id => id.toNumber());
+    assert.equal(mainTokenIds.length, accountAShouldHaveAmountOfTokens);
 
     //Check if the alternative account has the right amount of tokens
-    const alternativeTokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(alternativeAccount)).map(id => id.toNumber());
-    assert.equal(alternativeTokenIds.length, alternativeAccountShouldHaveAmountOfTokens);
+    const alternativeTokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(accountB)).map(id => id.toNumber());
+    assert.equal(alternativeTokenIds.length, accountBShouldHaveAmountOfTokens);
 
     for (let i = 0; i < amountOfTokensToMint; i++) {
       assert.equal(await futureERC721TokenShort.exists(alternativeTokenIds[i]), true);
@@ -81,26 +81,26 @@ contract("FutureERC721Token", accounts => {
 
   it("Should be able to transfer tokens", async () => {
     let transferTx;
-    const alternativeTokenIdsBefore = (await futureERC721TokenShort.getTokenIdsByOwner(alternativeAccount)).map(id => id.toNumber());
+    const alternativeTokenIdsBefore = (await futureERC721TokenShort.getTokenIdsByOwner(accountB)).map(id => id.toNumber());
     // Transfer first half of tokens
     for (let i = 0; i < alternativeTokenIdsBefore.length / 2; i++) {
-      transferTx = await futureERC721TokenShort.safeTransferFrom(alternativeAccount, alternativeAccountTwo, alternativeTokenIdsBefore[i], {
-        from: alternativeAccount,
+      transferTx = await futureERC721TokenShort.safeTransferFrom(accountB, accountC, alternativeTokenIdsBefore[i], {
+        from: accountB,
       });
       assert.ok(transferTx);
     }
 
     //This mint gives tokens to the alternative account, so it shouldn't change the main accounts tokens.
-    const mainTokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(mainAccount)).map(id => id.toNumber());
-    assert.equal(mainTokenIds.length, mainAccountShouldHaveAmountOfTokens, "0");
+    const mainTokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(accountA)).map(id => id.toNumber());
+    assert.equal(mainTokenIds.length, accountAShouldHaveAmountOfTokens, "0");
 
     //Check if the alternative account has the right amount of tokens
-    const alternativeTokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(alternativeAccount)).map(id => id.toNumber());
-    assert.equal(alternativeTokenIds.length, alternativeAccountShouldHaveAmountOfTokens / 2, "1");
+    const alternativeTokenIds = (await futureERC721TokenShort.getTokenIdsByOwner(accountB)).map(id => id.toNumber());
+    assert.equal(alternativeTokenIds.length, accountBShouldHaveAmountOfTokens / 2, "1");
 
     //Check if the second alternative account has the right amount of tokens
-    const alternativeTokenIdsTwo = (await futureERC721TokenShort.getTokenIdsByOwner(alternativeAccountTwo)).map(id => id.toNumber());
-    assert.equal(alternativeTokenIdsTwo.length, alternativeAccountShouldHaveAmountOfTokens / 2, "2");
+    const alternativeTokenIdsTwo = (await futureERC721TokenShort.getTokenIdsByOwner(accountC)).map(id => id.toNumber());
+    assert.equal(alternativeTokenIdsTwo.length, accountBShouldHaveAmountOfTokens / 2, "2");
   });
 
   it("Should be able to invalidate a token", async () => {

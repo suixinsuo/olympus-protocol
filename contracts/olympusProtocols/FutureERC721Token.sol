@@ -9,15 +9,15 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
     using SafeMath for uint256;
 
     uint tokenIdCounter = 0;
-    uint tokenPosition_;
+    int tokenPosition_;
     // (tokenId > future data)
     mapping(uint => uint) public tokenBuyingPrice;
     mapping(uint => uint) public tokenDeposit;
     mapping(uint => bool) public tokenValid;
 
 
-    constructor(string _name, string _symbol, uint _tokenPosition) ERC721Token(_name, _symbol) public {
-        require(_tokenPosition == 0 || _tokenPosition == 1, "Position should be either short or long");
+    constructor(string _name, string _symbol, int _tokenPosition) ERC721Token(_name, _symbol) public {
+        require(_tokenPosition == -1 || _tokenPosition == 1, "Position should be either short or long");
         tokenPosition_ = _tokenPosition;
     }
 
@@ -69,7 +69,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         return tokenDeposit[_tokenId];
     }
 
-    function tokenPosition() external view returns (uint _tokenPosition){
+    function tokenPosition() external view returns (int _tokenPosition){
         return tokenPosition_;
     }
 
