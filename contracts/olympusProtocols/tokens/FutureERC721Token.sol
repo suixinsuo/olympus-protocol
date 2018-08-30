@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../interfaces/FutureERC721.sol";
+import "../../interfaces/FutureERC721.sol";
 import "zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
