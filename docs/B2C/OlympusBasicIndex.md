@@ -1,110 +1,123 @@
-# Basic Index
+Basic Index
+===========
 
 ### Introduction
+
 A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. The Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the functions of the basic index (created by the Olympus team) that are targeted at investors.
 
 ### Basic info
+
 > The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
 
-```javascript
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address); // address: deployed index contract address
+const web3 = new Web3
+(new Web3.providers.HttpProvider("http://localhost:8545"));
+// address: deployed index contract address
+const indexContract = web3.eth.contract(abi).at(address);
 // Name
 indexContract.name((err,name)=>{
-  if (err) {
-    return console.error(err);
-  }
-  console.log(name);
+if (err) {
+  return console.error(err);
+}
+console.log(name);
 })
 // Symbol
 indexContract.symbol((err,symbol)=>{
-  if (err) {
-    return console.error(err);
-  }
-  console.log(symbol);
+if (err) {
+  return console.error(err);
+}
+console.log(symbol);
 })
 // Description
 indexContract.description((err,description)=>{
-  if (err) {
-    return console.error(err);
-  }
-  console.log(description);
+if (err) {
+  return console.error(err);
+}
+console.log(description);
 })
 // Category
 indexContract.category((err,category)=>{
-  if (err) {
-    return console.error(err);
-  }
-  console.log(category);
+if (err) {
+  return console.error(err);
+}
+console.log(category);
 })
 // Decimals
 indexContract.decimals((err,decimals)=>{
-  if (err) {
-    return console.error(err);
-  }
-  console.log(decimals);
+if (err) {
+  return console.error(err);
+}
+console.log(decimals);
 })
 ```
 
 ### Interface
 
-#### 1. invest
+1. invest
+---------
 
-```javascript
+``` {.sourceCode .javascript}
 function invest() public payable returns(bool);
 ```
 
-#### &emsp;Description
+####  Description
+
 > Invest in the index by calling the invest function while sending Ether to the index.
 
-#### &emsp;Returns
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
+####  Example code
+
 > The code below shows how to call this function with Web3.
 
-```javascript
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 const investAmount = 1 ** 17;
 indexContract.invest({value: investAmount}, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
+if (err) {
+  return console.log(err)
+}
 });
 ```
 
-#### 2. withdraw
+2. withdraw
+-----------
 
-```javascript
+``` {.sourceCode .javascript}
 function withdraw() external returns(bool);
 ```
 
-#### &emsp;Description
+####  Description
+
 > This function is for investors to withdraw all of their investment.
 
-#### &emsp;Returns
+####  Returns
+
 > Whether the function executed successfully or not.
 
-#### &emsp;Example code
+####  Example code
+
 > The code below shows how to call this function with Web3.
 
-```javascript
+``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3
+(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 
 indexContract.withdraw((err, result) => {
-  if (err) {
-    return console.log(err)
-  }
+if (err) {
+  return console.log(err)
+}
 });
 ```
 
 ### abi
-> You can get the [abi](http://www.olympus.io/olympusProtocols/index/abi) from our API
 
-### bytecode
-> You can get the [bytecode](http://www.olympus.io/olympusProtocols/index/bytecode) from our API
+> You can get the [abi](../api.html) from our API
