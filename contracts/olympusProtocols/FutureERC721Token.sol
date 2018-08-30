@@ -27,29 +27,33 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         tokenValid[_tokenId] = true;
     }
 
-    function mint(
+    function _mint(
         address _to,
         uint _deposit,
         uint _buyingPrice
-    ) external onlyOwner
-    {
+    ) internal {
+        require(_to != 0x0, "Can't mint to the empty address");
         require(_deposit > 0 && _buyingPrice > 0, "Deposit and initial price can't be zero");
         super._mint(_to, tokenIdCounter);
         _setFutureData(tokenIdCounter, _deposit, _buyingPrice);
         tokenIdCounter = tokenIdCounter.add(1);
     }
 
+    function mint(
+        address _to,
+        uint _deposit,
+        uint _buyingPrice
+    ) external onlyOwner {
+        _mint(_to,_deposit,_buyingPrice);
+    }
+
     function mintMultiple(
         address _to,
         uint[] _deposit,
         uint[] _buyingPrice
-    ) external onlyOwner
-    {
+    ) external onlyOwner {
         for(uint i = 0; i < _deposit.length; i++){
-            require(_deposit[i] > 0 && _buyingPrice[i] > 0, "Deposit and initial price can't be zero");
-            super._mint(_to, tokenIdCounter);
-            _setFutureData(tokenIdCounter, _deposit[i], _buyingPrice[i]);
-            tokenIdCounter = tokenIdCounter.add(1);
+            _mint(_to,_deposit[i],_buyingPrice[i]);
         }
     }
 
