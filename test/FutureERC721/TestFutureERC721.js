@@ -43,7 +43,7 @@ contract("FutureERC721Token", accounts => {
   });
 
   it("Should be able to mint a single token", async () => {
-    const mintTx = await futureERC721TokenShort.mint(mainAccount, 10 ** 18, 10 ** 19);
+    const mintTx = await futureERC721TokenShort.mint(mainAccount, depositAmount, initialBuyingPrice);
     assert.ok(mintTx);
     assert.equal((await futureERC721TokenShort.totalSupply()).toNumber(), 1);
     assert.equal((await futureERC721TokenShort.balanceOf(mainAccount)).toNumber(), 1);
