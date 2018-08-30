@@ -97,7 +97,7 @@ contract FutureContract is FutureInterfaceV1, Ownable, ComponentContainerInterfa
 
     function invest(
         uint /*_direction*/, // long or short
-        uint/*_shares*/ // shares of the target.
+        uint _shares // shares of the target.
         ) external payable returns (bool) {
 
         uint _etDeposit = calculateShareDeposit(_shares);
@@ -131,9 +131,21 @@ contract FutureContract is FutureInterfaceV1, Ownable, ComponentContainerInterfa
     function getTotalAssetValue(uint /*_direction*/) external view returns (uint) {
         return 0;
     }
+
+    function getActualTokenValue(uint /*token*/) internal returns(uint) {
+      // int difference = (t.startPrice-currentPrice)*t.NumberofShare*amountPerShare
+      // int _difference = amountOfTargetPerShare.mul(t.startPrice.sub(getTargetPrice())).mul(t.numberOfShares);
+      // Buy -1, Sell 1
+      // uint  actualValue = t.deposit.add(_difference.mul(direction));
+      return 0;
+    }
+
     // in ETH
     function getMyAssetValue(uint8 /*_direction*/) external view returns (uint){
-        return 0;
+      // TODO: Check the type of tokens of user that belongs to the direction.
+      // For each token which is not out of the game make next operation
+      // forEach(token) => getActualTokenValue(t)
+      return 0;
     }
 
     // Getters
