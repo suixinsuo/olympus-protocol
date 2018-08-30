@@ -156,6 +156,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         updateTokens(_tokens);
         return true;
     }
+
      // ----------------------------- DERIVATIVE -----------------------------
 
     function invest() public
