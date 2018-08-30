@@ -55,13 +55,13 @@ contract("FutureERC721Token", accounts => {
   });
 
   it("Should be able to mint multiple tokens", async () => {
-    const depositArray = [];
-    const initialPriceArray = [];
-    for (let i = 0; i < amountOfTokensToMint; i++) {
-      depositArray.push(depositAmount);
-      initialPriceArray.push(initialBuyingPrice);
-    }
-    const mintMultipleTx = await futureERC721TokenShort.mintMultiple(accountB, depositArray, initialPriceArray);
+
+    const mintMultipleTx = await futureERC721TokenShort.mintMultiple(
+      accountB,
+      depositAmount,
+      initialBuyingPrice,
+      amountOfTokensToMint
+    );
 
     assert.ok(mintMultipleTx);
 

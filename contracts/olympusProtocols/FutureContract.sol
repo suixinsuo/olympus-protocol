@@ -9,16 +9,15 @@ import "../interfaces/ReimbursableInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../BaseDerivative.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 import "./tokens/FutureERC721Token.sol";
 
 contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     using SafeMath for uint256;
 
-    ERC721Token public longToken;
+    FutureERC721Token public longToken;
     uint public outLongSupply;
-    ERC721Token public shortToken;
+    FutureERC721Token public shortToken;
     uint public outShortSupply;
 
     ComponentListInterface public componentList;
@@ -30,6 +29,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     uint public target;
     address public targetAddress;
+    uint public targetPrice;
     uint public deliveryDate;
     uint public depositPercentage;
     uint public forceClosePositionDelta;
@@ -86,18 +86,16 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         status = DerivativeStatus.Active;
         accumulatedFee = accumulatedFee.add(msg.value);
     }
-    function getTargetPrice() public returns(uint) {
-        return 10**18;
+
+    function getTargetPrice() public view returns(uint) {
+        return targetPrice;
     }
 
-    // Return the value required to buy a share to a current price
-    function calculateShareDeposit(uint _amountOfShares) public returns(uint) {
-        return _amountOfShares
-            .mul(amountOfTargetPerShare)
-            .mul(getTargetPrice())
-            .mul(depositPercentage)
-            .div(DENOMINATOR);
+    function setTargetPrice(uint _price) public returns(uint) {
+        targetPrice = _price;
     }
+
+
 
     function initializeTokens() internal {
         longToken = new FutureERC721Token(name, symbol, LONG);
@@ -106,22 +104,41 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         outShortSupply = 0;
     }
 
+    // Return the value required to buy a share to a current price
+    function calculateShareDeposit(uint _amountOfShares, uint _targetPrice) public view returns(uint) {
+        return _amountOfShares
+            .mul(_targetPrice)
+            .mul(depositPercentage)
+            .div(DENOMINATOR);
+    }
+
+    function getToken(int _direction) internal view returns(FutureERC721Token) {
+        if(_direction == LONG) {return longToken; }
+        if(_direction == SHORT) {return shortToken; }
+        revert();
+    }
 
     function invest(
-        uint /*_direction*/, // long or short
+        int _direction, // long or short
         uint _shares // shares of the target.
         ) external payable returns (bool) {
 
-        uint _etDeposit = calculateShareDeposit(_shares);
-        require(msg.value >= _etDeposit ); // Enough ETH to buy the share
+        uint _targetPrice = getTargetPrice();
+        require(_targetPrice > 0);
 
-        // MINT token
-        // token.deposit = _etDeposit;
-        // token.direction = _direction;
-        // token.price = getTargetPrice()
+        uint _ethDeposit = calculateShareDeposit(_shares, _targetPrice);
+
+        require(msg.value >= _ethDeposit.mul(_shares) ); // Enough ETH to buy the share
+
+        getToken(_direction).mintMultiple(
+          msg.sender,
+          _ethDeposit,
+          _targetPrice,
+          _shares
+        );
+
         // Return maining ETH to the token
-        msg.sender.transfer(msg.value.sub(_ethRequired));
-        emit Transfer(0x0,msg.sender,_shares); // TODO? Do it from here?
+        msg.sender.transfer(msg.value.sub(_ethDeposit.mul(_shares)));
         return true;
     }
 
@@ -144,20 +161,21 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return 0;
     }
 
-    function getActualTokenValue(uint /*token*/) internal returns(uint) {
-      // int difference = (t.startPrice-currentPrice)*t.NumberofShare*amountPerShare
-      // int _difference = amountOfTargetPerShare.mul(t.startPrice.sub(getTargetPrice())).mul(t.numberOfShares);
-      // Buy -1, Sell 1
-      // uint  actualValue = t.deposit.add(_difference.mul(direction));
-      return 0;
+    function getActualTokenValue(uint /*token*/) internal view returns(uint) {
+
+        // int difference = (t.startPrice-currentPrice)*t.NumberofShare*amountPerShare
+        // int _difference = amountOfTargetPerShare.mul(t.startPrice.sub(getTargetPrice())).mul(t.numberOfShares);
+        // Buy -1, Sell 1
+        // uint  actualValue = t.deposit.add(_difference.mul(direction));
+        return 0;
     }
 
     // in ETH
     function getMyAssetValue(uint8 /*_direction*/) external view returns (uint){
-      // TODO: Check the type of tokens of user that belongs to the direction.
-      // For each token which is not out of the game make next operation
-      // forEach(token) => getActualTokenValue(t)
-      return 0;
+        // TODO: Check the type of tokens of user that belongs to the direction.
+        // For each token which is not out of the game make next operation
+        // forEach(token) => getActualTokenValue(t)
+        return 0;
     }
 
     // Getters

@@ -130,6 +130,64 @@ contract("Basic Future", accounts => {
 
   });
   // --------------------------------------------------------------------------
+  // ----------------------------- Invest TEST  -------------------------------
+  it("Invest Section", async () => {
+    const targetPrice = 10 ** 18
+    await future.setTargetPrice(targetPrice);
+    assert.equal((await future.getTargetPrice()).toNumber(), targetPrice);
+  });
+  it.skip("Can't invest without target price", async () => {
 
+
+  });
+
+  // SET targetPrice to 10**18
+
+  it("Investor invest long", async () => {
+    const targetPrice = (await future.getTargetPrice()).toNumber();
+    const amountsOfShares = 2;
+    const depositValue = (await future.calculateShareDeposit(amountsOfShares, targetPrice)).toNumber();
+    const balanceBefore = await calc.ethBalance(investorA);
+
+    let tx;
+    tx = future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue * 2 });
+    assert.ok(tx);
+    const balanceAfter = await calc.ethBalance(investorA);
+
+    assert(await calc.inRange(balanceAfter, balanceBefore - (depositValue / 10 ** 18), 1), ' Return exceed of deposit');
+    const investorATokens = await longToken.getTokenIdsByOwner(investorA);
+
+    assert.equal(investorATokens.length, amountsOfShares, 'Investor A got one token');
+    assert.equal((await shortToken.getTokenIdsByOwner(investorA)).length, 0, 'Investor A got only long');
+
+    assert.equal((await longToken.getBuyingPrice(investorATokens[0])).toNumber(), targetPrice, 'Target price is correct');
+    assert.equal((await longToken.getDeposit(investorATokens[0])).toNumber(), depositValue, 'Deposit is correct');
+    assert.equal((await longToken.isTokenValid(investorATokens[0])), true, 'Token is valid');
+
+  });
+
+
+  it("Investor invest short", async () => {
+    const targetPrice = (await future.getTargetPrice()).toNumber();
+    const amountsOfShares = 2;
+    const depositValue = (await future.calculateShareDeposit(amountsOfShares, targetPrice)).toNumber();
+    const balanceBefore = await calc.ethBalance(investorB);
+
+    let tx;
+    tx = future.invest(FutureDirection.Short, amountsOfShares, { from: investorB, value: depositValue * 2 });
+    assert.ok(tx);
+    const balanceAfter = await calc.ethBalance(investorB);
+
+    assert(await calc.inRange(balanceAfter, balanceBefore - (depositValue / 10 ** 18), 1), ' Return exceed of deposit');
+    const investorBTokens = await shortToken.getTokenIdsByOwner(investorB);
+
+    assert.equal(investorBTokens.length, amountsOfShares, 'Investor B got one token');
+    assert.equal((await longToken.getTokenIdsByOwner(investorB)).length, 0, 'Investor B got only long');
+
+    assert.equal((await shortToken.getBuyingPrice(investorBTokens[0])).toNumber(), targetPrice, 'Target price is correct');
+    assert.equal((await shortToken.getDeposit(investorBTokens[0])).toNumber(), depositValue, 'Deposit is correct');
+    assert.equal((await shortToken.isTokenValid(investorBTokens[0])), true, 'Token is valid');
+
+  });
 
 });

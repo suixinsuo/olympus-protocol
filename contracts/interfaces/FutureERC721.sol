@@ -9,8 +9,9 @@ interface FutureERC721 {
 
     function mintMultiple(
         address _to,
-        uint[] _deposit,
-        uint[] _buyingPrice
+        uint _deposit,
+        uint _buyingPrice,
+        uint _total
         ) external; /* onlyOwner */
 
     function invalidateToken(uint _tokenId) external; /* onlyOwner */

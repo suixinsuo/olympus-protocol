@@ -49,11 +49,12 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
 
     function mintMultiple(
         address _to,
-        uint[] _deposit,
-        uint[] _buyingPrice
+        uint _deposit,
+        uint _buyingPrice,
+        uint _total
     ) external onlyOwner {
-        for(uint i = 0; i < _deposit.length; i++){
-            _mint(_to,_deposit[i],_buyingPrice[i]);
+        for(uint i = 0; i < _total; i++){
+            _mint(_to,_deposit,_buyingPrice);
         }
     }
 
