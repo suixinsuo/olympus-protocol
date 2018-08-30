@@ -2,9 +2,7 @@ const log = require("../utils/log");
 const calc = require("../utils/calc");
 const {
   DerivativeProviders,
-  ethToken,
-  DerivativeStatus,
-  DerivativeType
+  FutureDirection,
 } = require("../utils/constants");
 
 const FutureContract = artifacts.require("FutureContract");
@@ -12,13 +10,15 @@ const Marketplace = artifacts.require("Marketplace");
 const Locker = artifacts.require("Locker");
 const Reimbursable = artifacts.require("Reimbursable");
 const ComponentList = artifacts.require("ComponentList");
-
+const FutureToken = artifacts.require("FutureERC721Token");
 const MockToken = artifacts.require("MockToken");
 
 
 const futureData = {
   name: "Future Test",
   description: "Sample of future mvp",
+  symbol: 'FTK',
+
   version: 'v0.2',
   target: 1,
   clearInterval: 1, // seconds
@@ -41,8 +41,8 @@ contract("Basic Future", accounts => {
 
   const investorA = accounts[1];
   const investorB = accounts[2];
-
-
+  let longToken; // FutureERC721Token
+  let shortToken; // FutureERC721Token
   before("Initialize ComponentList", async () => {
 
     market = await Marketplace.deployed();
@@ -66,6 +66,7 @@ contract("Basic Future", accounts => {
     future = await FutureContract.new(
       futureData.name,
       futureData.description,
+      futureData.symbol,
 
       futureData.target,
       mockMOT.address,
@@ -74,7 +75,6 @@ contract("Basic Future", accounts => {
       futureData.depositPercentage,
       futureData.forceClosePositionDelta
     );
-
 
     assert.equal((await future.status()).toNumber(), 0); // new
 
@@ -86,6 +86,23 @@ contract("Basic Future", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], future.address);
     assert.equal((await future.status()).toNumber(), 1); // Active
+
+    // We have created two new ERC721, check the address is not 0
+    const longAddress = await future.getLongToken();
+    const shortAddress = await future.getShortToken();
+
+    assert.ok(parseInt(longAddress) != 0, 'Long token is set');
+    assert.ok(parseInt(shortAddress) != 0, 'Short token is set');
+
+    longToken = new FutureToken(longAddress);
+    shortToken = new FutureToken(shortAddress);
+
+    assert.equal(await longToken.owner(), future.address);
+    assert.equal((await longToken.tokenPosition()).toNumber(), FutureDirection.Long, 'Long token is long');
+
+    assert.equal(await shortToken.owner(), future.address);
+    assert.equal((await shortToken.tokenPosition()).toNumber(), FutureDirection.Short, 'Short token is short');
+
   });
 
 
@@ -101,6 +118,7 @@ contract("Basic Future", accounts => {
   it("Future initialized correctly", async () => {
     assert.equal(await future.name(), futureData.name);
     assert.equal(await future.description(), futureData.description);
+    assert.equal(await future.symbol(), futureData.symbol);
     assert.equal(await future.version(), "v0.1");
     assert.equal(await future.getTarget(), futureData.target);
     assert.equal(await future.getTargetAddress(), mockMOT.address);
@@ -108,7 +126,6 @@ contract("Basic Future", accounts => {
     assert.equal((await future.getAmountOfTargetPerShare()).toNumber(), futureData.amountOfTargetPerShare);
     assert.equal((await future.forceClosePositionDelta()).toNumber(), futureData.forceClosePositionDelta);
     assert.equal((await future.getDeliveryDate()).toNumber(), futureData.clearInterval);
-
 
 
   });

@@ -10,20 +10,23 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../BaseDerivative.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
-
+import "./tokens/FutureERC721Token.sol";
 
 contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     using SafeMath for uint256;
 
     ERC721Token public longToken;
+    uint public outLongSupply;
     ERC721Token public shortToken;
+    uint public outShortSupply;
+
     ComponentListInterface public componentList;
 
     string public name = "Olympus Future";
     string public description = "Olympus Future";
     string public version = "v0.1";
-
+    string public symbol;
 
     uint public target;
     address public targetAddress;
@@ -37,14 +40,13 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     bytes32 public constant CLEAR = "Clear";
     event Transfer(address indexed from, address indexed to, uint tokens);
 
-    enum FutureDirection {
-        Long,
-        Short
-    }
+    int public constant LONG = -1;
+    int public constant SHORT = 1;
 
     constructor(
       string _name,
       string _description,
+      string _symbol,
       uint _target,
       address _targetAddress,
       uint _amountOfTargetPerShare,
@@ -53,6 +55,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     ) public {
         name = _name;
         description = _description;
+        symbol = _symbol;
         target = _target;
         targetAddress = _targetAddress;
         amountOfTargetPerShare = _amountOfTargetPerShare;
@@ -78,7 +81,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         LockerInterface(getComponentByName(LOCKER)).setTimeInterval(CLEAR, _deliveryDate);
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
 
-        // TODO: Create here ERC721
+        // Create here ERC721
+        initializeTokens();
         status = DerivativeStatus.Active;
         accumulatedFee = accumulatedFee.add(msg.value);
     }
@@ -94,6 +98,14 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             .mul(depositPercentage)
             .div(DENOMINATOR);
     }
+
+    function initializeTokens() internal {
+        longToken = new FutureERC721Token(name, symbol, LONG);
+        shortToken = new FutureERC721Token(name, symbol, SHORT);
+        outLongSupply = 0;
+        outShortSupply = 0;
+    }
+
 
     function invest(
         uint /*_direction*/, // long or short
