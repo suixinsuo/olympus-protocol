@@ -27,7 +27,7 @@ In conclusion, try to check that you are not calling to get information that you
 
 a) Avoid redundant calls
 
-We have two calls to other contract where it could be done if we change the Whitelist Interface to
+We have two calls to another contract where it could be done in a single call if we change Whitelist Interface to
 accept a second parameter.
 
 ```javascript
@@ -73,16 +73,14 @@ And call our internal function
    checkLocker(REBALANCE);
 ```
 
-This optimization got reduced several 100.000 of gas.
-
+This optimization saved us several hundred thousand of gas.
 
 3. Remove call to another contracts for view functions.
 
 Before in the index we had a function `getStep(bytes32 category) public view`. This value wasn't store in the index,
-but in a StepProvider component. In order to get the value the index was calling him self to the StepProvider.
-to get the value from the provider which is holding it.
+but in a StepProvider component. In order to get the value the index itself was calling to the stepProvider, to get the value from the provider which is holding it.
 
-Remove this functions, if you need to use getStep as an from a DAPP, then rather call the StepProvider directly getting the provider address from `getComponentByName(Step)`. For the client side, make two view requests, which do not cost any gas and thus save some money.
+Remove this function, if you need to use getStep as a DAPP, then rather call the StepProvider directly, getting the provider address from `getComponentByName(Step)`. For the client side, make two view requests, which do not cost any gas and thus save some money.
 
 
 ## 3 Others
