@@ -14,6 +14,7 @@ const depositAmount = 10 ** 18;
 const initialBuyingPrice = 10 ** 19;
 const mainAccountShouldHaveAmountOfTokens = 1;
 const alternativeAccountShouldHaveAmountOfTokens = 10;
+const randomTokenId = Math.floor(Math.random() * 10);
 
 const amountOfTokensToMint = 10;
 contract("FutureERC721Token", accounts => {
@@ -102,4 +103,9 @@ contract("FutureERC721Token", accounts => {
     assert.equal(alternativeTokenIdsTwo.length, alternativeAccountShouldHaveAmountOfTokens / 2, "2");
   });
 
+  it("Should be able to invalidate a token", async () => {
+    const invalidateTx = await futureERC721TokenShort.invalidateToken(randomTokenId);
+    assert.ok(invalidateTx);
+    assert.equal(await futureERC721TokenShort.isTokenValid(randomTokenId), false);
+  });
 });
