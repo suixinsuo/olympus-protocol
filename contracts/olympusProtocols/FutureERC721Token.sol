@@ -13,6 +13,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
     // (tokenId > future data)
     mapping(uint => uint) public tokenBuyingPrice;
     mapping(uint => uint) public tokenDeposit;
+    mapping(uint => bool) public tokenValid;
 
 
     constructor(string _name, string _symbol, uint _tokenPosition) ERC721Token(_name, _symbol) public {
@@ -23,6 +24,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
     function _setFutureData(uint _tokenId, uint _deposit, uint _buyingPrice) internal {
         tokenBuyingPrice[_tokenId] = _buyingPrice;
         tokenDeposit[_tokenId] = _deposit;
+        tokenValid[_tokenId] = true;
     }
 
     function mint(
@@ -49,6 +51,14 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
             _setFutureData(tokenIdCounter, _deposit[i], _buyingPrice[i]);
             tokenIdCounter = tokenIdCounter.add(1);
         }
+    }
+
+    function invalidateToken(uint _tokenId) external onlyOwner {
+        tokenValid[_tokenId] = false;
+    }
+
+    function isTokenValid(uint _tokenId) external view returns (bool _tokenValid) {
+        return tokenValid[_tokenId];
     }
 
     function getBuyingPrice(uint _tokenId) external view returns (uint _buyingPrice){

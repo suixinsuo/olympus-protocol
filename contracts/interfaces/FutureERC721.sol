@@ -13,8 +13,12 @@ interface FutureERC721 {
         uint[] _buyingPrice
         ) external; /* onlyOwner */
 
+    function invalidateToken(uint _tokenId) external; /* onlyOwner */
+
     function getBuyingPrice(uint _tokenId) external view returns (uint _buyingPrice);
     function getDeposit(uint _tokenId) external view returns (uint _deposit);
     function getTokenIdsByOwner(address _owner) external view returns (uint[] _tokenIds);
     function tokenPosition() external view returns (uint _tokenPosition);
+    function isTokenValid(uint _tokenId) external view returns (bool _tokenValid);
+
 }
