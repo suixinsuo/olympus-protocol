@@ -208,7 +208,7 @@ contract("BasicFund", accounts => {
     let afterbalance0 = await token0.balanceOf(fund.address);
     let afterbalance1 = await token1.balanceOf(fund.address);
     assert.equal((beforebalance0 - afterbalance0), 100*10**18 , "Token Swap");
-    assert.equal((afterbalance0 - beforebalance1), 100*10**18 , "Token Swap");
+    assert.equal((afterbalance1 - beforebalance1), 100*10**18 , "Token Swap");
 
   });
   it("Shall be able to sell tokens", async () => {
