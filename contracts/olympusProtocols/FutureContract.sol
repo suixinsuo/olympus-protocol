@@ -142,7 +142,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         );
 
         // Return maining ETH to the token
-        require(msg.sender.transfer(msg.value.sub(_ethDeposit.mul(_shares))));
+        msg.sender.transfer(msg.value.sub(_ethDeposit.mul(_shares)));
         return true;
     }
 
