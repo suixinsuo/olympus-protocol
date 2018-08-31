@@ -91,6 +91,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return targetPrice;
     }
 
+    // TODO: In the story of oracles, restric this function only to the Oracle address
     function setTargetPrice(uint _price) public returns(uint) {
         targetPrice = _price;
     }
@@ -141,7 +142,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         );
 
         // Return maining ETH to the token
-        msg.sender.transfer(msg.value.sub(_ethDeposit.mul(_shares)));
+        require(msg.sender.transfer(msg.value.sub(_ethDeposit.mul(_shares))));
         return true;
     }
 
