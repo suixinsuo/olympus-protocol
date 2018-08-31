@@ -107,6 +107,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     // Return the value required to buy a share to a current price
     function calculateShareDeposit(uint _amountOfShares, uint _targetPrice) public view returns(uint) {
         return _amountOfShares
+            .mul(amountOfTargetPerShare)
+
             .mul(_targetPrice)
             .mul(depositPercentage)
             .div(DENOMINATOR);
@@ -124,6 +126,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         ) external payable returns (bool) {
 
         uint _targetPrice = getTargetPrice();
+        require( status == DerivativeStatus.Active);
         require(_targetPrice > 0);
 
         uint _ethDeposit = calculateShareDeposit(_shares, _targetPrice);
