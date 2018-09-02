@@ -245,7 +245,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
     }
 
     // ----------------------------- BUY TOKENS -----------------------------
-    function buyTokens() external  returns(bool) {
+    function buyTokens() external onlyOwner  returns(bool) {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
@@ -270,7 +270,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
     // ----------------------------- REBALANCE -----------------------------
 
 
-    function rebalance() public  returns (bool success) {
+    function rebalance() public onlyOwner returns (bool success) {
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         address[] memory tokensToSell;
