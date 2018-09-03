@@ -180,6 +180,7 @@ contract("Basic Future", accounts => {
 
   it("It shall calculate share deposit correctly", async () => {
 
+
     let protocolDeposit = (await future.calculateShareDeposit(2, 10 ** 18)).toNumber();
     let testCalculation = calculateShareDeposit(2, 10 ** 18);
     assert.equal(protocolDeposit, testCalculation);
@@ -192,9 +193,9 @@ contract("Basic Future", accounts => {
     testCalculation = calculateShareDeposit(2, 0);
     assert.equal(protocolDeposit, testCalculation);
 
-    testCalculation = calculateShareDeposit(2 ** 200, 10 ** 18);
-    await calc.assertInvalidOpCode(
-      async () => await future.calculateShareDeposit(2 ** 200, 10 ** 18),
+    testCalculation = calculateShareDeposit(2 ** 256 - 1, 10 ** 18);
+    await calc.assertReverts(
+      async () => await future.calculateShareDeposit(2 ** 256 - 1, 10 ** 18),
       'Safe math avoid overflow'
     );
 
