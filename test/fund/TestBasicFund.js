@@ -199,7 +199,18 @@ contract("BasicFund", accounts => {
     // ETH balance is reduced
     assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(0.8, "ether"), "ETH balance reduced");
   });
+  it("Shall be able to support token swap", async () => {
+    let token0 = await ERC20.at(tokens[0]);
+    let token1 = await ERC20.at(tokens[1]);
+    let beforebalance0 = await token0.balanceOf(fund.address);
+    let beforebalance1 = await token1.balanceOf(fund.address);
+    await fund.tokenSwap("",tokens[0],tokens[1],100*10**18,10**18);
+    let afterbalance0 = await token0.balanceOf(fund.address);
+    let afterbalance1 = await token1.balanceOf(fund.address);
+    assert.equal((beforebalance0 - afterbalance0), 100*10**18 , "Token Swap");
+    assert.equal((afterbalance1 - beforebalance1), 100*10**18 , "Token Swap");
 
+  });
   it("Shall be able to sell tokens", async () => {
     let tx;
     // From the preivus test we got 1.8 ETH
