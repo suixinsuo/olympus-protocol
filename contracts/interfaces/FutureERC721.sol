@@ -5,14 +5,14 @@ interface FutureERC721 {
         address _to,
         uint _deposit,
         uint _buyingPrice
-        ) external; /* onlyOwner */
+        ) external returns (bool); /* onlyOwner */
 
     function mintMultiple(
         address _to,
         uint _deposit,
         uint _buyingPrice,
         uint _total
-        ) external; /* onlyOwner */
+        ) external returns (bool); /* onlyOwner */
 
     function invalidateToken(uint _tokenId) external; /* onlyOwner */
 

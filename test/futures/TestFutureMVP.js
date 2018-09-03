@@ -172,7 +172,7 @@ contract("Basic Future", accounts => {
 
   });
 
-  it("Invest Section", async () => {
+  it("Invest == Se the price", async () => {
     const targetPrice = 10 ** 18
     await future.setTargetPrice(targetPrice);
     assert.equal((await future.getTargetPrice()).toNumber(), targetPrice);
@@ -191,6 +191,15 @@ contract("Basic Future", accounts => {
     protocolDeposit = (await future.calculateShareDeposit(2, 0)).toNumber();
     testCalculation = calculateShareDeposit(2, 0);
     assert.equal(protocolDeposit, testCalculation);
+
+    testCalculation = calculateShareDeposit(2 ** 200, 10 ** 18);
+    await calc.assertInvalidOpCode(
+      async () => await future.calculateShareDeposit(2 ** 200, 10 ** 18),
+      'Safe math avoid overflow'
+    );
+
+
+
   });
 
   // SET targetPrice to 10**18
@@ -202,7 +211,7 @@ contract("Basic Future", accounts => {
     const balanceBefore = await calc.ethBalance(investorA);
 
     let tx;
-    tx = future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue * 2 });
+    tx = await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue * 2 });
     assert.ok(tx);
     const balanceAfter = await calc.ethBalance(investorA);
 
@@ -226,7 +235,7 @@ contract("Basic Future", accounts => {
     const balanceBefore = await calc.ethBalance(investorB);
 
     let tx;
-    tx = future.invest(FutureDirection.Short, amountsOfShares, { from: investorB, value: depositValue * 2 });
+    tx = await future.invest(FutureDirection.Short, amountsOfShares, { from: investorB, value: depositValue * 2 });
     assert.ok(tx);
     const balanceAfter = await calc.ethBalance(investorB);
 

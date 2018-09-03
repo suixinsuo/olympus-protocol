@@ -43,8 +43,9 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         address _to,
         uint _deposit,
         uint _buyingPrice
-    ) external onlyOwner {
+    ) external onlyOwner returns (bool) {
         _mint(_to,_deposit,_buyingPrice);
+        return true;
     }
 
     function mintMultiple(
@@ -52,10 +53,11 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         uint _deposit,
         uint _buyingPrice,
         uint _total
-    ) external onlyOwner {
+    ) external onlyOwner returns(bool) {
         for(uint i = 0; i < _total; i++){
             _mint(_to,_deposit,_buyingPrice);
         }
+        return true;
     }
 
     function invalidateToken(uint _tokenId) external onlyOwner {

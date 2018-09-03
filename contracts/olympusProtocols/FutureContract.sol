@@ -38,7 +38,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     uint public accumulatedFee;
 
     bytes32 public constant CLEAR = "Clear";
-    event Transfer(address indexed from, address indexed to, uint tokens);
 
     int public constant LONG = -1;
     int public constant SHORT = 1;
@@ -134,12 +133,12 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         require(msg.value >= _ethDeposit.mul(_shares) ); // Enough ETH to buy the share
 
-        getToken(_direction).mintMultiple(
-          msg.sender,
-          _ethDeposit,
-          _targetPrice,
-          _shares
-        );
+        require(getToken(_direction).mintMultiple(
+            msg.sender,
+            _ethDeposit,
+            _targetPrice,
+            _shares
+        ) == true);
 
         // Return maining ETH to the token
         msg.sender.transfer(msg.value.sub(_ethDeposit.mul(_shares)));
