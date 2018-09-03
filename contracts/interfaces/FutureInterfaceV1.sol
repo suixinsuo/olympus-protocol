@@ -17,7 +17,7 @@ interface FutureInterfaceV1 {
   function getShortToken() external view returns (ERC721);
 
   function invest(
-      uint _direction, // long = 0 or short = 1
+      int _direction, // long = -1 or short = 1
       uint _shares // shares of the target.
   ) external payable returns (bool);
 

@@ -9,16 +9,15 @@ import "../interfaces/ReimbursableInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../BaseDerivative.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 import "./tokens/FutureERC721Token.sol";
 
 contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     using SafeMath for uint256;
 
-    ERC721Token public longToken;
+    FutureERC721Token public longToken;
     uint public outLongSupply;
-    ERC721Token public shortToken;
+    FutureERC721Token public shortToken;
     uint public outShortSupply;
 
     ComponentListInterface public componentList;
@@ -30,6 +29,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     uint public target;
     address public targetAddress;
+    uint public targetPrice;
     uint public deliveryDate;
     uint public depositPercentage;
     uint public forceClosePositionDelta;
@@ -86,6 +86,16 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
 
+    function getTargetPrice() public view returns(uint) {
+        return targetPrice;
+    }
+
+    // TODO: In the story of oracles, restric this function only to the Oracle address
+    function setTargetPrice(uint _price) public returns(uint) {
+        targetPrice = _price;
+    }
+
+
 
     function initializeTokens() internal {
         longToken = new FutureERC721Token(name, symbol, LONG);
@@ -94,12 +104,45 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         outShortSupply = 0;
     }
 
+    // Return the value required to buy a share to a current price
+    function calculateShareDeposit(uint _amountOfShares, uint _targetPrice) public view returns(uint) {
+        return _amountOfShares
+            .mul(amountOfTargetPerShare)
+
+            .mul(_targetPrice)
+            .mul(depositPercentage)
+            .div(DENOMINATOR);
+    }
+
+    function getToken(int _direction) internal view returns(FutureERC721Token) {
+        if(_direction == LONG) {return longToken; }
+        if(_direction == SHORT) {return shortToken; }
+        revert();
+    }
 
     function invest(
-        uint /*_direction*/, // long or short
-        uint/*_shares*/ // shares of the target.
+        int _direction, // long or short
+        uint _shares // shares of the target.
         ) external payable returns (bool) {
-        return false;
+
+        uint _targetPrice = getTargetPrice();
+        require( status == DerivativeStatus.Active);
+        require(_targetPrice > 0);
+
+        uint _ethDeposit = calculateShareDeposit(_shares, _targetPrice);
+
+        require(msg.value >= _ethDeposit.mul(_shares) ); // Enough ETH to buy the share
+
+        require(getToken(_direction).mintMultiple(
+            msg.sender,
+            _ethDeposit,
+            _targetPrice,
+            _shares
+        ) == true);
+
+        // Return maining ETH to the token
+        msg.sender.transfer(msg.value.sub(_ethDeposit.mul(_shares)));
+        return true;
     }
 
     // bot system
@@ -120,8 +163,21 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function getTotalAssetValue(uint /*_direction*/) external view returns (uint) {
         return 0;
     }
+
+    function getActualTokenValue(uint /*token*/) internal view returns(uint) {
+
+        // int difference = (t.startPrice-currentPrice)*t.NumberofShare*amountPerShare
+        // int _difference = amountOfTargetPerShare.mul(t.startPrice.sub(getTargetPrice())).mul(t.numberOfShares);
+        // Buy -1, Sell 1
+        // uint  actualValue = t.deposit.add(_difference.mul(direction));
+        return 0;
+    }
+
     // in ETH
     function getMyAssetValue(uint8 /*_direction*/) external view returns (uint){
+        // TODO: Check the type of tokens of user that belongs to the direction.
+        // For each token which is not out of the game make next operation
+        // forEach(token) => getActualTokenValue(t)
         return 0;
     }
 
