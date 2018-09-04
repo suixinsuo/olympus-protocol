@@ -62,7 +62,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) external onlyOwner payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
-        require(msg.value > INITIAL_FEE); // Require some balance for internal opeations as reimbursable
+        require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable
 
         // Set PausedCycle
         pausedCycle = 365 days;
