@@ -214,7 +214,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             status == DerivativeStatus.Closed && getAssetsValue() == 0) ? // everything is done, take all.
             (_amount <= accumulatedFee)
             :
-            (_amount.add(INITIAL_FEE) <= accumulatedFee)) // else, the initial fee stays.
+            (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
         );
         accumulatedFee = accumulatedFee.sub(_amount);
         // Exchange to MOT

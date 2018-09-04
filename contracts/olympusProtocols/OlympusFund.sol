@@ -249,7 +249,12 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
         require(_amount > 0);
-        require(_amount.add(INITIAL_FEE) <= accumulatedFee);
+        require((
+            status == DerivativeStatus.Closed && getAssetsValue() == 0) ? // everything is done, take all.
+            (_amount <= accumulatedFee)
+            :
+            (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
+        );
         accumulatedFee = accumulatedFee.sub(_amount);
         // Exchange to MOT
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
