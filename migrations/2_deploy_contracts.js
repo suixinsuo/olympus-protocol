@@ -64,7 +64,7 @@ function deployStep(deployer, network) {
 function deployExchange(deployer, network) {
   let kyberNetwork = KyberConfig[network];
   let kyberAddress =
-    network === "kovan" ? "0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50" : "0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e";
+    network === "kovan" ? "0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42E50" : "0x818E6FECD516Ecc3849DAf6845e3EC868087B755";
   return deployer
     .then(() => deployer.deploy(ExchangeAdapterManager))
     .then(() => {
