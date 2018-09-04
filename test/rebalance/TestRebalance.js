@@ -61,6 +61,8 @@ contract("MockRebalanceIndex", accounts => {
         await _rebalanceProvider.setMotAddress(_mockToken.address);
         await _exchangeProvider.setMotAddress(_mockToken.address);
 
+        const result = await rebalanceProvider.needsRebalance.call(10, mockRebalanceIndex.address);
+        assert.equal(result, false);
         const erc20Token = await ERC20Extended.at(tokens[0]);
         const amount = web3.toWei(srcAmountETH);
         const rate = expectedRate;
@@ -78,6 +80,7 @@ contract("MockRebalanceIndex", accounts => {
   it("MockRebalanceIndex should not use cached price if timeout is exceeded.", async () => {
     // Set timeout to zero, so cached prices will never work
     await rebalanceProvider.updateCachedPriceTimeout(0);
+
     // Simulate a broken exchange/token
     await mockKyberNetwork.toggleSimulatePriceZero(true);
     const erc20Token1 = await ERC20Extended.at(tokens[0]);
@@ -96,6 +99,11 @@ contract("MockRebalanceIndex", accounts => {
     await mockKyberNetwork.toggleSimulatePriceZero(false);
     // Update the cache timeout back to the default value (6 hours)
     await rebalanceProvider.updateCachedPriceTimeout(3600 * 6);
+  });
+
+  it("Rebalance Provider shouldRebalance should return true.", async () => {
+    const result = await rebalanceProvider.needsRebalance.call(0, mockRebalanceIndex.address);
+    assert.ok(result);
   });
 
   it("MockRebalanceIndex should be able to rebalance tokens.", async () => {
