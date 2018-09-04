@@ -60,13 +60,13 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
             uint ETHTokenPrice;
             (ETHTokenPrice,) = priceProvider.getPrice(
                 ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
-            uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(_targetAddress)); //
-            uint shouldHaveAmountOfTokensInETH = (getTotalIndexValueWithoutCache().mul(indexTokenWeights[i])).div(100);
-            uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18);
+            uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(_targetAddress);
+            uint shouldHaveAmountOfTokensInETH = (getTotalIndexValueWithoutCache(_targetAddress).mul(indexTokenWeights[i])).div(100);
             uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
-            if (shouldHaveAmountOfTokens < currentTokenBalance.sub(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
+            if ((shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18) <
+                currentTokenBalance.sub(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
                 itemsToSell = true;
-            } else if (shouldHaveAmountOfTokens > currentTokenBalance.add(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
+            } else if ((shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18) > currentTokenBalance.add(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
                 itemsToBuy = true;
             }
         }
@@ -212,15 +212,15 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         }
     }
 
-    function getTotalIndexValueWithoutCache() public view returns (uint totalValue) {
+    function getTotalIndexValueWithoutCache(address _indexAddress) public view returns (uint totalValue) {
         uint price;
         address[] memory indexTokenAddresses;
-        (indexTokenAddresses, ) = IndexInterface(msg.sender).getTokens();
+        (indexTokenAddresses, ) = IndexInterface(_indexAddress).getTokens();
 
         for(uint i = 0; i < indexTokenAddresses.length; i++) {
             (price,) = priceProvider.getPrice(
                 ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
-            totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)).mul(
+            totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(_indexAddress)).mul(
             10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(price));
         }
     }
