@@ -136,8 +136,6 @@ contract("Fund", accounts => {
     }, "Shall revert");
   });
 
-
-
   it("Update component shall approve MOT ", async () => {
     // Set new market place
     const newRisk = await RiskControl.new();
@@ -171,14 +169,14 @@ contract("Fund", accounts => {
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
     tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
-    assert.ok(calc.getEvent(tx, 'Transfer'));
+    assert.ok(calc.getEvent(tx, "Transfer"));
     tx = await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
-    assert.ok(calc.getEvent(tx, 'Transfer'));
+    assert.ok(calc.getEvent(tx, "Transfer"));
 
     // Mapped investor
     const activeInvestors = await fund.getActiveInvestors();
-    assert.equal(activeInvestors[0], investorA, 'Investor A is active');
-    assert.equal(activeInvestors[1], investorB, 'Investor B is active');
+    assert.equal(activeInvestors[0], investorA, "Investor A is active");
+    assert.equal(activeInvestors[1], investorB, "Investor B is active");
 
     assert.equal((await fund.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
     // Price is the same, as no Token value has changed
@@ -201,11 +199,11 @@ contract("Fund", accounts => {
 
     // Withdraw max transfers is set to 1
     tx = await fund.withdraw();
-    assert.ok(calc.getEvent(tx, 'Transfer'));
+    assert.ok(calc.getEvent(tx, "Transfer"));
 
     assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
-    assert.equal((await fund.activeInvestors(0)), investorB, 'Investor B is still active');
+    assert.equal(await fund.activeInvestors(0), investorB, "Investor B is still active");
 
     // Cant request while withdrawing
     await calc.assertReverts(
@@ -215,10 +213,10 @@ contract("Fund", accounts => {
 
     // Second withdraw succeeds
     tx = await fund.withdraw();
-    assert.ok(calc.getEvent(tx, 'Transfer'));
+    assert.ok(calc.getEvent(tx, "Transfer"));
 
     assert.equal((await fund.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
-    assert.equal((await fund.getActiveInvestors()).length, 0, 'No more active investors')
+    assert.equal((await fund.getActiveInvestors()).length, 0, "No more active investors");
     await fund.setMaxSteps(DerivativeProviders.WITHDRAW, fundData.maxTransfers); // Restore
   });
 
@@ -335,20 +333,25 @@ contract("Fund", accounts => {
     // Withdraw
     const withdrawETHAmount = web3.toWei(0.2, "ether");
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
-    const MOTBefore = (await mockMOT.balanceOf(accounts[0]));
+    const MOTBefore = await mockMOT.balanceOf(accounts[0]);
 
     await fund.withdrawFee(withdrawETHAmount);
 
-    assert(await calc.inRange(fee, web3.toWei(expectedFee - 0.2, "ether"), web3.toWei(0.01, "ether")), "Owner pending fee");
+    assert(
+      await calc.inRange(fee, web3.toWei(expectedFee - 0.2, "ether"), web3.toWei(0.01, "ether")),
+      "Owner pending fee"
+    );
 
     const ownerBalanceAfter = await calc.ethBalance(accounts[0]);
     const MOTAfter = await mockMOT.balanceOf(accounts[0]);
 
     assert(ownerBalanceAfter < ownerBalanceInital, "Owner dont receive ether as fee"); // Pay gas, just reduced
-    const expectedAmountMOT = motRatio[0].mul(withdrawETHAmount).div(10 ** 18).toString();
-    assert.equal(expectedAmountMOT, MOTAfter.sub(MOTBefore).toString(), 'Owner recieve MOT as fee');
+    const expectedAmountMOT = motRatio[0]
+      .mul(withdrawETHAmount)
+      .div(10 ** 18)
+      .toString();
+    assert.equal(expectedAmountMOT, MOTAfter.sub(MOTBefore).toString(), "Owner recieve MOT as fee");
     await fund.setManagementFee(0); // Reset
-
   });
 
   // --------------------------------------------------------------------------
@@ -435,7 +438,6 @@ contract("Fund", accounts => {
   });
 
   it("Shall be able to sell tokens (by step) to get enough eth for withdraw", async () => {
-
     await fund.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
 
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
@@ -479,9 +481,7 @@ contract("Fund", accounts => {
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
     await fund.setMaxSteps(DerivativeProviders.GETETH, 4); // Reset
     await fund.setManagementFee(0);
-
   });
-
 
   // --------------------------------------------------------------------------
   // ----------------------------- CLOSE A TOKEN ------------------------------
@@ -505,9 +505,7 @@ contract("Fund", accounts => {
     // ETH balance is reduced
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(0, "ether"), "ETH balance reduced");
 
-    await calc.assertReverts(
-      async () => await fund.sellAllTokensOnClosedFund(), "Fund is not closed"
-    );
+    await calc.assertReverts(async () => await fund.sellAllTokensOnClosedFund(), "Fund is not closed");
 
     await fund.close(); // Just set to close but not sell
 
@@ -518,10 +516,7 @@ contract("Fund", accounts => {
     assert.isAbove((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "First step dont sell 2nd token");
 
     // Check whitelist for bot to sell tokens after close
-    await calc.assertReverts(
-      async () => await fund.sellAllTokensOnClosedFund({ from: bot }),
-      "Bot is not whitelisted"
-    );
+    await calc.assertReverts(async () => await fund.sellAllTokensOnClosedFund({ from: bot }), "Bot is not whitelisted");
     // Whitelist bot
     await fund.enableWhitelist(WhitelistType.Maintenance, true);
     await fund.setAllowed([bot], WhitelistType.Maintenance, true);
@@ -542,7 +537,6 @@ contract("Fund", accounts => {
     await fund.setMaxSteps(DerivativeProviders.GETETH, 4);
     await fund.enableWhitelist(WhitelistType.Maintenance, false);
     await fund.setAllowed([bot], WhitelistType.Maintenance, false);
-
   });
 
   it("Investor cant invest but can withdraw after close", async () => {
@@ -555,12 +549,12 @@ contract("Fund", accounts => {
     );
     // Request
     await fund.requestWithdraw(toTokenWei(1.8), { from: investorC });
-    await fund.withdraw();
+    // no need to call withdraw anymore after the fund is closed.
+    // await fund.withdraw();
     assert.equal((await fund.balanceOf(investorC)).toNumber(), 0, " A has withdrawn");
   });
 
   // --------------------------------------------------------------------------
   // ----------------------------- FUND IS CLOSE ------------------------------
   // Only add more test cases afte the fund is close. Fund cant reopen
-
 });

@@ -28,6 +28,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
+    uint public constant INITIAL_FEE = 10*17;
     uint[] public weights;
     uint public accumulatedFee = 0;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
@@ -76,7 +77,7 @@ contract OlympusIndex is IndexInterface, Derivative {
    )
    external onlyOwner payable {
         require(status == DerivativeStatus.New);
-        require(msg.value > 0); // Require some balance for internal opeations as reimbursable
+        require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable. 0.1ETH
         require(_componentList != 0x0);
         require(_rebalanceDeltaPercentage <= DENOMINATOR);
 
@@ -208,7 +209,13 @@ contract OlympusIndex is IndexInterface, Derivative {
 
   // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
-        require(accumulatedFee >= _amount);
+        require(_amount > 0);
+        require((
+            status == DerivativeStatus.Closed && getAssetsValue() == 0) ? // everything is done, take all.
+            (_amount <= accumulatedFee)
+            :
+            (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
+        );
         accumulatedFee = accumulatedFee.sub(_amount);
         // Exchange to MOT
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -231,7 +238,13 @@ contract OlympusIndex is IndexInterface, Derivative {
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
     {
-        WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
+         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+         withdrawProvider.request(msg.sender, amount);
+         if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
+            withdrawProvider.freeze();
+            handleWithdraw(withdrawProvider, msg.sender);
+            withdrawProvider.finalize();
+         }
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
@@ -256,8 +269,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         address[] memory _requests = withdrawProvider.getUserRequests();
 
         uint _transfers = initializeOrContinueStep(WITHDRAW);
-        uint _eth;
-        uint _tokenAmount;
         uint i;
 
         if (_transfers == 0 && getStatusStep(GETETH) == 0) {
@@ -277,15 +288,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
 
         for (i = _transfers; i < _requests.length && goNextStep(WITHDRAW); i++) {
-            (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
-            if (_tokenAmount == 0) {continue;}
-
-            balances[_requests[i]] =  balances[_requests[i]].sub(_tokenAmount);
-            emit Transfer(msg.sender, 0x0, _tokenAmount); // ERC20 Required event
-
-            totalSupply_ = totalSupply_.sub(_tokenAmount);
-            address(_requests[i]).transfer(_eth);
-            _transfers++;
+            if(!handleWithdraw(withdrawProvider, _requests[i])){ continue; }
         }
 
         if (i == _requests.length) {
@@ -294,6 +297,22 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
         reimburse();
         return i == _requests.length; // True if completed
+    }
+
+    function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) { 
+        uint _eth;
+        uint _tokenAmount;   
+
+        (_eth, _tokenAmount) = _withdrawProvider.withdraw(_investor);
+        if (_tokenAmount == 0) {return false;}
+
+        balances[_investor] =  balances[_investor].sub(_tokenAmount);
+        emit Transfer(msg.sender, 0x0, _tokenAmount); // ERC20 Required event
+
+        totalSupply_ = totalSupply_.sub(_tokenAmount);
+        address(_investor).transfer(_eth);
+
+        return true;
     }
 
     function checkLocker(bytes32 category) internal {
