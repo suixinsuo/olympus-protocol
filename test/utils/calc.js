@@ -12,7 +12,8 @@ module.exports = {
   },
 
   getEvent: (tx, name) => {
-    return tx.logs.map(log => ({ event: log.event, args: log.args })).find(event => event.event === name);
+    const results = tx.logs.map(log => ({ event: log.event, args: log.args })).filter(event => event.event === name);
+    return results.length;
   },
   assertReverts: async (call, message) => {
     try {

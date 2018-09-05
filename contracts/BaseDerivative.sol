@@ -20,6 +20,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer {
     bytes32 public constant REBALANCE = "RebalanceProvider";
     bytes32 public constant LOCKER = "LockerProvider";
     bytes32 public constant REIMBURSABLE = "Reimbursable";
+    bytes32 public constant STEP = "StepProvider";
 
     uint public constant DENOMINATOR = 10000;
 
@@ -29,6 +30,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer {
         require(_componentList != 0x0);
         componentList = ComponentListInterface(_componentList);
         excludedComponents[MARKET] = true;
+        excludedComponents[STEP] = true;
         excludedComponents[LOCKER] = true;
     }
 

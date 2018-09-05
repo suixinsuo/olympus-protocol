@@ -16,6 +16,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
     mapping(uint => bool) public tokenValid;
 
 
+
     constructor(string _name, string _symbol, int _tokenPosition) ERC721Token(_name, _symbol) public {
         require(_tokenPosition == -1 || _tokenPosition == 1, "Position should be either short or long");
         tokenPosition_ = _tokenPosition;
@@ -37,7 +38,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         super._mint(_to, tokenIdCounter);
         _setFutureData(tokenIdCounter, _deposit, _buyingPrice);
         tokenIdCounter = tokenIdCounter.add(1);
-    }
+     }
 
     function mint(
         address _to,
@@ -45,7 +46,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         uint _buyingPrice
     ) external onlyOwner returns (bool) {
         _mint(_to,_deposit,_buyingPrice);
-        return true;
+         return true;
     }
 
     function mintMultiple(
@@ -82,5 +83,29 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
 
     function getTokenIdsByOwner(address _owner) external view returns (uint[] _tokenIds){
         return ownedTokens[_owner];
+    }
+
+    event LogN(uint number, string text);
+
+
+    function getValidTokens() external view returns(uint[] memory) {
+        uint _length = 0;
+        uint i;
+
+        for(i = 0; i < allTokens.length; i++) {
+            if(tokenValid[allTokens[i]]) { _length++; }
+        }
+
+        uint[] memory validTokens = new uint[](_length);
+        uint _counter = 0;
+
+        for(i = 0; i < allTokens.length; i++) {
+            if(tokenValid[allTokens[i]]) {
+                validTokens[_counter] = allTokens[i];
+                _counter++;
+            }
+        }
+
+        return validTokens;
     }
 }

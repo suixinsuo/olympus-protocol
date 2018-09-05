@@ -113,6 +113,7 @@ async function deployFuture(deployer, network) {
     Locker,
     MarketplaceProvider,
     Reimbursable,
+    StepProvider,
     ComponentList,
   ]);
   await deployExchange(deployer, network);
