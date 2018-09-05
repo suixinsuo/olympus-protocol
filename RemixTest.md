@@ -66,6 +66,13 @@
     "Reimbursable","ADDRESS"
 ## Mock Rebalance
 ["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x569b92514e4ea12413df6e02e1639976940cde70"] , [50,50], "0x7A9305A0f2a0A9b088Aef901A68A1E4B9212e195", "0x023d373f70662e8b7031421cfc513aeeaffb983a"
+
+## Check rates
+MOT Buy Rate
+"0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","1000000000000000000","0x0"
+
+
+
 ## Kovan Addresses
 
 ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',

@@ -22,5 +22,7 @@ module.exports = {
     GETETH: "GetEth",
     TOKENBROKEN: "TokenBroken",
     BUYTOKENS: "BuyTokens",
+    CHECK_POSITION: "CheckPosition",
+    CLEAR: "Clear",
   }
 };

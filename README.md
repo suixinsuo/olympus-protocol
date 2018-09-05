@@ -39,6 +39,7 @@ Exchange subcomponent:
 
 Exchange subcomponent:
 
+- MockKyber Adapter 0x20462bd14c7a1e524d19ef6a7a291297c7135b4c
 - KyberNetworkAdapter 0xf75edc5caa70a79d4e2905be8cc9d6199b160946
 - ExchangeAdapterManager 0xab52f697f320b92007b516265afd2b43a251ba8b
 

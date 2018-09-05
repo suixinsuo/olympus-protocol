@@ -22,4 +22,5 @@ interface FutureERC721 {
     function tokenPosition() external view returns (int _tokenPosition);
     function isTokenValid(uint _tokenId) external view returns (bool _tokenValid);
 
+    function getValidTokens() external view returns(uint[] memory);
 }
