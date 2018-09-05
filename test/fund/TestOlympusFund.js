@@ -34,6 +34,7 @@ const fundData = {
   managmentFee: 0.1,
   initialManagementFee: 0,
   withdrawInterval: 0,
+  wrongEthDeposit: 0.05,
   ethDeposit: 0.5, // ETH
   maxTransfers: 10
 };
@@ -111,6 +112,13 @@ contract("Fund", accounts => {
       { gas: 8e6 } // At the moment require 5.7M
     );
     assert.equal((await fund.status()).toNumber(), 0); // new
+
+    // initial ETH should be equal or more than 0.1 ETH
+    await calc.assertReverts(async () => {
+      await fund.initialize(componentList.address, fundData.initialManagementFee, fundData.withdrawInterval, {
+        value: web3.toWei(fundData.wrongEthDeposit, "ether")
+      });
+    }, "Shall revert");
 
     await fund.initialize(componentList.address, fundData.initialManagementFee, fundData.withdrawInterval, {
       value: web3.toWei(fundData.ethDeposit, "ether")
@@ -321,8 +329,14 @@ contract("Fund", accounts => {
     await fund.setManagementFee(fundData.managmentFee * denominator);
 
     // Invest two times (two different logics for first time and others)
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
-    await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    await fund.invest({
+      value: web3.toWei(1, "ether"),
+      from: investorA
+    });
+    await fund.invest({
+      value: web3.toWei(1, "ether"),
+      from: investorA
+    });
 
     const expectedFee = 0.5 + 0.2 - 0.01; // Base Fee + Fee from investments - commision of withdraw
     let fee = (await fund.accumulatedFee()).toNumber();
@@ -335,6 +349,12 @@ contract("Fund", accounts => {
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
     const MOTBefore = await mockMOT.balanceOf(accounts[0]);
 
+    // initial ETH should be equal or more than 0.1 ETH
+    await calc.assertReverts(async () => {
+      await fund.withdrawFee(await fund.accumulatedFee()); // try take all, fail.
+    }, "Shall revert");
+
+    // take less, success.
     await fund.withdrawFee(withdrawETHAmount);
 
     assert(
@@ -510,6 +530,7 @@ contract("Fund", accounts => {
     await fund.close(); // Just set to close but not sell
 
     await fund.sellAllTokensOnClosedFund(); // Owner can sell tokens after close
+
     // getTokens will return amounts, but they are not updated til the steps are finished.
     // So that we check directly the balance of erc20
     assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0, "First step sell 1st token");
@@ -533,6 +554,10 @@ contract("Fund", accounts => {
 
     assert.equal((await fund.getETHBalance()).toNumber(), web3.toWei(1.8, "ether"), "ETH balance returned");
     assert.equal((await fund.status()).toNumber(), DerivativeStatus.Closed, " Cant change to active ");
+
+    // after closed and tokens are sold, manager can take all money out.
+    await fund.withdrawFee(await fund.accumulatedFee());
+
     // reset
     await fund.setMaxSteps(DerivativeProviders.GETETH, 4);
     await fund.enableWhitelist(WhitelistType.Maintenance, false);
