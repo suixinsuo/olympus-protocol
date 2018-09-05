@@ -210,7 +210,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // ----------------------------- FEES  -----------------------------
     // Owner can send ETH to the Index, to perform some task, this eth belongs to him
     // solhint-disable-next-line
-    function addOwnerBalance() external payable onlyOwner {
+    function addOwnerBalance() external payable {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
 
