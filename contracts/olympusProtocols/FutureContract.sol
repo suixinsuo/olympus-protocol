@@ -48,7 +48,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     uint[] public freezeLongTokens;
     uint[] public freezeShortTokens;
     uint freezePrice;
-    // TODO: Change this event for real transfer to user holder
+    // TODO: Change this event for real transfer to user holder OL-1369
     event DepositReturned(uint _tokenId, uint amount);
 
     constructor(
@@ -127,13 +127,13 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     /// --------------------------------- TOKENS ---------------------------------
-    function getToken(int _direction) internal view returns(FutureERC721Token) {
+    function getToken(int _direction) public view returns(FutureERC721Token) {
         if(_direction == LONG) {return longToken; }
         if(_direction == SHORT) {return shortToken; }
         revert();
     }
 
-    function getTokenOutSupply(int _direction) internal view returns(uint) {
+    function getTokenOutSupply(int _direction) public view returns(uint) {
         if(_direction == LONG) {return outLongSupply; }
         if(_direction == SHORT) {return outShortSupply; }
         revert();
@@ -145,16 +145,15 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         revert();
     }
 
-    function isTokenValid(int _direction, uint _id) internal view returns(bool) {
+    function isTokenValid(int _direction, uint _id) public view returns(bool) {
         return getToken(_direction).isTokenValid(_id);
     }
 
-
-    function getTokenDeposit(int _direction, uint _id) internal view returns(uint) {
+    function getTokenDeposit(int _direction, uint _id) public view returns(uint) {
         return getToken(_direction).getDeposit(_id);
     }
 
-    function getValidTokens(int _direction) internal view returns(uint[] memory) {
+    function getValidTokens(int _direction) public view returns(uint[] memory) {
         return getToken(_direction).getValidTokens();
     }
 
@@ -163,7 +162,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
 
-    function getTokenSupply(int _direction) internal  view returns(uint) {
+    function getTokenSupply(int _direction) public  view returns(uint) {
         return getToken(_direction).totalSupply().sub(getTokenOutSupply(_direction));
     }
 
@@ -302,7 +301,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         // is Invalid
         // Deliver the lasting value to the user
         if(_tokenValue > 0){
-            // getToken(_direction).holder().transfer(_tokenValue); // TODO when token get holder
+            // getToken(_direction).holder().transfer(_tokenValue); // TODO when token get holder OL-1369
             emit DepositReturned(_id, _tokenValue);
         }
 

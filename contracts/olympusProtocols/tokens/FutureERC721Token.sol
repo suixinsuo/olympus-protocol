@@ -85,9 +85,6 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         return ownedTokens[_owner];
     }
 
-    event LogN(uint number, string text);
-
-
     function getValidTokens() external view returns(uint[] memory) {
         uint _length = 0;
         uint i;
