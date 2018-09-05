@@ -26,7 +26,6 @@
 
 "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0 // Olympus labs
 "0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 0,0 // Gerdinand
-"0x808806d6c795246c16736a8ca556c5a0e6c0a585", 0, 0
 
 
 3. Set intervals (1 days)

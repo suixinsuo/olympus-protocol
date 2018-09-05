@@ -1,4 +1,3 @@
-const log = require("../utils/log");
 const calc = require("../utils/calc");
 const BigNumber = web3.BigNumber;
 
@@ -198,21 +197,21 @@ contract("Basic Future", accounts => {
   it("It shall calculate share deposit correctly", async () => {
 
 
-    let protocolDeposit = (await future.calculateShareDeposit(2, 10 ** 18)).toNumber();
-    let testCalculation = calculateShareDeposit(2, 10 ** 18);
+    let protocolDeposit = (await future.calculateShareDeposit(2, futureData.defaultTargetPrice)).toNumber();
+    let testCalculation = calculateShareDeposit(2, futureData.defaultTargetPrice);
     assert.equal(protocolDeposit, testCalculation);
 
-    protocolDeposit = (await future.calculateShareDeposit(0, 10 ** 18)).toNumber();
-    testCalculation = calculateShareDeposit(0, 10 ** 18);
+    protocolDeposit = (await future.calculateShareDeposit(0, futureData.defaultTargetPrice)).toNumber();
+    testCalculation = calculateShareDeposit(0, futureData.defaultTargetPrice);
     assert.equal(protocolDeposit, testCalculation);
 
     protocolDeposit = (await future.calculateShareDeposit(2, 0)).toNumber();
     testCalculation = calculateShareDeposit(2, 0);
     assert.equal(protocolDeposit, testCalculation);
 
-    testCalculation = calculateShareDeposit(2 ** 256 - 1, 10 ** 18);
+    testCalculation = calculateShareDeposit(2 ** 256 - 1, futureData.defaultTargetPrice);
     await calc.assertReverts(
-      async () => await future.calculateShareDeposit(2 ** 256 - 1, 10 ** 18),
+      async () => await future.calculateShareDeposit(2 ** 256 - 1, futureData.defaultTargetPrice),
       'Safe math avoid overflow'
     );
 
@@ -233,7 +232,7 @@ contract("Basic Future", accounts => {
     assert.ok(tx);
     const balanceAfter = await calc.ethBalance(investorA);
 
-    assert(await calc.inRange(balanceAfter, balanceBefore - (depositValue / 10 ** 18), 1), ' Return exceed of deposit');
+    assert(await calc.inRange(balanceAfter, balanceBefore - (depositValue / futureData.defaultTargetPrice), 1), ' Return exceed of deposit');
     const investorATokens = await longToken.getTokenIdsByOwner(investorA);
 
     assert.equal(investorATokens.length, amountsOfShares, 'Investor A got one token');
@@ -257,7 +256,7 @@ contract("Basic Future", accounts => {
     assert.ok(tx);
     const balanceAfter = await calc.ethBalance(investorB);
 
-    assert(await calc.inRange(balanceAfter, balanceBefore - (depositValue / 10 ** 18), 1), ' Return exceed of deposit');
+    assert(await calc.inRange(balanceAfter, balanceBefore - (depositValue / futureData.defaultTargetPrice), 1), ' Return exceed of deposit');
     const investorBTokens = await shortToken.getTokenIdsByOwner(investorB);
 
     assert.equal(investorBTokens.length, amountsOfShares, 'Investor B got one token');
@@ -297,7 +296,7 @@ contract("Basic Future", accounts => {
     const targetPrice = futureData.defaultTargetPrice;
     tokenDeposit = calculateShareDeposit(1, targetPrice); // For 1 token
 
-    assert.equal(targetPrice, 10 ** 18, 'Target price is the same as set in the configuration');
+    assert.equal(targetPrice, futureData.defaultTargetPrice, 'Target price is the same as set in the configuration');
     assert.equal((await shortToken.getDeposit(investorATokens[0])).toNumber(), tokenDeposit, 'Deposit is 2 E17 LONG');
     assert.equal((await shortToken.getDeposit(investorBTokens[0])).toNumber(), tokenDeposit, 'Deposit is 2 E17 SHORT');
 
@@ -312,7 +311,7 @@ contract("Basic Future", accounts => {
     assert.equal(tokenValue, tokenTestValue, 'Actual value is the same when price no change SHORT');
 
     // -------------------------- PRICE HIGH -----------------------
-    updatePrice = 0.95 * 10 ** 18; // SHORT win
+    updatePrice = 0.95 * futureData.defaultTargetPrice; // SHORT win
 
     // LONG
     tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
@@ -324,7 +323,7 @@ contract("Basic Future", accounts => {
     assert.equal(tokenValue, tokenTestValue, 'Actual value is increased for SHORT');
 
     // -------------------------- PRICE LOW -----------------------
-    updatePrice = 1.05 * 10 ** 18; // LONG win
+    updatePrice = 1.05 * futureData.defaultTargetPrice; // LONG win
 
     // LONG
     tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
@@ -337,7 +336,7 @@ contract("Basic Future", accounts => {
 
 
     // -------------------------- PRICE is TOO LOW -----------------------
-    updatePrice = 0.9 * 10 ** 18; // SHORT win
+    updatePrice = 0.9 * futureData.defaultTargetPrice; // SHORT win
 
     // LONG
     tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
@@ -348,7 +347,7 @@ contract("Basic Future", accounts => {
     assert.equal(tokenValue, tokenTestValue, 'Actual value is really increased for SHORT');
 
     // -------------------------- PRICE is TOO HIGH -----------------------
-    updatePrice = new BigNumber(1.1).mul(10 ** 18).toNumber(); // LONG win
+    updatePrice = new BigNumber(1.1).mul(futureData.defaultTargetPrice).toNumber(); // LONG win
     // LONG
     tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
     tokenTestValue = getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
@@ -383,7 +382,7 @@ contract("Basic Future", accounts => {
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B normalPrice');
 
     // -------------------------- PRICE HIGH -----------------------
-    updatePrice = 0.95 * 10 ** 18; // SHORT win
+    updatePrice = 0.95 * futureData.defaultTargetPrice; // SHORT win
     await future.setTargetPrice(updatePrice);
 
     // LONG
@@ -396,7 +395,7 @@ contract("Basic Future", accounts => {
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B increased');
 
     // -------------------------- PRICE LOW -----------------------
-    updatePrice = 1.05 * 10 ** 18; // LONG win
+    updatePrice = 1.05 * futureData.defaultTargetPrice; // LONG win
 
     await future.setTargetPrice(updatePrice);
     // LONG
@@ -409,7 +408,7 @@ contract("Basic Future", accounts => {
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B reduced');
 
     // -------------------------- PRICE is TOO LOW -----------------------
-    updatePrice = 0.9 * 10 ** 18; // SHORT win
+    updatePrice = 0.9 * futureData.defaultTargetPrice; // SHORT win
     await future.setTargetPrice(updatePrice);
     // LONG
     myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
@@ -422,7 +421,7 @@ contract("Basic Future", accounts => {
 
 
     // -------------------------- PRICE is TOO HIGH -----------------------
-    updatePrice = new BigNumber(1.1).mul(10 ** 18).toNumber(); // LONG win
+    updatePrice = new BigNumber(1.1).mul(futureData.defaultTargetPrice).toNumber(); // LONG win
     await future.setTargetPrice(updatePrice);
 
     // LONG
@@ -448,7 +447,7 @@ contract("Basic Future", accounts => {
     await future.setMaxSteps(DerivativeProviders.CHECK_POSITION, 1);
 
     // We set step provider to 1
-    await future.setTargetPrice(new BigNumber(0.95).mul(10 ** 18));
+    await future.setTargetPrice(new BigNumber(0.95).mul(futureData.defaultTargetPrice));
 
     // 4 tokens, 4 calls
     await future.checkPosition();
@@ -468,7 +467,7 @@ contract("Basic Future", accounts => {
 
     // Reset
     await future.setMaxSteps(DerivativeProviders.CHECK_POSITION, futureData.maxSteps);
-    await future.setTargetPrice(new BigNumber(1.05).mul(10 ** 18));
+    await future.setTargetPrice(new BigNumber(1.05).mul(futureData.defaultTargetPrice));
     // Call at once
     await future.checkPosition();
     assert.equal((await stepProvider.status(future.address, DerivativeProviders.CHECK_POSITION)).toNumber(), 0, 'Finish Check Position');
@@ -482,7 +481,7 @@ contract("Basic Future", accounts => {
 
   it("Check position Long go out", async () => {
     const investorATokens = await longToken.getTokenIdsByOwner(investorA);
-    const updatePrice = new BigNumber(0.91).mul(10 ** 18);
+    const updatePrice = new BigNumber(0.91).mul(futureData.defaultTargetPrice);
     const tokenDeposit = calculateShareDeposit(1, futureData.defaultTargetPrice); // Initial Deposit
 
     // We set step provider to 1
@@ -513,8 +512,8 @@ contract("Basic Future", accounts => {
     const previousWinnerBalance = (await future.winnersBalance()).toNumber();
 
     const investorBTokens = await shortToken.getTokenIdsByOwner(investorB);
-    const updatePrice = new BigNumber(1.09).mul(10 ** 18);
-    const tokenDeposit = calculateShareDeposit(1, 10 ** 18); // Initial Deposit
+    const updatePrice = new BigNumber(1.09).mul(futureData.defaultTargetPrice);
+    const tokenDeposit = calculateShareDeposit(1, futureData.defaultTargetPrice); // Initial Deposit
 
     // We set step provider to 1
     await future.setTargetPrice(updatePrice);
