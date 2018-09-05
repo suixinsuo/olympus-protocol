@@ -26,7 +26,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     uint public constant DENOMINATOR = 10000;
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
-    uint public constant INITIAL_FEE = 10*17;
+    uint public constant INITIAL_FEE = 10**17;
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;

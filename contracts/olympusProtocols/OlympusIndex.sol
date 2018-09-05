@@ -28,7 +28,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
-    uint public constant INITIAL_FEE = 10*17;
+    uint public constant INITIAL_FEE = 10**17;
     uint[] public weights;
     uint public accumulatedFee = 0;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
