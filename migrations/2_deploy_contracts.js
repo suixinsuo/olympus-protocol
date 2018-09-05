@@ -5,6 +5,7 @@ const KyberConfig = require("../scripts/libs/kyber_config");
 let ExchangeProvider = artifacts.require("ExchangeProvider");
 let ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 let KyberNetworkAdapter = artifacts.require("../contracts/components/exchange/exchanges/KyberNetworkAdapter.sol");
+let MockBrokenTokenKyberNetworkAdapter = artifacts.require("../contracts/components/exchange/exchanges/MockBrokenTokenKyberNetworkAdapter.sol");
 let MockKyberNetwork = artifacts.require("MockKyberNetwork");
 let MockDDEXAdapter = artifacts.require("MockDDEXAdapter");
 let MockDDEX = artifacts.require("MockDDEX");
@@ -77,7 +78,10 @@ function deployExchange(deployer, network) {
     .then(() => deployer.deploy(MockDDEXAdapter, kyberAddress, ExchangeAdapterManager.address, ExchangeProvider.address))
     .then(() => {
       if (network === "development") {
-        return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18);
+        return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18).then((mockKyberNetworkInstance) => {
+          // deployer.deploy(KyberNetworkAdapter, mockKyberNetworkInstance.address, ExchangeAdapterManager.address, ExchangeProvider.address)
+          deployer.deploy(MockBrokenTokenKyberNetworkAdapter, mockKyberNetworkInstance.address, ExchangeAdapterManager.address, ExchangeProvider.address)
+        });
       }
     }).then(async () => {
       console.log('Deploying!!!');

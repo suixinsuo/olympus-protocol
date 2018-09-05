@@ -13,7 +13,6 @@ contract MockKyberNetwork {
         uint    slippageRate;
     }
     address ETH_ADDRESS = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
-
     Token[] public supportedTokens;
     constructor (uint total,uint _decimals) public {
         require(total <= 50 && total > 0);
@@ -24,7 +23,6 @@ contract MockKyberNetwork {
             }));
         }
     }
-
     function toggleSimulatePriceZero(bool _shouldSimulateZero) external returns(bool success){
         simulatePriceZero = _shouldSimulateZero;
         return true;
