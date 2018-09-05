@@ -1,6 +1,6 @@
 const log = require("../utils/log");
 const calc = require("../utils/calc");
-const BigNumber = require("BigNumber.js");
+const BigNumber = web3.BigNumber;
 
 const {
   DerivativeProviders,
