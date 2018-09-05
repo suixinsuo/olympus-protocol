@@ -20,7 +20,6 @@ module.exports = {
       assert(false, "Failed: " + message);
     } catch (e) {
       if (!e.message.includes("revert")) {
-        assert(false, e);
         throw e; // Error is not caused by revert but for another reason
       }
       assert(true, message);
@@ -33,7 +32,6 @@ module.exports = {
       assert(false, "Failed: " + message);
     } catch (e) {
       if (!e.message.includes("invalid opcode")) {
-        assert(false, e);
         throw e; // Error is not caused by revert but for another reason
       }
       assert(true, message);
