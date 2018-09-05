@@ -391,7 +391,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     // For reiumbursable
-    function addOwnerBalance() external payable onlyOwner {
+    function addOwnerBalance() external payable {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
 

@@ -26,6 +26,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     uint public constant DENOMINATOR = 10000;
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
+    uint public constant INITIAL_FEE = 10*17;
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
@@ -61,7 +62,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) external onlyOwner payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
-        require(msg.value > 0); // Require some balance for internal opeations as reimbursable
+        require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable
 
         // Set PausedCycle
         pausedCycle = 365 days;
@@ -241,13 +242,19 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // ----------------------------- FEES  -----------------------------
     // Owner can send ETH to the Index, to perform some task, this eth belongs to him
     // solhint-disable-next-line
-    function addOwnerBalance() external payable onlyOwner {
+    function addOwnerBalance() external payable {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
 
     // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
-        require(accumulatedFee >= _amount);
+        require(_amount > 0);
+        require((
+            status == DerivativeStatus.Closed && getAssetsValue() == 0) ? // everything is done, take all.
+            (_amount <= accumulatedFee)
+            :
+            (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
+        );
         accumulatedFee = accumulatedFee.sub(_amount);
         // Exchange to MOT
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -270,7 +277,13 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         whenNotPaused
         withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
         {
-        WithdrawInterface(getComponentByName(WITHDRAW)).request(msg.sender, amount);
+         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+         withdrawProvider.request(msg.sender, amount);
+         if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
+            withdrawProvider.freeze();
+            handleWithdraw(withdrawProvider, msg.sender);
+            withdrawProvider.finalize();
+         }
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
@@ -303,8 +316,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         address[] memory _requests = withdrawProvider.getUserRequests();
 
         uint _transfers = stepProvider.initializeOrContinue(WITHDRAW);
-        uint _eth;
-        uint _tokenAmount;
         uint i;
 
         if (_transfers == 0 && stepProvider.getStatus(GETETH) == 0) {
@@ -315,7 +326,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             }
         }
 
-        if (_transfers == 0){
+        if (_transfers == 0) {
             if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){
                 reimburse();
                 return false;
@@ -324,21 +335,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
 
         for (i = _transfers; i < _requests.length && stepProvider.goNextStep(WITHDRAW); i++) {
-
-            releaseTokensBroken(_requests[i]); // Investors
-            (_eth, _tokenAmount) = withdrawProvider.withdraw(_requests[i]);
-            if (_tokenAmount == 0) {continue;}
-
-            balances[_requests[i]] = balances[_requests[i]].sub(_tokenAmount);
-            totalSupply_ = totalSupply_.sub(_tokenAmount);
-            emit Transfer(msg.sender, 0x0, _tokenAmount); // ERC20 Required event
-
-            // Can be 0 in case all tokens are broken
-            if(_eth > 0 ) {
-                address(_requests[i]).transfer(_eth);
-            }
-            // Unmap investor (do it at the end)
-            removeInvestor(_requests[i]);
+            if(!handleWithdraw(withdrawProvider, _requests[i])){ continue; }
         }
 
         if (i == _requests.length) {
@@ -348,6 +345,27 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         reimburse();
         return i == _requests.length; // True if completed
+    }
+
+    function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) {
+        uint _eth;
+        uint _tokenAmount;
+
+        releaseTokensBroken(_investor); // Investors
+        (_eth, _tokenAmount) = _withdrawProvider.withdraw(_investor);
+        if (_tokenAmount == 0) { return false; }
+
+        balances[_investor] = balances[_investor].sub(_tokenAmount);
+        totalSupply_ = totalSupply_.sub(_tokenAmount);
+        emit Transfer(msg.sender, 0x0, _tokenAmount); // ERC20 Required event
+
+        // Can be 0 in case all tokens are broken
+        if (_eth > 0){
+            address(_investor).transfer(_eth);
+        }
+        // Unmap investor (do it at the end)
+        removeInvestor(_investor);  
+        return true;      
     }
 
     function releaseTokensBroken(address _investor) internal returns(bool) {
