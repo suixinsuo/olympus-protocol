@@ -21,7 +21,6 @@ module.exports = {
       assert(false, "Failed: " + message);
     } catch (e) {
       if (!e.message.includes("revert")) {
-        assert(false, e.message);
         throw e; // Error is not caused by revert but for another reason
       }
       assert(true, message);
@@ -40,7 +39,6 @@ module.exports = {
       assert(true, message);
     }
   },
-
 
   waitSeconds: async seconds => {
     return new Promise((resolve, reject) => setInterval(() => resolve(), seconds * 1000));

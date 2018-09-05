@@ -35,6 +35,7 @@ const indexData = {
   decimals: 18,
   managmentFee: 0.1,
   initialManagementFee: 0,
+  wrongEthDeposit: 0.05,
   ethDeposit: 0.5, // ETH
   weights: [50, 50],
   tokensLenght: 2,
@@ -149,6 +150,12 @@ contract("Olympus Index", accounts => {
     assert.equal((await index.status()).toNumber(), 0); // new
 
     assert.equal((await index.status()).toNumber(), DerivativeStatus.New, "Must be still new");
+
+    await calc.assertReverts(async () => {
+      await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
+        value: web3.toWei(indexData.wrongEthDeposit, "ether")
+      });
+    }, "initial ETH should be equal or more than 0.1 ETH");
 
     await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
       value: web3.toWei(indexData.ethDeposit, "ether")
@@ -401,6 +408,11 @@ contract("Olympus Index", accounts => {
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
     const MOTBefore = await mockMOT.balanceOf(accounts[0]);
 
+    await calc.assertReverts(async () => {
+      await index.withdrawFee(await index.accumulatedFee()); // try take all, fail.
+    }, "withdraw Fee can't take all, it should leave 0.1 ETH in there");
+
+    // take less, success.
     await index.withdrawFee(withdrawETHAmount);
 
     fee = (await index.accumulatedFee()).toNumber();
@@ -537,7 +549,10 @@ contract("Olympus Index", accounts => {
   it("Shall be able to close (by step) a index", async () => {
     const bot = investorA;
 
-    await index.invest({ value: web3.toWei(2, "ether"), from: investorC });
+    await index.invest({
+      value: web3.toWei(2, "ether"),
+      from: investorC
+    });
     await index.setMaxSteps(DerivativeProviders.GETETH, 1); // For testing
 
     let token0_erc20 = await ERC20.at(await index.tokens(0));
@@ -565,7 +580,10 @@ contract("Olympus Index", accounts => {
 
     // Check whitelist for bot to sell tokens after close
     await calc.assertReverts(
-      async () => await index.sellAllTokensOnClosedFund({ from: bot }),
+      async () =>
+        await index.sellAllTokensOnClosedFund({
+          from: bot
+        }),
       "Bot is not whitelisted"
     );
     // Whitelist bot
@@ -573,7 +591,9 @@ contract("Olympus Index", accounts => {
     await index.setAllowed([bot], WhitelistType.Maintenance, true);
 
     // Second time complete sell tokens and withdraw at once
-    await index.sellAllTokensOnClosedFund({ from: bot });
+    await index.sellAllTokensOnClosedFund({
+      from: bot
+    });
 
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
     // TODO VERIFY TOKENS ARE SOLD (refactor with getTokensAndAmounts())
@@ -582,9 +602,14 @@ contract("Olympus Index", accounts => {
       let balance = await erc20.balanceOf(index.address);
       assert.equal(balance.toNumber(), 0, "Tokens are sold");
     }
+
     assert.equal((await index.getAssetsValue()).toNumber(), 0, "Assets value is 0");
     assert.isAbove((await index.getETHBalance()).toNumber(), 0, "ETH balance returned");
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Shall keep being closed");
+
+    // after closed and tokens are sold, manager can take all money out.
+    await index.withdrawFee(await index.accumulatedFee());
+
     await index.setMaxSteps(DerivativeProviders.GETETH, 4); // For testing
   });
 
