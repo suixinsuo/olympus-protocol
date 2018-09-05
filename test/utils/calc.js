@@ -38,7 +38,6 @@ module.exports = {
     }
   },
 
-
   waitSeconds: async seconds => {
     return new Promise((resolve, reject) => setInterval(() => resolve(), seconds * 1000));
   },
