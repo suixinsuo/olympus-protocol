@@ -101,7 +101,7 @@ contract("Basic Index", accounts => {
       indexData.category,
       indexData.decimals,
       tokens.slice(0, indexData.tokensLenght),
-      indexData.weights,
+      indexData.weights
     );
 
     assert.equal((await index.status()).toNumber(), 0); // new

@@ -1,5 +1,6 @@
 const MockKyberNetwork = artifacts.require("exchanges/MockKyberNetwork");
 const KyberNetworkAdapter = artifacts.require("exchanges/KyberNetworkAdapter");
+const MockBrokenTokenKyberNetworkAdapter = artifacts.require("exchanges/MockBrokenTokenKyberNetworkAdapter");
 const ERC20Extended = artifacts.require("../contracts/libs/ERC20Extended");
 const ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 const MockDDEXAdapter = artifacts.require("MockDDEXAdapter");
@@ -13,7 +14,7 @@ const expectedRate = web3.toBigNumber("1000" + "000000000000000000");
 const expectedRateToSell = web3.toBigNumber("1000000000000000");
 const BigNumber = web3.BigNumber;
 const calc = require("../utils/calc");
-
+const brokenTokenList = ["0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42000", "0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42001"]
 
 function bytes32ToString(bytes32) {
   return web3.toAscii(bytes32).replace(/\u0000/g, "");
@@ -39,14 +40,16 @@ contract("ExchangeProvider", accounts => {
   before(async () => {
     return await Promise.all([
       MockKyberNetwork.deployed(),
+      MockBrokenTokenKyberNetworkAdapter.deployed(),
       KyberNetworkAdapter.deployed(),
       ExchangeAdapterManager.deployed(),
       MockToken.deployed(),
       ExchangeProvider.deployed()
     ])
       .spread(
-        async (_mockKyberNetwork, _kyberNetworkAdapter, _exchangeAdapterManager, _mockToken, _exchangeProvider) => {
+        async (_mockKyberNetwork, _mockBrokenTokenKyberNetworkAdapter, _kyberNetworkAdapter, _exchangeAdapterManager, _mockToken, _exchangeProvider) => {
           assert.ok(_mockKyberNetwork, "MockKyberNetwork contract is not deployed.");
+          assert.ok(_mockBrokenTokenKyberNetworkAdapter, "MockBrokenTokenKyberNetworkAdapter contract is not deployed.");
           assert.ok(_kyberNetworkAdapter, "KyberNetworkExchange contract is not deployed.");
           assert.ok(_exchangeAdapterManager, "ExchangeAdapterManager contract is not deployed.");
           assert.ok(_mockToken, "MockToken contract is not deployed.");
@@ -311,6 +314,62 @@ contract("ExchangeProvider", accounts => {
     assert.equal(exchangeprice2[0].toNumber(), 10 ** 15, `BestRate`);
 
     await AdapterManager.removeExchangeAdapter(exchangeidtwo);
+  });
+
+  it("Should get mock token price from mockBrokenTokenKyber", async () => {
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    let motPrice = await mockKyberNetworkAdapter.getPrice(ethToken, MockToken.address, 1000);
+    assert.notEqual(motPrice.toString(), '0')
+  });
+  it("Should set broken token address for mockBrokenTokenKyber", async () => {
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    let result = await mockKyberNetworkAdapter.setBrokenTokens(brokenTokenList); 
+    assert.equal(result.receipt.status, '0x1')
+  });
+  it("Should get broken token address from mockBrokenTokenKyber", async () => {
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    let brokenToken = await mockKyberNetworkAdapter.getBrokenTokens(); 
+    for (let i in brokenTokenList) {
+      assert.equal(brokenToken[i].toLowerCase(), brokenTokenList[i].toLowerCase());
+    }
+  });
+  it("Should get 0 from mockBrokenTokenKyber when the token is broken", async () => {
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    for (let i in brokenTokenList) {
+      let tokenPrice = await mockKyberNetworkAdapter.getPrice(ethToken, brokenTokenList[i], 1000); 
+      assert.equal(tokenPrice.toString(), '0,0')
+    }
+  });
+  it("Should revert from mockBrokenTokenKyber when the buy broken token", async () => {
+    const srcAmountETH = 1;
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+
+    for (let i in brokenTokenList) {
+      await calc.assertReverts(async () => await mockKyberNetworkAdapter.buyToken(brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+    }
+  });
+  it("Should revert from mockBrokenTokenKyber when the sell broken token", async () => {
+    const srcAmountETH = 1;
+    const amount = web3.toWei(srcAmountETH);
+    const rate = 1000*10**18;
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+
+    for (let i in brokenTokenList) {
+      await calc.assertReverts(async () => await mockKyberNetworkAdapter.sellToken(brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+    }
+  });
+
+  it("Should revert buy brokenToken from token swap", async () => {
+    const srcAmountETH = 1;
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    
+    for (let i in brokenTokenList) {
+      await calc.assertReverts(async () => await mockKyberNetworkAdapter.tokenExchange(ethToken, brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+    }
   });
   it("Should support buy token from token swap", async () => {
     const srcAmountETH = 1;
