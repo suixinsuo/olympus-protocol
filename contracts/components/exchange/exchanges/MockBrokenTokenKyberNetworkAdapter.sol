@@ -19,14 +19,14 @@ contract MockBrokenTokenKyberNetworkAdapter is OlympusExchangeAdapterInterface{
 
     bool public adapterEnabled;
 
-    address[] public brokenToken;
+    address[] public brokenTokens;
     modifier onlyExchangeAdapterManager() {
         require(msg.sender == address(exchangeAdapterManager));
         _;
     }
     modifier checkBrokenToken(address _token) {
-        for(uint i = 0; i < brokenToken.length; i++) {
-            if (address(_token) == address(brokenToken[i])) {
+        for(uint i = 0; i < brokenTokens.length; i++) {
+            if (address(_token) == address(brokenTokens[i])) {
                 revert("broken token");
             }
         }
@@ -41,12 +41,12 @@ contract MockBrokenTokenKyberNetworkAdapter is OlympusExchangeAdapterInterface{
         adapterEnabled = true;
     }
 
-    function setBrokenToken(address[] _token) external onlyOwner returns(bool) {
-        brokenToken = _token;
+    function setBrokenTokens(address[] _tokens) external onlyOwner returns(bool) {
+        brokenTokens = _tokens;
         return true;
     }
-    function getBrokenToken() external view returns(address[]) {
-        return brokenToken;
+    function getBrokenTokens() external view returns(address[]) {
+        return brokenTokens;
     }
     function setExchangeAdapterManager(address _exchangeAdapterManager) external onlyOwner{
         exchangeAdapterManager = _exchangeAdapterManager;
@@ -107,8 +107,8 @@ contract MockBrokenTokenKyberNetworkAdapter is OlympusExchangeAdapterInterface{
     }
 
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount) external view returns(uint, uint){
-        for(uint i = 0; i < brokenToken.length; i++) {
-            if (address(_destAddress) == address(brokenToken[i])) {
+        for(uint i = 0; i < brokenTokens.length; i++) {
+            if (address(_destAddress) == address(brokenTokens[i])) {
                 return (0,0);
             }
         }

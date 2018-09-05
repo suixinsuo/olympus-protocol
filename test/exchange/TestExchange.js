@@ -323,12 +323,12 @@ contract("ExchangeProvider", accounts => {
   });
   it("Should set broken token address for mockBrokenTokenKyber", async () => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
-    let result = await mockKyberNetworkAdapter.setBrokenToken(brokenTokenList); 
+    let result = await mockKyberNetworkAdapter.setBrokenTokens(brokenTokenList); 
     assert.equal(result.receipt.status, '0x1')
   });
   it("Should get broken token address from mockBrokenTokenKyber", async () => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
-    let brokenToken = await mockKyberNetworkAdapter.getBrokenToken(); 
+    let brokenToken = await mockKyberNetworkAdapter.getBrokenTokens(); 
     for (let i in brokenTokenList) {
       assert.equal(brokenToken[i].toLowerCase(), brokenTokenList[i].toLowerCase());
     }
