@@ -10,8 +10,7 @@
 1. Create
 // Direction address is MOT, must be change later on
 `
-  "Test Future", "For testing purposes", 1, 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a,
-  2, 100, 800
+  "Test Future", "For testing purposes", "TFT", 1, 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a,  2, 100, 800
 
 `
 # Index
@@ -25,14 +24,16 @@
     ```
 2.  Initalize
 
-"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0 // Olympus labs
-"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 0 // Gerdinand
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0 // Olympus labs
+"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 0,0 // Gerdinand
+
 
 3. Set intervals (1 days)
 ["0x576974686472617750726f766964657200000000000000000000000000000000", "0x427579546f6b656e730000000000000000000000000000000000000000000000", "0x526562616c616e636550726f7669646572000000000000000000000000000000"]
 , ["86400","86400","86400"]
 # Fund
 
+Mainnet fund 0xcc6402e1fbc7fb3f5e5543ecdd3d7978904f617a
 1.  Create
     "Sample Fund","SFP","Testing fund","Funds","18"
 
