@@ -113,12 +113,11 @@ contract("Fund", accounts => {
     );
     assert.equal((await fund.status()).toNumber(), 0); // new
 
-    // initial ETH should be equal or more than 0.1 ETH
     await calc.assertReverts(async () => {
       await fund.initialize(componentList.address, fundData.initialManagementFee, fundData.withdrawInterval, {
         value: web3.toWei(fundData.wrongEthDeposit, "ether")
       });
-    }, "Shall revert");
+    }, "initial ETH should be equal or more than 0.1 ETH");
 
     await fund.initialize(componentList.address, fundData.initialManagementFee, fundData.withdrawInterval, {
       value: web3.toWei(fundData.ethDeposit, "ether")
@@ -349,10 +348,9 @@ contract("Fund", accounts => {
     const ownerBalanceInital = await calc.ethBalance(accounts[0]);
     const MOTBefore = await mockMOT.balanceOf(accounts[0]);
 
-    // initial ETH should be equal or more than 0.1 ETH
     await calc.assertReverts(async () => {
       await fund.withdrawFee(await fund.accumulatedFee()); // try take all, fail.
-    }, "Shall revert");
+    }, "withdraw Fee can't take all, it should leave 0.1 ETH in there");
 
     // take less, success.
     await fund.withdrawFee(withdrawETHAmount);
