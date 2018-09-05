@@ -24,9 +24,9 @@ interface FutureInterfaceV1 {
   // bot system
   function checkPosition() external returns (bool); // for bot.
   function clear() external returns (bool);
-  function updateTargetPrice(uint _rateToEther) external returns(bool);
+  // function updateTargetPrice(uint _rateToEther) external returns(bool); TODO when bot
 
   // helpers
-  function getTotalAssetValue(uint _direction) external view returns (uint);
-  function getMyAssetValue(uint8 _direction) external view returns (uint); // in ETH
+  function getTotalAssetValue(int _direction) external view returns (uint);
+  function getMyAssetValue(int _direction) external view returns (uint); // in ETH
 }

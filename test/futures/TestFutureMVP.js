@@ -359,6 +359,86 @@ contract("Basic Future", accounts => {
 
   });
 
+  it("Investors my assets value", async () => {
+    // Difference between this and the previous scenario, here is the total assets and
+    // the price is the internal of the Future.
+    let myAssetsValue;
+    let tokenTestValue;
+    const targetPrice = futureData.defaultTargetPrice;
+    let updatePrice;
+    const tokenDeposit = calculateShareDeposit(1, futureData.defaultTargetPrice); // Initial Deposit
+    const tokensACount = (await longToken.getTokenIdsByOwner(investorA)).length;
+    const tokensBCount = (await shortToken.getTokenIdsByOwner(investorB)).length;
+
+    // -------------------------- SAME PRICE -----------------------
+    updatePrice = targetPrice;
+    // LONG
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
+
+    tokenTestValue = getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A normalPrice');
+    // SHORT
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B normalPrice');
+
+    // -------------------------- PRICE HIGH -----------------------
+    updatePrice = 0.95 * 10 ** 18; // SHORT win
+    await future.setTargetPrice(updatePrice);
+
+    // LONG
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A reduced');
+    // SHORT
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B increased');
+
+    // -------------------------- PRICE LOW -----------------------
+    updatePrice = 1.05 * 10 ** 18; // LONG win
+
+    await future.setTargetPrice(updatePrice);
+    // LONG
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A increased');
+    // SHORT
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B reduced');
+
+    // -------------------------- PRICE is TOO LOW -----------------------
+    updatePrice = 0.9 * 10 ** 18; // SHORT win
+    await future.setTargetPrice(updatePrice);
+    // LONG
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A is 0');
+    // SHORT
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B is too high');
+
+
+    // -------------------------- PRICE is TOO HIGH -----------------------
+    updatePrice = new BigNumber(1.1).mul(10 ** 18).toNumber(); // LONG win
+    await future.setTargetPrice(updatePrice);
+
+    // LONG
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A is too high');
+    // SHORT
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
+    tokenTestValue = getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B is 0');
+
+    // Reset
+    await future.setTargetPrice(futureData.defaultTargetPrice);
+
+  });
+
   // --------------------------------------------------------------------------
   // ----------------------------- Check Position TEST  -------------------------------
   // Required A and B to have 2 tokens each.
@@ -402,12 +482,12 @@ contract("Basic Future", accounts => {
 
   it("Check position Long go out", async () => {
     const investorATokens = await longToken.getTokenIdsByOwner(investorA);
-    const updatedPrice = new BigNumber(0.91).mul(10 ** 18);
-    const tokenDeposit = calculateShareDeposit(1, 10 ** 18); // Initial Deposit
+    const updatePrice = new BigNumber(0.91).mul(10 ** 18);
+    const tokenDeposit = calculateShareDeposit(1, futureData.defaultTargetPrice); // Initial Deposit
 
     // We set step provider to 1
-    await future.setTargetPrice(updatedPrice);
-    const tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatedPrice)).toNumber();
+    await future.setTargetPrice(updatePrice);
+    const tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
 
     assert(tokenValue > 0, 'Test scenario user is reiumbursed part of his deposit while out');
     const tx = await future.checkPosition();
@@ -433,12 +513,12 @@ contract("Basic Future", accounts => {
     const previousWinnerBalance = (await future.winnersBalance()).toNumber();
 
     const investorBTokens = await shortToken.getTokenIdsByOwner(investorB);
-    const updatedPrice = new BigNumber(1.09).mul(10 ** 18);
+    const updatePrice = new BigNumber(1.09).mul(10 ** 18);
     const tokenDeposit = calculateShareDeposit(1, 10 ** 18); // Initial Deposit
 
     // We set step provider to 1
-    await future.setTargetPrice(updatedPrice);
-    const tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], updatedPrice)).toNumber();
+    await future.setTargetPrice(updatePrice);
+    const tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], updatePrice)).toNumber();
 
     assert(tokenValue > 0, 'Test scenario user is reimbursing part of his deposit while out');
     const tx = await future.checkPosition();
@@ -481,6 +561,19 @@ contract("Basic Future", accounts => {
     await future.setTargetPrice(futureData.defaultTargetPrice);
   });
 
+  it("Investors my assets value with invalid tokens", async () => {
+    // getMy assets value Ingores the invalid tokens
+    let myAssetsValue;
+
+
+    // -------------------------- SAME PRICE -----------------------
+    // LONG
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
+    assert.equal(myAssetsValue, 0, 'Assets A are all invalid');
+    // SHORT
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
+    assert.equal(myAssetsValue, 0, 'Assets B are all invalid');
+  });
   // --------------------------------------------------------------------------
   // ----------------------------- CLEAR position  -------------------------------
   // A and B start with two invalidate

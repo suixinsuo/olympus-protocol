@@ -149,12 +149,17 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return getToken(_direction).isTokenValid(_id);
     }
 
+
     function getTokenDeposit(int _direction, uint _id) internal view returns(uint) {
         return getToken(_direction).getDeposit(_id);
     }
 
     function getValidTokens(int _direction) internal view returns(uint[] memory) {
         return getToken(_direction).getValidTokens();
+    }
+
+    function getTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
+        return getToken(_direction).getTokenIdsByOwner(_owner);
     }
 
 
@@ -313,23 +318,23 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return false;
     }
 
-    function updateTargetPrice(uint /*_rateToEther*/) external returns(bool) {
-        return false;
-    }
 
     // helpers
-    function getTotalAssetValue(uint /*_direction*/) external view returns (uint) {
+    function getTotalAssetValue(int /*_direction*/) external view returns (uint) {
         return 0;
     }
 
 
 
     // in ETH
-    function getMyAssetValue(uint8 /*_direction*/) external view returns (uint){
-        // TODO: Check the type of tokens of user that belongs to the direction.
-        // For each token which is not out of the game make next operation
-        // forEach(token) => getActualTokenValue(t)
-        return 0;
+    function getMyAssetValue(int _direction) external view returns (uint){
+        uint[] memory tokens = getTokenIdsByOwner(_direction, msg.sender);
+        uint price = getTargetPrice();
+        uint balance;
+        for(uint i = 0; i < tokens.length; i++) {
+            balance = balance.add(getTokenActualValue(_direction, tokens[i], price));
+        }
+         return balance;
     }
 
     // Getters
