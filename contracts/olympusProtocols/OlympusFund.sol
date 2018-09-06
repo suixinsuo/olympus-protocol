@@ -366,8 +366,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             address(_investor).transfer(_eth);
         }
         // Unmap investor (do it at the end)
-        removeInvestor(_investor);  
-        return true;      
+        removeInvestor(_investor);
+        return true;
     }
 
     function releaseTokensBroken(address _investor) internal returns(bool) {
@@ -382,7 +382,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             requestPending = tokenBrokenProvider.withdraw(tokensToRelease[i], _investor);
 
-            ERC20Extended(tokensToRelease[i]).transfer(_investor, _tokenBalances[i]);
+            ERC20NoReturn(tokensToRelease[i]).transfer(_investor, _tokenBalances[i]);
 
             // Remove token broken completed
             if(requestPending == 0) {
