@@ -261,7 +261,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         ERC20Extended MOT = ERC20Extended(FeeChargerInterface(address(exchange)).MOT());
         uint _rate;
         (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
-        exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0);
+        
+        // fix, this is MOT, so we should require this to be true.
+        require(exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0)); 
         return true;
     }
 
@@ -380,7 +382,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             requestPending = tokenBrokenProvider.withdraw(tokensToRelease[i], _investor);
 
-            ERC20Extended(tokensToRelease[i]).transfer(_investor,_tokenBalances[i]);
+            ERC20Extended(tokensToRelease[i]).transfer(_investor, _tokenBalances[i]);
 
             // Remove token broken completed
             if(requestPending == 0) {
