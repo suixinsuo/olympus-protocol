@@ -18,9 +18,9 @@ The suit option will limit the number of deployment required for the concrete te
 
 ## Mainnet (September 4, 2018)
 Exchange subcomponent:
-
-- KyberNetworkAdapter 0xb4ca82eda9fd642add19c7ab143c91ac9819aeb9
-- ExchangeAdapterManager 0x5c3dab41bad87bf56ec91acc873b6fd966cf6e96
+- Mock Token Broken Kyber: 0x3bb0754eafe418e336a269906efcdcc94fff1454
+- KyberNetworkAdapter: 0xb4ca82eda9fd642add19c7ab143c91ac9819aeb9
+- ExchangeAdapterManager: 0x5c3dab41bad87bf56ec91acc873b6fd966cf6e96
 
 - ComponentList 0xb3c8d8713c1bfdefd2c8bed7594e1103da0e650a
   - ExchangeProvider 0xb5ef3debae3cb2e2bb1ed3e615992f71e560a98b Name: 0x45786368616e676550726f7669646572
