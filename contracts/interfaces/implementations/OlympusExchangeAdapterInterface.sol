@@ -7,6 +7,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract OlympusExchangeAdapterInterface is Ownable {
 
+
     function supportsTradingPair(address _srcAddress, address _destAddress)
         external view returns(bool supported);
 

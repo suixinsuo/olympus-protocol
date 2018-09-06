@@ -9,7 +9,7 @@ import "../../../libs/ERC20Extended.sol";
 contract MockKyberNetwork {
     bool public simulatePriceZero = false;
 
-    bytes32 name = "Kovan and Local Mock Kyber Network";
+    bytes32 name = "LocalMockKyber";
     struct Token{
         SimpleERC20Token   token;
         uint    slippageRate;

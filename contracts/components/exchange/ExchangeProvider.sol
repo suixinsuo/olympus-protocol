@@ -20,7 +20,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     bytes4 public constant BUY_FUNCTION_SELECTOR = bytes4(keccak256("buyToken(address,uint256,uint256,address)"));
     bytes4 public constant SELL_FUNCTION_SELECTOR = bytes4(keccak256("sellToken(address,uint256,uint256,address)"));
     bytes4 public constant SWAP_FUNCTION_SELECTOR = bytes4(keccak256("tokenExchange(address,address,uint256,uint256,address)"));
-    
+
     uint public failureFeeToDeduct = 0;
     uint sellMultipleTokenFee = 0; // Used in sellTokens, put as a storage variable because the stack got too deep
     bool functionCompleteSuccess = true;
@@ -34,7 +34,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     mapping(address => mapping(address => mapping(address => uint))) amountOfTradeFailures;
     mapping(address => mapping(address => mapping(address => uint))) lastTradeFailure;
 
-    OlympusExchangeAdapterManagerInterface private exchangeAdapterManager;
+    OlympusExchangeAdapterManagerInterface public exchangeAdapterManager;
 
     constructor(address _exchangeManager) public {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
