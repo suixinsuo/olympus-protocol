@@ -156,8 +156,12 @@ indexContract.decimals((err,decimals)=>{
 -------------
 
 ``` {.sourceCode .javascript}
-function initialize(address _componentList,
-  uint _initialFundFee) onlyOwner external payable;
+function initialize(
+        address _componentList,
+        uint _initialFundFee,
+        uint _rebalanceDeltaPercentage
+  )
+  external onlyOwner payable;
 ```
 
 ####  Description
