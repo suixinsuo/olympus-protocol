@@ -18,9 +18,9 @@ The suit option will limit the number of deployment required for the concrete te
 
 ## Mainnet (September 4, 2018)
 Exchange subcomponent:
-
-- KyberNetworkAdapter 0xb4ca82eda9fd642add19c7ab143c91ac9819aeb9
-- ExchangeAdapterManager 0x5c3dab41bad87bf56ec91acc873b6fd966cf6e96
+- Mock Token Broken Kyber: 0x3bb0754eafe418e336a269906efcdcc94fff1454
+- KyberNetworkAdapter: 0xb4ca82eda9fd642add19c7ab143c91ac9819aeb9
+- ExchangeAdapterManager: 0x5c3dab41bad87bf56ec91acc873b6fd966cf6e96
 
 - ComponentList 0xb3c8d8713c1bfdefd2c8bed7594e1103da0e650a
   - ExchangeProvider 0xb5ef3debae3cb2e2bb1ed3e615992f71e560a98b Name: 0x45786368616e676550726f7669646572
@@ -46,7 +46,7 @@ Exchange subcomponent:
 - ComponentList 0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e
   - ExchangeProvider 0x389561ac7a1ca2b48da717769cda7de81fe56c16 Name: 0x45786368616e676550726f7669646572
   - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23 Name: 0x4d61726b657450726f7669646572
-  - AsyncWithdraw 0x4c3244b29cd1c1d999c1b2d3c787a956a7c47d97 Name: 0x576974686472617750726f7669646572
+- AsyncWithdraw 0x4c3244b29cd1c1d999c1b2d3c787a956a7c47d97 Name: 0x576974686472617750726f7669646572
   - Reimbursable 0x3016f17d5f585E1A2E2B22C858A88201a7902060 Name: 0x5265696d6275727361626c65
   - PercentageFee 0x8701ef2028e540cb00e50e0f830aad738be8e6c5 Name: 0x46656550726f7669646572
   - WhitelistProvider 0xefecfb7976b271c38101955ac2f1406e2c1ae5db Name: 0x57686974656c69737450726f7669646572
@@ -56,6 +56,7 @@ Exchange subcomponent:
   - Step 0x97a2abb256769450c4cc0a0b72ada72c1998cba8 Name: 0x5374657050726f7669646572
   - TokenBroken 0xed365f7c04877ca18cd33d3dc3e51333eb4d545f Name: 0x546f6b656e42726f6b656e
   - Buy Tokens name: 0x427579546f6b656e73
+  - GetEth (for get ETH from tokens) 0x476574457468
 
  # Deployed addresses (Mainnet 13 ,July, 2018)
 

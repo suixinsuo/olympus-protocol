@@ -8,6 +8,8 @@ import "../../../libs/ERC20Extended.sol";
 
 contract MockKyberNetwork {
     bool public simulatePriceZero = false;
+
+    bytes32 name = "LocalMockKyber";
     struct Token{
         SimpleERC20Token   token;
         uint    slippageRate;
@@ -102,14 +104,14 @@ contract MockKyberNetwork {
             destAddress.transfer(ethAmount);
             return ethAmount;
         }
-            
+
         //TOKEN ----> TOKEN Exchange
         require(msg.value == 0);
         source.transferFrom(msg.sender, address(this), srcAmount);
         uint tokenAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
         dest.transfer(destAddress,tokenAmount);
         return tokenAmount;
-        
+
     }
 
     function getExpectAmount(uint amount, uint destDecimals, uint rate) private pure returns(uint){
