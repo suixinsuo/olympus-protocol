@@ -335,6 +335,45 @@ contract("Fund Special Scenarios", accounts => {
   });
 
   // --------------------------------------------------------------------------
+  // ----------------------------- Accumulated Fee Value correct -------------
+
+  it("Withdraw doesnt take more ETH than corresponding fro balance", async () => {
+    // The key of this test is that we get lest ETH than we expect on selling tokens
+    await mockKyber.setSlippageMockRate(99);
+    ///
+
+    const fund = await createNewFund(componentList);
+    // Invest
+    const investAmount = web3.toWei(1, "ether");
+    await fund.invest({ value: investAmount, from: investorA });
+    // Buy token
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.4, "ether"), web3.toWei(0.4, "ether")]; // Buy 0.8 of 1 ETH as scenario
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    // Request withdraw 75 %
+    await fund.requestWithdraw(investAmount * 0.75, { from: investorA });
+    // Withdraw
+    await fund.withdraw();
+    // We expect sell part of the tokens, return ETH from (getETHBalance + token sold)
+    // Keep
+    const ethBalance = (await web3.eth.getBalance(fund.address)).toNumber();
+    const accFee = (await fund.accumulatedFee()).toNumber();
+    const assetsValue = (await fund.getAssetsValue()).toNumber();
+    const fundPrice = (await fund.getPrice()).toNumber();
+    const fundInvestETHBalance = (await fund.getETHBalance()).toNumber();
+
+
+    assert.isAbove(fundInvestETHBalance, 0, ' ETH Balance for buy tokens is 0');
+    assert.isAbove(assetsValue, 0, ' Assets Value has value');
+    assert.isAbove(fundPrice, web3.toWei(0.95, "ether"), ' Assets Value has value');
+    assert.isAbove(ethBalance, accFee, ' Eth Balance is the same of acc Fee (all ETH returned)');
+    // Reset
+    await mockKyber.setSlippageMockRate(100);
+
+  })
+  // --------------------------------------------------------------------------
   // ----------------------------- OTHER TEST --------------------------------
   // Add other integration or road-end test here
 
