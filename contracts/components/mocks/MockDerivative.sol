@@ -27,6 +27,10 @@ contract MockDerivative is  DerivativeInterface, ComponentContainer, StandardTok
 
     function approveComponent(bytes32 /*_name*/) internal { }
 
+    function getETHBalance() public view returns(uint) {
+        return address(this).balance;
+    }
+
     function () public payable {
 
     }

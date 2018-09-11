@@ -312,4 +312,101 @@ contract("ExchangeProvider", accounts => {
 
     await AdapterManager.removeExchangeAdapter(exchangeidtwo);
   });
+
+  it("Should get mock token price from mockBrokenTokenKyber", async () => {
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    let motPrice = await mockKyberNetworkAdapter.getPrice(ethToken, MockToken.address, 1000);
+    assert.notEqual(motPrice.toString(), '0')
+  });
+  it("Should set broken token address for mockBrokenTokenKyber", async () => {
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    let result = await mockKyberNetworkAdapter.setBrokenTokens(brokenTokenList);
+    assert.equal(result.receipt.status, '0x1')
+  });
+  it("Should get broken token address from mockBrokenTokenKyber", async () => {
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    let brokenToken = await mockKyberNetworkAdapter.getBrokenTokens();
+    for (let i in brokenTokenList) {
+      assert.equal(brokenToken[i].toLowerCase(), brokenTokenList[i].toLowerCase());
+    }
+  });
+  it("Should get 0 from mockBrokenTokenKyber when the token is broken", async () => {
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+    for (let i in brokenTokenList) {
+      let tokenPrice = await mockKyberNetworkAdapter.getPrice(ethToken, brokenTokenList[i], 1000);
+      assert.equal(tokenPrice.toString(), '0,0')
+    }
+  });
+  it("Should revert from mockBrokenTokenKyber when the buy broken token", async () => {
+    const srcAmountETH = 1;
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+
+    for (let i in brokenTokenList) {
+      await calc.assertReverts(async () => await mockKyberNetworkAdapter.buyToken(brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+    }
+  });
+  it("Should revert from mockBrokenTokenKyber when the sell broken token", async () => {
+    const srcAmountETH = 1;
+    const amount = web3.toWei(srcAmountETH);
+    const rate = 1000*10**18;
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+
+    for (let i in brokenTokenList) {
+      await calc.assertReverts(async () => await mockKyberNetworkAdapter.sellToken(brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+    }
+  });
+
+  it("Should revert buy brokenToken from token swap", async () => {
+    const srcAmountETH = 1;
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+    let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
+
+    for (let i in brokenTokenList) {
+      await calc.assertReverts(async () => await mockKyberNetworkAdapter.tokenExchange(ethToken, brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+    }
+  });
+  it("Should support buy token from token swap", async () => {
+    const srcAmountETH = 1;
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+    let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
+    const erc20Token = await ERC20Extended.at(tokens[0]);
+    const beforeBalance = await erc20Token.balanceOf(deposit);
+
+    await kyberNetworkAdapter.tokenExchange(ethToken,tokens[0],amount,rate,deposit,{value: web3.toWei(srcAmountETH)});
+    const afterBalance = await erc20Token.balanceOf(deposit);
+    assert.equal((afterBalance - beforeBalance), rate , `BestRate`);
+  });
+  it("Should support token to stoken swap", async () => {
+    let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
+    const erc20Token = await ERC20Extended.at(tokens[0]);
+    const erc20Token2 = await ERC20Extended.at(tokens[1]);
+    const beforeBalance = await erc20Token2.balanceOf(deposit);
+    await erc20Token.transfer(kyberNetworkAdapter.address, 1000*10**18);
+    const beforeBalance2 = await erc20Token.balanceOf(kyberNetworkAdapter.address);
+    /*
+    Normally srctoken is approved by exchange provider , but I don't use it, so I send it directly to kyber adapter.
+    */
+    await kyberNetworkAdapter.tokenExchange(tokens[0],tokens[1],1000*10**18,10**18,deposit);
+    const afterBalance = await erc20Token2.balanceOf(deposit);
+    const afterBalance2 = await erc20Token.balanceOf(kyberNetworkAdapter.address);
+    assert.equal((afterBalance-beforeBalance), 1000*10**18 , `Success`);
+    assert.equal((beforeBalance2-afterBalance2), 1000*10**18 , `Success`);
+  });
+  it("exchange provider should support token to stoken swap", async () => {
+    const erc20Token = await ERC20Extended.at(tokens[0]);
+    const erc20Token2 = await ERC20Extended.at(tokens[1]);
+    const beforeBalance = await erc20Token.balanceOf(deposit);
+    await erc20Token2.approve(exchangeProvider.address, 1000*10**18);
+    const beforeBalance2 = await erc20Token2.balanceOf(deposit);
+
+    await exchangeProvider.tokenExchange(tokens[1],tokens[0],1000*10**18,10**18,deposit,"");
+    const afterBalance = await erc20Token.balanceOf(deposit);
+    const afterBalance2 = await erc20Token2.balanceOf(deposit);
+    assert.equal((afterBalance-beforeBalance), 1000*10**18 , `Success`);
+    assert.equal((beforeBalance2-afterBalance2), 1000*10**18 , `Success`);
+  });
 });
