@@ -24,8 +24,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
 
     uint public constant DENOMINATOR = 10000;
-    uint public constant WORST_RATE = 500;
-
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     uint public constant INITIAL_VALUE =  10**18; // 1 ETH
     uint public constant INITIAL_FEE = 10**17;
@@ -297,12 +295,11 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
                 return true;
             }
             // tokenPercentToSell must be freeze as class variable
-            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue()).add(WORST_RATE);
-            freezeTokenPercentage = freezeTokenPercentage > DENOMINATOR? DENOMINATOR :freezeTokenPercentage;
-
+            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
         }
-        return getETHFromTokens(freezeTokenPercentage );
+        return getETHFromTokens(freezeTokenPercentage);
     }
+
 
    // solhint-disable-next-line
     function withdraw()

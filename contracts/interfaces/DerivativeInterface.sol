@@ -19,4 +19,5 @@ contract DerivativeInterface is  Ownable, ComponentContainerInterface {
     function updateComponent(bytes32 _name) public returns (address);
     function approveComponent(bytes32 _name) internal;
 
+
 }

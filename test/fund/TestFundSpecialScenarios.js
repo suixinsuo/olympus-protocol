@@ -337,7 +337,7 @@ contract("Fund Special Scenarios", accounts => {
   // --------------------------------------------------------------------------
   // ----------------------------- Accumulated Fee Value correct -------------
 
-  it("Withdraw doesnt take more ETH than corresponding fro balance", async () => {
+  it("Withdraw doesn't take more ETH than corresponding for balance", async () => {
     // The key of this test is that we get lest ETH than we expect on selling tokens
     await mockKyber.setSlippageMockRate(99);
     ///
@@ -368,7 +368,7 @@ contract("Fund Special Scenarios", accounts => {
     assert.isAbove(fundInvestETHBalance, 0, ' ETH Balance for buy tokens is 0');
     assert.isAbove(assetsValue, 0, ' Assets Value has value');
     assert.isAbove(fundPrice, web3.toWei(0.95, "ether"), ' Assets Value has value');
-    assert.isAbove(ethBalance, accFee, ' Eth Balance is the same of acc Fee (all ETH returned)');
+    assert.equal(ethBalance, accFee, ' Eth Balance is the same of acc Fee (all ETH returned)');
     // Reset
     await mockKyber.setSlippageMockRate(100);
 
