@@ -41,8 +41,7 @@ Exchange subcomponent:
 
 - MockKyber  0x20462bd14c7a1e524d19ef6a7a291297c7135b4c
 - Adapter with fake kyber 0xd0e3d1390c9757545647053b23d5173b0933c9f3 name: 0x66616b656b79626572 ('fakekyber')
-- Mock token Broken kyber 0x6fdc17b288cb2c36a5a232f550d57ccfd81d3839
-- KyberNetworkAdapter 0x7e0cfe3791a4b01922c128975dff114220616b41  name: 0x6b79626572 ('kyber')
+- KyberNetworkAdapter 0x7e0cfe3791a4b01922c128975dff114220616b41 - name: 0x6b79626572 ('kyber')
 - ExchangeAdapterManager 0xbcb4dcea717dc20f3e6dffcd9c9ef85e9b5f960d
 
 
