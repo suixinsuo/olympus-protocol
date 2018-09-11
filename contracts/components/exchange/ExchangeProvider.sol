@@ -22,17 +22,17 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     bytes4 public constant SWAP_FUNCTION_SELECTOR = bytes4(keccak256("tokenExchange(address,address,uint256,uint256,address)"));
 
     uint public failureFeeToDeduct = 0;
-    uint sellMultipleTokenFee = 0; // Used in sellTokens, put as a storage variable because the stack got too deep
-    bool functionCompleteSuccess = true;
+    uint public sellMultipleTokenFee = 0; // Used in sellTokens, put as a storage variable because the stack got too deep
+    bool public functionCompleteSuccess = true;
 
     // exchangeId > sourceAddress > destAddress
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceExpected;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceSlippage;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public lastCachedPriceTime;
     // msg.sender => sourceAddress > destAddress
-    mapping(address => mapping(address => mapping(address => uint))) firstTradeFailure;
-    mapping(address => mapping(address => mapping(address => uint))) amountOfTradeFailures;
-    mapping(address => mapping(address => mapping(address => uint))) lastTradeFailure;
+    mapping(address => mapping(address => mapping(address => uint))) public firstTradeFailure;
+    mapping(address => mapping(address => mapping(address => uint))) public amountOfTradeFailures;
+    mapping(address => mapping(address => mapping(address => uint))) public lastTradeFailure;
 
     OlympusExchangeAdapterManagerInterface public exchangeAdapterManager;
 
