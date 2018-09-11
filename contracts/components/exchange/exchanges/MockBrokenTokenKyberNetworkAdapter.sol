@@ -13,7 +13,7 @@ contract MockBrokenTokenKyberNetworkAdapter is OlympusExchangeAdapterInterface{
     address public exchangeAdapterManager;
     address public exchangeProvider;
     bytes32 public exchangeId;
-    bytes32 public name;
+    bytes32 public name = "KyberBrokenToken";
     ERC20Extended public constant ETH_TOKEN_ADDRESS = ERC20Extended(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     address public walletId = 0x09227deaeE08a5Ba9D6Eb057F922aDfAd191c36c;
 

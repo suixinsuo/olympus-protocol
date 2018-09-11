@@ -48,6 +48,15 @@ Mainnet fund 0xcc6402e1fbc7fb3f5e5543ecdd3d7978904f617a
 
     // MOT (0.001 ETH)
     `"0x0",["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a"],["1000000000000000"],[0]`
+    // Mainnet Addresses
+    MANA = 0x0f5d2fb29fb7d3cfee444a200298f468908cc942
+    OMG = 0xd26114cd6EE289AccF82350c8d8487fedB8A0C07
+    KNC = 0xdd974d5c2e2928dea5f71b9825b8b646686bd200
+    ENG = 0xf0ee6b27b759c9893ce4f094b49ad28fd15a23e4
+    LINK = 0x514910771af9ca656af840dff83e8264ecf986ca
+    `"0x0",["0x0f5d2fb29fb7d3cfee444a200298f468908cc942"],["1000000000000000"],[0]`
+    // Buying mana omg and eng in mainnet
+    "0x0",["0x0f5d2fb29fb7d3cfee444a200298f468908cc942", "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07", "0xf0ee6b27b759c9893ce4f094b49ad28fd15a23e4"],["5000000000000000","5000000000000000","5000000000000000"],[0,"0",0]
 
 4.  Sell MANA (check balance)
 
@@ -105,3 +114,6 @@ DGX: '0x5a060e07ae8c5b670d2fd1af4b8f6e8c2e09b8e6', // No tested
 
 "Olympus Fund","OLF","Derivative which base his assets value in diversification of tokens","General","18"
 "0x0",["0x0f5d2fb29fb7d3cfee444a200298f468908cc942"],["844242424242425"],[0]
+
+
+

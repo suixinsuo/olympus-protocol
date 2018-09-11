@@ -12,6 +12,8 @@ contract MockKyberNetwork {
 
     uint public slippageMockRate  = 100;
     bool public simulatePriceZero = false;
+
+    bytes32 name = "LocalMockKyber";
     struct Token{
         SimpleERC20Token   token;
         uint    slippageRate;

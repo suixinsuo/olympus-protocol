@@ -10,6 +10,7 @@ contract DerivativeInterface is  Ownable, ComponentContainerInterface {
 
     string public description;
     string public category;
+    
     string public version;
     DerivativeType public fundType;
     DerivativeStatus public status;
