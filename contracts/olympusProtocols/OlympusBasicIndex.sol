@@ -310,4 +310,9 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         approveComponent(REBALANCE);
     }
 
+    function getETHBalance() public view returns(uint) {
+        return address(this).balance;
+    }
+
+
 }

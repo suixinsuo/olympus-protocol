@@ -88,4 +88,8 @@ contract MockRebalanceIndex is IndexInterface, MockDerivative {
         //mock 1 eth to 1 token
         return 10 ** 18;
     }
+
+     function getETHBalance() public view returns(uint) {
+        return address(this).balance;
+    }
 }

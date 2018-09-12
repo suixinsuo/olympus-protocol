@@ -84,9 +84,26 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
 
     function freeze() external {
         require(contracts[msg.sender].withdrawRequestLock == false);
+        ERC20Extended derivative = ERC20Extended(msg.sender);
+
+
+        uint _price = ERC20PriceInterface(msg.sender).getPrice();
+        uint _derivativeEth = ERC20PriceInterface(derivative).getETHBalance();
+        uint _withdrawAmount = contracts[msg.sender].totalWithdrawAmount;
+        // ETH = AMOUNT*PRICE / DECIMALS
+        uint _requireEther = _withdrawAmount.mul(_price).div(10 ** derivative.decimals());
+
+        // Case we have enough ETH
+        if(_requireEther <= _derivativeEth) {
+            contracts[msg.sender].price = _price;
+        } else {
+            // Special scenario, we got not enough ETH to satisfy this price
+            // PRICE = ETH*DECIMALS / AMOUNT
+            contracts[msg.sender].price = _derivativeEth.mul(10 ** derivative.decimals()).div(_withdrawAmount);
+        }
+
         contracts[msg.sender].withdrawRequestLock = true;
-        contracts[msg.sender].price = ERC20PriceInterface(msg.sender).getPrice();
-     }
+    }
 
     function finalize() external {
         contracts[msg.sender].withdrawRequestLock = false;
