@@ -100,9 +100,9 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
 
     function tokenSwap(bytes32 _exchangeId, ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _rate)
          public onlyOwner returns(bool) {
-        
+
         //Only Support Token Swap
-        require(_src!=ETH&&_dest!=ETH); 
+        require(_src!=ETH&&_dest!=ETH);
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
@@ -297,5 +297,9 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
             emit TokenUpdated(_tokenAddress, amounts[_tokenAddress]);
         }
         return true;
+    }
+
+    function getETHBalance() public view returns(uint) {
+        return address(this).balance;
     }
 }
