@@ -163,4 +163,9 @@ contract MockFund is FundInterface, Derivative {
         investors[msg.sender] -= amount;
         totalSupply_ -= amount;
     }
+
+
+    function getETHBalance() public view returns(uint) {
+        return address(this).balance;
+    }
 }

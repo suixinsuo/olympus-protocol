@@ -6,6 +6,8 @@ import "./ComponentContainerInterface.sol";
 
 contract ERC20PriceInterface {
     function getPrice() public view returns(uint);
+    function getETHBalance() public view returns(uint);
+
 }
 
 contract ERC721PriceInterface {

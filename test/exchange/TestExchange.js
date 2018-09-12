@@ -323,12 +323,12 @@ contract("ExchangeProvider", accounts => {
   });
   it("Should set broken token address for mockBrokenTokenKyber", async () => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
-    let result = await mockKyberNetworkAdapter.setBrokenTokens(brokenTokenList); 
+    let result = await mockKyberNetworkAdapter.setBrokenTokens(brokenTokenList);
     assert.equal(result.receipt.status, '0x1')
   });
   it("Should get broken token address from mockBrokenTokenKyber", async () => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
-    let brokenToken = await mockKyberNetworkAdapter.getBrokenTokens(); 
+    let brokenToken = await mockKyberNetworkAdapter.getBrokenTokens();
     for (let i in brokenTokenList) {
       assert.equal(brokenToken[i].toLowerCase(), brokenTokenList[i].toLowerCase());
     }
@@ -336,7 +336,7 @@ contract("ExchangeProvider", accounts => {
   it("Should get 0 from mockBrokenTokenKyber when the token is broken", async () => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
     for (let i in brokenTokenList) {
-      let tokenPrice = await mockKyberNetworkAdapter.getPrice(ethToken, brokenTokenList[i], 1000); 
+      let tokenPrice = await mockKyberNetworkAdapter.getPrice(ethToken, brokenTokenList[i], 1000);
       assert.equal(tokenPrice.toString(), '0,0')
     }
   });
@@ -366,7 +366,7 @@ contract("ExchangeProvider", accounts => {
     const amount = web3.toWei(srcAmountETH);
     const rate = expectedRate;
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
-    
+
     for (let i in brokenTokenList) {
       await calc.assertReverts(async () => await mockKyberNetworkAdapter.tokenExchange(ethToken, brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
     }
@@ -378,7 +378,7 @@ contract("ExchangeProvider", accounts => {
     let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
     const erc20Token = await ERC20Extended.at(tokens[0]);
     const beforeBalance = await erc20Token.balanceOf(deposit);
-    
+
     await kyberNetworkAdapter.tokenExchange(ethToken,tokens[0],amount,rate,deposit,{value: web3.toWei(srcAmountETH)});
     const afterBalance = await erc20Token.balanceOf(deposit);
     assert.equal((afterBalance - beforeBalance), rate , `BestRate`);

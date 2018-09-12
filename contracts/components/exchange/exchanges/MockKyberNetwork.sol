@@ -2,11 +2,15 @@ pragma solidity 0.4.24;
 
 import "../../../libs/utils.sol";
 import "../../../libs/SimpleERC20Token.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "../../../libs/ERC20Extended.sol";
 
 
 contract MockKyberNetwork {
+    using SafeMath for uint256;
+
+    uint public slippageMockRate  = 100;
     bool public simulatePriceZero = false;
 
     bytes32 name = "LocalMockKyber";
@@ -25,6 +29,12 @@ contract MockKyberNetwork {
             }));
         }
     }
+
+    function setSlippageMockRate(uint _value) public {
+        require(_value >= 0 && _value <= 100);
+        slippageMockRate = _value;
+    }
+
     function toggleSimulatePriceZero(bool _shouldSimulateZero) external returns(bool success){
         simulatePriceZero = _shouldSimulateZero;
         return true;
@@ -101,7 +111,7 @@ contract MockKyberNetwork {
             require(msg.value == 0);
             source.transferFrom(msg.sender, address(this), srcAmount);
             uint ethAmount = Utils.calcDstQty(srcAmount, source.decimals(), 18, expectedRate);
-            destAddress.transfer(ethAmount);
+            destAddress.transfer(ethAmount.div(100).mul(slippageMockRate));
             return ethAmount;
         }
 
