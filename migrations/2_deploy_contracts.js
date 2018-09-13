@@ -150,6 +150,7 @@ async function deployOlympusFund(deployer, network) {
     ComponentList,
     Steps,
     TokenBroken,
+    [MockToken, "", "MOT", 18, mockTokenSupply],
   ]);
   await deployExchange(deployer, network);
 }
@@ -182,6 +183,7 @@ async function deployOlympusIndex(deployer, network) {
     ComponentList,
     Steps,
     TokenBroken,
+    [MockToken, "", "MOT", 18, mockTokenSupply],
   ]);
   await deployExchange(deployer, network);
   await deployer.deploy(RebalanceProvider, ExchangeProvider.address);

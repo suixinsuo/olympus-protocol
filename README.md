@@ -18,6 +18,7 @@ The suit option will limit the number of deployment required for the concrete te
 
 ## Mainnet (September 4, 2018)
 Exchange subcomponent:
+- Fake Kyber 0x0d30ebb6387f1db32e999962d26af54b2e5f03f5 ADAPTER:  0x391e1b09113e38d148b625372c1114ef826b310a Name: 0x66616b654b79626572 ('FakeKyber')
 - Mock Token Broken Kyber: 0x3bb0754eafe418e336a269906efcdcc94fff1454
 - KyberNetworkAdapter: 0xb4ca82eda9fd642add19c7ab143c91ac9819aeb9
 - ExchangeAdapterManager: 0x5c3dab41bad87bf56ec91acc873b6fd966cf6e96

@@ -401,7 +401,7 @@ contract("Fund Special Scenarios", accounts => {
 
   });
 
-  ("All Tokens marked as broken on closing the fund", async () => {
+  it("All Tokens marked as broken on closing the fund", async () => {
     const fund = await createNewFund(componentList);
     // Invest
     const investAmount = web3.toWei(2, "ether");
@@ -453,7 +453,7 @@ contract("Fund Special Scenarios", accounts => {
   });
 
   // --------------------------------------------------------------------------
-  // ----------------------------- Accumulated Fee Value correct -------------
+  // ----------------------------- WITHDRAW -------------
 
   it("Withdraw doesn't take more ETH than corresponding for balance", async () => {
     // The key of this test is that we get lest ETH than we expect on selling tokens
@@ -485,11 +485,66 @@ contract("Fund Special Scenarios", accounts => {
 
     assert.isAbove(fundInvestETHBalance, 0, ' ETH Balance for buy tokens is 0');
     assert.isAbove(assetsValue, 0, ' Assets Value has value');
-    assert.isAbove(fundPrice, web3.toWei(0.95, "ether"), ' Assets Value has value');
+    assert.isAbove(fundPrice, web3.toWei(0.95, "ether"), ' Price reduce because slippage rate a little');
     assert.equal(ethBalance, accFee, ' Eth Balance is the same of acc Fee (all ETH returned)');
     // Reset
     await mockKyber.setSlippageMockRate(100);
 
+  })
+
+
+  /**
+   * This test avoid a issue found on mainnet.
+   * If the tokens to be sold are less than the total tokens, getETHFromToken
+   * would not realize that he finished selling, and will get withdraw stuck in the middle.
+   * After the fix is done, this test will prevent same issue to happen
+   */
+  it("Withdraw require sell tokens but less than tokens list", async () => {
+
+    const fund = await createNewFund(componentList);
+    // Invest
+    const investAmount = web3.toWei(1, "ether");
+    await fund.invest({ value: investAmount, from: investorA });
+    // Buy token
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.5, "ether"), web3.toWei(0.5, "ether")];
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+
+    let [fundTokens, fundAmounts] = await fund.getTokens();
+    fundAmounts = fundAmounts.map((amount) => amount.toNumber());
+    // We get two tokens with amount
+    assert.equal(fundTokens.length, 2, 'Buy 2 tokens');
+    assert.isAbove(fundAmounts[0], 0, 'Fund token 0 has amount');
+    assert.isAbove(fundAmounts[1], 0, 'Fund token 1 has amount');
+    // We sell the first token.
+
+    const sellRates = await Promise.all(
+      tokens.map(async (token, index) => await mockKyber.getExpectedRate(token, ethToken, fundAmounts[index]))
+    );
+
+    // We sell all but are broken
+    tx = await fund.sellTokens("", [fundTokens[0]], [fundAmounts[0]], [sellRates.map(rate => rate[0])[0]]);
+    [fundTokens, fundAmounts] = await fund.getTokens();
+    fundAmounts = fundAmounts.map((amount) => amount.toNumber());
+    assert.equal(fundAmounts[0], 0, 'Fund token 0 has been sold');
+    assert.isAbove(fundAmounts[1], 0, 'Fund token 1 still has amount');
+
+    await fund.requestWithdraw(investAmount, { from: investorA });
+    // Withdraw
+    await fund.withdraw();
+
+    assert.equal((await fund.balanceOf(investorA)).toNumber(), 0, 'Investor A has withdraw');
+    // Only 1 token with amount is sold on the withdraw
+    [fundTokens, fundAmounts] = await fund.getTokens();
+    fundAmounts = fundAmounts.map((amount) => amount.toNumber());
+    assert.equal(fundAmounts[1], 0, 'Fund token 0 has been also sold');
+    // Check the status provider
+    const sellStatus = (await stepProvider.status(fund.address, DerivativeProviders.GETETH)).toNumber();
+    assert.equal(sellStatus, 0); // In the original issue that has the problem
+    const withdrawStatus = (await stepProvider.status(fund.address, DerivativeProviders.WITHDRAW)).toNumber();
+    assert.equal(withdrawStatus, 0);
   })
   // --------------------------------------------------------------------------
   // ----------------------------- OTHER TEST --------------------------------

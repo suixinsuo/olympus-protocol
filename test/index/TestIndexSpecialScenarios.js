@@ -56,8 +56,26 @@ const getTokensAndAmounts = async (index) => {
   return [tokensWeights[0], amounts];
 }
 
+
+const createNewIndex = async (componentList, tokens) => {
+  const index = await OlympusIndex.new(
+    indexData.name,
+    indexData.symbol,
+    indexData.description,
+    indexData.category,
+    indexData.decimals,
+    tokens.slice(0, indexData.tokensLenght),
+    indexData.weights,
+    { gas: 8e6 } // At the moment require 6.7M
+  );
+
+  await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
+    value: web3.toWei(indexData.ethDeposit, "ether")
+  });
+  return index;
+}
+
 contract("Olympus Index Special Scenarios", accounts => {
-  let index;
   let market;
   let mockKyber;
   let mockMOT;
@@ -76,6 +94,7 @@ contract("Olympus Index Special Scenarios", accounts => {
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
+
 
   before("Create Index", async () => {
     mockKyber = await MockKyberNetwork.deployed();
@@ -114,28 +133,11 @@ contract("Olympus Index Special Scenarios", accounts => {
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
   });
 
-  it("Create the index", async () => {
-    index = await OlympusIndex.new(
-      indexData.name,
-      indexData.symbol,
-      indexData.description,
-      indexData.category,
-      indexData.decimals,
-      tokens.slice(0, indexData.tokensLenght),
-      indexData.weights,
-      { gas: 8e6 } // At the moment require 6.7M
-    );
+  it("Bot withdraw selling tokens", async () => {
 
-    assert.equal(await index.name(), indexData.name);
-    await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
-      value: web3.toWei(indexData.ethDeposit, "ether")
-    });
+    const index = await createNewIndex(componentList, tokens);
     assert.equal((await index.status()).toNumber(), 1); // Active
 
-  });
-
-
-  it("Bot withdraw selling tokens", async () => {
     let tx;
     const bot = investorB; // B will do rol of bot here
     // A invest and request withdraw
@@ -163,6 +165,72 @@ contract("Olympus Index Special Scenarios", accounts => {
 
 
   });
+  // --------------------------------------------------------------------------
+  // ----------------------------- WITHDRAW -------------
+  it("Buy tokens and get price with underlaying tokens broken", async () => {
+
+
+    const index = await createNewIndex(componentList, tokens);
+    // Invest
+    const investAmount = web3.toWei(1, "ether");
+    await index.invest({ value: investAmount, from: investorA });
+    // Make all the tokens
+    await mockKyber.toggleSimulatePriceZero(true);
+
+    let price = (await index.getPrice()).toNumber();
+    assert.equal(price, web3.toWei(1, 'ether'), ' Price is constant because nothing was bought');
+    assert.equal((await index.getAssetsValue()).toNumber(), 0, ' assets value is  0');
+
+    await calc.assertReverts(
+      async () => await index.buyTokens(),
+      'Tokens are broken buy reverts'
+    );
+
+    price = (await index.getPrice()).toNumber();
+    assert.equal(price, web3.toWei(1, 'ether'), ' Price is STILL constant because nothing was bought');
+    assert.equal((await index.getAssetsValue()).toNumber(), 0, ' assets value is  STILL 0');
+
+    // Reset
+    await mockKyber.toggleSimulatePriceZero(false);
+
+  })
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- WITHDRAW -------------
+
+  it("Withdraw doesn't take more ETH than corresponding for balance", async () => {
+    // The key of this test is that we get lest ETH than we expect on selling tokens
+    await mockKyber.setSlippageMockRate(99);
+    ///
+
+
+    const index = await createNewIndex(componentList, tokens);
+    // Invest
+    const investAmount = web3.toWei(1, "ether");
+    await index.invest({ value: investAmount, from: investorA });
+    // Buy token
+    await index.buyTokens();
+    // Request withdraw 75 %
+    await index.requestWithdraw(investAmount * 0.75, { from: investorA });
+    // Withdraw
+    await index.withdraw();
+    // We expect sell part of the tokens, return ETH from (getETHBalance + token sold)
+    // Keep
+    const ethBalance = (await web3.eth.getBalance(index.address)).toNumber();
+    const accFee = (await index.accumulatedFee()).toNumber();
+    const assetsValue = (await index.getAssetsValue()).toNumber();
+    const indexPrice = (await index.getPrice()).toNumber();
+    const indexInvestETHBalance = (await index.getETHBalance()).toNumber();
+
+
+    assert.equal(indexInvestETHBalance, 0, ' All withdraw is sold');
+    assert.isAbove(assetsValue, 0, ' Assets Value has value');
+    assert.isAbove(indexPrice, web3.toWei(0.95, "ether"), 'Price reduce because slippage rate a little');
+    assert.equal(ethBalance, accFee, ' Eth Balance is the same of acc Fee (all ETH returned)');
+    // Reset
+    await mockKyber.setSlippageMockRate(100);
+
+  })
 
 
 });

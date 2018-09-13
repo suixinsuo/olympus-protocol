@@ -299,9 +299,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         return i == _requests.length; // True if completed
     }
 
-    function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) { 
+    function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) {
         uint _eth;
-        uint _tokenAmount;   
+        uint _tokenAmount;
 
         (_eth, _tokenAmount) = _withdrawProvider.withdraw(_investor);
         if (_tokenAmount == 0) {return false;}
@@ -377,7 +377,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         }
         require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
 
-        if(i == tokens.length) {
+        if(i == freezeTokens.length) {
             finalizeStep(GETETH);
             return true;
         }
