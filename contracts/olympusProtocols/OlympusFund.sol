@@ -53,7 +53,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.0";
+        version = "1.1-20180913";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
