@@ -296,4 +296,9 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
         }
         return true;
     }
+
+
+    function getETHBalance() public view returns(uint) {
+        return address(this).balance;
+    }
 }

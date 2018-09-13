@@ -308,4 +308,9 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative {
         approveComponent(REBALANCE);
     }
 
+    function getETHBalance() public view returns(uint) {
+        return address(this).balance;
+    }
+
+
 }
