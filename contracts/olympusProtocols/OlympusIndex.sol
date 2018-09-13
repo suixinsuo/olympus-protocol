@@ -541,5 +541,11 @@ contract OlympusIndex is IndexInterface, Derivative {
         return true;
     }
 
-
+    // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
+    function panic() external onlyOwner {
+        owner.transfer(address(this).balance);
+        for (uint i = 0; i < tokens.length; i++) {
+            ERC20NoReturn(tokens[i]).transfer(owner, ERC20Extended(tokens[i]).balanceOf(address(this)));
+        }
+    }
 }
