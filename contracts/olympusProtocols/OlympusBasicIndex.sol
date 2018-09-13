@@ -323,9 +323,9 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
 
     // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
     function panic() external onlyOwner {
-        _transfer(owner, address(this).balance);
+        owner.transfer(address(this).balance);
         for (uint i = 0; i < tokens.length; i++) {
-            tokenTransfer(tokens[i], owner, amounts[tokens[i]]);
+            ERC20NoReturn(tokens[i]).transfer(owner, amounts[tokens[i]]);
         }
     }
 
