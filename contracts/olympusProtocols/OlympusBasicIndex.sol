@@ -53,7 +53,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
 
         // Check all tokens are ERC20Extended
         for (uint i = 0 ; i < tokens.length; i++) {
-            require(ERC20Extended(tokens[i]).balanceOf(address(this)) == 0 );
+            ERC20Extended(tokens[i]).balanceOf(address(this));
         }
 
         name = _name;
