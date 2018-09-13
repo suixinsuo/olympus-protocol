@@ -91,7 +91,25 @@ contract("Basic Index", accounts => {
           []
         ),
       "Shall revert"
-    ));
+    )
+  );
+
+
+  it("Required tokens to be ERC20Extended Standard", async () =>
+    await calc.assertReverts(
+      async () =>
+        await BasicIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          [rebalance.address, asyncWithdraw.address], // NOT erc20
+          indexData.weights
+        ),
+      "Shall revert"
+    )
+  );
 
   it("Create a index", async () => {
     index = await BasicIndex.new(

@@ -49,9 +49,12 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(0<=_decimals&&_decimals<=18);
         require(_tokens.length == _weights.length);
         uint _totalWeight;
+        uint i;
 
-        for (uint i = 0; i < _weights.length; i++) {
+        for (i = 0; i < _weights.length; i++) {
             _totalWeight = _totalWeight.add(_weights[i]);
+            // Check all tokens are ERC20Extended
+            ERC20Extended(_tokens[i]).balanceOf(address(this));
         }
         require(_totalWeight == 100);
 
@@ -66,6 +69,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         tokens = _tokens;
         weights = _weights;
         status = DerivativeStatus.New;
+
+
     }
 
     // ----------------------------- CONFIG -----------------------------
