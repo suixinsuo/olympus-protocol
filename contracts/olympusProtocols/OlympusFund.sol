@@ -230,6 +230,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         uint _balance;
 
         for (uint i = 0; i < tokens.length; i++) {
+            if(isBrokenToken[tokens[i]]) {continue;}
+
             _balance = amounts[tokens[i]];
             if (_balance == 0) {continue;}
 
@@ -461,7 +463,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             checkBrokenTokens(_tokensThisStep);
         }
 
-        if(i == tokens.length) {
+        if(i == _tokensToSell.length) {
             updateTokens(_tokensToSell); // Must update tokens at the end to keep _tokensToSell freeze
             finalizeStep(GETETH);
             return true;
