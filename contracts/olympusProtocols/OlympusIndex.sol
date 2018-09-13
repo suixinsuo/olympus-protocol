@@ -54,7 +54,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         for (i = 0; i < _weights.length; i++) {
             _totalWeight = _totalWeight.add(_weights[i]);
             // Check all tokens are ERC20Extended
-            ERC20Extended(tokens[i]).balanceOf(address(this));
+            ERC20Extended(_tokens[i]).balanceOf(address(this));
         }
         require(_totalWeight == 100);
 
