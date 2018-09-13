@@ -12,7 +12,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     string public name = "AsyncWithdraw";
     string public description = "Withdraw one by one";
     string public category = "Withdraw";
-    string public version = "1.0";
+    string public version = "1.1-20180913";
 
     struct ContractInfo {
         uint price;

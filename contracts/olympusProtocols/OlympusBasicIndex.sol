@@ -62,7 +62,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         decimals = _decimals;
         description = _description;
         category = _category;
-        version = "1.0";
+        version = "1.1-20180913";
         fundType = DerivativeType.Index;
         tokens = _tokens;
         weights = _weights;

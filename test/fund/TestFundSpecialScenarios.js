@@ -8,7 +8,7 @@ const {
   DerivativeType
 } = require("../utils/constants");
 const Fund = artifacts.require("OlympusFund");
-const AsyncWithdraw = artifacts.require("components/widrwaw/AsyncWithdraw");
+const AsyncWithdraw = artifacts.require("components/withdraw/AsyncWithdraw");
 const RiskControl = artifacts.require("components/RiskControl");
 const Marketplace = artifacts.require("Marketplace");
 const PercentageFee = artifacts.require("PercentageFee");

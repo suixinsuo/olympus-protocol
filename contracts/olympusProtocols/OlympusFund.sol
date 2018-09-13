@@ -53,7 +53,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.0";
+        version = "1.1-20180913";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -588,14 +588,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         ERC20NoReturn(_token).approve(exchange, 0);
         ERC20NoReturn(_token).approve(exchange, amount);
-    }
-
-    // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
-    function panic() external onlyOwner {
-        _transfer(owner, address(this).balance);
-        for (uint i = 0; i < tokens.length; i++) {
-            tokenTransfer(tokens[i], owner, amounts[tokens[i]]);
-        }
     }
 
     function tokenTransfer(address _tokenAddress, address _to, uint _amount) private {
