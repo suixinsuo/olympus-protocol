@@ -49,11 +49,17 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(0<=_decimals&&_decimals<=18);
         require(_tokens.length == _weights.length);
         uint _totalWeight;
+        uint i;
 
-        for (uint i = 0; i < _weights.length; i++) {
+        for (i = 0; i < _weights.length; i++) {
             _totalWeight = _totalWeight.add(_weights[i]);
         }
         require(_totalWeight == 100);
+
+        // Check all tokens are ERC20Extended
+        for ( i = 0 ; i < tokens.length; i++) {
+            require(ERC20Extended(tokens[i]).balanceOf(address(this)) == 0 );
+        }
 
         name = _name;
         symbol = _symbol;
@@ -66,6 +72,8 @@ contract OlympusIndex is IndexInterface, Derivative {
         tokens = _tokens;
         weights = _weights;
         status = DerivativeStatus.New;
+
+
     }
 
     // ----------------------------- CONFIG -----------------------------
@@ -299,9 +307,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         return i == _requests.length; // True if completed
     }
 
-    function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) { 
+    function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) {
         uint _eth;
-        uint _tokenAmount;   
+        uint _tokenAmount;
 
         (_eth, _tokenAmount) = _withdrawProvider.withdraw(_investor);
         if (_tokenAmount == 0) {return false;}

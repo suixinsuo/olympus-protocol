@@ -130,10 +130,29 @@ contract("Olympus Index", accounts => {
           indexData.category,
           indexData.decimals,
           tokens.slice(0, indexData.tokensLenght),
-          []
+          [],
+          { gas: 8e6 } // At the moment require 6.7M
         ),
       "Shall revert"
     ));
+
+
+  it("Required tokens to be ERC20Extended Standard", async () =>
+    await calc.assertReverts(
+      async () =>
+        await OlympusIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          [rebalance.address, asyncWithdraw.address], // NOT erc20
+          indexData.weights,
+          { gas: 8e6 } // At the moment require 6.7M
+        ),
+      "Shall revert"
+    )
+  );
 
   it("Create a index", async () => {
     index = await OlympusIndex.new(
