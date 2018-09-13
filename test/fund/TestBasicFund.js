@@ -101,7 +101,6 @@ contract("BasicFund", accounts => {
     assert.equal(await fund.description(), fundData.description);
     assert.equal(await fund.symbol(), fundData.symbol);
     assert.equal(await fund.category(), fundData.category);
-    assert.equal(await fund.version(), "1.0");
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
 

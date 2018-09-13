@@ -209,7 +209,6 @@ contract("Olympus Index", accounts => {
     assert.equal(await index.description(), indexData.description);
     assert.equal(await index.category(), indexData.category);
     assert.equal(await index.symbol(), indexData.symbol);
-    assert.equal(await index.version(), "1.0");
     assert.equal((await index.fundType()).toNumber(), DerivativeType.Index);
     assert.equal((await index.totalSupply()).toNumber(), 0);
     const [indexTokens, weights] = await index.getTokens();

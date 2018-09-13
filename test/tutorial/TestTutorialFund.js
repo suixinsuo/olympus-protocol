@@ -19,7 +19,7 @@ const fundData = {
   category: "Tests",
   description: "Sample of base fund",
   decimals: 18,
-  maxInvestors: 2,
+  maxInvestors: 2
 };
 
 const toTokenWei = amount => {
@@ -60,18 +60,10 @@ contract("Tutorial Fund", accounts => {
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchange.address);
     componentList.setComponent(DerivativeProviders.WITHDRAW, asyncWithdraw.address);
     componentList.setComponent(DerivativeProviders.LOCKER, lockerProvider.address);
-
   });
 
-
   it("Create a fund", async () => {
-    fund = await Fund.new(
-      fundData.name,
-      fundData.symbol,
-      fundData.description,
-      fundData.category,
-      fundData.decimals
-    );
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
 
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
@@ -84,8 +76,11 @@ contract("Tutorial Fund", accounts => {
     assert.equal((await fund.status()).toNumber(), 1); // Active
     // The fee send is not taked in account in the price but as a fee
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
-    assert.equal((await fund.MAX_INVESTORS()).toNumber(), fundData.maxInvestors, 'Max Investors is correctly initialized');
-
+    assert.equal(
+      (await fund.MAX_INVESTORS()).toNumber(),
+      fundData.maxInvestors,
+      "Max Investors is correctly initialized"
+    );
   });
   // ----------------------------- CONFIG TEST  ----------------------
 
@@ -114,7 +109,6 @@ contract("Tutorial Fund", accounts => {
     assert.equal(await fund.description(), fundData.description);
     assert.equal(await fund.symbol(), fundData.symbol);
     assert.equal(await fund.category(), fundData.category);
-    assert.equal(await fund.version(), "1.0");
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
 
@@ -168,10 +162,9 @@ contract("Tutorial Fund", accounts => {
     await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
     assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
 
-    await calc.assertReverts(
-      async () => { await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorC }) },
-      'Third investor can`t invest'
-    );
+    await calc.assertReverts(async () => {
+      await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorC });
+    }, "Third investor can`t invest");
     // Request always allowed
     await fund.withdraw({ from: investorA });
     assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
@@ -284,7 +277,11 @@ contract("Tutorial Fund", accounts => {
       assert.equal(balance.toNumber(), 0.9 * rates[i][0], " Fund get ERC20 correct balance");
     }
 
-    assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(0, "ether"), "We sold all underlying tokens");
+    assert.equal(
+      (await web3.eth.getBalance(fund.address)).toNumber(),
+      web3.toWei(0, "ether"),
+      "We sold all underlying tokens"
+    );
     // Request withdraw, it should sell all tokens.
     await fund.withdraw({ from: investorA });
 
@@ -296,8 +293,6 @@ contract("Tutorial Fund", accounts => {
     // Price is constant
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), "Price keeps constant after buy tokens");
   });
-
-
 
   // At the end of this section all tokens has been sold and withdraw
   // ----------------------------- CLOSE A FUND ----------------------
@@ -367,13 +362,7 @@ contract("Tutorial Fund", accounts => {
   // ----------------------------- LOCKER CONDITIONS ----------------------
   // We crate a new contract with the token timer initialized.
   it("Create a fund with locker interval", async () => {
-    fund = await Fund.new(
-      fundData.name,
-      fundData.symbol,
-      fundData.description,
-      fundData.category,
-      fundData.decimals
-    );
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     await fund.initialize(componentList.address, fundData.maxInvestors);
 
     await fund.setTradeInterval(2);
@@ -398,16 +387,13 @@ contract("Tutorial Fund", accounts => {
     // Third time shall revert
     await calc.assertReverts(
       async () => await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0])),
-      'Buy shall revert before timeout'
+      "Buy shall revert before timeout"
     );
 
     await calc.waitSeconds(2); // Make sure next test start fresh
-
-
   });
 
-  it('Sell tokens shall revert before timeout', async () => {
-
+  it("Sell tokens shall revert before timeout", async () => {
     // Prepare sell tokens
     const fundTokensAndBalance = await fund.getTokens();
     const balances = fundTokensAndBalance[1];
@@ -416,13 +402,22 @@ contract("Tutorial Fund", accounts => {
     );
     // We sell half by half
     // First shall succeed after timeout
-    tx = await fund.sellTokens("", fundTokensAndBalance[0], balances.map((balance) => balance / 2), sellRates.map(rate => rate[0]));
+    tx = await fund.sellTokens(
+      "",
+      fundTokensAndBalance[0],
+      balances.map(balance => balance / 2),
+      sellRates.map(rate => rate[0])
+    );
     // Second shall fail
     await calc.assertReverts(
-      async () => fund.sellTokens("", fundTokensAndBalance[0], balances.map((balance) => balance / 2), sellRates.map(rate => rate[0])),
-      'Cant sell before timeout'
+      async () =>
+        fund.sellTokens(
+          "",
+          fundTokensAndBalance[0],
+          balances.map(balance => balance / 2),
+          sellRates.map(rate => rate[0])
+        ),
+      "Cant sell before timeout"
     );
   });
 });
-
-
