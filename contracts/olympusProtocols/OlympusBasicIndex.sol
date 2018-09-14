@@ -20,7 +20,6 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
     event StatusChanged(DerivativeStatus status);
 
     mapping(address => uint) public investors;
-    mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
 
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
@@ -62,6 +61,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         decimals = _decimals;
         description = _description;
         category = _category;
+
         version = "1.1-20180913";
         fundType = DerivativeType.Index;
         tokens = _tokens;
@@ -327,7 +327,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
     function panic() external onlyOwner {
         owner.transfer(address(this).balance);
         for (uint i = 0; i < tokens.length; i++) {
-            ERC20NoReturn(tokens[i]).transfer(owner, amounts[tokens[i]]);
+            ERC20NoReturn(tokens[i]).transfer(owner, ERC20Extended(tokens[i]).balanceOf(address(this)));
         }
     }
 
