@@ -523,7 +523,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             if((_failedTimes[t]) <= 0 || isBrokenToken[_tokens[t]]) {
                 continue;
             }
-             isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
+            isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
             // I broken, check if has balance to distribute
             if(amounts[_tokens[t]] > 0) {
                 tokensToRelease.push(_tokens[t]);
@@ -595,15 +595,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function _transfer(address _from, uint _amount) private {
-         _from.transfer(_amount);
+        _from.transfer(_amount);
     }
-
-    // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
-    function panic() external onlyOwner {
-        _transfer(owner, address(this).balance);
-        for (uint i = 0; i < tokens.length; i++) {
-            tokenTransfer(tokens[i], owner, amounts[tokens[i]]);
-        }
-    }
-
 }
