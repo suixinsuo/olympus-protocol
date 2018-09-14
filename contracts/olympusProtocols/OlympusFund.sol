@@ -235,10 +235,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             _balance = amounts[tokens[i]];
             if (_balance == 0) {continue;}
 
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), _balance, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(ERC20Extended(tokens[i]), ETH, _balance, 0x0);
 
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue = _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**18));
         }
         return _totalTokensValue;
     }
