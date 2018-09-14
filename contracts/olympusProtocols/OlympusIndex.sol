@@ -312,7 +312,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (_tokenAmount == 0) {return false;}
 
         balances[_investor] =  balances[_investor].sub(_tokenAmount);
-        emit Transfer(msg.sender, 0x0, _tokenAmount); // ERC20 Required event
+        emit Transfer(_investor, 0x0, _tokenAmount); // ERC20 Required event
 
         totalSupply_ = totalSupply_.sub(_tokenAmount);
         address(_investor).transfer(_eth);

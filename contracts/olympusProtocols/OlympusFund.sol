@@ -371,7 +371,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         balances[_investor] = balances[_investor].sub(_tokenAmount);
         totalSupply_ = totalSupply_.sub(_tokenAmount);
-        emit Transfer(msg.sender, 0x0, _tokenAmount); // ERC20 Required event
+        emit Transfer(_investor, 0x0, _tokenAmount); // ERC20 Required event
 
         // Can be 0 in case all tokens are broken
         if (_eth > 0){
