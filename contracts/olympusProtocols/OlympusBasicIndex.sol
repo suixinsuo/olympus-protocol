@@ -20,7 +20,6 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
     event StatusChanged(DerivativeStatus status);
 
     mapping(address => uint) public investors;
-    mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
 
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
