@@ -20,7 +20,6 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
     event StatusChanged(DerivativeStatus status);
 
     mapping(address => uint) public investors;
-    mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
 
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
@@ -62,6 +61,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         decimals = _decimals;
         description = _description;
         category = _category;
+
         version = "1.1-20180913";
         fundType = DerivativeType.Index;
         tokens = _tokens;
@@ -129,6 +129,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
 
         balances[msg.sender] = balances[msg.sender].add(_investorShare);
         totalSupply_ = totalSupply_.add(_investorShare);
+        emit Transfer(0x0, msg.sender, _investorShare); // ERC20 Required event
 
         return true;
     }
@@ -170,10 +171,10 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
             _balance = ERC20(tokens[i]).balanceOf(address(this));
             if (_balance == 0) {continue;}
 
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(ERC20Extended(tokens[i]), ETH, _balance, 0x0);
 
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue = _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**18));
 
         }
         return _totalTokensValue;
@@ -211,6 +212,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         totalSupply_ = totalSupply_.sub(tokenAmount);
         msg.sender.transfer(ethAmount);
         withdrawProvider.finalize();
+        emit Transfer(msg.sender, 0x0, tokenAmount); // ERC20 Required event
 
         return true;
     }

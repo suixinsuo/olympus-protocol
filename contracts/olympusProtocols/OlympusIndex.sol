@@ -197,9 +197,9 @@ contract OlympusIndex is IndexInterface, Derivative {
             _balance = ERC20(tokens[i]).balanceOf(address(this));
 
             if (_balance == 0) {continue;}
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(ERC20Extended(tokens[i]), ETH, _balance, 0x0);
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue =  _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**18));
 
         }
         return _totalTokensValue;
@@ -312,7 +312,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (_tokenAmount == 0) {return false;}
 
         balances[_investor] =  balances[_investor].sub(_tokenAmount);
-        emit Transfer(msg.sender, 0x0, _tokenAmount); // ERC20 Required event
+        emit Transfer(_investor, 0x0, _tokenAmount); // ERC20 Required event
 
         totalSupply_ = totalSupply_.sub(_tokenAmount);
         address(_investor).transfer(_eth);

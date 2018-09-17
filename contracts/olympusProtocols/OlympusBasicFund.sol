@@ -155,6 +155,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
 
         balances[msg.sender] = balances[msg.sender].add(_investorShare);
         totalSupply_ = totalSupply_.add(_investorShare);
+        emit Transfer(0x0, msg.sender, _investorShare); // ERC20 Required event
 
         return true;
     }
@@ -198,10 +199,10 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
             _balance = ERC20(tokens[i]).balanceOf(address(this));
             if (_balance == 0) {continue;}
 
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(ERC20Extended(tokens[i]), ETH, _balance, 0x0);
 
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue = _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**18));
 
         }
         return _totalTokensValue;
@@ -237,6 +238,8 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
         totalSupply_ = totalSupply_.sub(tokenAmount);
         msg.sender.transfer(ethAmount);
         withdrawProvider.finalize();
+        emit Transfer(msg.sender, 0x0, tokenAmount); // ERC20 Required event
+
 
         return true;
     }
