@@ -1,4 +1,8 @@
 module.exports = {
+  getRandomDecimals: () => {
+    return Math.floor(Math.random() * 18) + 1;
+  },
+
   roundTo: (value, decimals) => {
     return Math.round(10 ** decimals * value) / 10 ** decimals;
   },

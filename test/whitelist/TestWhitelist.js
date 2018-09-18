@@ -1,4 +1,5 @@
 const log = require("../utils/log");
+const calc = require("../utils/calc");
 const WhitelistProvider = artifacts.require("WhitelistProvider");
 const MockWhitelist = artifacts.require("MockWhitelistClient");
 const MockToken = artifacts.require("MockToken");
@@ -11,7 +12,7 @@ contract("Whitelist", accounts => {
   const authorizedUser = accounts[2];
 
   before("Deploy Whitelist Mock", async () => {
-    let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
+    let mockMot = await MockToken.new("", "MOT", calc.getRandomDecimals(), 10 ** 9 * 10 ** 18);
     whitelistProvider = await WhitelistProvider.deployed();
     await whitelistProvider.setMotAddress(mockMot.address);
 
