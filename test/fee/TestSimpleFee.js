@@ -1,4 +1,5 @@
 const log = require("../utils/log");
+const calc = require("../utils/calc");
 const PercentageFee = artifacts.require("PercentageFee");
 const MockFeeClient = artifacts.require("MockFeeClient");
 const MockToken = artifacts.require("MockToken");
@@ -13,7 +14,7 @@ contract("Fee", accounts => {
 
   it("Shall be able execute Simple fee", async () => {
     const fee = await PercentageFee.new();
-    let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
+    let mockMot = await MockToken.new("", "MOT", calc.getRandomDecimals(), 10 ** 9 * 10 ** 18);
     await fee.setMotAddress(mockMot.address);
 
     const client = await MockFeeClient.new(fee.address);
