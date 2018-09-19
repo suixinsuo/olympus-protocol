@@ -194,17 +194,18 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
         // Iterator
         uint _expectedRate;
         uint _balance;
+        ERC20Extended token;
 
         for (uint i = 0; i < tokens.length; i++) {
-            _balance = ERC20(tokens[i]).balanceOf(address(this));
+            token = ERC20Extended(tokens[i]);
+            _balance = token.balanceOf(address(this));
+
             if (_balance == 0) {continue;}
-
-            (_expectedRate, ) = exchangeProvider.getPrice(ERC20Extended(tokens[i]), ETH, _balance, 0x0);
-
+            (_expectedRate, ) = exchangeProvider.getPrice(token, ETH, 10**token.decimals(), 0x0);
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**18));
-
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**token.decimals()));
         }
+
         return _totalTokensValue;
     }
 
