@@ -7,6 +7,10 @@ module.exports = {
     return parseFloat(web3.fromWei((await web3.eth.getBalance(address)).toNumber(), "ether"), 10);
   },
 
+  fromWei: number => {
+    return parseFloat(web3.fromWei(number , "ether"), 10);
+  },
+
   inRange: async (value, range, offset) => {
     return value > range - offset && value < range + offset;
   },
