@@ -57,7 +57,7 @@ contract("Basic Index", accounts => {
   const investorB = accounts[2];
   const investorC = accounts[3];
 
-  before("Initalize tokens", async () => {
+  before("Initialize tokens", async () => {
     mockKyber = await MockKyberNetwork.deployed();
     tokens = await mockKyber.supportedTokens();
 
