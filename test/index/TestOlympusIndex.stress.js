@@ -62,6 +62,16 @@ const getTokensAndAmounts = async index => {
   return [tokensWeights[0], amounts];
 };
 
+const safeRebalance = async index => {
+  const result = await index.rebalance.call();
+  await index.rebalance();
+  if (!result) {
+    console.log('safeRebalance:', result)
+    await safeRebalance(index);
+  }
+
+}
+
 contract("Olympus Index", accounts => {
 
   let index;
@@ -328,7 +338,7 @@ contract("Olympus Index", accounts => {
 
     assert.isAbove(amounts[0], rawAmounts[0], 'MOT amount higher than the 30%');
 
-    await index.rebalance();
+    await safeRebalance(index);
 
     await index.buyTokens();
 
@@ -407,13 +417,11 @@ contract("Olympus Index", accounts => {
     );
 
     assert.isAbove(amounts[1], rawAmounts[1], 'EOS amount higher than the 20%');
-    let fee = await index.accumulatedFee();
-    let balance = await web3.eth.getBalance(index.address);
-    console.log('old fee and balance', fee.toNumber(), balance.toNumber());
-    await index.rebalance2(true);
-    fee = await index.accumulatedFee();
-    balance = await web3.eth.getBalance(index.address);
-    console.log('new fee and balance', fee.toNumber(), balance.toNumber());
+    // let fee = await index.accumulatedFee();
+    // let balance = await web3.eth.getBalance(index.address);
+    safeRebalance(index);
+    // fee = await index.accumulatedFee();
+    // balance = await web3.eth.getBalance(index.address);
     await index.withdraw();
 
     // let price = (await index.getPrice()).toNumber();
