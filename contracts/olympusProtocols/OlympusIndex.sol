@@ -23,7 +23,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
     bytes32 public constant BUYTOKENS = "BuyTokens";
-
+    enum Status { avaliable, withdrawing, rebalancing, buying, pending }
+    Status public productStatus = Status.avaliable;
     // event ChangeStatus(DerivativeStatus status);
 
     uint public constant DENOMINATOR = 10000;
@@ -36,7 +37,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public freezeBalance; // For operations (Buy tokens and sellTokens)
     ERC20Extended[]  freezeTokens;
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
-
+    
     constructor (
       string _name,
       string _symbol,
@@ -126,6 +127,9 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function getTokens() public view returns (address[] _tokens, uint[] _weights) {
         return (tokens, weights);
+    }
+    function getProductStatus() public view returns (uint _status) {
+        return uint(productStatus);
     }
 
     // solhint-disable-next-line
@@ -268,6 +272,10 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
+
+        require(productStatus == Status.avaliable || productStatus == Status.withdrawing);
+        productStatus = Status.withdrawing;
+
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
         // Check if there is request
@@ -279,6 +287,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (_transfers == 0 && getStatusStep(GETETH) == 0) {
             checkLocker(WITHDRAW);
             if (_requests.length == 0) {
+                productStatus = Status.avaliable;
                 reimburse();
                 return true;
             }
@@ -300,6 +309,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
         }
+        productStatus = Status.avaliable;
         reimburse();
         return i == _requests.length; // True if completed
     }
@@ -393,12 +403,17 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
+
+        require(productStatus == Status.avaliable || productStatus == Status.buying);
+        productStatus = Status.buying;
+
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         // Start?
         if (getStatusStep(BUYTOKENS) == 0) {
             checkLocker(BUYTOKENS);
             if (tokens.length == 0 || getETHBalance() == 0) {
+                productStatus = Status.avaliable;
                 reimburse();
                 return true;
             }
@@ -431,7 +446,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             finalizeStep(BUYTOKENS);
             freezeBalance = 0;
         }
-
+        productStatus = Status.avaliable;
         reimburse();
         return true;
     }
@@ -439,6 +454,10 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
         startGasCalculation();
+        
+        require(productStatus == Status.avaliable || productStatus == Status.rebalancing);
+        productStatus = Status.rebalancing;
+
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         if (!rebalanceProvider.getRebalanceInProgress()) {
@@ -485,6 +504,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 finalizeStep(REBALANCE);
                 rebalanceProvider.finalize();
                 rebalanceReceivedETHAmountFromSale = 0;
+                productStatus = Status.avaliable;
                 reimburse();   // Completed case
                 return true;
             }
