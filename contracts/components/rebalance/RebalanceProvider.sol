@@ -15,13 +15,13 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
     string public name = "Rebalance";
     string public description = "Help to rebalance quantity of tokens depending of the weight assigned in the derivative";
     string public category = "Rebalance";
-    string public version = "v1.0";
+    string public version = "1.1-20180919";
 
     uint private constant PERCENTAGE_DENOMINATOR = 10000;
     uint private constant RECALCULATION_PERCENTAGE_DENOMINATOR = 10**18;
     uint private priceTimeout = 6 hours;
 
-    address constant private ETH_TOKEN = 0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
+    ERC20Extended constant private ETH_TOKEN = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
     enum RebalanceStatus { Initial, Calculated, Recalculated }
     mapping(address => address[]) public tokensToSell;
     mapping(address => uint[]) public amountsToSell;
@@ -59,7 +59,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
             (ETHTokenPrice,) = priceProvider.getPrice(
-                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "");
+                ETH_TOKEN, ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(_targetAddress);
             uint shouldHaveAmountOfTokensInETH = (getTotalIndexValueWithoutCache(_targetAddress).mul(indexTokenWeights[i])).div(100);
             uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
@@ -95,17 +95,18 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
         (indexTokenAddresses, indexTokenWeights) = IndexInterface(msg.sender).getTokens();
+        uint totalIndexValue = getTotalIndexValue();
         for(i = 0; i < indexTokenAddresses.length; i++) {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
             (ETHTokenPrice,,) = priceProvider.getPriceOrCacheFallback(
-                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, "", priceTimeout);
+                ETH_TOKEN, ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0, priceTimeout);
 
             if (ETHTokenPrice == 0) {
                 tokensWithPriceIssues[msg.sender].push(indexTokenAddresses[i]);
             }
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)); //
-            uint shouldHaveAmountOfTokensInETH = (getTotalIndexValue().mul(indexTokenWeights[i])).div(100);
+            uint shouldHaveAmountOfTokensInETH = (totalIndexValue.mul(indexTokenWeights[i])).div(100);
             uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18);
             uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
             // minus delta
@@ -200,15 +201,18 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
     }
 
     function getTotalIndexValue() public returns (uint totalValue){
-        uint price;
+        uint[] memory prices;
         address[] memory indexTokenAddresses;
         (indexTokenAddresses, ) = IndexInterface(msg.sender).getTokens();
-
+        uint amount;
+        uint decimals;
+        ERC20Extended indexToken;
+        (prices,,) = priceProvider.getMultiplePricesOrCacheFallback(castToERC20Extended(indexTokenAddresses),priceTimeout);
         for(uint i = 0; i < indexTokenAddresses.length; i++) {
-            (price,,) = priceProvider.getPriceOrCacheFallback(
-                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0, priceTimeout);
-            totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)).mul(
-            10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(price));
+            indexToken = ERC20Extended(indexTokenAddresses[i]);
+            decimals = indexToken.decimals();
+            amount = indexToken.balanceOf(msg.sender);
+            totalValue = totalValue.add(amount.mul(10**decimals).div(prices[i]));
         }
     }
 
@@ -219,9 +223,16 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
 
         for(uint i = 0; i < indexTokenAddresses.length; i++) {
             (price,) = priceProvider.getPrice(
-                ERC20Extended(ETH_TOKEN), ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
+                ETH_TOKEN, ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
             totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(_indexAddress)).mul(
             10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(price));
+        }
+    }
+
+    function castToERC20Extended(address[] _addresses) public pure returns (ERC20Extended[] _erc20Extended) {
+        _erc20Extended = new ERC20Extended[](_addresses.length);
+        for(uint i = 0; i < _addresses.length; i++){
+            _erc20Extended[i] = ERC20Extended(_addresses[i]);
         }
     }
 }
