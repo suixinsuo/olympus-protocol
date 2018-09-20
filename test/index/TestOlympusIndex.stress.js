@@ -410,7 +410,7 @@ contract("Olympus Index", accounts => {
     let fee = await index.accumulatedFee();
     let balance = await web3.eth.getBalance(index.address);
     console.log('old fee and balance', fee.toNumber(), balance.toNumber());
-    await index.rebalance(); 
+    await index.rebalance2(true);
     fee = await index.accumulatedFee();
     balance = await web3.eth.getBalance(index.address);
     console.log('new fee and balance', fee.toNumber(), balance.toNumber());
