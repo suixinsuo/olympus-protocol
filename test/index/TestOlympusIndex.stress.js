@@ -191,7 +191,7 @@ contract("Olympus Index", accounts => {
     );
   });
 
-  it("Buy tokens and withdraw at the same time", async () => {
+  it("Buy tokens and withdraw", async () => {
     // console.log('ba:', investorsGroupB[0]);
     // const ba = (await web3.eth.getBalance(investorsGroupB[0])).toNumber();
 
@@ -210,15 +210,14 @@ contract("Olympus Index", accounts => {
       })
     );
 
-
     await index.buyTokens();
     await index.withdraw();
 
-    let price = (await index.getPrice()).toNumber();
-    console.log('price:', price);
+    let price = calc.fromWei((await index.getPrice()).toNumber());
+    assert(calc.inRange(price, 1, 0.001), "Price is approx. to 1 ETH (may be a little bit up or down)");
 
     let balance = (await index.getETHBalance()).toNumber();
-    console.log('getETHBalance:', balance);
+    assert.equal(balance, web3.toWei(0, "ether"), 'Total ETH balance is 0');
 
     let assetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(assetsValue, web3.toWei(0.15, "ether"),
@@ -266,8 +265,9 @@ contract("Olympus Index", accounts => {
     );
 
     await index.buyTokens();
-    let price = (await index.getPrice()).toNumber();
-    console.log('after Withdraw then buy tokens price:', price);
+
+    let price = calc.fromWei((await index.getPrice()).toNumber());
+    assert(calc.inRange(price, 1, 0.001), "Price is approx. to 1 ETH (may be a little bit up or down)");
 
     let balance = (await index.getETHBalance()).toNumber();
     assert.equal(balance, web3.toWei(0, "ether"),
@@ -362,7 +362,11 @@ contract("Olympus Index", accounts => {
     const finalAmounts = await Promise.all(
       tokensWeights[0].map(async token => {
         let erc20 = await ERC20.at(token);
-        return (await erc20.balanceOf(index.address)).toNumber();
+        const amount = (await erc20.balanceOf(index.address)).toNumber();
+        const price = await exchange.getPrice('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', token,
+          amount, 0);
+        // console.log('price:', amount);
+        return amount;
       })
     );
 
@@ -403,12 +407,14 @@ contract("Olympus Index", accounts => {
     );
 
     assert.isAbove(amounts[1], rawAmounts[1], 'EOS amount higher than the 20%');
-
-    await index.rebalance();
-    const fee = await index.accumulatedFee();
-    const balance = await web3.eth.getBalance(index.address);
-    console.log('fee:', fee.toNumber(), balance.toNumber());
-    // await index.withdraw2();
+    let fee = await index.accumulatedFee();
+    let balance = await web3.eth.getBalance(index.address);
+    console.log('old fee and balance', fee.toNumber(), balance.toNumber());
+    await index.rebalance(); 
+    fee = await index.accumulatedFee();
+    balance = await web3.eth.getBalance(index.address);
+    console.log('new fee and balance', fee.toNumber(), balance.toNumber());
+    await index.withdraw();
 
     // let price = (await index.getPrice()).toNumber();
     // assert.isAbove(price, web3.toWei(1, "ether"), 'Price is >1 ETH');
@@ -460,5 +466,6 @@ contract("Olympus Index", accounts => {
 
     // await index.withdraw();
   });
+
 
 });
