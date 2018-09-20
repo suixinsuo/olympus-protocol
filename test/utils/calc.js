@@ -1,4 +1,9 @@
 module.exports = {
+  getRandomDecimals: () => {
+    const [min, max] = [1, 18];
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  },
+
   roundTo: (value, decimals) => {
     return Math.round(10 ** decimals * value) / 10 ** decimals;
   },
