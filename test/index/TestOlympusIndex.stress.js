@@ -72,6 +72,15 @@ const safeRebalance = async index => {
 
 }
 
+const safeWithdraw = async index => {
+  const result = await index.withdraw.call();
+  await index.withdraw();
+  if (!result) {
+    console.log('safeWithdraw:', result)
+    await safeWithdraw(index);
+  }
+}
+
 contract("Olympus Index", accounts => {
 
   let index;
@@ -419,60 +428,92 @@ contract("Olympus Index", accounts => {
     assert.isAbove(amounts[1], rawAmounts[1], 'EOS amount higher than the 20%');
     // let fee = await index.accumulatedFee();
     // let balance = await web3.eth.getBalance(index.address);
-    safeRebalance(index);
-    // fee = await index.accumulatedFee();
-    // balance = await web3.eth.getBalance(index.address);
+    await safeRebalance(index);
+
     await index.withdraw();
 
-    // let price = (await index.getPrice()).toNumber();
-    // assert.isAbove(price, web3.toWei(1, "ether"), 'Price is >1 ETH');
+    let price = (await index.getPrice()).toNumber();
+    assert.isAbove(price, web3.toWei(1, "ether"), 'Price is >1 ETH');
 
-    // let balance = (await index.getETHBalance()).toNumber();
-    // assert.equal(balance, 0, 'Total ETH balance is 0');
+    let ethBalance = (await index.getETHBalance()).toNumber();
+    assert.equal(ethBalance, 0, 'Total ETH balance is 0');
 
-    // let assetsValue = (await index.getAssetsValue()).toNumber();
-    // assert.isAbove(assetsValue, web3.toWei(0.2, "ether"),
-    // "Total assets value should be > 0.2 ETH");
+    let assetsValue = (await index.getAssetsValue()).toNumber();
+    assert.isAbove(assetsValue, web3.toWei(0.2, "ether"),
+      "Total assets value should be > 0.2 ETH");
+
+    await Promise.all(
+      investorsGroupA.map(async account => {
+        const value = (await index.balanceOf(account)).toNumber();
+        assert.equal(value, web3.toWei(0, "ether"),
+          "Group A investors have the index balance of 0");
+      })
+    );
+
+    await Promise.all(
+      investorsGroupB.map(async account => {
+        const value = await calc.ethBalance(account);
+        assert(calc.inRange(value, 0.02, 0.001), "Group B investors have the index balance of 0.02");
+      })
+    );
 
   });
 
   it("Withdraw then close ", async () => {
     // Group B investors each request withdraw 0.01 of the index;
-    // await Promise.all(
-    //   investorsGroupB.map(async account => {
-    //     await index.requestWithdraw(toTokenWei(0.005), {
-    //       from: account
-    //     });
-    //   })
-    // );
+    await Promise.all(
+      investorsGroupB.map(async account => {
+        // const amount = (await index.balanceOf(account)).toNumber(); // 
+        // console.log('amount', calc.fromWei(amount)) // 0.019 ;
+        await index.requestWithdraw(toTokenWei('0.005'), {
+          from: account
+        });
+      })
+    );
 
-    // await index.close();
+    await index.close();
 
+    let price = (await index.getPrice()).toNumber();
+    assert.isAbove(price, web3.toWei(1, "ether"), 'Price is >1 ETH');
+
+    let balance = (await index.getETHBalance()).toNumber();
+    assert.equal(balance, 0, 'Total ETH balance is 0');
+
+    let assetsValue = (await index.getAssetsValue()).toNumber();
+    assert.isAbove(assetsValue, web3.toWei(0.01, "ether"),
+      "Total assets value should be > 0.01 ETH");
+
+    assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, "Status of the index is Closed");
+
+  });
+
+  it("Close then withdraw ", async () => {
+ 
+     await Promise.all(
+      investorsGroupB.map(async account => {
+        // const amountInRequest = (await asyncWithdraw.getUserWithdrawBalance(index.address, account)).toNumber();
+        // console.log('amountInRequest:', amountInRequest);
+        const amount = (await index.balanceOf(account)).toNumber();
+        await index.requestWithdraw(amount, {
+          from: account
+        });
+      })
+    );
+
+    const total = await index.withdraw2.call();
+    console.log('total:', total.toNumber());
     // let price = (await index.getPrice()).toNumber();
-    // assert.equal(price, web3.toWei(1, "ether"), 'Price is approx. to 1 ETH');
+    // assert.equal(price, web3.toWei(1, "ether"), 'Price is 1 ETH');
 
     // let balance = (await index.getETHBalance()).toNumber();
     // assert.equal(balance, 0, 'Total ETH balance is 0');
 
     // let assetsValue = (await index.getAssetsValue()).toNumber();
-    // assert.isAbove(assetsValue, web3.toWei(0.01, "ether"),
-    //   "Total assets value should be > 0.01 ETH");
+    // assert.isAbove(assetsValue, web3.toWei(0, "ether"),
+    //   "Total assets value should be 0 ETH");
 
     // assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, "Status of the index is Closed");
 
-  });
-
-  it("Close then withdraw ", async () => {
-
-    // await Promise.all(
-    //   investorsGroupB.map(async account => {
-    //     await index.requestWithdraw((await index.balanceOf(account)).toString(), {
-    //       from: account
-    //     });
-    //   })
-    // );
-
-    // await index.withdraw();
   });
 
 
