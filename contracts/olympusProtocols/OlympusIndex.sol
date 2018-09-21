@@ -490,7 +490,6 @@ contract OlympusIndex is IndexInterface, Derivative {
                 currentStep = 0;
             }
         }
-
         // Buy Tokens
         if (stepStatus == uint(RebalancePhases.BuyTokens)) {
             _amounts = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
@@ -500,6 +499,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                     exchangeProvider.buyToken.value(_amounts[i])(ERC20Extended(_tokensToBuy[i]), _amounts[i], 0, address(this), 0x0)
                 );
             }
+ 
             if(i == _tokensToBuy.length) {
                 finalizeStep(REBALANCE);
                 rebalanceProvider.finalize();
@@ -509,7 +509,6 @@ contract OlympusIndex is IndexInterface, Derivative {
                 return true;
             }
         }
-
         reimburse(); // Not complete case
         return false;
     }

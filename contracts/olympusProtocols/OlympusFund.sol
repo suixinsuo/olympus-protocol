@@ -41,6 +41,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
     address[] public activeInvestors; // Start in 0
 
+    enum Status { avaliable, withdrawing, pending }
+    Status public productStatus = Status.avaliable;
+
     constructor(
       string _name,
       string _symbol,
@@ -138,7 +141,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-
         for (uint i = 0; i < _tokens.length; i++) {
             // Setting amount to 0 skips the sell
             if (isBrokenToken[_tokens[i]]) {
@@ -326,6 +328,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
+        require(productStatus == Status.avaliable || productStatus == Status.withdrawing);
+        productStatus = Status.withdrawing;
+
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
 
@@ -335,6 +340,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         if (_transfers == 0 && getStatusStep(GETETH) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
+
+                productStatus = Status.avaliable;
                 reimburse();
                 return true;
             }
@@ -357,6 +364,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             finalizeStep(WITHDRAW);
         }
 
+        productStatus = Status.avaliable;
         reimburse();
         return i == _requests.length; // True if completed
     }
