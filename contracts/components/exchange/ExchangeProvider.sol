@@ -14,7 +14,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     string public description =
     "Exchange provider of Olympus Labs, which additionally supports buy\and sellTokens for multiple tokens at the same time";
     string public category = "exchange";
-    string public version = "1.1-20180913";
+    string public version = "1.2-20180919";
     ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
     uint public registerTradeFailureInterval = 1 days;
     bytes4 public constant BUY_FUNCTION_SELECTOR = bytes4(keccak256("buyToken(address,uint256,uint256,address)"));
@@ -310,6 +310,38 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId)
         external view returns(uint expectedRate, uint slippageRate) {
         return exchangeAdapterManager.getPrice(_sourceAddress, _destAddress, _amount, _exchangeId);
+    }
+
+    function getMultiplePricesOrCacheFallback(ERC20Extended[] _destAddresses, uint _maxPriceAgeIfCache)
+        external returns(uint[] expectedRates, uint[] slippageRates, bool[] isCached) {
+        expectedRates = new uint[](_destAddresses.length);
+        slippageRates = new uint[](_destAddresses.length);
+        isCached = new bool[](_destAddresses.length);
+        uint[] memory _expectedRates;
+        uint[] memory _slippageRates;
+        (_expectedRates, _slippageRates) = exchangeAdapterManager.getPrices(_destAddresses);
+        for(uint i = 0; i < _expectedRates.length; i++){
+
+            if (_expectedRates[i] > 0){
+                currentPriceExpected[0x0][ETH][_destAddresses[i]] = _expectedRates[i];
+                currentPriceSlippage[0x0][ETH][_destAddresses[i]] = _slippageRates[i];
+                lastCachedPriceTime[0x0][ETH][_destAddresses[i]] = now;
+                expectedRates[i] = _expectedRates[i];
+                slippageRates[i] = _slippageRates[i];
+                isCached[i] = false;
+                continue;
+            }
+            if (lastCachedPriceTime[0x0][ETH][_destAddresses[i]] + _maxPriceAgeIfCache < now) {
+                expectedRates[i] = 0;
+                slippageRates[i] = 0;
+                isCached[i] = false;
+                continue;
+            }
+            expectedRates[i] = currentPriceExpected[0x0][ETH][_destAddresses[i]];
+            slippageRates[i] = currentPriceSlippage[0x0][ETH][_destAddresses[i]];
+            isCached[i] = true;
+            continue;
+        }
     }
 
     function getPriceOrCacheFallback(
