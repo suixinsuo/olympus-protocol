@@ -181,9 +181,16 @@ contract("Fund", accounts => {
       value: web3.toWei(0.01, "ether"),
       from: investorJ
     });
-    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
-    assert.equal(((await fund.getAssetsValue()).toNumber(), web3.toWei(0.1, "ether")));
+
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
+    const rates_KNC = await mockKyber.getExpectedRate(ethToken, tokens[0], web3.toWei(0.05, "ether"));
+    const rates_EOS = await mockKyber.getExpectedRate(ethToken, tokens[0], web3.toWei(0.05, "ether"));
+    console.log(rates_KNC,rates_EOS);
+    const amounts = [web3.toWei(0.05, "ether"), web3.toWei(0.05, "ether")];
+    console.log(amounts);
+    let tx;
+    tx = await fund.buyTokens("", [tokens[0],tokens[1]], amounts, [rates_KNC,rates_EOS]);
 
   });
 
