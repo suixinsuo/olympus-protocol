@@ -174,8 +174,6 @@ contract("Fund", accounts => {
     const rates_KNC = await mockKyber.getExpectedRate(ethToken, KNC, web3.toWei(0.05, "ether"));
     const rates_EOS = await mockKyber.getExpectedRate(ethToken, EOS, web3.toWei(0.05, "ether"));
 
-    console.log(rates_KNC,rates_EOS);
-
     const amounts = [web3.toWei(0.05, "ether"), web3.toWei(0.05, "ether")];
 
     let tx;
@@ -193,7 +191,7 @@ contract("Fund", accounts => {
 
   });
 
-  it("Create a fund", async () => {
+  it("Sell tokens then buy tokens", async () => {
     for (let i  = 0; i < GroupB.length; i++) {
       await fund.invest({
         value: web3.toWei(0.01, "ether"),
@@ -201,7 +199,27 @@ contract("Fund", accounts => {
       })};
     const rates_KNC = await mockKyber.getExpectedRate(ethToken, KNC, web3.toWei(0.05, "ether"));
     const rates_EOS = await mockKyber.getExpectedRate(ethToken, EOS, web3.toWei(0.05, "ether"));
-    //await fund.sellTokens("", fundTokensAndBalance[0], fundTokensAndBalance[1], sellRates.map(rate => rate[0]));
+    let fundTokensAndBalance = await fund.getTokens();
+    await fund.sellTokens("", fundTokensAndBalance[0], [fundTokensAndBalance[1][0]*0.5,fundTokensAndBalance[1][1]*0.5], [10**15,10**15]);//bignumber to number
+    let amount = await fund.getETHBalance();
+    await fund.buyTokens("", [MOT], [amount], [10**21]);//bignumber to number
+
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
+    
+    for (let i  = 0; i < GroupA.length; i++) {
+      assert.equal((await fund.balanceOf(GroupA[i])).toNumber(),  web3.toWei(0.01, "ether"), "Group has invest 0.001");
+    };
+    for (let i  = 0; i < GroupB.length; i++) {
+      assert.equal((await fund.balanceOf(GroupA[i])).toNumber(),  web3.toWei(0.01, "ether"), "Group has invest 0.001");
+    };
+    let NewfundTokensAndBalance = await fund.getTokens();//reload the balance 
+
+    assert.equal(NewfundTokensAndBalance[0][0], KNC, "KNC Token exist in fund");
+    assert.equal(NewfundTokensAndBalance[0][1], EOS, "EOS Token exist in fund");
+    assert.equal(NewfundTokensAndBalance[0][2], MOT, "MOT Token exist in fund");
+    assert.equal(NewfundTokensAndBalance[1][0].toNumber(), 0.05 * 0.5 * 10**21, "KNC Balance is correct in the fund");
+    assert.equal(NewfundTokensAndBalance[1][1].toNumber(), 0.05 * 0.5 * 10**21, "EOS Balance is correct in the fund");
+    assert.equal(NewfundTokensAndBalance[1][2].toNumber(), 0.15 * 10**21, "MOT Balance is correct in the fund");
   
   });
 
