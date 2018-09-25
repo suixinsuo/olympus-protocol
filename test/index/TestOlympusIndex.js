@@ -26,7 +26,7 @@ const Reimbursable = artifacts.require("Reimbursable");
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
-
+const TIME_LOCK_TEST_SECONDS = 5;
 const indexData = {
   name: "OlympusIndex",
   symbol: "OlympusIndex",
@@ -260,6 +260,8 @@ contract("Olympus Index", accounts => {
   it("Rebalance works with no tokens", async () => {
     let tx;
     let rebalanceFinished = false;
+    // Set the interval for TIME_LOCK_TEST_SECONDS seconds, so the next test can test the timeLock
+    await index.setMultipleTimeIntervals([await index.REBALANCE()], [TIME_LOCK_TEST_SECONDS]);
     while (rebalanceFinished == false) {
       rebalanceFinished = await index.rebalance.call();
       tx = await index.rebalance();
@@ -273,8 +275,9 @@ contract("Olympus Index", accounts => {
   });
 
   it("Can't rebalance so frequently", async () => {
-    await calc.assertReverts(async () => await index.rebalance(), "Should be reverted");
-    // disable the lock
+    await calc.assertReverts(async () => await index.rebalance(), "Should be reverted because of the time lock");
+    // disable the lock, wait TIME_LOCK_TEST_SECONDS seconds to make sure the previous time lock is expired.
+    await calc.waitSeconds(TIME_LOCK_TEST_SECONDS);
     await index.setMultipleTimeIntervals([await index.REBALANCE()], [0]);
   });
 
@@ -336,7 +339,6 @@ contract("Olympus Index", accounts => {
     // Request is always allowed
     await index.requestWithdraw(toTokenWei(1), { from: investorA });
     await index.requestWithdraw(toTokenWei(1), { from: investorB });
-
     tx = await index.withdraw();
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
@@ -346,12 +348,10 @@ contract("Olympus Index", accounts => {
     await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
     await index.enableWhitelist(WhitelistType.Investment, false);
   });
-
   // In this scenario, there are not request, but is enought to check the modifier
   it("Shall be able to execute mainetnance operations while whitelisted", async () => {
     const bot = accounts[4];
     let tx;
-
     // Only owner is allowed
     await calc.assertReverts(async () => await index.withdraw({ from: bot }), "Whitdraw (only owner)");
     await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Whitdraw (only owner)");
@@ -365,8 +365,7 @@ contract("Olympus Index", accounts => {
 
     await index.setAllowed([bot], WhitelistType.Maintenance, true);
     tx = await index.withdraw({ from: bot });
-    tx = await index.rebalance({ from: bot });
-
+    // tx = await index.rebalance({ from: bot });
     // Permissions removed
     await index.setAllowed([bot], WhitelistType.Maintenance, false);
     await calc.assertReverts(async () => await index.withdraw({ from: bot }), "Is not allowed to withdraw");
@@ -377,6 +376,7 @@ contract("Olympus Index", accounts => {
   });
 
   it("Shall be able to withdraw only after frequency", async () => {
+
     let tx;
     const interval = 5; //5 seconds frequency
     await index.setMaxSteps(DerivativeProviders.WITHDRAW, 1); // For testing
@@ -388,7 +388,6 @@ contract("Olympus Index", accounts => {
 
     await index.requestWithdraw(toTokenWei(1), { from: investorA });
     await index.requestWithdraw(toTokenWei(1), { from: investorB });
-
     await index.withdraw();
     assert.notEqual((await index.balanceOf(investorB)).toNumber(), 0, " B hasn't withdraw yet, step 1/2");
     await index.withdraw(); // Lock is active, but multistep also
@@ -562,6 +561,47 @@ contract("Olympus Index", accounts => {
       web3.toWei(0.00001, "ether")
     );
     assert.ok(priceInRange, "Price updated");
+  });
+  it("Shall be able to execute rebalance operations while whitelisted", async () => {
+    let tx;
+    let tokenAmounts;
+    // Invest and get initial data
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    const initialIndexBalance = (await index.getETHBalance()).toNumber();
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const extraAmount = +web3.toWei(1, "ether");
+    // Buy tokens and sent to index, forcing increase his total assets value
+    tx = await index.buyTokens();
+    assert.ok(tx);
+
+    assert.equal((await index.getETHBalance()).toNumber(), 0, "ETH used to buy"); // All ETH has been sald
+    const initialAssetsValue = +(await index.getAssetsValue()).toNumber();
+
+    exchange.buyToken(tokens[0], extraAmount, 0, index.address, 0x0, {
+      value: extraAmount
+    });
+    const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
+    assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
+    // Execute Rebalance
+    // Make sure it has to do multiple calls
+    await index.setMaxSteps(DerivativeProviders.REBALANCE, 1);
+
+    const bot = accounts[4];
+    await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Whitdraw (only owner)");
+    await index.enableWhitelist(WhitelistType.Maintenance, true);
+    await index.setAllowed([bot], WhitelistType.Maintenance, true);
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call({from: bot});
+      tx = await index.rebalance({from: bot});
+      assert.ok(tx);
+    }
+    await index.setAllowed([bot], WhitelistType.Maintenance, false);
+    await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Is not allowed to rebalance");
+    // // //Reset
+    await index.enableWhitelist(WhitelistType.Maintenance, true);
   });
 
   it("Shall be able to close (by step) a index", async () => {
