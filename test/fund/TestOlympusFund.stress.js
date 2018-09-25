@@ -223,9 +223,55 @@ contract("Fund", accounts => {
   
   });
 
-  it("Create a fund", async () => {
+  it("Buy tokens then withdraw", async () => {
+    for (let i  = 0; i < GroupB.length; i++) {
+      await fund.invest({
+        value: web3.toWei(0.01, "ether"),
+        from: GroupB[i]
+      })};
+
+    for (let i  = 0; i < GroupA.length; i++) {
+      await fund.requestWithdraw(toTokenWei(0.005), { from: GroupA[i] });
+    };
+    
+    let amount = await fund.getETHBalance(); //0.1ETH from GroupB
+    await fund.buyTokens("", [MOT], [amount], [10**21]);//bignumber to number
+
+    await fund.withdraw();
+
+    assert(await calc.inRange((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), 0.001), "Price Changed");
+    assert(await calc.inRange((await fund.getAssetsValue()).toNumber(), web3.toWei(0.25, "ether"), 0.001), "Assets Value Changed");
+
+    for (let i  = 0; i < GroupA.length; i++) {
+      assert.equal((await fund.balanceOf(GroupA[i])).toNumber(),  web3.toWei(0.005, "ether"), "GroupA has invest 0.005");
+    };
+    let NewfundTokensAndBalance = await fund.getTokens();//reload the balance 
+    assert.equal(NewfundTokensAndBalance[0][0], KNC, "KNC Token exist in fund");
+    assert.equal(NewfundTokensAndBalance[0][1], EOS, "EOS Token exist in fund");
+    assert.equal(NewfundTokensAndBalance[0][2], MOT, "MOT Token exist in fund");
+    console.log(NewfundTokensAndBalance[1]);
+    console.log(NewfundTokensAndBalance[1][0].toNumber(),NewfundTokensAndBalance[1][1].toNumber(),NewfundTokensAndBalance[1][2].toNumber());
+  });
+
+  it("sell tokens then withdraw", async () => {
+    let fundTokensAndBalance = await fund.getTokens();
+    await fund.sellTokens("", MOT,fundTokensAndBalance[1][2], [10**15]);
+    for (let i  = 0; i < GroupA.length; i++) {
+      await fund.requestWithdraw(toTokenWei(0.005), { from: GroupA[i] });
+    };
+    await fund.withdraw();
+
+  });
+  it("Withdraw then sell tokens", async () => {
     
 
   });
+  it("Withdraw then close", async () => {
+    
 
+  });
+  it("Close then withdraw", async () => {
+    
+
+  });
   })
