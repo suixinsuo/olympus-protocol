@@ -347,7 +347,6 @@ contract("Olympus Index", accounts => {
     await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
     await index.enableWhitelist(WhitelistType.Investment, false);
   });
-
   // In this scenario, there are not request, but is enought to check the modifier
   it("Shall be able to execute mainetnance operations while whitelisted", async () => {
     const bot = accounts[4];
@@ -365,9 +364,7 @@ contract("Olympus Index", accounts => {
 
     await index.setAllowed([bot], WhitelistType.Maintenance, true);
     tx = await index.withdraw({ from: bot });
-
     // tx = await index.rebalance({ from: bot });
-
     // Permissions removed
     await index.setAllowed([bot], WhitelistType.Maintenance, false);
     await calc.assertReverts(async () => await index.withdraw({ from: bot }), "Is not allowed to withdraw");
@@ -563,6 +560,47 @@ contract("Olympus Index", accounts => {
       web3.toWei(0.00001, "ether")
     );
     assert.ok(priceInRange, "Price updated");
+  });
+  it("Shall be able to execute rebalance operations while whitelisted", async () => {
+    let tx;
+    let tokenAmounts;
+    // Invest and get initial data
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    const initialIndexBalance = (await index.getETHBalance()).toNumber();
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const extraAmount = +web3.toWei(1, "ether");
+    // Buy tokens and sent to index, forcing increase his total assets value
+    tx = await index.buyTokens();
+    assert.ok(tx);
+
+    assert.equal((await index.getETHBalance()).toNumber(), 0, "ETH used to buy"); // All ETH has been sald
+    const initialAssetsValue = +(await index.getAssetsValue()).toNumber();
+
+    exchange.buyToken(tokens[0], extraAmount, 0, index.address, 0x0, {
+      value: extraAmount
+    });
+    const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
+    assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
+    // Execute Rebalance
+    // Make sure it has to do multiple calls
+    await index.setMaxSteps(DerivativeProviders.REBALANCE, 1);
+
+    const bot = accounts[4];
+    await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Whitdraw (only owner)");
+    await index.enableWhitelist(WhitelistType.Maintenance, true);
+    await index.setAllowed([bot], WhitelistType.Maintenance, true);
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call({from: bot});
+      tx = await index.rebalance({from: bot});
+      assert.ok(tx);
+    }
+    await index.setAllowed([bot], WhitelistType.Maintenance, false);
+    await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Is not allowed to rebalance");
+    // // //Reset
+    await index.enableWhitelist(WhitelistType.Maintenance, true);
   });
 
   it("Shall be able to close (by step) a index", async () => {

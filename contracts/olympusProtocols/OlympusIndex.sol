@@ -23,8 +23,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
     bytes32 public constant BUYTOKENS = "BuyTokens";
-    enum Status { available, withdrawing, rebalancing, buying, pending }
-    Status public productStatus = Status.available;
+    enum Status { AVAILABLE, WITHDRAWING, REBALANCING, BUYING, PENDING }
+    Status public productStatus = Status.AVAILABLE;
     // event ChangeStatus(DerivativeStatus status);
 
     uint public constant DENOMINATOR = 10000;
@@ -273,8 +273,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
 
-        require(productStatus == Status.available || productStatus == Status.withdrawing);
-        productStatus = Status.withdrawing;
+        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
+        productStatus = Status.WITHDRAWING;
 
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
@@ -287,7 +287,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (_transfers == 0 && getStatusStep(GETETH) == 0) {
             checkLocker(WITHDRAW);
             if (_requests.length == 0) {
-                productStatus = Status.available;
+                productStatus = Status.AVAILABLE;
                 reimburse();
                 return true;
             }
@@ -309,7 +309,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
         }
-        productStatus = Status.available;
+        productStatus = Status.AVAILABLE;
         reimburse();
         return i == _requests.length; // True if completed
     }
@@ -404,8 +404,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
 
-        require(productStatus == Status.available || productStatus == Status.buying);
-        productStatus = Status.buying;
+        require(productStatus == Status.AVAILABLE || productStatus == Status.BUYING);
+        productStatus = Status.BUYING;
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
@@ -413,7 +413,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (getStatusStep(BUYTOKENS) == 0) {
             checkLocker(BUYTOKENS);
             if (tokens.length == 0 || getETHBalance() == 0) {
-                productStatus = Status.available;
+                productStatus = Status.AVAILABLE;
                 reimburse();
                 return true;
             }
@@ -446,7 +446,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             finalizeStep(BUYTOKENS);
             freezeBalance = 0;
         }
-        productStatus = Status.available;
+        productStatus = Status.AVAILABLE;
         reimburse();
         return true;
     }
@@ -455,8 +455,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
         startGasCalculation();
         
-        require(productStatus == Status.available || productStatus == Status.rebalancing);
-        productStatus = Status.rebalancing;
+        require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING);
+        productStatus = Status.REBALANCING;
 
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -504,7 +504,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 finalizeStep(REBALANCE);
                 rebalanceProvider.finalize();
                 rebalanceReceivedETHAmountFromSale = 0;
-                productStatus = Status.available;
+                productStatus = Status.AVAILABLE;
                 reimburse();   // Completed case
                 return true;
             }
