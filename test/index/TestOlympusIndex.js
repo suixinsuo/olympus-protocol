@@ -26,7 +26,7 @@ const Reimbursable = artifacts.require("Reimbursable");
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
-
+const TIME_LOCK_TEST_SECONDS = 5;
 const indexData = {
   name: "OlympusIndex",
   symbol: "OlympusIndex",
@@ -260,6 +260,8 @@ contract("Olympus Index", accounts => {
   it("Rebalance works with no tokens", async () => {
     let tx;
     let rebalanceFinished = false;
+    // Set the interval for TIME_LOCK_TEST_SECONDS seconds, so the next test can test the timeLock
+    await index.setMultipleTimeIntervals([await index.REBALANCE()], [TIME_LOCK_TEST_SECONDS]);
     while (rebalanceFinished == false) {
       rebalanceFinished = await index.rebalance.call();
       tx = await index.rebalance();
@@ -272,13 +274,12 @@ contract("Olympus Index", accounts => {
     tokenAmounts[1].forEach(amount => assert.equal(amount, 0, "Amount is 0"));
   });
 
-  // it("Can't rebalance so frequently", async () => {
-  //   console.log(await index.getProductStatus())
-  //   await calc.assertReverts(async () => await index.rebalance(), "Should be reverted");
-  //   console.log(await index.getProductStatus())
-  //   // disable the lock
-  //   await index.setMultipleTimeIntervals([await index.REBALANCE()], [0]);
-  // });
+  it("Can't rebalance so frequently", async () => {
+    await calc.assertReverts(async () => await index.rebalance(), "Should be reverted because of the time lock");
+    // disable the lock, wait TIME_LOCK_TEST_SECONDS seconds to make sure the previous time lock is expired.
+    await calc.waitSeconds(TIME_LOCK_TEST_SECONDS);
+    await index.setMultipleTimeIntervals([await index.REBALANCE()], [0]);
+  });
 
   it("Buy Tokens works with no ETH", async () => {
     let tx;
@@ -378,7 +379,7 @@ contract("Olympus Index", accounts => {
   });
 
   it("Shall be able to withdraw only after frequency", async () => {
-    
+
     let tx;
     const interval = 5; //5 seconds frequency
     await index.setMaxSteps(DerivativeProviders.WITHDRAW, 1); // For testing
