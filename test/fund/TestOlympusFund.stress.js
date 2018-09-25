@@ -71,7 +71,25 @@ contract("Fund", accounts => {
   const investorG = accounts[7];
   const investorH = accounts[8];
   const investorI = accounts[9];
-  const investorJ = accounts[0];
+  const investorJ = accounts[10];
+
+  const investorK = accounts[11];
+  const investorL = accounts[12];
+  const investorM = accounts[13];
+  const investorN = accounts[14];
+  const investorO = accounts[15];
+  const investorP = accounts[16];
+  const investorQ = accounts[17];
+  const investorR = accounts[18];
+  const investorS = accounts[19];
+  const investorT = accounts[20];
+
+  const GroupA = [investorA,investorB,investorC,investorD,investorE,investorF,investorG,investorH,investorI,investorJ];
+  const GroupB = [investorK,investorL,investorM,investorN,investorO,investorP,investorQ,investorR,investorS,investorT];
+
+  let KNC;
+  let EOS;
+  let MOT;
 
   before("Set Component list", async () => {
     mockMOT = await MockToken.deployed();
@@ -108,6 +126,9 @@ contract("Fund", accounts => {
     componentList.setComponent(DerivativeProviders.TOKENBROKEN, tokenBroken.address);
     token0_erc20 = await ERC20.at(await tokens[0]);
     token1_erc20 = await ERC20.at(await tokens[1]);
+    KNC = tokens[0];
+    EOS = tokens[1];
+    MOT = tokens[2];
   });
   // ----------------------------- REQUIRED FOR CREATION ----------------------
   it("Create a fund", async () => {
@@ -141,62 +162,52 @@ contract("Fund", accounts => {
   });
   
   it("Invest 10 times and buy tokens", async () => {
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorA
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorB
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorC
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorD
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorE
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorF
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorG
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorH
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorI
-    });
-    await fund.invest({
-      value: web3.toWei(0.01, "ether"),
-      from: investorJ
-    });
+    for (let i  = 0; i < GroupB.length; i++) {
+      await fund.invest({
+        value: web3.toWei(0.01, "ether"),
+        from: GroupA[i]
+      })};
 
 
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
-    const rates_KNC = await mockKyber.getExpectedRate(ethToken, tokens[0], web3.toWei(0.05, "ether"));
-    const rates_EOS = await mockKyber.getExpectedRate(ethToken, tokens[0], web3.toWei(0.05, "ether"));
+  
+    const rates_KNC = await mockKyber.getExpectedRate(ethToken, KNC, web3.toWei(0.05, "ether"));
+    const rates_EOS = await mockKyber.getExpectedRate(ethToken, EOS, web3.toWei(0.05, "ether"));
+
     console.log(rates_KNC,rates_EOS);
+
     const amounts = [web3.toWei(0.05, "ether"), web3.toWei(0.05, "ether")];
-    console.log(amounts);
+
     let tx;
-    tx = await fund.buyTokens("", [tokens[0],tokens[1]], amounts, [rates_KNC,rates_EOS]);
+    tx = await fund.buyTokens("", [KNC,EOS], amounts, [10**21,10**21]);//bignumber to number
+    const fundTokensAndBalance = await fund.getTokens();
+    for (let i  = 0; i < GroupA.length; i++) {
+      assert.equal((await fund.balanceOf(GroupA[i])).toNumber(),  web3.toWei(0.01, "ether"), "Group has invest 0.001");
+    };
+
+    assert.equal(fundTokensAndBalance[0][0], KNC, "Token exist in fund");
+    assert.equal(fundTokensAndBalance[0][1], EOS, "Token exist in fund");
+
+    assert.equal(fundTokensAndBalance[1][0].toNumber(), 0.05 * 10**21, "Balance is correct in the fund");
+    assert.equal(fundTokensAndBalance[1][1].toNumber(), 0.05 * 10**21, "Balance is correct in the fund");
 
   });
 
   it("Create a fund", async () => {
-    
+    for (let i  = 0; i < GroupB.length; i++) {
+      await fund.invest({
+        value: web3.toWei(0.01, "ether"),
+        from: GroupB[i]
+      })};
+    const rates_KNC = await mockKyber.getExpectedRate(ethToken, KNC, web3.toWei(0.05, "ether"));
+    const rates_EOS = await mockKyber.getExpectedRate(ethToken, EOS, web3.toWei(0.05, "ether"));
+    //await fund.sellTokens("", fundTokensAndBalance[0], fundTokensAndBalance[1], sellRates.map(rate => rate[0]));
+  
   });
 
+  it("Create a fund", async () => {
+    
+
+  });
 
   })
