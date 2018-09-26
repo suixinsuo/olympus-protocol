@@ -55,7 +55,7 @@ contract("ExchangeProvider", accounts => {
           assert.ok(_mockToken, "MockToken contract is not deployed.");
           assert.ok(_exchangeProvider, "ExchangeProvider contract is not deployed.");
           await _exchangeProvider.setMotAddress(_mockToken.address);
-          tokens = await _mockKyberNetwork.supportedTokens();
+          tokens = (await _mockKyberNetwork.supportedTokens()).slice(0,2);
           mockKyberNetwork = _mockKyberNetwork;
           return (exchangeProvider = _exchangeProvider);
         }

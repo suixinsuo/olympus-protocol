@@ -98,7 +98,7 @@ contract("Olympus Index Special Scenarios", accounts => {
 
   before("Create Index", async () => {
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = await mockKyber.supportedTokens();
+    tokens = (await mockKyber.supportedTokens()).slice(0,2);
 
     market = await Marketplace.deployed();
     mockMOT = await MockToken.deployed();
