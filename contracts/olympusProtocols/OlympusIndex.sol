@@ -37,7 +37,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public freezeBalance; // For operations (Buy tokens and sellTokens)
     ERC20Extended[]  freezeTokens;
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
-    
+
     constructor (
       string _name,
       string _symbol,
@@ -128,6 +128,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     function getTokens() public view returns (address[] _tokens, uint[] _weights) {
         return (tokens, weights);
     }
+
     function getProductStatus() public view returns (uint _status) {
         return uint(productStatus);
     }
@@ -447,16 +448,18 @@ contract OlympusIndex is IndexInterface, Derivative {
         if(i == tokens.length) {
             finalizeStep(BUYTOKENS);
             freezeBalance = 0;
+            productStatus = Status.AVAILABLE;
+            reimburse();
+            return true;
         }
-        productStatus = Status.AVAILABLE;
         reimburse();
-        return true;
+        return false;
     }
 
     // solhint-disable-next-line
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
         startGasCalculation();
-        
+
         require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING);
         productStatus = Status.REBALANCING;
 
@@ -501,7 +504,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                     exchangeProvider.buyToken.value(_amounts[i])(ERC20Extended(_tokensToBuy[i]), _amounts[i], 0, address(this), 0x0)
                 );
             }
- 
+
             if(i == _tokensToBuy.length) {
                 finalizeStep(REBALANCE);
                 rebalanceProvider.finalize();
