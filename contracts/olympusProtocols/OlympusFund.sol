@@ -41,6 +41,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
     address[] public activeInvestors; // Start in 0
 
+    enum Status { AVAILABLE, WITHDRAWING, PENDING }
+    Status public productStatus = Status.AVAILABLE;
+
     constructor(
       string _name,
       string _symbol,
@@ -122,7 +125,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         require(getETHBalance() >= totalEthRequired);
 
-        if (!OlympusExchangeInterface(getComponentByName(EXCHANGE))
+        if (!getExchangeInterface()
             .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)) {
             checkBrokenTokens(_tokens);
             updateTokens(_tokens);
@@ -137,7 +140,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
 
-        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        OlympusExchangeInterface exchange = getExchangeInterface();
 
         for (uint i = 0; i < _tokens.length; i++) {
             // Setting amount to 0 skips the sell
@@ -223,24 +226,27 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function getAssetsValue() public view returns (uint) {
         // TODO cast to OlympusExchangeInterface
-        OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        OlympusExchangeInterface exchangeProvider = getExchangeInterface();
         uint _totalTokensValue = 0;
         // Iterator
         uint _expectedRate;
         uint _balance;
+        uint _decimals;
+        ERC20Extended token;
 
         for (uint i = 0; i < tokens.length; i++) {
             if(isBrokenToken[tokens[i]]) {continue;}
 
-            _balance = amounts[tokens[i]];
+            token = ERC20Extended(tokens[i]);
+            _decimals = token.decimals();
+            _balance = token.balanceOf(address(this));
+
             if (_balance == 0) {continue;}
-
-            (_expectedRate, ) = exchangeProvider.getPrice(ERC20Extended(tokens[i]), ETH, _balance, 0x0);
-
+            (_expectedRate, ) = exchangeProvider.getPrice(token, ETH, 10**_decimals, 0x0);
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**18));
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**_decimals));
         }
-        return _totalTokensValue;
+        return _totalTokensValue; 
     }
 
     // ----------------------------- FEES  -----------------------------
@@ -261,7 +267,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         );
         accumulatedFee = accumulatedFee.sub(_amount);
         // Exchange to MOT
-        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        OlympusExchangeInterface exchange = getExchangeInterface();
         ERC20Extended MOT = ERC20Extended(FeeChargerInterface(address(exchange)).MOT());
         uint _rate;
         (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
@@ -326,6 +332,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
+        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
+        productStatus = Status.WITHDRAWING;
+
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
 
@@ -335,6 +344,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         if (_transfers == 0 && getStatusStep(GETETH) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
+
+                productStatus = Status.AVAILABLE;
                 reimburse();
                 return true;
             }
@@ -357,6 +368,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             finalizeStep(WITHDRAW);
         }
 
+        productStatus = Status.AVAILABLE;
         reimburse();
         return i == _requests.length; // True if completed
     }
@@ -436,7 +448,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // solhint-disable-next-line
     function getETHFromTokens(uint _tokenPercentage) internal returns(bool success) {
-        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        OlympusExchangeInterface exchange = getExchangeInterface();
 
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         if(_tokensToSell.length == 0) {return true;}
@@ -516,7 +528,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function checkBrokenTokens(ERC20Extended[] _tokens) internal {
         TokenBrokenInterface  tokenBrokenProvider = TokenBrokenInterface(getComponentByName(TOKENBROKEN));
         uint[] memory _failedTimes = new uint[](_tokens.length);
-        _failedTimes = OlympusExchangeInterface(getComponentByName(EXCHANGE)).getFailedTradesArray(_tokens);
+        _failedTimes = getExchangeInterface().getFailedTradesArray(_tokens);
 
         for(uint t = 0;t < _tokens.length; t++) {
              // Is successfull or already broken
@@ -585,7 +597,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return activeInvestors;
     }
     function approveExchange(address _token, uint amount) internal {
-        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+        OlympusExchangeInterface exchange = getExchangeInterface();
         ERC20NoReturn(_token).approve(exchange, 0);
         ERC20NoReturn(_token).approve(exchange, amount);
     }
@@ -598,12 +610,16 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
          _from.transfer(_amount);
     }
 
-    // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
-    function panic() external onlyOwner {
-        _transfer(owner, address(this).balance);
-        for (uint i = 0; i < tokens.length; i++) {
-            tokenTransfer(tokens[i], owner, amounts[tokens[i]]);
-        }
+    function getExchangeInterface() private view returns (OlympusExchangeInterface){
+        return OlympusExchangeInterface(getComponentByName(EXCHANGE));
     }
+
+    // // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
+    // function panic() external onlyOwner {
+    //     _transfer(owner, address(this).balance);
+    //     for (uint i = 0; i < tokens.length; i++) {
+    //         tokenTransfer(tokens[i], owner, amounts[tokens[i]]);
+    //     }
+    // }
 
 }

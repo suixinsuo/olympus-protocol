@@ -23,7 +23,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
     bytes32 public constant BUYTOKENS = "BuyTokens";
-
+    enum Status { AVAILABLE, WITHDRAWING, REBALANCING, BUYING, PENDING }
+    Status public productStatus = Status.AVAILABLE;
     // event ChangeStatus(DerivativeStatus status);
 
     uint public constant DENOMINATOR = 10000;
@@ -36,7 +37,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public freezeBalance; // For operations (Buy tokens and sellTokens)
     ERC20Extended[]  freezeTokens;
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
-
+    
     constructor (
       string _name,
       string _symbol,
@@ -127,6 +128,9 @@ contract OlympusIndex is IndexInterface, Derivative {
     function getTokens() public view returns (address[] _tokens, uint[] _weights) {
         return (tokens, weights);
     }
+    function getProductStatus() public view returns (uint _status) {
+        return uint(productStatus);
+    }
 
     // solhint-disable-next-line
     function close() OnlyOwnerOrPausedTimeout public returns(bool success) {
@@ -191,16 +195,18 @@ contract OlympusIndex is IndexInterface, Derivative {
         // Iterator
         uint _expectedRate;
         uint _balance;
+        uint _decimals;
+        ERC20Extended token;
 
         for (uint i = 0; i < tokens.length; i++) {
-
-            _balance = ERC20(tokens[i]).balanceOf(address(this));
+            token = ERC20Extended(tokens[i]);
+            _decimals = token.decimals();
+            _balance = token.balanceOf(address(this));
 
             if (_balance == 0) {continue;}
-            (_expectedRate, ) = exchangeProvider.getPrice(ERC20Extended(tokens[i]), ETH, _balance, 0x0);
+            (_expectedRate, ) = exchangeProvider.getPrice(token, ETH, 10**_decimals, 0x0);
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**18));
-
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**_decimals));
         }
         return _totalTokensValue;
     }
@@ -268,6 +274,10 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
+
+        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
+        productStatus = Status.WITHDRAWING;
+
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
         // Check if there is request
@@ -279,6 +289,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (_transfers == 0 && getStatusStep(GETETH) == 0) {
             checkLocker(WITHDRAW);
             if (_requests.length == 0) {
+                productStatus = Status.AVAILABLE;
                 reimburse();
                 return true;
             }
@@ -300,6 +311,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
         }
+        productStatus = Status.AVAILABLE;
         reimburse();
         return i == _requests.length; // True if completed
     }
@@ -393,12 +405,17 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
+
+        require(productStatus == Status.AVAILABLE || productStatus == Status.BUYING);
+        productStatus = Status.BUYING;
+
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         // Start?
         if (getStatusStep(BUYTOKENS) == 0) {
             checkLocker(BUYTOKENS);
             if (tokens.length == 0 || getETHBalance() == 0) {
+                productStatus = Status.AVAILABLE;
                 reimburse();
                 return true;
             }
@@ -431,7 +448,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             finalizeStep(BUYTOKENS);
             freezeBalance = 0;
         }
-
+        productStatus = Status.AVAILABLE;
         reimburse();
         return true;
     }
@@ -439,6 +456,10 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
         startGasCalculation();
+        
+        require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING);
+        productStatus = Status.REBALANCING;
+
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         if (!rebalanceProvider.getRebalanceInProgress()) {
@@ -471,7 +492,6 @@ contract OlympusIndex is IndexInterface, Derivative {
                 currentStep = 0;
             }
         }
-
         // Buy Tokens
         if (stepStatus == uint(RebalancePhases.BuyTokens)) {
             _amounts = rebalanceProvider.recalculateTokensToBuyAfterSale(rebalanceReceivedETHAmountFromSale);
@@ -481,15 +501,16 @@ contract OlympusIndex is IndexInterface, Derivative {
                     exchangeProvider.buyToken.value(_amounts[i])(ERC20Extended(_tokensToBuy[i]), _amounts[i], 0, address(this), 0x0)
                 );
             }
+ 
             if(i == _tokensToBuy.length) {
                 finalizeStep(REBALANCE);
                 rebalanceProvider.finalize();
                 rebalanceReceivedETHAmountFromSale = 0;
+                productStatus = Status.AVAILABLE;
                 reimburse();   // Completed case
                 return true;
             }
         }
-
         reimburse(); // Not complete case
         return false;
     }
