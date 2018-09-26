@@ -252,8 +252,7 @@ contract("Fund", accounts => {
     assert.equal(NewfundTokensAndBalance[0][0], KNC, "KNC Token exist in fund");
     assert.equal(NewfundTokensAndBalance[0][1], EOS, "EOS Token exist in fund");
     assert.equal(NewfundTokensAndBalance[0][2], MOT, "MOT Token exist in fund");
-    console.log(NewfundTokensAndBalance[1]);
-    console.log(NewfundTokensAndBalance[1][0].toNumber(),NewfundTokensAndBalance[1][1].toNumber(),NewfundTokensAndBalance[1][2].toNumber());
+  
   });
 
   it("sell tokens then withdraw", async () => {
@@ -264,8 +263,6 @@ contract("Fund", accounts => {
     };
     await fund.withdraw();
     assert(await calc.inRange((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), 0.001), "Price Changed");
-    let test = await fund.getAssetsValue();
-    console.log(test);
     assert(await calc.inRange((await fund.getAssetsValue()).toNumber(), web3.toWei(0.041, "ether"), 0.1), "Assets Value Changed");
     for (let i  = 0; i < GroupA.length; i++) {
       assert.equal((await fund.balanceOf(GroupA[i])).toNumber(), 0, "GroupA has invest 0.00");
@@ -276,17 +273,26 @@ contract("Fund", accounts => {
 
   });
   it("Withdraw then sell tokens", async () => {
-    let fundTokensAndBalance = await fund.getTokens();
+    
     for (let i  = 0; i < GroupB.length; i++) {
       await fund.requestWithdraw(toTokenWei(0.02), { from: GroupB[i] });
     };
     await fund.withdraw();
-    console.log([fundTokensAndBalance[1][0],fundTokensAndBalance[1][1]]);
-    //wait fund.sellTokens("", [KNC,EOS], [fundTokensAndBalance[1][0],fundTokensAndBalance[1][1]], [10**15,10**15]);
-    //await fund.sellTokens("", [KNC],[fundTokensAndBalance[1][0]], [10**15]);
-    //await fund.sellTokens("", [EOS],[fundTokensAndBalance[1][1]], [10**15]);
-    assert(await calc.inRange((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"), 0.001), "Price Changed");
+    let fundTokensAndBalance = await fund.getTokens();
+    await fund.sellTokens("", [KNC,EOS], [fundTokensAndBalance[1][0],fundTokensAndBalance[1][1]], [10**15,10**15]);
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));//"Price Changed"
     assert(await calc.inRange((await fund.getAssetsValue()).toNumber(), 0, 0.1), "Assets Value Changed");
+
+    let NewfundTokensAndBalance = await fund.getTokens();//reload the balance 
+
+    for (let i  = 0; i < GroupA.length; i++) {
+      assert.equal((await fund.balanceOf(GroupA[i])).toNumber(), 0, "GroupA has invest 0.00");
+    };
+    for (let i  = 0; i < GroupB.length; i++) {
+     assert.equal((await fund.balanceOf(GroupB[i])).toNumber(),  0, "GroupB has invest 0.00");
+    };
+    assert.equal(NewfundTokensAndBalance[1][0].toNumber(), 0, "KNC Balance is correct in the fund");
+    assert.equal(NewfundTokensAndBalance[1][1].toNumber(), 0, "EOS Balance is correct in the fund");
 
   });
   it("Withdraw then close", async () => {
@@ -321,7 +327,9 @@ contract("Fund", accounts => {
       await fund.requestWithdraw(toTokenWei(0.005), { from: GroupA[i] });
     };
     await fund.close();
+    await fund.sellAllTokensOnClosedFund();
 
+    assert.equal((await fund.status()).toNumber(), 3 , " Status is closed");
 
   });
   it("Close then withdraw", async () => {
@@ -329,5 +337,21 @@ contract("Fund", accounts => {
       await fund.requestWithdraw(toTokenWei(0.005), { from: GroupA[i] });
     };
 
+    assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
+
+    //assert.equal((await fund.getAssetsValue()).toNumber(), 0); // "Assets Value Changed"
+
+    let NewfundTokensAndBalance = await fund.getTokens();//reload the balance 
+
+    for (let i  = 0; i < GroupA.length; i++) {
+      assert.equal((await fund.balanceOf(GroupA[i])).toNumber(), 0, "GroupA has invest 0.00");
+    };
+    for (let i  = 0; i < GroupB.length; i++) {
+     assert.equal((await fund.balanceOf(GroupB[i])).toNumber(),  0, "GroupB has invest 0.00");
+    };
+    assert.equal(NewfundTokensAndBalance[1][0].toNumber(), 0, "KNC Balance is correct in the fund");
+    assert.equal(NewfundTokensAndBalance[1][1].toNumber(), 0, "EOS Balance is correct in the fund");
+    assert.equal(NewfundTokensAndBalance[1][2].toNumber(), 0, "MOT Balance is correct in the fund");
+    assert.equal((await fund.status()).toNumber(), 3 , " Status is closed");
   });
   })
