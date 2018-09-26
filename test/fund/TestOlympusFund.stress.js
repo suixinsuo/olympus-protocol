@@ -339,7 +339,7 @@ contract("Fund", accounts => {
 
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
 
-    //assert.equal((await fund.getAssetsValue()).toNumber(), 0); // "Assets Value Changed"
+    assert.equal((await fund.getAssetsValue()).toNumber(), 0); // "Assets Value Changed"
 
     let NewfundTokensAndBalance = await fund.getTokens();//reload the balance 
 
