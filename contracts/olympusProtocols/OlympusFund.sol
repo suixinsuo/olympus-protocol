@@ -41,7 +41,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
     address[] public activeInvestors; // Start in 0
 
-    enum Status { AVAILABLE, WITHDRAWING, PENDING }
+    enum Status { AVAILABLE, WITHDRAWING }
     Status public productStatus = Status.AVAILABLE;
 
     constructor(
