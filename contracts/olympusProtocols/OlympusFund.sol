@@ -108,7 +108,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // ----------------------------- FUND INTERFACE -----------------------------
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
-
+        require(productStatus == Status.AVAILABLE);
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _tokens.length; i++) {
@@ -139,7 +139,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
-
+        require(productStatus == Status.AVAILABLE);
         OlympusExchangeInterface exchange = getExchangeInterface();
 
         for (uint i = 0; i < _tokens.length; i++) {
@@ -246,7 +246,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             if (_expectedRate == 0) {continue;}
             _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**_decimals));
         }
-        return _totalTokensValue; 
+        return _totalTokensValue;
     }
 
     // ----------------------------- FEES  -----------------------------
