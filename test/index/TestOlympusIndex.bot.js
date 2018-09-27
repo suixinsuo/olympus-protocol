@@ -43,13 +43,12 @@ const indexData = {
   rebalanceDelta: 0
 };
 
+let processingBuyToken = false;
+let processingRebalance = false;
+let processingWithdraw = false;
+
 const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
-};
-
-const expectedTokenAmount = (balance, rates, tokenIndex) => {
-  // Balance ETH * (weight)%  * tokenRate / ETH  ==> Expected tokenAmount
-  return (balance * (indexData.weights[tokenIndex] / 100) * rates[0][tokenIndex].toNumber()) / 10 ** 18;
 };
 
 const delay = async (sec) => {
@@ -58,50 +57,129 @@ const delay = async (sec) => {
   });
 }
 
-const getTokensAndAmounts = async index => {
-  const tokensWeights = await index.getTokens();
-  const amounts = await Promise.all(
-    tokensWeights[0].map(async token => {
-      let erc20 = await ERC20.at(token);
-      return erc20.balanceOf(index.address);
-    })
-  );
-  return [tokensWeights[0], amounts];
-};
+const availableStatus = async (index, current) => {
+  const status = await index.getProductStatus();
+  return status.toNumber() === 0 || status.toNumber() === current;
+}
 
-const safeRebalance = async index => {
-  console.log('start rebalance ...')
-  const result = await index.rebalance.call();
-  await index.rebalance();
-  if (!result) {
-    console.log('safeRebalance:', result)
-    await safeRebalance(index);
-  } else {
-    console.log('rebalance done')
+const availableWithdraw = async (index, asyncWithdraw) => {
+  const available = await availableStatus(index, 1);
+  const totalRequest = (await asyncWithdraw.getContractInfo(index.address))[2].toNumber();
+  return available && totalRequest > 0;
+}
+
+const availableRebalance = async (index, rebalanceProvider) => {
+  const available = await availableStatus(index, 2);
+  try {
+    console.log('availableRebalance:', indexData.rebalanceDelta, index.address);
+    const needs = await rebalanceProvider.needsRebalance.call(1, index.address);
+    console.log('needs:', needs);
+    return available && needs;
+  } catch (err) {
+    console.log('err', err);
+    return false;
   }
 }
 
-const safeWithdraw = async index => {
-  console.log('start withdraw ...')
-  const result = await index.withdraw.call();
-  await index.withdraw();
-  if (!result) {
-    console.log('safeWithdraw:', result)
-    await safeWithdraw(index);
-  } else {
-    console.log('withdraw done')
+const availableBuyTokens = async (index) => {
+  const available = await availableStatus(index, 3);
+  let balance = (await index.getETHBalance()).toNumber();
+  const result = available && balance > 1000;
+  return result;
+}
+
+const safeRebalance = async (index, rebalanceProvider) => {
+  if (processingRebalance)
+    return;
+
+  if (!availableRebalance(index, rebalanceProvider)) {
+    return;
+  }
+
+  processingRebalance = true;
+
+  try {
+    const result = await index.rebalance.call();
+    await index.rebalance();
+    processingRebalance = false;
+    if (!result) {
+      console.log('safeRebalance:', result)
+      await safeRebalance(index, rebalanceProvider);
+    } else {
+      console.log('rebalance done');
+    }
+  } catch (e) {
+    if (e.message.includes("revert")) {
+      console.log('safeRebalance revert');
+      status = await index.getProductStatus();
+      console.log('index status:', status.toNumber());
+      await delay(1000);
+      processingRebalance = false;
+      await safeRebalance(index, rebalanceProvider);
+    }
   }
 }
 
-const safeBuyTokens = async index => {
-  console.log('start buy tokens ...')
-  const result = await index.buyTokens.call();
-  await index.buyTokens();
-  if (!result) {
-    console.log('safeBuyTokens:', result)
-    await buyTokens(index);
-  } else {
-    console.log('buy tokens done')
+const safeWithdraw = async (index, asyncWithdraw) => {
+  if (processingWithdraw)
+    return;
+  if (!await availableWithdraw(index, asyncWithdraw)) {
+    return;
+  }
+
+  processingWithdraw = true;
+
+  try {
+    const result = await index.withdraw.call();
+    await index.withdraw();
+    processingWithdraw = false;
+    if (!result) {
+      console.log('safeWithdraw:', result)
+      await safeWithdraw(index, asyncWithdraw);
+    } else {
+      console.log('withdraw done');
+    }
+  } catch (e) {
+    if (e.message.includes("revert")) {
+      const status = await index.getProductStatus();
+      console.log('safeWithdraw revert', status.toNumber());
+      await delay(1000);
+      processingWithdraw = false;
+      await safeWithdraw(index, asyncWithdraw);
+    }
+  }
+}
+
+const safeBuyTokens = async (index) => {
+  if (processingBuyToken)
+    return;
+
+  if (!await availableBuyTokens(index)) {
+    return;
+  }
+
+  processingBuyToken = true;
+  console.log('start buy token .......');
+  try {
+    const result = await index.buyTokens.call();
+    console.log('buy tokens result', result);
+    await index.buyTokens();
+
+    processingBuyToken = false;
+    if (!result) {
+      console.log('buy token not finish', result);
+      await safeBuyTokens(index);
+    } else {
+      console.log('buy tokens done');
+    }
+  } catch (e) {
+    if (e.message.includes("revert")) {
+      const status = await index.getProductStatus();
+      console.log('safeBuyTokens revert', status.toNumber());
+      await delay(1000);
+      processingBuyToken = false;
+      await safeBuyTokens(index);
+    }
   }
 }
 
@@ -120,6 +198,7 @@ contract("Olympus Index", accounts => {
   let erc20Token1;
   let erc20Token2;
   let erc20Token3;
+  let allDone = false;
 
   const investorsGroupA = accounts.slice(1, 11);
   const investorsGroupB = accounts.slice(11);
@@ -150,7 +229,6 @@ contract("Olympus Index", accounts => {
     await whitelist.setMotAddress(mockMOT.address);
     await reimbursable.setMotAddress(mockMOT.address);
     await mockKyber.setSlippageMockRate(100);
-
 
     componentList.setComponent(DerivativeProviders.MARKET, market.address);
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchange.address);
@@ -191,6 +269,12 @@ contract("Olympus Index", accounts => {
       value: web3.toWei(indexData.ethDeposit, "ether")
     });
 
+    await web3.eth.sendTransaction({
+      from: accounts[0],
+      to: mockKyber.address,
+      value: '10000000000000000000'
+    });
+
     price = (await index.getPrice()).toNumber();
     assert.equal(price, web3.toWei(1, "ether"), 'step 1. Price is 1');
 
@@ -206,16 +290,19 @@ contract("Olympus Index", accounts => {
   it("Simulate bot", async () => {
 
     setInterval(async () => {
-      await safeBuyTokens(index);
-    }, 10000);
+      if (!allDone)
+        await safeBuyTokens(index);
+    }, 5000);
 
     setInterval(async () => {
-      await safeWithdraw(index);
-    }, 12000);
+      if (!allDone)
+        await safeWithdraw(index, asyncWithdraw);
+    }, 5000);
 
     setInterval(async () => {
-      await safeRebalance(index);
-    }, 30000);
+      if (!allDone)
+        await safeRebalance(index, rebalance);
+    }, 15000);
 
   });
 
@@ -228,12 +315,18 @@ contract("Olympus Index", accounts => {
       }))
     );
 
-    await delay(40000);
+    let assetsValue = (await index.getAssetsValue()).toNumber();
+    console.log('invested assetsValue:', assetsValue);
+
+    await delay(30000);
 
     let price = (await index.getPrice()).toNumber();
     assert.equal(price, web3.toWei(1, "ether"), 'step 3. Price is 1 ETH');
-    const assetsValue = (await index.getAssetsValue()).toNumber();
+    assetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(assetsValue, web3.toWei(1, "ether"), "step 3. Total assets value is 1 ETH");
+
+    const ethBalance = (await index.getETHBalance()).toNumber();
+    console.log('ethBalance', ethBalance);
     // 4. Each investor should have the index token balance of 0.1;
     // 5. Each token has amount, the percentage of index token is the same as the percentage we set while deploying the index.
 
@@ -248,15 +341,20 @@ contract("Olympus Index", accounts => {
       }))
     );
 
+    // await safeBuyTokens(index);
+
     await Promise.all(
       investorsGroupA.map(async account => {
-        await index.requestWithdraw(toTokenWei(0.01), {
+        await index.requestWithdraw(toTokenWei(0.05), {
           from: account
         });
       })
     );
 
-    await delay(85000);
+    // await safeWithdraw(index);
+
+    await delay(30000);
+
     let price = (await index.getPrice()).toNumber();
     assert.equal(price, web3.toWei(1, "ether"), 'Price is 1 ETH');
     const assetsValue = (await index.getAssetsValue()).toNumber();
@@ -265,9 +363,144 @@ contract("Olympus Index", accounts => {
     assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
 
     // Each investor should have the index token balance of 0.15, they also each receives 0.05 ETH back.
+  })
 
+  it("buy tokens and rebalance", async () => {
+
+    // 1. Sends 10 MOT to the index;
+    await erc20Token0.transfer(index.address, web3.toWei(10, "ether"), {
+      from: accounts[0]
+    });
+
+    // 2. Group A 10 investors each invests 0.05 ETH;
+    await Promise.all(
+      investorsGroupA.map(async account => await index.invest({
+        value: web3.toWei(0.05, "ether"),
+        from: account
+      }))
+    );
+
+    await delay(30000);
+
+    let price = (await index.getPrice()).toNumber();
+    assert.isAbove(price, web3.toWei(1, "ether"), 'Price is > 1');
+
+    let balance = (await index.getETHBalance()).toNumber();
+    assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
+
+    const assetsValue = (await index.getAssetsValue()).toNumber();
+    console.log('assetsValue:', calc.fromWei(assetsValue));
+
+    // Each investor should have the index token balance of 0.15, they also each receives 0.05 ETH back.
   })
 
 
+  it("withdraw and rebalance", async () => {
+
+    await Promise.all(
+      investorsGroupA.map(async account => {
+        await index.requestWithdraw(toTokenWei(0.1), {
+          from: account
+        });
+      })
+    );
+
+    // Sends another 50 MOT to the index;
+    await erc20Token0.transfer(index.address, web3.toWei(50, "ether"), {
+      from: accounts[0]
+    });
+
+    await delay(30000);
+
+    let price = (await index.getPrice()).toNumber();
+    assert.isAbove(price, web3.toWei(1, "ether"), 'Price is > 1');
+
+    let balance = (await index.getETHBalance()).toNumber();
+    assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
+
+    const assetsValue = (await index.getAssetsValue()).toNumber();
+    assert.isAbove(assetsValue, web3.toWei(1, "ether"), "Total assets value is > 1 ETH;");
+
+    // 4. Each investor should have the index token balance of 0.1, each of them also receives 0.1 ETH back;
+    // 5. Percentage of each tokens in the index should be the same as the percentage we set while deploying the index contract.
+
+  });
+
+  it("buy tokens, withdraw and rebalance", async () => {
+
+    // 1. Sends another 100 MOT to the index;
+    await erc20Token0.transfer(index.address, web3.toWei(50, "ether"), {
+      from: accounts[0]
+    });
+
+    // 2. Group A 10 investors each invests 0.1 ETH;
+    await Promise.all(
+      investorsGroupA.map(async account => await index.invest({
+        value: web3.toWei(0.1, "ether"),
+        from: account
+      }))
+    );
+
+    // 3. Group A 10 investors each requests withdraw 0.05 ETH;
+    await Promise.all(
+      investorsGroupA.map(async account => {
+        await index.requestWithdraw(toTokenWei(0.05), {
+          from: account
+        });
+      })
+    );
+    allDone = true;
+
+    await delay(20000);
+    await safeRebalance(index, rebalance);
+    await safeBuyTokens(index);
+    await safeWithdraw(index, asyncWithdraw);
+
+    let price = (await index.getPrice()).toNumber();
+    assert.isAbove(price, web3.toWei(1, "ether"), 'Price is > 1');
+
+    let balance = (await index.getETHBalance()).toNumber();
+    // assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
+    assert(calc.inRange(balance, 0, 0.00001), "Total ETH balance now is 0");
+
+    const assetsValue = (await index.getAssetsValue()).toNumber();
+    assert.isAbove(assetsValue, web3.toWei(2.5, "ether"), "Total assets value is > 2.5 ETH;");
+
+    // 4. Each investor should have the index token balance of 0.25;
+    // 5. Percentage of each tokens in the index should be the same as the percentage we set while deploying the index contract.
+
+  });
+
+  it("withdraw and close", async () => {
+    // 1. Group A investors each requests withdraw of 0.1 ETH;
+    await Promise.all(
+      investorsGroupA.map(async account => {
+        await index.requestWithdraw(toTokenWei(0.1), {
+          from: account
+        });
+      })
+    );
+
+    // 2. Owner closes the index;
+    await index.close();
+    await index.sellAllTokensOnClosedFund();
+
+    // 3. Group A investors each requests withdraw rest of investment;
+    await Promise.all(
+      investorsGroupA.map(async account => {
+        const amountInRequest = (await asyncWithdraw.getUserWithdrawBalance(index.address, account)).toNumber();
+        // console.log('amountInRequest:', amountInRequest);
+        const amount = (await index.balanceOf(account)).toNumber();
+        await index.requestWithdraw(amount - amountInRequest, {
+          from: account
+        });
+      })
+    );
+
+    // await delay(30000);
+
+    allDone = true;
+
+  });
 
 });

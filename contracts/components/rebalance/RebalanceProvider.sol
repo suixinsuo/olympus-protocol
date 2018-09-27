@@ -55,13 +55,14 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         bool itemsToBuy = false;
         bool itemsToSell = false;
         (indexTokenAddresses, indexTokenWeights) = IndexInterface(_targetAddress).getTokens();
+        uint totalIndexValue = getTotalIndexValueWithoutCache(_targetAddress);
         for(i = 0; i < indexTokenAddresses.length; i++) {
             // Get the amount of tokens expected for 1 ETH
             uint ETHTokenPrice;
             (ETHTokenPrice,) = priceProvider.getPrice(
                 ETH_TOKEN, ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(_targetAddress);
-            uint shouldHaveAmountOfTokensInETH = (getTotalIndexValueWithoutCache(_targetAddress).mul(indexTokenWeights[i])).div(100);
+            uint shouldHaveAmountOfTokensInETH = (totalIndexValue.mul(indexTokenWeights[i])).div(100);
             uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
             if ((shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18) <
                 currentTokenBalance.sub(multipliedTokenBalance.div(PERCENTAGE_DENOMINATOR))){
