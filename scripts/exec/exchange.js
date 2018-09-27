@@ -14,7 +14,7 @@ function buyOnDev() {
   (async () => {
 
     let mockkyber = await MockKyberNetwork.deployed();
-    let tokens = await mockkyber.supportedTokens();
+    let tokens = (await mockkyber.supportedTokens()).slice(0,2);
     let exchangeProviderWrap = await ExchangeProviderWrap.deployed();
 
     let orderId = new Date().getTime();
@@ -78,7 +78,7 @@ module.exports = function (callback) {
       console.info(`Added bibox exchange: id = ${biboxId}`);
 
       let mockKyberNetwrok = await MockKyberNetwork.deployed();
-      let tokens = await mockKyberNetwrok.supportedTokens();
+      let tokens = await mockkyber.supportedTokens().slice(0,1);;
       let rates = tokens.map(t => { return web3.toWei(1000, 'ether') });
       await centralizedExchange.setRates(biboxId, tokens, rates);
       let exchangeProvider = await ExchangeProvider.deployed();
