@@ -138,7 +138,7 @@ contract("Fund", accounts => {
       fundData.description,
       fundData.category,
       fundData.decimals,
-      { gas: 8e6 } // At the moment require 5.7M
+      { gas: 7e6 } // At the moment require 5.7M
     );
     assert.equal((await fund.status()).toNumber(), 0); // new
 
