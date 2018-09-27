@@ -452,6 +452,7 @@ contract("Olympus Index", accounts => {
     allDone = true;
 
     await delay(20000);
+    
     await safeRebalance(index, rebalance);
     await safeBuyTokens(index);
     await safeWithdraw(index, asyncWithdraw);

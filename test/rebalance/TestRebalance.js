@@ -35,7 +35,7 @@ contract("MockRebalanceIndex", accounts => {
         _mockToken,
         _rebalanceProvider
       ) => {
-        tokens = await _mockKyberNetwork.supportedTokens();
+        tokens = (await _mockKyberNetwork.supportedTokens()).slice(0,2);
 
         _mockRebalanceIndex = await MockRebalanceIndex.new(
           tokens,
