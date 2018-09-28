@@ -317,6 +317,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return i == _requests.length; // True if completed
     }
 
+    event TOTALSUPPLY(uint i, uint y);
     function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) {
         uint _eth;
         uint _tokenAmount;
@@ -327,6 +328,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         balances[_investor] =  balances[_investor].sub(_tokenAmount);
         emit Transfer(_investor, 0x0, _tokenAmount); // ERC20 Required event
 
+        emit TOTALSUPPLY(totalSupply_, _tokenAmount);
         totalSupply_ = totalSupply_.sub(_tokenAmount);
         address(_investor).transfer(_eth);
 
