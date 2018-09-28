@@ -23,7 +23,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
     bytes32 public constant BUYTOKENS = "BuyTokens";
-    enum Status { AVAILABLE, WITHDRAWING, REBALANCING, BUYING, PENDING }
+    enum Status { AVAILABLE, WITHDRAWING, REBALANCING, BUYING }
     Status public productStatus = Status.AVAILABLE;
     // event ChangeStatus(DerivativeStatus status);
 
