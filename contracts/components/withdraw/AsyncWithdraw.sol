@@ -12,12 +12,15 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     string public name = "AsyncWithdraw";
     string public description = "Withdraw one by one";
     string public category = "Withdraw";
-    string public version = "1.1-20180913";
+    string public version = "1.2-20180928";
 
     struct ContractInfo {
         uint price;
-        address[]  userRequests;
-        mapping (address => uint)  amountPerUser;
+        address[] userRequests;
+        mapping (address => uint) amountPerUser;
+        address[] pendingUserRequests;
+        mapping (address => uint) pendingAmountPerUser;
+        uint pendingTotalWithdrawAmount;
         uint totalWithdrawAmount;
         bool withdrawRequestLock;
     }
@@ -26,10 +29,16 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
 
 
     function getUserRequests() external view returns(address[]) {
+        if(contracts[msg.sender].pendingTotalWithdrawAmount > 0){
+            return contracts[msg.sender].pendingUserRequests;
+        }
         return contracts[msg.sender].userRequests;
     }
 
     function getTotalWithdrawAmount() external view returns(uint) {
+        if(contracts[msg.sender].pendingTotalWithdrawAmount > 0){
+            return contracts[msg.sender].pendingTotalWithdrawAmount;
+        }
         return contracts[msg.sender].totalWithdrawAmount;
     }
 
@@ -56,20 +65,20 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         return true;
     }
 
-
     function withdraw(address _investor) external returns(uint eth, uint tokens) {
         require(payFee(0));
         require(contracts[msg.sender].withdrawRequestLock); // Only withdraw after lock
 
         // Jump the already withdrawed
-        if(contracts[msg.sender].amountPerUser[_investor] == 0) {return(0,0);}
+        if(contracts[msg.sender].pendingAmountPerUser[_investor] == 0) {return(0,0);}
 
         ERC20Extended derivative = ERC20Extended(msg.sender);
 
-        tokens = contracts[msg.sender].amountPerUser[_investor];
-
+        tokens = contracts[msg.sender].pendingAmountPerUser[_investor];
         contracts[msg.sender].totalWithdrawAmount = contracts[msg.sender].totalWithdrawAmount.sub(tokens);
+        contracts[msg.sender].pendingTotalWithdrawAmount = contracts[msg.sender].pendingTotalWithdrawAmount.sub(tokens);
         contracts[msg.sender].amountPerUser[_investor] = 0;
+        contracts[msg.sender].pendingAmountPerUser[_investor] = 0;
 
         // If he doesn't have this amount, the request will be closed and no ETH will be returned
         if(tokens > derivative.balanceOf(_investor)) {
@@ -103,12 +112,22 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         }
 
         contracts[msg.sender].withdrawRequestLock = true;
+
+        uint i;
+        for(i = 0; i < contracts[msg.sender].userRequests.length; i++){
+            contracts[msg.sender].pendingUserRequests.push(contracts[msg.sender].userRequests[i]);
+            contracts[msg.sender].pendingAmountPerUser[contracts[msg.sender].userRequests[i]] = contracts[msg.sender].
+                amountPerUser[contracts[msg.sender].userRequests[i]];
+            contracts[msg.sender].pendingTotalWithdrawAmount += contracts[msg.sender].
+                amountPerUser[contracts[msg.sender].userRequests[i]];
+        }
+        delete contracts[msg.sender].userRequests;
     }
 
     function finalize() external {
         contracts[msg.sender].withdrawRequestLock = false;
         contracts[msg.sender].price = 0;
-        delete contracts[msg.sender].userRequests;
+        delete contracts[msg.sender].pendingUserRequests;
     }
 
     // Out of the interface
