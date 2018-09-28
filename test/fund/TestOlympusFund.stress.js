@@ -337,7 +337,10 @@ contract("Fund", accounts => {
   });
   it("Close then withdraw", async () => {
     for (let i = 0; i < GroupA.length; i++) {
+      console.log("before", (await fund.balanceOf(GroupA[i])).toNumber(), i);
       await fund.requestWithdraw(toTokenWei(0.005), { from: GroupA[i] });
+      console.log("after", (await fund.balanceOf(GroupA[i])).toNumber(), i);
+
     };
 
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
@@ -347,7 +350,7 @@ contract("Fund", accounts => {
     let NewfundTokensAndBalance = await fund.getTokens();//reload the balance
 
     for (let i = 0; i < GroupA.length; i++) {
-      console.log((await fund.balanceOf(GroupA[i])).toNumber(), i);
+      console.log("extra", (await fund.balanceOf(GroupA[i])).toNumber(), i);
       // assert.equal((await fund.balanceOf(GroupA[i])).toNumber(), 0, "GroupA has invest 0.00");
     };
     for (let i = 0; i < GroupB.length; i++) {

@@ -202,7 +202,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
-        require(status == DerivativeStatus.Closed);
+        require(status == DerivativeStatus.Closed && WithdrawInterface(getComponentByName(WITHDRAW)).getUserRequests().length == 0);
         startGasCalculation();
         bool result = !getETHFromTokens(DENOMINATOR);
         reimburse();
@@ -225,7 +225,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function getAssetsValue() public view returns (uint) {
-        // TODO cast to OlympusExchangeInterface
         OlympusExchangeInterface exchangeProvider = getExchangeInterface();
         uint _totalTokensValue = 0;
         // Iterator
@@ -272,7 +271,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         uint _rate;
         (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
 
-        // fix, this is MOT, so we should require this to be true.
+        // This is MOT, so we should require this to be true.
         require(exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0));
         return true;
     }
