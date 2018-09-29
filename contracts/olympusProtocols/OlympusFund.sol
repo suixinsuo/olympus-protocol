@@ -290,12 +290,13 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
-        unhandledWithdraws = true;
         if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
             withdrawProvider.freeze();
             handleWithdraw(withdrawProvider, msg.sender);
             withdrawProvider.finalize();
+            return;
         }
+        unhandledWithdraws = true;
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
@@ -603,7 +604,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function _transfer(address _from, uint _amount) private {
-         _from.transfer(_amount);
+        _from.transfer(_amount);
     }
 
     function getExchangeInterface() private view returns (OlympusExchangeInterface){

@@ -330,6 +330,12 @@ contract("Fund", accounts => {
       await fund.requestWithdraw(toTokenWei(0.005), { from: GroupA[i] });
     };
     await fund.close();
+
+    await calc.assertReverts(async () => {
+      await fund.sellAllTokensOnClosedFund();
+    }, "There are withdraw requests which are not handled yet");
+
+    await fund.withdraw();
     await fund.sellAllTokensOnClosedFund();
 
     assert.equal((await fund.status()).toNumber(), 3, " Status is closed");
@@ -337,10 +343,8 @@ contract("Fund", accounts => {
   });
   it("Close then withdraw", async () => {
     for (let i = 0; i < GroupA.length; i++) {
-      console.log("before", (await fund.balanceOf(GroupA[i])).toNumber(), i);
+      // Withdraws the ETH immediately, because all assets are sold and the fund is closed.
       await fund.requestWithdraw(toTokenWei(0.005), { from: GroupA[i] });
-      console.log("after", (await fund.balanceOf(GroupA[i])).toNumber(), i);
-
     };
 
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
@@ -350,8 +354,7 @@ contract("Fund", accounts => {
     let NewfundTokensAndBalance = await fund.getTokens();//reload the balance
 
     for (let i = 0; i < GroupA.length; i++) {
-      console.log("extra", (await fund.balanceOf(GroupA[i])).toNumber(), i);
-      // assert.equal((await fund.balanceOf(GroupA[i])).toNumber(), 0, "GroupA has invest 0.00");
+      assert.equal((await fund.balanceOf(GroupA[i])).toNumber(), 0, "GroupA has invest 0.00");
     };
     for (let i = 0; i < GroupB.length; i++) {
       assert.equal((await fund.balanceOf(GroupB[i])).toNumber(), 0, "GroupB has invest 0.00");
