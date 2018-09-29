@@ -47,6 +47,22 @@ let processingBuyToken = false;
 let processingRebalance = false;
 let processingWithdraw = false;
 
+const expectedTokenAmount = (balance, rates, tokenIndex) => {
+  // Balance ETH * (weight)%  * tokenRate / ETH  ==> Expected tokenAmount
+  return (balance * (indexData.weights[tokenIndex] / 100) * rates[0][tokenIndex].toNumber()) / 10 ** 18;
+};
+
+const getTokensAndAmounts = async index => {
+  const tokensWeights = await index.getTokens();
+  const amounts = await Promise.all(
+    tokensWeights[0].map(async token => {
+      let erc20 = await ERC20.at(token);
+      return erc20.balanceOf(index.address);
+    })
+  );
+  return [tokensWeights[0], amounts];
+};
+
 const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
 };
@@ -464,6 +480,10 @@ contract("Olympus Index", accounts => {
     );
 
     // 5. Percentage of each tokens in the index should be the same as the percentage we set while deploying the index contract.
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+
     const percentages = await Promise.all(
       tokens.map(async token => {
         let erc20 = await ERC20.at(token);
@@ -471,7 +491,12 @@ contract("Olympus Index", accounts => {
         return calc.fromWei(amount);
       })
     );
-    console.log('each token amount:', percentages);
+
+    const total = percentages.reduce((a, b) => a + b);
+    percentages.forEach((p, index) => {
+      assert(calc.inRange(p * 100 / total, indexData.weights[index], 0.001),
+        " each tokens in the index should be the same as the percentage");
+    });
   });
 
   it("buy tokens, withdraw and rebalance", async () => {
@@ -523,7 +548,21 @@ contract("Olympus Index", accounts => {
       })
     );
 
+    // const rates = await Promise.all(
+    //   tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    // );
+
+    // console.log('rate:', rates);
+
     // 5. Percentage of each tokens in the index should be the same as the percentage we set while deploying the index contract.
+    tokenAmounts = await getTokensAndAmounts(index);
+    tokenAmounts[1].forEach((amount, index) => {
+      // const expectedAmount = expectedTokenAmount(initialIndexBalance + extraAmount, rates, index);
+      // assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
+    });
+
+    const amounts = tokenAmounts[1].map(amount => amount.toNumber());
+    console.log('amounts:', amounts);
 
   });
 
@@ -536,6 +575,10 @@ contract("Olympus Index", accounts => {
       })
     );
 
+    allDone = true;
+    // await delay(30000);
+    // await safeWithdraw(index, asyncWithdraw);
+
     // 1. Group A investors each requests withdraw of 0.1 ETH;
     await Promise.all(
       investorsGroupA.map(async account => {
@@ -545,6 +588,7 @@ contract("Olympus Index", accounts => {
       })
     );
 
+    await delay(30000);
     // 2. Owner closes the index;
     await index.close();
     await index.sellAllTokensOnClosedFund();
@@ -561,8 +605,10 @@ contract("Olympus Index", accounts => {
       })
     );
 
-    await delay(90000);
+    await delay(30000);
     allDone = true;
+
+    safeWithdraw(index, asyncWithdraw);
 
     let balance = (await index.getETHBalance()).toNumber();
     console.log('balance:', balance);
@@ -574,7 +620,7 @@ contract("Olympus Index", accounts => {
     console.log('assetsValue:', assetsValue);
 
     const totalSupply = await index.totalSupply();
-    console.log('totalSupply', totalSupply.toNumber());
+    console.log('last totalSupply', totalSupply.toNumber());
 
     let price = (await index.getPrice()).toNumber();
     assert.equal(price, web3.toWei(1, "ether"), 'Price is 1');
