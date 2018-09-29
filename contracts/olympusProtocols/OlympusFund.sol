@@ -484,15 +484,15 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function initializeOrContinueStep(bytes32 category) internal returns(uint) {
-        return  StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
+        return StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
     }
 
     function getStatusStep(bytes32 category) internal view returns(uint) {
-        return  StepInterface(getComponentByName(STEP)).getStatus(category);
+        return StepInterface(getComponentByName(STEP)).getStatus(category);
     }
 
     function finalizeStep(bytes32 category) internal returns(bool) {
-        return  StepInterface(getComponentByName(STEP)).finalize(category);
+        return StepInterface(getComponentByName(STEP)).finalize(category);
     }
 
     function goNextStep(bytes32 category) internal returns(bool) {
@@ -500,7 +500,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function getNextArrayLength(bytes32 stepCategory, uint currentStep) internal view returns(uint) {
-        uint arrayLength = StepInterface(ReimbursableInterface(getComponentByName(STEP))).getMaxCalls(stepCategory);
+        uint arrayLength = StepInterface(getComponentByName(STEP)).getMaxCalls(stepCategory);
         if(arrayLength.add(currentStep) >= tokens.length ) {
             arrayLength = tokens.length.sub(currentStep);
         }
