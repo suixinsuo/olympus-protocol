@@ -37,6 +37,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public freezeBalance; // For operations (Buy tokens and sellTokens)
     ERC20Extended[]  freezeTokens;
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
+    bool public unhandledWithdraws;
 
     constructor (
       string _name,
@@ -141,7 +142,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
-        require(status == DerivativeStatus.Closed);
+        require(status == DerivativeStatus.Closed && unhandledWithdraws == false);
         startGasCalculation();
         bool result = !getETHFromTokens(DENOMINATOR);
         reimburse();
@@ -256,7 +257,9 @@ contract OlympusIndex is IndexInterface, Derivative {
             withdrawProvider.freeze();
             handleWithdraw(withdrawProvider, msg.sender);
             withdrawProvider.finalize();
+            return;
          }
+         unhandledWithdraws = true;
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
@@ -311,8 +314,9 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (i == _requests.length) {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
+            unhandledWithdraws = false;
+            productStatus = Status.AVAILABLE;
         }
-        productStatus = Status.AVAILABLE;
         reimburse();
         return i == _requests.length; // True if completed
     }
