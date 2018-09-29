@@ -41,8 +41,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
     address[] public activeInvestors; // Start in 0
 
-    enum Status { AVAILABLE, WITHDRAWING }
-    Status public productStatus = Status.AVAILABLE;
+    bool public isWithdrawing = false;
+    bool public unhandledWithdraws;
 
     constructor(
       string _name,
@@ -108,7 +108,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // ----------------------------- FUND INTERFACE -----------------------------
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
-        require(productStatus == Status.AVAILABLE);
+        require(isWithdrawing == false);
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _tokens.length; i++) {
@@ -139,7 +139,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
-        require(productStatus == Status.AVAILABLE);
+        require(isWithdrawing == false);
         OlympusExchangeInterface exchange = getExchangeInterface();
 
         for (uint i = 0; i < _tokens.length; i++) {
@@ -202,7 +202,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
-        require(status == DerivativeStatus.Closed && WithdrawInterface(getComponentByName(WITHDRAW)).getUserRequests().length == 0);
+        require(status == DerivativeStatus.Closed && unhandledWithdraws == false);
         startGasCalculation();
         bool result = !getETHFromTokens(DENOMINATOR);
         reimburse();
@@ -290,6 +290,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
+        unhandledWithdraws = true;
         if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
             withdrawProvider.freeze();
             handleWithdraw(withdrawProvider, msg.sender);
@@ -331,8 +332,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
-        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
-        productStatus = Status.WITHDRAWING;
+        isWithdrawing = true;
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
@@ -344,7 +344,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
 
-                productStatus = Status.AVAILABLE;
+                isWithdrawing = false;
                 reimburse();
                 return true;
             }
@@ -365,9 +365,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         if (i == _requests.length) {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
+            unhandledWithdraws = false;
+            isWithdrawing = false;
         }
 
-        productStatus = Status.AVAILABLE;
         reimburse();
         return i == _requests.length; // True if completed
     }
