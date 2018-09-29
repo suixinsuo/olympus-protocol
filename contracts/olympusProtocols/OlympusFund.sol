@@ -484,23 +484,19 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function initializeOrContinueStep(bytes32 category) internal returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).initializeOrContinue(category);
+        return  StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
     }
 
     function getStatusStep(bytes32 category) internal view returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).getStatus(category);
+        return  StepInterface(getComponentByName(STEP)).getStatus(category);
     }
 
     function finalizeStep(bytes32 category) internal returns(bool) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).finalize(category);
+        return  StepInterface(getComponentByName(STEP)).finalize(category);
     }
 
     function goNextStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).goNextStep(category);
-    }
-
-    function updateStatusStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).updateStatus(category);
+        return StepInterface(getComponentByName(STEP)).goNextStep(category);
     }
 
     function getNextArrayLength(bytes32 stepCategory, uint currentStep) internal view returns(uint) {
