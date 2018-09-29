@@ -530,7 +530,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             if((_failedTimes[t]) <= 0 || isBrokenToken[_tokens[t]]) {
                 continue;
             }
-             isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
+            isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
             // I broken, check if has balance to distribute
             if(amounts[_tokens[t]] > 0) {
                 tokensToRelease.push(_tokens[t]);
