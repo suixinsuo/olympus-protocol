@@ -41,8 +41,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
     address[] public activeInvestors; // Start in 0
 
-    enum Status { AVAILABLE, WITHDRAWING }
-    Status public productStatus = Status.AVAILABLE;
+    bool public isWithdrawing = false;
+    bool public unhandledWithdraws;
 
     constructor(
       string _name,
@@ -108,7 +108,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // ----------------------------- FUND INTERFACE -----------------------------
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
-        require(productStatus == Status.AVAILABLE);
+        require(isWithdrawing == false);
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _tokens.length; i++) {
@@ -139,7 +139,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
-        require(productStatus == Status.AVAILABLE);
+        require(isWithdrawing == false);
         OlympusExchangeInterface exchange = getExchangeInterface();
 
         for (uint i = 0; i < _tokens.length; i++) {
@@ -202,7 +202,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
-        require(status == DerivativeStatus.Closed);
+        require(status == DerivativeStatus.Closed && unhandledWithdraws == false);
         startGasCalculation();
         bool result = !getETHFromTokens(DENOMINATOR);
         reimburse();
@@ -225,7 +225,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function getAssetsValue() public view returns (uint) {
-        // TODO cast to OlympusExchangeInterface
         OlympusExchangeInterface exchangeProvider = getExchangeInterface();
         uint _totalTokensValue = 0;
         // Iterator
@@ -272,7 +271,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         uint _rate;
         (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
 
-        // fix, this is MOT, so we should require this to be true.
+        // This is MOT, so we should require this to be true.
         require(exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0));
         return true;
     }
@@ -295,7 +294,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             withdrawProvider.freeze();
             handleWithdraw(withdrawProvider, msg.sender);
             withdrawProvider.finalize();
+            return;
         }
+        unhandledWithdraws = true;
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
@@ -332,8 +333,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         startGasCalculation();
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
-        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
-        productStatus = Status.WITHDRAWING;
+        isWithdrawing = true;
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
@@ -345,7 +345,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
 
-                productStatus = Status.AVAILABLE;
+                isWithdrawing = false;
                 reimburse();
                 return true;
             }
@@ -366,9 +366,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         if (i == _requests.length) {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
+            unhandledWithdraws = false;
+            isWithdrawing = false;
         }
 
-        productStatus = Status.AVAILABLE;
         reimburse();
         return i == _requests.length; // True if completed
     }
@@ -485,27 +486,23 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function initializeOrContinueStep(bytes32 category) internal returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).initializeOrContinue(category);
+        return StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
     }
 
     function getStatusStep(bytes32 category) internal view returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).getStatus(category);
+        return StepInterface(getComponentByName(STEP)).getStatus(category);
     }
 
     function finalizeStep(bytes32 category) internal returns(bool) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).finalize(category);
+        return StepInterface(getComponentByName(STEP)).finalize(category);
     }
 
     function goNextStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).goNextStep(category);
-    }
-
-    function updateStatusStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).updateStatus(category);
+        return StepInterface(getComponentByName(STEP)).goNextStep(category);
     }
 
     function getNextArrayLength(bytes32 stepCategory, uint currentStep) internal view returns(uint) {
-        uint arrayLength = StepInterface(ReimbursableInterface(getComponentByName(STEP))).getMaxCalls(stepCategory);
+        uint arrayLength = StepInterface(getComponentByName(STEP)).getMaxCalls(stepCategory);
         if(arrayLength.add(currentStep) >= tokens.length ) {
             arrayLength = tokens.length.sub(currentStep);
         }
@@ -535,7 +532,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             if((_failedTimes[t]) <= 0 || isBrokenToken[_tokens[t]]) {
                 continue;
             }
-             isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
+            isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
             // I broken, check if has balance to distribute
             if(amounts[_tokens[t]] > 0) {
                 tokensToRelease.push(_tokens[t]);
@@ -607,7 +604,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     }
 
     function _transfer(address _from, uint _amount) private {
-         _from.transfer(_amount);
+        _from.transfer(_amount);
     }
 
     function getExchangeInterface() private view returns (OlympusExchangeInterface){
