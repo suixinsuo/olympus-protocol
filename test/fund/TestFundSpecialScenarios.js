@@ -486,7 +486,7 @@ contract("Fund Special Scenarios", accounts => {
     const fundPrice = (await fund.getPrice()).toNumber();
     const fundInvestETHBalance = (await fund.getETHBalance()).toNumber();
 
-    assert.isAbove(fundInvestETHBalance, 0, " ETH Balance for buy tokens is 0");
+    assert.equal(fundInvestETHBalance, 0, " ETH Balance for buy tokens is 0");
     assert.isAbove(assetsValue, 0, " Assets Value has value");
     assert.isAbove(fundPrice, web3.toWei(0.95, "ether"), " Price reduce because slippage rate a little");
     assert.equal(ethBalance, accFee, " Eth Balance is the same of acc Fee (all ETH returned)");

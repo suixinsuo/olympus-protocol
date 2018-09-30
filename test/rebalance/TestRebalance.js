@@ -12,9 +12,10 @@ const calc = require("../utils/calc");
 
 const Promise = require("bluebird");
 
-contract("MockRebalanceIndex", accounts => {
+contract.only("MockRebalanceIndex", accounts => {
   let tokens;
   let exchangeProvider;
+  let rebalanceProvider;
   let mockRebalanceIndex;
   let mockKyberNetwork;
   const deposit = accounts[0];
@@ -35,17 +36,9 @@ contract("MockRebalanceIndex", accounts => {
         _mockToken,
         _rebalanceProvider
       ) => {
-        tokens = (await _mockKyberNetwork.supportedTokens()).slice(0,2);
-
-        _mockRebalanceIndex = await MockRebalanceIndex.new(
-          tokens,
-          [50, 50],
-          RebalanceProvider.address,
-          ExchangeProvider.address
-        );
+        tokens = (await _mockKyberNetwork.supportedTokens()).slice(0, 2);
 
         assert.ok(_mockKyberNetwork, "MockKyberNetwork contract is not deployed.");
-        assert.ok(_mockRebalanceIndex, "MockRebalanceIndex contract is not deployed.");
         assert.ok(_rebalanceProvider, "RebalanceProvider contract is not deployed.");
         assert.ok(_exchangeProvider, "ExchangeProvider contract is not deployed.");
         assert.ok(_exchangeAdapterManager, "ExchangeAdapterManager contract is not deployed.");
@@ -55,26 +48,38 @@ contract("MockRebalanceIndex", accounts => {
         exchangeProvider = _exchangeProvider;
         rebalanceProvider = _rebalanceProvider;
         mockKyberNetwork = _mockKyberNetwork;
+
+        _mockRebalanceIndex = await MockRebalanceIndex.new(
+          tokens,
+          [50, 50],
+          RebalanceProvider.address,
+          ExchangeProvider.address
+        );
+
+        assert.ok(_mockRebalanceIndex, "MockRebalanceIndex contract is not deployed.");
         mockRebalanceIndex = _mockRebalanceIndex;
-        const srcAmountETH = 1;
 
         await _rebalanceProvider.setMotAddress(_mockToken.address);
         await _exchangeProvider.setMotAddress(_mockToken.address);
-
-        const result = await rebalanceProvider.needsRebalance.call(10, mockRebalanceIndex.address);
-        assert.equal(result, false);
-        const erc20Token = await ERC20Extended.at(tokens[0]);
-        const amount = web3.toWei(srcAmountETH);
-        const rate = expectedRate;
-        await _mockRebalanceIndex.buyToken(tokens[0], amount, rate, 0x0, {
-          value: web3.toWei(srcAmountETH)
-        });
-        const afterBalance = await erc20Token.balanceOf(_mockRebalanceIndex.address);
-
-        erc20Token.transfer(mockRebalanceIndex.address, afterBalance);
-        await mockRebalanceIndex.initialize();
       }
     );
+  });
+
+  it("initialization", async () => {
+    await mockRebalanceIndex.initialize();
+
+    const srcAmountETH = 1;
+
+    const result = await rebalanceProvider.needsRebalance.call(0.001 * 10 ** 18, mockRebalanceIndex.address);
+    assert.equal(result, false, "No need to rebalance initially");
+    const erc20Token = await ERC20Extended.at(tokens[0]);
+    const amount = web3.toWei(srcAmountETH);
+    const rate = expectedRate;
+    await mockRebalanceIndex.buyToken(tokens[0], amount, rate, 0x0, {
+      value: web3.toWei(srcAmountETH)
+    });
+    const afterBalance = await erc20Token.balanceOf(_mockRebalanceIndex.address);
+    erc20Token.transfer(mockRebalanceIndex.address, afterBalance);
   });
 
   it("MockRebalanceIndex should not use cached price if timeout is exceeded.", async () => {

@@ -36,8 +36,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public freezeBalance; // For operations (Buy tokens and sellTokens)
     ERC20Extended[]  freezeTokens;
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
-    bool public unhandledWithdraws;
-
+ 
     constructor (
       string _name,
       string _symbol,
@@ -141,7 +140,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
-        require(status == DerivativeStatus.Closed && unhandledWithdraws == false);
+        require(status == DerivativeStatus.Closed );
         require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
         productStatus = Status.SELLINGTOKENS;
@@ -226,9 +225,9 @@ contract OlympusIndex is IndexInterface, Derivative {
 
   // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
-        require(_amount > 0);
+        require(_amount > 0 );
         require((
-            status == DerivativeStatus.Closed && getAssetsValue() == 0) ? // everything is done, take all.
+            status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == 0 ) ? // everything is done, take all.
             (_amount <= accumulatedFee)
             :
             (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
@@ -256,14 +255,13 @@ contract OlympusIndex is IndexInterface, Derivative {
     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
-        if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
+        if(status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == amount) {
             withdrawProvider.freeze();
             handleWithdraw(withdrawProvider, msg.sender);
             withdrawProvider.finalize();
             return;
         }
-        unhandledWithdraws = true;
-    }
+     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
 
@@ -272,12 +270,18 @@ contract OlympusIndex is IndexInterface, Derivative {
             if (_totalETHToReturn <= getETHBalance()) {
                 return true;
             }
+                    emit LogN(getAssetsValue(), 'getAssetsValue()');
+
+        emit LogN(getETHBalance(), 'getETHBalance');
+
             // tokenPercentToSell must be freeze as class variable
             freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul((10 ** decimals)).div(getAssetsValue());
         }
+        emit LogN(freezeBalance, 'freezeBalance');
         return getETHFromTokens(freezeBalance);
     }
 
+event LogN(uint a, string b);
     // solhint-disable-next-line
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
@@ -302,8 +306,8 @@ contract OlympusIndex is IndexInterface, Derivative {
             }
         }
 
-        if (_transfers == 0){
-            if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){
+        if (_transfers == 0) {
+            if(!guaranteeLiquidity(getWithdrawAmount())) {
                 reimburse();
                 return false;
             }
@@ -317,7 +321,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (i == _requests.length) {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
-            unhandledWithdraws = false;
             productStatus = Status.AVAILABLE;
         }
         reimburse();
@@ -543,6 +546,10 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function updateStatusStep(bytes32 category) internal returns(bool) {
         return StepInterface(getComponentByName(STEP)).updateStatus(category);
+    }
+
+    function getWithdrawAmount() internal view returns(uint) {
+        return WithdrawInterface(getComponentByName(WITHDRAW)).getTotalWithdrawAmount();
     }
 
     function getNextArrayLength(bytes32 stepCategory, uint currentStep) internal view returns(uint) {

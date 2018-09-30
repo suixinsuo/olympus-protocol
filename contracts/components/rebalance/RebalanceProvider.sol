@@ -43,7 +43,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         priceTimeout = _newTimeout;
     }
 
-    function needsRebalance(uint _rebalanceDeltaPercentage, address _targetAddress) external view returns (bool _needsRebalance) {
+    function needsRebalance(uint _rebalanceDeltaPercentage, address _targetAddress) external view returns (bool) {
         if(rebalanceStatus[_targetAddress] != RebalanceStatus.Initial) {
             return true;
         }
@@ -64,9 +64,9 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
             uint shouldHaveAmountOfTokensInETH = (totalIndexValue.mul(indexTokenWeights[i])).div(100);
             uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
             if ((shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18) <
-                currentTokenBalance.sub(multipliedTokenBalance.div((10 ** ERC20Extended(msg.sender).decimals())))) {
+                currentTokenBalance.sub(multipliedTokenBalance.div((10 ** ERC20Extended(_targetAddress).decimals())))) {
                 itemsToSell = true;
-            } else if ((shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18) > currentTokenBalance.add(multipliedTokenBalance.div((10 ** ERC20Extended(msg.sender).decimals())))){
+            } else if ((shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18) > currentTokenBalance.add(multipliedTokenBalance.div((10 ** ERC20Extended(_targetAddress).decimals())))){
                 itemsToBuy = true;
             }
         }

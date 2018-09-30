@@ -266,7 +266,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
         require(_amount > 0);
         require((
-            status == DerivativeStatus.Closed && getAssetsValue() == 0) ? // everything is done, take all.
+            status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == 0 ) ? // everything is done, take all.
             (_amount <= accumulatedFee)
             :
             (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
@@ -297,10 +297,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
-        if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
-            withdrawProvider.freeze();
+        if(status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == amount){
+            withdrawFreeze();
             handleWithdraw(withdrawProvider, msg.sender);
-            withdrawProvider.finalize();
+            withdrawFinalize();
             return;
         }
         unhandledWithdraws = true;
@@ -361,11 +361,11 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
 
         if (_transfers == 0) {
-            if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){
+            if(!guaranteeLiquidity(getWithdrawAmount())) {
                 reimburse();
                 return false;
             }
-            withdrawProvider.freeze();
+            withdrawFreeze();
         }
 
         for (i = _transfers; i < _requests.length && goNextStep(WITHDRAW); i++) {
@@ -373,7 +373,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
 
         if (i == _requests.length) {
-            withdrawProvider.finalize();
+            withdrawFinalize();
             finalizeStep(WITHDRAW);
             unhandledWithdraws = false;
             productStatus = Status.AVAILABLE;
@@ -615,6 +615,17 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return OlympusExchangeInterface(getComponentByName(EXCHANGE));
     }
 
+    function getWithdrawAmount() internal view returns(uint) {
+        return WithdrawInterface(getComponentByName(WITHDRAW)).getTotalWithdrawAmount();
+    }
+
+    function withdrawFreeze() internal {
+        WithdrawInterface(getComponentByName(WITHDRAW)).freeze();
+    }
+
+    function withdrawFinalize() internal {
+        WithdrawInterface(getComponentByName(WITHDRAW)).finalize();
+    }
     // // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
     // function panic() external onlyOwner {
     //     _transfer(owner, address(this).balance);

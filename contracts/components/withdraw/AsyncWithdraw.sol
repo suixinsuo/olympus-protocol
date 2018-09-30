@@ -21,6 +21,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         address[] pendingUserRequests;
         mapping (address => uint) pendingAmountPerUser;
         uint pendingTotalWithdrawAmount;
+        uint pendingTotalETHAmount;
         uint totalWithdrawAmount;
         bool withdrawRequestLock;
     }
@@ -68,7 +69,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         return true;
     }
 
-    function withdraw(address _investor) external returns(uint eth, uint tokens) {
+    function withdraw(address _investor) external returns(uint _eth, uint _tokens) {
         require(payFee(0));
         require(contracts[msg.sender].withdrawRequestLock); // Only withdraw after lock
 
@@ -77,21 +78,35 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
 
         ERC20Extended derivative = ERC20Extended(msg.sender);
 
-        tokens = contracts[msg.sender].pendingAmountPerUser[_investor];
-        contracts[msg.sender].totalWithdrawAmount = contracts[msg.sender].totalWithdrawAmount.sub(tokens);
-        contracts[msg.sender].pendingTotalWithdrawAmount = contracts[msg.sender].pendingTotalWithdrawAmount.sub(tokens);
-        contracts[msg.sender].amountPerUser[_investor] = 0;
-        contracts[msg.sender].pendingAmountPerUser[_investor] = 0;
-
+        _tokens = contracts[msg.sender].pendingAmountPerUser[_investor];
+        _eth = _tokens.mul(contracts[msg.sender].price).div(10 ** derivative.decimals());
+        
         // If he doesn't have this amount, the request will be closed and no ETH will be returned
-        if(tokens > derivative.balanceOf(_investor)) {
+        if(_tokens > derivative.balanceOf(_investor)) {
             emit Withdrawed(_investor, 0, 0);
-            return( 0, 0);
+            clearInvestor(msg.sender, _investor, _tokens, _eth);
+            return (0, 0);
         }
 
-        eth = tokens.mul( contracts[msg.sender].price).div( 10 ** derivative.decimals());
-        emit Withdrawed(_investor, tokens, eth);
-        return( eth, tokens);
+        // the last investor requested withdraw, we need to give him whats left.
+        if (contracts[msg.sender].pendingAmountPerUser[_investor] == contracts[msg.sender].pendingTotalWithdrawAmount ) {
+            _eth = contracts[msg.sender].pendingTotalETHAmount;
+        }
+
+        clearInvestor(msg.sender, _investor, _tokens, _eth);
+
+        emit Withdrawed(_investor, _tokens, _eth);
+        return( _eth, _tokens);
+    }
+    event LogN(uint number, string text);
+
+    function clearInvestor(address _derivative, address _investor, uint _tokens, uint _eth) private {
+        contracts[_derivative].totalWithdrawAmount = contracts[_derivative].totalWithdrawAmount.sub(_tokens);
+        contracts[_derivative].pendingTotalWithdrawAmount = contracts[_derivative].pendingTotalWithdrawAmount.sub(_tokens);
+        contracts[_derivative].amountPerUser[_investor] = 0;
+        contracts[_derivative].pendingAmountPerUser[_investor] = 0;
+
+        contracts[_derivative].pendingTotalETHAmount = contracts[_derivative].pendingTotalETHAmount.sub(_eth);
     }
 
     function freeze() external {
@@ -108,10 +123,19 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         // Case we have enough ETH
         if(_requireEther <= _derivativeEth) {
             contracts[msg.sender].price = _price;
+            contracts[msg.sender].pendingTotalETHAmount = _requireEther; 
+
         } else {
             // Special scenario, we got not enough ETH to satisfy this price
             // PRICE = ETH*DECIMALS / AMOUNT
+            emit LogN(_derivativeEth, "_derivativeEth");
+            emit LogN(derivative.decimals(), "decimals");
+            emit LogN(_withdrawAmount, "_withdrawAmount");
+
             contracts[msg.sender].price = _derivativeEth.mul(10 ** derivative.decimals()).div(_withdrawAmount);
+            contracts[msg.sender].pendingTotalETHAmount = _derivativeEth; 
+
+            emit LogN(contracts[msg.sender].price, "final price");
         }
 
         contracts[msg.sender].withdrawRequestLock = true;
@@ -121,8 +145,8 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
             contracts[msg.sender].pendingUserRequests.push(contracts[msg.sender].userRequests[i]);
             contracts[msg.sender].pendingAmountPerUser[contracts[msg.sender].userRequests[i]] = contracts[msg.sender].
                 amountPerUser[contracts[msg.sender].userRequests[i]];
-            contracts[msg.sender].pendingTotalWithdrawAmount += contracts[msg.sender].
-                amountPerUser[contracts[msg.sender].userRequests[i]];
+            contracts[msg.sender].pendingTotalWithdrawAmount = contracts[msg.sender].pendingTotalWithdrawAmount.add(contracts[msg.sender].
+                amountPerUser[contracts[msg.sender].userRequests[i]]);
         }
         delete contracts[msg.sender].userRequests;
     }
@@ -138,17 +162,23 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         uint price,
         address[]  userRequests,
         uint totalWithdrawAmount,
-        bool withdrawRequestLock
+        bool withdrawRequestLock,
+        uint pendingTotalETHAmount
      ) {
         price = contracts[_contract].price;
         userRequests = contracts[_contract].userRequests;
         totalWithdrawAmount = contracts[_contract].totalWithdrawAmount;
         withdrawRequestLock = contracts[_contract].withdrawRequestLock;
+        pendingTotalETHAmount = contracts[_contract].pendingTotalETHAmount;
     }
 
 
     /// Out of interface
-    function getWithdrawBalance(address _contract) external view returns(uint){
+    function getPendingTotalETHAmount(address _contract) external view returns(uint) {
+        return contracts[_contract].pendingTotalETHAmount;
+    }
+
+    function getWithdrawBalance(address _contract) external view returns(uint) {
         return contracts[_contract].amountPerUser[msg.sender];
     }
 

@@ -192,7 +192,7 @@ const safeBuyTokens = async index => {
   }
 };
 
-contract("Olympus Index", accounts => {
+contract.skip("Olympus Index Bot", accounts => {
   let index;
   let market;
   let mockKyber;
