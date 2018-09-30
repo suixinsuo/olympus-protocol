@@ -50,7 +50,6 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     function request(address _investor, uint256 _amount) external returns (bool) {
         ERC20Extended derivative = ERC20Extended(msg.sender);
          // Safe checks
-        require(contracts[msg.sender].withdrawRequestLock == false); // Cant request while withdrawing
         require(derivative.totalSupply() >= contracts[msg.sender].totalWithdrawAmount.add(_amount));
         require(
             derivative.balanceOf(_investor) >= _amount
@@ -61,7 +60,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
             contracts[msg.sender].userRequests.push(_investor);
         }
         contracts[msg.sender].amountPerUser[_investor] = contracts[msg.sender].amountPerUser[_investor].add(_amount);
-        contracts[msg.sender].totalWithdrawAmount =  contracts[msg.sender].totalWithdrawAmount.add(_amount);
+        contracts[msg.sender].totalWithdrawAmount = contracts[msg.sender].totalWithdrawAmount.add(_amount);
 
         emit WithdrawRequest(_investor, contracts[msg.sender].amountPerUser[_investor]);
 
@@ -89,7 +88,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
             return( 0, 0);
         }
 
-        eth = tokens.mul( contracts[msg.sender].price).div( 10 ** derivative.decimals());
+        eth = tokens.mul(contracts[msg.sender].price).div( 10 ** derivative.decimals());
         emit Withdrawed(_investor, tokens, eth);
         return( eth, tokens);
     }
