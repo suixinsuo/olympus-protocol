@@ -43,10 +43,6 @@ const toTokenWei = amount => {
   return amount * 10 ** fundData.decimals;
 };
 
-function bytes32ToString(bytes32) {
-  return web3.toAscii(bytes32).replace(/\u0000/g, "");
-}
-
 contract("Fund", accounts => {
   let fund;
   let market;
@@ -165,7 +161,7 @@ contract("Fund", accounts => {
     assert.equal(await fund.name(), fundData.name);
     assert.equal(await fund.description(), fundData.description);
     assert.equal(await fund.symbol(), fundData.symbol);
-    assert.equal(bytes32ToString(await fund.category()), fundData.category);
+    assert.equal(calc.bytes32ToString(await fund.category()), fundData.category);
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
 
