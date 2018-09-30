@@ -12,7 +12,7 @@ const calc = require("../utils/calc");
 
 const Promise = require("bluebird");
 
-contract.only("MockRebalanceIndex", accounts => {
+contract("MockRebalanceIndex", accounts => {
   let tokens;
   let exchangeProvider;
   let rebalanceProvider;
