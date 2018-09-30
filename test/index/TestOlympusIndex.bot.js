@@ -282,7 +282,7 @@ contract.skip("Olympus Index Bot", accounts => {
     });
 
     price = (await index.getPrice()).toNumber();
-    assert.equal(price, web3.toWei(1, "ether"), "step 1. Price is 1");
+    assert.equal(price, web3.toWei(1, "ether"), "step 1. Price is 1 ether.");
 
     balance = (await index.getETHBalance()).toNumber();
     assert.equal(balance, web3.toWei(0, "ether"), "step 1. Total ETH balance now is 0");
