@@ -113,7 +113,7 @@ contract("Fund Special Scenarios", accounts => {
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
     componentList.setComponent(DerivativeProviders.LOCKER, locker.address);
     componentList.setComponent(DerivativeProviders.TOKENBROKEN, tokenBroken.address);
-    token0_erc20 = await ERC20.at(await tokens[0]);
+    c = await ERC20.at(await tokens[0]);
     token1_erc20 = await ERC20.at(await tokens[1]);
   });
 

@@ -24,8 +24,8 @@
     ```
 2.  Initalize
 
-"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0 // Olympus labs
-"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 0,0 // Gerdinand
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",1 // Olympus labs
+"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 1 // Gerdinand
 
 
 3. Set intervals (1 days)
