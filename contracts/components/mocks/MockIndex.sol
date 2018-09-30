@@ -20,7 +20,7 @@ contract MockIndex is IndexInterface, MockDerivative {
 
     constructor (
       string _name, uint _decimals, string _description,
-      string _category, ERC20[] _tokens, uint[] _weights)
+      bytes32 _category, ERC20[] _tokens, uint[] _weights)
       checkLength(_tokens, _weights) public {
 
         name = _name;

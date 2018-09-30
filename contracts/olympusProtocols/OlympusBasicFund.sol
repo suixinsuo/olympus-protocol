@@ -28,7 +28,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals
      ) public {
         require(0<=_decimals&&_decimals<=18);

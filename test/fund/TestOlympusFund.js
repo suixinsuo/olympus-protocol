@@ -43,6 +43,10 @@ const toTokenWei = amount => {
   return amount * 10 ** fundData.decimals;
 };
 
+function bytes32ToString(bytes32) {
+  return web3.toAscii(bytes32).replace(/\u0000/g, "");
+}
+
 contract("Fund", accounts => {
   let fund;
   let market;
@@ -69,7 +73,7 @@ contract("Fund", accounts => {
     mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = (await mockKyber.supportedTokens()).slice(0,2);
+    tokens = (await mockKyber.supportedTokens()).slice(0, 2);
     exchange = await ExchangeProvider.deployed();
     asyncWithdraw = await AsyncWithdraw.deployed();
     riskControl = await RiskControl.deployed();
@@ -161,7 +165,7 @@ contract("Fund", accounts => {
     assert.equal(await fund.name(), fundData.name);
     assert.equal(await fund.description(), fundData.description);
     assert.equal(await fund.symbol(), fundData.symbol);
-    assert.equal(await fund.category(), fundData.category);
+    assert.equal(bytes32ToString(await fund.category()), fundData.category);
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
 

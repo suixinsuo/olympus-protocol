@@ -42,7 +42,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals,
       address[] _tokens,
       uint[] _weights)

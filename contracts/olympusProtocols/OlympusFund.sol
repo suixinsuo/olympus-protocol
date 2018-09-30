@@ -24,7 +24,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     enum Status { AVAILABLE, WITHDRAWING, SELLINGTOKENS }
     Status public productStatus = Status.AVAILABLE;
-    uint public DENOMINATOR;
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     ERC20Extended[] private tokenBrokensERC20Freeze;
 
@@ -33,8 +32,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
-    address[] public tokensToRelease; // List of tokens brokens with balance to release
     mapping(address=> bool) public isBrokenToken; // Starts from 1
+    address[] public tokensToRelease; // List of tokens brokens with balance to release
 
     uint public accumulatedFee = 0;
 
@@ -48,7 +47,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals
      ) public {
         require(0<=_decimals&&_decimals<=18);
@@ -58,7 +57,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         description = _description;
         version = "1.1-20180930";
         decimals = _decimals;
-        DENOMINATOR = 10 ** decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
     }
@@ -210,7 +208,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
         productStatus = Status.SELLINGTOKENS;
-        bool result = getETHFromTokens(DENOMINATOR);
+        bool result = getETHFromTokens((10 ** decimals));
         if(result) {
             productStatus = Status.AVAILABLE;
         }
@@ -314,7 +312,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         if(getStatusStep(GETETH) == 0) {
             // Case price is broken while withdrawing
             if(_price == 0) {
-                freezeTokenPercentage = DENOMINATOR; // Tokens got broken?
+                freezeTokenPercentage = (10 ** decimals); // Tokens got broken?
                 return getETHFromTokens(freezeTokenPercentage);
             }
            // Case is not required to sell Assets (we will not detect token brokens)
@@ -324,7 +322,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             }
             // Case is required to sell some assets
             // tokenPercentToSell must be freeze as class variable
-            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
+            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul((10 ** decimals)).div(getAssetsValue());
             return getETHFromTokens(freezeTokenPercentage);
         }
         // Case second call
@@ -477,7 +475,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             uint sellIndex = i.sub(currentStep);
             _tokensThisStep[sellIndex] = _tokensToSell[i];
-            _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div(DENOMINATOR);
+            _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div((10 ** decimals));
             (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
@@ -585,20 +583,15 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function addInvestor(address investor) internal {
         if (activeInvestorIndex[investor] == 0) {
-            uint index = activeInvestors.push(investor);
-            activeInvestorIndex[investor] = index;
+            activeInvestorIndex[investor] = activeInvestors.push(investor);
         }
     }
     function removeInvestor(address investor) internal {
-
         if (balances[investor] > 0) {return;}
-        // activeInvestorIndex starts in 1. We iterate until one before the last
-        for (uint i = activeInvestorIndex[investor] - 1; i + 1 < activeInvestors.length; i++) {
-            activeInvestors[i] = activeInvestors[i+1];
-            activeInvestorIndex[activeInvestors[i+1]] -= 1;
-        }
-        activeInvestorIndex[investor] = 0; // Removed
+        activeInvestors[activeInvestorIndex[investor]-1] = activeInvestors[activeInvestors.length - 1];
+        activeInvestorIndex[activeInvestors[activeInvestors.length - 1]] = activeInvestorIndex[investor];
         activeInvestors.length -= 1;
+        activeInvestorIndex[investor] = 0;
     }
 
     function getActiveInvestors() external view returns(address[]) {
