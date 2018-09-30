@@ -22,8 +22,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // Does not fit in derivative, index out of gas
     bytes32 public constant TOKENBROKEN = "TokenBroken";
 
-
-    uint public constant DENOMINATOR = 10000;
+    enum Status { AVAILABLE, WITHDRAWING, SELLINGTOKENS }
+    Status public productStatus = Status.AVAILABLE;
+    uint public DENOMINATOR;
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     ERC20Extended[] private tokenBrokensERC20Freeze;
 
@@ -41,7 +42,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
     address[] public activeInvestors; // Start in 0
 
-    bool public isWithdrawing = false;
     bool public unhandledWithdraws;
 
     constructor(
@@ -58,6 +58,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         description = _description;
         version = "1.1-20180930";
         decimals = _decimals;
+        DENOMINATOR = 10 ** decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
     }
@@ -108,7 +109,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // ----------------------------- FUND INTERFACE -----------------------------
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
-        require(isWithdrawing == false);
+        require(productStatus == Status.AVAILABLE);
+
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _tokens.length; i++) {
@@ -139,7 +141,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
-        require(isWithdrawing == false);
+        
+        require(productStatus == Status.AVAILABLE);
+
         OlympusExchangeInterface exchange = getExchangeInterface();
 
         for (uint i = 0; i < _tokens.length; i++) {
@@ -203,8 +207,13 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
         require(status == DerivativeStatus.Closed && unhandledWithdraws == false);
+        require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
-        bool result = !getETHFromTokens(DENOMINATOR);
+        productStatus = Status.SELLINGTOKENS;
+        bool result = getETHFromTokens(DENOMINATOR);
+        if(result) {
+            productStatus = Status.AVAILABLE;
+        }
         reimburse();
         return result;
     }
@@ -331,9 +340,11 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         returns(bool)
     {
         startGasCalculation();
-        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        
+        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
+        productStatus = Status.WITHDRAWING;
 
-        isWithdrawing = true;
+        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
@@ -345,7 +356,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
 
-                isWithdrawing = false;
+                productStatus = Status.AVAILABLE;
                 reimburse();
                 return true;
             }
@@ -367,7 +378,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
             unhandledWithdraws = false;
-            isWithdrawing = false;
+            productStatus = Status.AVAILABLE;
         }
 
         reimburse();
