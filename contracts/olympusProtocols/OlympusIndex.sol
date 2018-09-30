@@ -67,7 +67,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         DENOMINATOR = 10 ** decimals;
         description = _description;
         category = _category;
-        version = "1.1-20180913";
+        version = "1.1-20180930";
         fundType = DerivativeType.Index;
         tokens = _tokens;
         weights = _weights;

@@ -36,7 +36,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20180913";
+        version = "1.1-20180930";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
