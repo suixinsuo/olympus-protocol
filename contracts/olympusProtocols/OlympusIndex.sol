@@ -251,15 +251,15 @@ contract OlympusIndex is IndexInterface, Derivative {
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
     {
-         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
-         withdrawProvider.request(msg.sender, amount);
-         if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
+        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        withdrawProvider.request(msg.sender, amount);
+        if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
             withdrawProvider.freeze();
             handleWithdraw(withdrawProvider, msg.sender);
             withdrawProvider.finalize();
             return;
-         }
-         unhandledWithdraws = true;
+        }
+        unhandledWithdraws = true;
     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
@@ -525,27 +525,27 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
     // ----------------------------- STEP PROVIDER -----------------------------
     function initializeOrContinueStep(bytes32 category) internal returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).initializeOrContinue(category);
+        return  StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
     }
 
     function getStatusStep(bytes32 category) internal view returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).getStatus(category);
+        return  StepInterface(getComponentByName(STEP)).getStatus(category);
     }
 
     function finalizeStep(bytes32 category) internal returns(bool) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).finalize(category);
+        return  StepInterface(getComponentByName(STEP)).finalize(category);
     }
 
     function goNextStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).goNextStep(category);
+        return StepInterface(getComponentByName(STEP)).goNextStep(category);
     }
 
     function updateStatusStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).updateStatus(category);
+        return StepInterface(getComponentByName(STEP)).updateStatus(category);
     }
 
     function getNextArrayLength(bytes32 stepCategory, uint currentStep) internal view returns(uint) {
-        uint arrayLength = StepInterface(ReimbursableInterface(getComponentByName(STEP))).getMaxCalls(stepCategory);
+        uint arrayLength = StepInterface(getComponentByName(STEP)).getMaxCalls(stepCategory);
         if(arrayLength.add(currentStep) >= tokens.length ) {
             arrayLength = tokens.length.sub(currentStep);
         }

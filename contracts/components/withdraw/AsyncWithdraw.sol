@@ -52,7 +52,10 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
          // Safe checks
         require(contracts[msg.sender].withdrawRequestLock == false); // Cant request while withdrawing
         require(derivative.totalSupply() >= contracts[msg.sender].totalWithdrawAmount.add(_amount));
-        require(derivative.balanceOf(_investor) >= _amount.add(contracts[msg.sender].amountPerUser[_investor]));
+        require(
+            derivative.balanceOf(_investor) >= _amount
+            .add(contracts[msg.sender].amountPerUser[_investor])
+            .add(contracts[msg.sender].pendingAmountPerUser[_investor]));
         // // Add user to the list of requesters
         if (contracts[msg.sender].amountPerUser[_investor] == 0) {
             contracts[msg.sender].userRequests.push(_investor);
