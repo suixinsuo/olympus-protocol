@@ -250,15 +250,12 @@ contract OlympusIndex is IndexInterface, Derivative {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
 
-    event LOGA(uint a, uint b, string c);
-
     // ----------------------------- WITHDRAW -----------------------------
     // solhint-disable-next-line
     function requestWithdraw(uint amount) external
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
     {
-        emit LOGA(amount, balanceOf(msg.sender), "balance compare");
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
         if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
@@ -279,7 +276,6 @@ contract OlympusIndex is IndexInterface, Derivative {
             }
             // tokenPercentToSell must be freeze as class variable
             freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
-            emit LOGA(freezeBalance, tokenBalance, "freezeBalance");
         }
         return getETHFromTokens(freezeBalance);
     }
@@ -330,19 +326,16 @@ contract OlympusIndex is IndexInterface, Derivative {
         return i == _requests.length; // True if completed
     }
 
-    event TOTALSUPPLY(uint i, uint y);
     function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) {
         uint _eth;
         uint _tokenAmount;
 
         (_eth, _tokenAmount) = _withdrawProvider.withdraw(_investor);
-        emit LOGA(_tokenAmount, balanceOf(_investor), 'after');
         if (_tokenAmount == 0) {return false;}
 
         balances[_investor] =  balances[_investor].sub(_tokenAmount);
         emit Transfer(_investor, 0x0, _tokenAmount); // ERC20 Required event
 
-        emit TOTALSUPPLY(totalSupply_, _tokenAmount);
         totalSupply_ = totalSupply_.sub(_tokenAmount);
         address(_investor).transfer(_eth);
 
