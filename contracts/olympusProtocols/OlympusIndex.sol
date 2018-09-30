@@ -23,11 +23,11 @@ contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
     bytes32 public constant BUYTOKENS = "BuyTokens";
-    enum Status { AVAILABLE, WITHDRAWING, REBALANCING, BUYING }
+    enum Status { AVAILABLE, WITHDRAWING, REBALANCING, BUYING, SELLINGTOKENS }
     Status public productStatus = Status.AVAILABLE;
     // event ChangeStatus(DerivativeStatus status);
 
-    uint public constant DENOMINATOR = 10000;
+    uint public DENOMINATOR;
     uint public constant INITIAL_VALUE =  10**18;
     uint public constant INITIAL_FEE = 10**17;
     uint[] public weights;
@@ -64,6 +64,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         symbol = _symbol;
         totalSupply_ = 0;
         decimals = _decimals;
+        DENOMINATOR = 10 ** decimals;
         description = _description;
         category = _category;
         version = "1.1-20180913";
@@ -143,8 +144,13 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
         require(status == DerivativeStatus.Closed && unhandledWithdraws == false);
+        require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
-        bool result = !getETHFromTokens(DENOMINATOR);
+        productStatus = Status.SELLINGTOKENS;
+        bool result = getETHFromTokens(DENOMINATOR);
+        if(result) {
+            productStatus = Status.AVAILABLE;
+        }
         reimburse();
         return result;
     }
@@ -244,6 +250,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
 
+    event LOGA(uint a, uint b, string c);
 
     // ----------------------------- WITHDRAW -----------------------------
     // solhint-disable-next-line
@@ -251,6 +258,7 @@ contract OlympusIndex is IndexInterface, Derivative {
       whenNotPaused
       withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
     {
+        emit LOGA(amount, balanceOf(msg.sender), "balance compare");
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
         if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
@@ -271,6 +279,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             }
             // tokenPercentToSell must be freeze as class variable
             freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
+            emit LOGA(freezeBalance, tokenBalance, "freezeBalance");
         }
         return getETHFromTokens(freezeBalance);
     }
@@ -327,6 +336,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint _tokenAmount;
 
         (_eth, _tokenAmount) = _withdrawProvider.withdraw(_investor);
+        emit LOGA(_tokenAmount, balanceOf(_investor), 'after');
         if (_tokenAmount == 0) {return false;}
 
         balances[_investor] =  balances[_investor].sub(_tokenAmount);
