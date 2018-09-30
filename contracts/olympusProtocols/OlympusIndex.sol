@@ -270,18 +270,13 @@ contract OlympusIndex is IndexInterface, Derivative {
             if (_totalETHToReturn <= getETHBalance()) {
                 return true;
             }
-                    emit LogN(getAssetsValue(), 'getAssetsValue()');
-
-        emit LogN(getETHBalance(), 'getETHBalance');
 
             // tokenPercentToSell must be freeze as class variable
             freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul((10 ** decimals)).div(getAssetsValue());
         }
-        emit LogN(freezeBalance, 'freezeBalance');
         return getETHFromTokens(freezeBalance);
     }
 
-event LogN(uint a, string b);
     // solhint-disable-next-line
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();

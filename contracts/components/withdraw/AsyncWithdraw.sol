@@ -98,7 +98,6 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         emit Withdrawed(_investor, _tokens, _eth);
         return( _eth, _tokens);
     }
-    event LogN(uint number, string text);
 
     function clearInvestor(address _derivative, address _investor, uint _tokens, uint _eth) private {
         contracts[_derivative].totalWithdrawAmount = contracts[_derivative].totalWithdrawAmount.sub(_tokens);
@@ -128,14 +127,9 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         } else {
             // Special scenario, we got not enough ETH to satisfy this price
             // PRICE = ETH*DECIMALS / AMOUNT
-            emit LogN(_derivativeEth, "_derivativeEth");
-            emit LogN(derivative.decimals(), "decimals");
-            emit LogN(_withdrawAmount, "_withdrawAmount");
 
             contracts[msg.sender].price = _derivativeEth.mul(10 ** derivative.decimals()).div(_withdrawAmount);
             contracts[msg.sender].pendingTotalETHAmount = _derivativeEth; 
-
-            emit LogN(contracts[msg.sender].price, "final price");
         }
 
         contracts[msg.sender].withdrawRequestLock = true;
