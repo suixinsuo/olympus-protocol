@@ -249,7 +249,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div((10 ** decimals)) ;
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div((10 ** decimals));
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);

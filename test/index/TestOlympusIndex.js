@@ -186,7 +186,7 @@ contract("Olympus Index", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], index.address);
     assert.equal((await index.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not taken in account in the price but as a fee
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
     assert.equal((await index.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
   });
@@ -224,7 +224,7 @@ contract("Olympus Index", accounts => {
   it("Index shall be able to deploy", async () => {
     assert.equal(await index.name(), indexData.name);
     assert.equal(await index.description(), indexData.description);
-    assert.equal(await index.category(), indexData.category);
+    assert.equal(calc.bytes32ToString(await index.category()), indexData.category);
     assert.equal(await index.symbol(), indexData.symbol);
     assert.equal((await index.fundType()).toNumber(), DerivativeType.Index);
     assert.equal((await index.totalSupply()).toNumber(), 0);

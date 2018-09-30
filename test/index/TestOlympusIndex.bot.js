@@ -26,7 +26,6 @@ const Reimbursable = artifacts.require("Reimbursable");
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
-//  1%, 9%, 2%, 8%, 3%, 7%, 4%, 6%, 5%, 10%, 15%, 20%, 2.2%, 4.55%, 3.25%
 
 const indexData = {
   name: "OlympusIndex",
@@ -38,7 +37,6 @@ const indexData = {
   initialManagementFee: 0,
   wrongEthDeposit: 0.05,
   ethDeposit: 0.1,
-  //   weights: [10, 1, 29, 5, 5, 10, 20, 10, 10],
   weights: [1, 9, 2, 8, 3, 7, 4, 6, 5, 10, 15, 20, 2, 5, 3],
   rebalanceDelta: 0
 };
@@ -67,22 +65,22 @@ const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
 };
 
-const delay = async (sec) => {
-  return new Promise((resolve) => {
+const delay = async sec => {
+  return new Promise(resolve => {
     setTimeout(resolve, sec);
   });
-}
+};
 
 const availableStatus = async (index, current) => {
   const status = await index.getProductStatus();
   return status.toNumber() === 0 || status.toNumber() === current;
-}
+};
 
 const availableWithdraw = async (index, asyncWithdraw) => {
   const available = await availableStatus(index, 1);
   const totalRequest = (await asyncWithdraw.getContractInfo(index.address))[2].toNumber();
   return available && totalRequest > 0;
-}
+};
 
 const availableRebalance = async (index, rebalanceProvider) => {
   const available = await availableStatus(index, 2);
@@ -90,21 +88,20 @@ const availableRebalance = async (index, rebalanceProvider) => {
     const needs = await rebalanceProvider.needsRebalance.call(1, index.address);
     return available && needs;
   } catch (err) {
-    console.log('err', err);
+    console.log("err", err);
     return false;
   }
-}
+};
 
-const availableBuyTokens = async (index) => {
+const availableBuyTokens = async index => {
   const available = await availableStatus(index, 3);
   let balance = (await index.getETHBalance()).toNumber();
   const result = available && balance > 1000;
   return result;
-}
+};
 
 const safeRebalance = async (index, rebalanceProvider) => {
-  if (processingRebalance)
-    return;
+  if (processingRebalance) return;
 
   if (!availableRebalance(index, rebalanceProvider)) {
     return;
@@ -117,27 +114,26 @@ const safeRebalance = async (index, rebalanceProvider) => {
     await index.rebalance();
     processingRebalance = false;
     if (!result) {
-      console.log('safeRebalance:', result)
+      console.log("safeRebalance:", result);
       await safeRebalance(index, rebalanceProvider);
     } else {
-      console.log('rebalance done');
+      console.log("rebalance done");
     }
   } catch (e) {
     if (e.message.includes("revert")) {
-      console.log('safeRebalance revert');
+      console.log("safeRebalance revert");
       status = await index.getProductStatus();
-      console.log('index status:', status.toNumber());
+      console.log("index status:", status.toNumber());
       await delay(1000);
       processingRebalance = false;
       await safeRebalance(index, rebalanceProvider);
     }
   }
-}
+};
 
 const safeWithdraw = async (index, asyncWithdraw) => {
-  if (processingWithdraw)
-    return;
-  if (!await availableWithdraw(index, asyncWithdraw)) {
+  if (processingWithdraw) return;
+  if (!(await availableWithdraw(index, asyncWithdraw))) {
     return;
   }
 
@@ -148,57 +144,55 @@ const safeWithdraw = async (index, asyncWithdraw) => {
     await index.withdraw();
     processingWithdraw = false;
     if (!result) {
-      console.log('safeWithdraw:', result)
+      console.log("safeWithdraw:", result);
       await safeWithdraw(index, asyncWithdraw);
     } else {
-      console.log('withdraw done');
+      console.log("withdraw done");
     }
   } catch (e) {
     if (e.message.includes("revert")) {
       const status = await index.getProductStatus();
-      console.log('safeWithdraw revert', status.toNumber());
+      console.log("safeWithdraw revert", status.toNumber());
       await delay(1000);
       processingWithdraw = false;
       await safeWithdraw(index, asyncWithdraw);
     }
   }
-}
+};
 
-const safeBuyTokens = async (index) => {
-  if (processingBuyToken)
-    return;
+const safeBuyTokens = async index => {
+  if (processingBuyToken) return;
 
-  if (!await availableBuyTokens(index)) {
+  if (!(await availableBuyTokens(index))) {
     return;
   }
 
   processingBuyToken = true;
-  console.log('start buy token .......');
+  console.log("start buy token .......");
   try {
     const result = await index.buyTokens.call();
-    console.log('buy tokens result', result);
+    console.log("buy tokens result", result);
     await index.buyTokens();
 
     processingBuyToken = false;
     if (!result) {
-      console.log('buy token not finish', result);
+      console.log("buy token not finish", result);
       await safeBuyTokens(index);
     } else {
-      console.log('buy tokens done');
+      console.log("buy tokens done");
     }
   } catch (e) {
     if (e.message.includes("revert")) {
       const status = await index.getProductStatus();
-      console.log('safeBuyTokens revert', status.toNumber());
+      console.log("safeBuyTokens revert", status.toNumber());
       await delay(1000);
       processingBuyToken = false;
       await safeBuyTokens(index);
     }
   }
-}
+};
 
 contract("Olympus Index", accounts => {
-
   let index;
   let market;
   let mockKyber;
@@ -218,7 +212,6 @@ contract("Olympus Index", accounts => {
   const investorsGroupB = accounts.slice(11);
 
   before("Initialize tokens", async () => {
-
     mockKyber = await MockKyberNetwork.deployed();
     const mockTokens = await mockKyber.supportedTokens();
     tokens = mockTokens.slice(0, indexData.weights.length);
@@ -259,11 +252,9 @@ contract("Olympus Index", accounts => {
     erc20Token1 = await ERC20.at(await tokens[1]);
     erc20Token2 = await ERC20.at(await tokens[2]);
     erc20Token3 = await ERC20.at(await tokens[3]);
-
   });
 
   it("Deploy index should be success", async () => {
-
     index = await OlympusIndex.new(
       indexData.name,
       indexData.symbol,
@@ -271,13 +262,14 @@ contract("Olympus Index", accounts => {
       indexData.category,
       indexData.decimals,
       tokens,
-      indexData.weights, {
+      indexData.weights,
+      {
         gas: 8e6
       }
     );
 
     let status = (await index.status()).toNumber();
-    assert.equal(status, 0, 'step 1. Deploy should be success and status should be new');
+    assert.equal(status, 0, "step 1. Deploy should be success and status should be new");
 
     await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
       value: web3.toWei(indexData.ethDeposit, "ether")
@@ -286,69 +278,64 @@ contract("Olympus Index", accounts => {
     await web3.eth.sendTransaction({
       from: accounts[0],
       to: mockKyber.address,
-      value: '10000000000000000000'
+      value: "10000000000000000000"
     });
 
     price = (await index.getPrice()).toNumber();
-    assert.equal(price, web3.toWei(1, "ether"), 'step 1. Price is 1');
+    assert.equal(price, web3.toWei(1, "ether"), "step 1. Price is 1");
 
     balance = (await index.getETHBalance()).toNumber();
     assert.equal(balance, web3.toWei(0, "ether"), "step 1. Total ETH balance now is 0");
 
     const assetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(assetsValue, web3.toWei(0, "ether"), "step 1. Total assets value is 0 ETH");
-
   });
 
-
   it("Simulate bot", async () => {
-
     setInterval(async () => {
-      if (!allDone)
-        await safeBuyTokens(index);
+      if (!allDone) await safeBuyTokens(index);
     }, 5000);
 
     setInterval(async () => {
-      if (!allDone)
-        await safeWithdraw(index, asyncWithdraw);
+      if (!allDone) await safeWithdraw(index, asyncWithdraw);
     }, 5000);
 
     setInterval(async () => {
-      if (!allDone)
-        await safeRebalance(index, rebalance);
+      if (!allDone) await safeRebalance(index, rebalance);
     }, 15000);
-
   });
 
   it("Buy tokens", async () => {
-
     await Promise.all(
-      investorsGroupA.map(async account => await index.invest({
-        value: web3.toWei(0.1, "ether"),
-        from: account
-      }))
+      investorsGroupA.map(
+        async account =>
+          await index.invest({
+            value: web3.toWei(0.1, "ether"),
+            from: account
+          })
+      )
     );
 
     let assetsValue = (await index.getAssetsValue()).toNumber();
-    console.log('invested assetsValue:', assetsValue);
+    console.log("invested assetsValue:", assetsValue);
 
     await delay(30000);
 
     let price = (await index.getPrice()).toNumber();
-    assert.equal(price, web3.toWei(1, "ether"), 'step 3. Price is 1 ETH');
+    assert.equal(price, web3.toWei(1, "ether"), "step 3. Price is 1 ETH");
     assetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(assetsValue, web3.toWei(1, "ether"), "step 3. Total assets value is 1 ETH");
 
     const ethBalance = (await index.getETHBalance()).toNumber();
-    console.log('ethBalance', ethBalance);
+    console.log("ethBalance", ethBalance);
     // 4. Each investor should have the index token balance of 0.1;
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
         assert.equal(value, web3.toWei(0.1, "ether"), "should have the index token balance of 0.1");
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        console.log('account balance:', calc.fromWei(balance));
-        console.log('Group A investors balance', calc.fromWei(value));
+        console.log("account balance:", calc.fromWei(balance));
+        console.log("Group A investors balance", calc.fromWei(value));
       })
     );
 
@@ -357,19 +344,20 @@ contract("Olympus Index", accounts => {
       tokens.map(async token => {
         let erc20 = await ERC20.at(token);
         const amount = (await erc20.balanceOf(index.address)).toNumber();
-        assert.isAbove(amount, 0, 'token should have amount');
+        assert.isAbove(amount, 0, "token should have amount");
       })
     );
-
   });
 
   it("buy tokens and withdraw", async () => {
-
     await Promise.all(
-      investorsGroupA.map(async account => await index.invest({
-        value: web3.toWei(0.1, "ether"),
-        from: account
-      }))
+      investorsGroupA.map(
+        async account =>
+          await index.invest({
+            value: web3.toWei(0.1, "ether"),
+            from: account
+          })
+      )
     );
 
     // await safeBuyTokens(index);
@@ -387,7 +375,7 @@ contract("Olympus Index", accounts => {
     await delay(30000);
 
     let price = (await index.getPrice()).toNumber();
-    assert.equal(price, web3.toWei(1, "ether"), 'Price is 1 ETH');
+    assert.equal(price, web3.toWei(1, "ether"), "Price is 1 ETH");
     const assetsValue = (await index.getAssetsValue()).toNumber();
     assert.equal(assetsValue, web3.toWei(1.5, "ether"), "Total assets value is 1.5 ETH");
     balance = (await index.getETHBalance()).toNumber();
@@ -398,15 +386,14 @@ contract("Olympus Index", accounts => {
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        assert.equal(value, web3.toWei(0.15, "ether"), 'should have the index token balance of 0.15');
-        console.log('account balance:', calc.fromWei(balance)); // 99.899840754 - 99.848889022 = 0.05 OK.
-        console.log('Group A investors balance', calc.fromWei(value));
+        assert.equal(value, web3.toWei(0.15, "ether"), "should have the index token balance of 0.15");
+        console.log("account balance:", calc.fromWei(balance)); // 99.899840754 - 99.848889022 = 0.05 OK.
+        console.log("Group A investors balance", calc.fromWei(value));
       })
     );
-  })
+  });
 
   it("buy tokens and rebalance", async () => {
-
     // 1. Sends 10 MOT to the index;
     await erc20Token0.transfer(index.address, web3.toWei(10, "ether"), {
       from: accounts[0]
@@ -414,39 +401,39 @@ contract("Olympus Index", accounts => {
 
     // 2. Group A 10 investors each invests 0.05 ETH;
     await Promise.all(
-      investorsGroupA.map(async account => await index.invest({
-        value: web3.toWei(0.05, "ether"),
-        from: account
-      }))
+      investorsGroupA.map(
+        async account =>
+          await index.invest({
+            value: web3.toWei(0.05, "ether"),
+            from: account
+          })
+      )
     );
 
     await delay(30000);
 
     let price = (await index.getPrice()).toNumber();
-    assert.isAbove(price, web3.toWei(1, "ether"), 'Price is > 1');
+    assert.isAbove(price, web3.toWei(1, "ether"), "Price is > 1");
 
     let balance = (await index.getETHBalance()).toNumber();
     assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
 
     const assetsValue = (await index.getAssetsValue()).toNumber();
-    console.log('assetsValue:', calc.fromWei(assetsValue));
+    console.log("assetsValue:", calc.fromWei(assetsValue));
 
     // Each investor should have the index token balance of 0.2
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        assert(calc.inRange(calc.fromWei(value), 0.2, 0.00001),
-          'should have the index token balance of 0.15');
-        console.log('account balance:', calc.fromWei(balance));
-        console.log('Group A investors balance', calc.fromWei(value));
+        assert(calc.inRange(calc.fromWei(value), 0.2, 0.00001), "should have the index token balance of 0.15");
+        console.log("account balance:", calc.fromWei(balance));
+        console.log("Group A investors balance", calc.fromWei(value));
       })
     );
-  })
-
+  });
 
   it("withdraw and rebalance", async () => {
-
     await Promise.all(
       investorsGroupA.map(async account => {
         await index.requestWithdraw(toTokenWei(0.1), {
@@ -463,7 +450,7 @@ contract("Olympus Index", accounts => {
     await delay(30000);
 
     let price = (await index.getPrice()).toNumber();
-    assert.isAbove(price, web3.toWei(1, "ether"), 'Price is > 1');
+    assert.isAbove(price, web3.toWei(1, "ether"), "Price is > 1");
 
     let balance = (await index.getETHBalance()).toNumber();
     assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
@@ -475,7 +462,7 @@ contract("Olympus Index", accounts => {
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
-        console.log('Group A investors balance', calc.fromWei(value));
+        console.log("Group A investors balance", calc.fromWei(value));
       })
     );
 
@@ -494,13 +481,14 @@ contract("Olympus Index", accounts => {
 
     const total = percentages.reduce((a, b) => a + b);
     percentages.forEach((p, index) => {
-      assert(calc.inRange(p * 100 / total, indexData.weights[index], 0.001),
-        " each tokens in the index should be the same as the percentage");
+      assert(
+        calc.inRange((p * 100) / total, indexData.weights[index], 0.001),
+        " each tokens in the index should be the same as the percentage"
+      );
     });
   });
 
   it("buy tokens, withdraw and rebalance", async () => {
-
     // 1. Sends another 100 MOT to the index;
     await erc20Token0.transfer(index.address, web3.toWei(50, "ether"), {
       from: accounts[0]
@@ -508,10 +496,13 @@ contract("Olympus Index", accounts => {
 
     // 2. Group A 10 investors each invests 0.1 ETH;
     await Promise.all(
-      investorsGroupA.map(async account => await index.invest({
-        value: web3.toWei(0.1, "ether"),
-        from: account
-      }))
+      investorsGroupA.map(
+        async account =>
+          await index.invest({
+            value: web3.toWei(0.1, "ether"),
+            from: account
+          })
+      )
     );
 
     // 3. Group A 10 investors each requests withdraw 0.05 ETH;
@@ -526,12 +517,11 @@ contract("Olympus Index", accounts => {
     await delay(30000);
 
     let price = (await index.getPrice()).toNumber();
-    assert.isAbove(price, web3.toWei(1, "ether"), 'Price is > 1');
-
+    assert.isAbove(price, web3.toWei(1, "ether"), "Price is > 1");
 
     const totalSupply = await index.totalSupply();
 
-    console.log('total , price:', totalSupply.toNumber(), price);
+    console.log("total , price:", totalSupply.toNumber(), price);
 
     let balance = (await index.getETHBalance()).toNumber();
     // assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
@@ -544,7 +534,7 @@ contract("Olympus Index", accounts => {
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
-        console.log('Group A investors balance', calc.fromWei(value));
+        console.log("Group A investors balance", calc.fromWei(value));
       })
     );
 
@@ -562,16 +552,14 @@ contract("Olympus Index", accounts => {
     });
 
     const amounts = tokenAmounts[1].map(amount => amount.toNumber());
-    console.log('amounts:', amounts);
-
+    console.log("amounts:", amounts);
   });
 
   it("withdraw and close", async () => {
-
     await Promise.all(
       investorsGroupA.map(async account => {
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        console.log('account before balance:', calc.fromWei(balance));
+        console.log("account before balance:", calc.fromWei(balance));
       })
     );
 
@@ -610,34 +598,31 @@ contract("Olympus Index", accounts => {
     safeWithdraw(index, asyncWithdraw);
 
     let balance = (await index.getETHBalance()).toNumber();
-    console.log('balance:', balance);
+    console.log("balance:", balance);
     // assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
     assert(calc.inRange(calc.fromWei(balance), 0, 0.00001), "Total ETH balance now is 0");
 
     const assetsValue = (await index.getAssetsValue()).toNumber();
     assert.isAbove(assetsValue, web3.toWei(0, "ether"), "Total assets value should be 0");
-    console.log('assetsValue:', assetsValue);
+    console.log("assetsValue:", assetsValue);
 
     const totalSupply = await index.totalSupply();
-    console.log('last totalSupply', totalSupply.toNumber());
+    console.log("last totalSupply", totalSupply.toNumber());
 
     let price = (await index.getPrice()).toNumber();
-    assert.equal(price, web3.toWei(1, "ether"), 'Price is 1');
+    assert.equal(price, web3.toWei(1, "ether"), "Price is 1");
 
     // 4. Group A investors have the index balance of 0, each of them also receives > 0.25 ETH;
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        assert(calc.inRange(calc.fromWei(value), 0, 0.00001),
-          'should have the index token balance of 0');
-        console.log('account final balance:', calc.fromWei(balance)); // 
+        assert(calc.inRange(calc.fromWei(value), 0, 0.00001), "should have the index token balance of 0");
+        console.log("account final balance:", calc.fromWei(balance)); //
       })
     );
     // 5. Status of the index is still “Closed”
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, "Status of the index is Closed");
     // allDone = true;
-
   });
-
 });

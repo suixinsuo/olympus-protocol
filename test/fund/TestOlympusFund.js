@@ -127,7 +127,7 @@ contract("Fund", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], fund.address);
     assert.equal((await fund.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not taken in account in the price but as a fee
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
     assert.equal((await fund.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
   });

@@ -130,7 +130,7 @@ contract("Basic Index", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], index.address);
     assert.equal((await index.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not taken in account in the price but as a fee
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
   });
 
