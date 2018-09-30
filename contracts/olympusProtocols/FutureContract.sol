@@ -16,6 +16,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     using SafeMath for uint256;
 
+    uint public constant DENOMINATOR = 10000;
+
     // Enum and constants
     int public constant LONG = -1;
     int public constant SHORT = 1;

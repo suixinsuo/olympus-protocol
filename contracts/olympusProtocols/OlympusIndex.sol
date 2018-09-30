@@ -27,7 +27,6 @@ contract OlympusIndex is IndexInterface, Derivative {
     Status public productStatus = Status.AVAILABLE;
     // event ChangeStatus(DerivativeStatus status);
 
-    uint public DENOMINATOR;
     uint public constant INITIAL_VALUE =  10**18;
     uint public constant INITIAL_FEE = 10**17;
     uint[] public weights;
@@ -64,7 +63,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         symbol = _symbol;
         totalSupply_ = 0;
         decimals = _decimals;
-        DENOMINATOR = 10 ** decimals;
         description = _description;
         category = _category;
         version = "1.1-20180930";
@@ -87,7 +85,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(status == DerivativeStatus.New);
         require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable. 0.1ETH
         require(_componentList != 0x0);
-        require(_rebalanceDeltaPercentage <= DENOMINATOR);
+        require(_rebalanceDeltaPercentage <= (10 ** decimals));
 
         pausedCycle = 365 days;
 
@@ -147,7 +145,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
         productStatus = Status.SELLINGTOKENS;
-        bool result = getETHFromTokens(DENOMINATOR);
+        bool result = getETHFromTokens((10 ** decimals));
         if(result) {
             productStatus = Status.AVAILABLE;
         }
@@ -275,7 +273,7 @@ contract OlympusIndex is IndexInterface, Derivative {
                 return true;
             }
             // tokenPercentToSell must be freeze as class variable
-            freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
+            freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul((10 ** decimals)).div(getAssetsValue());
         }
         return getETHFromTokens(freezeBalance);
     }
@@ -397,7 +395,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         for(i = currentStep;i < freezeTokens.length && goNextStep(GETETH); i++){
             uint sellIndex = i.sub(currentStep);
             _tokensThisStep[sellIndex] = freezeTokens[i];
-            _amounts[sellIndex] = _tokenPercentage.mul(freezeTokens[i].balanceOf(address(this))).div(DENOMINATOR);
+            _amounts[sellIndex] = _tokenPercentage.mul(freezeTokens[i].balanceOf(address(this))).div((10 ** decimals));
             (, _sellRates[sellIndex] ) = exchange.getPrice(freezeTokens[i], ETH, _amounts[sellIndex], 0x0);
             // require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);

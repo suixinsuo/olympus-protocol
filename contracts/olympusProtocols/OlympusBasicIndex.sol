@@ -73,7 +73,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
     function initialize(address _componentList, uint _rebalanceDeltaPercentage) external onlyOwner {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
-        require(_rebalanceDeltaPercentage <= DENOMINATOR);
+        require(_rebalanceDeltaPercentage <= (10 ** decimals));
 
         super._initialize(_componentList);
         bytes32[4] memory names = [MARKET, EXCHANGE, WITHDRAW, REBALANCE];
@@ -144,7 +144,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
 
     function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
-        getETHFromTokens(DENOMINATOR); // 100% all the tokens
+        getETHFromTokens((10 ** decimals)); // 100% all the tokens
         status = DerivativeStatus.Closed;
         emit StatusChanged(status);
         return true;
@@ -187,7 +187,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         uint _totalETHToReturn = tokenBalance.mul(getPrice()).div( 10 ** decimals);
 
         if (_totalETHToReturn > address(this).balance) {
-            uint _ethDifference = _totalETHToReturn.sub(address(this).balance).mul(DENOMINATOR);
+            uint _ethDifference = _totalETHToReturn.sub(address(this).balance).mul((10 ** decimals));
             uint _tokenPercentToSell = _ethDifference.div( getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
@@ -249,7 +249,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR) ;
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div((10 ** decimals)) ;
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
