@@ -40,7 +40,7 @@ const indexData = {
   weights: [50, 50],
   tokensLenght: 2,
   maxTransfers: 10,
-  rebalanceDelta: 30
+  rebalanceDelta: 0.003 * 10 ** 18
 };
 const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
@@ -85,7 +85,7 @@ contract("Olympus Index", accounts => {
 
   before("Initialize tokens", async () => {
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = (await mockKyber.supportedTokens()).slice(0,2);
+    tokens = (await mockKyber.supportedTokens()).slice(0, 2);
 
     market = await Marketplace.deployed();
     mockMOT = await MockToken.deployed();
@@ -136,7 +136,6 @@ contract("Olympus Index", accounts => {
       "Shall revert"
     ));
 
-
   it("Required tokens to be ERC20Extended Standard", async () =>
     await calc.assertReverts(
       async () =>
@@ -151,8 +150,7 @@ contract("Olympus Index", accounts => {
           { gas: 8e6 } // At the moment require 6.7M
         ),
       "Shall revert"
-    )
-  );
+    ));
 
   it("Create a index", async () => {
     index = await OlympusIndex.new(
@@ -188,7 +186,7 @@ contract("Olympus Index", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], index.address);
     assert.equal((await index.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not taken in account in the price but as a fee
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
     assert.equal((await index.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
   });
@@ -226,7 +224,7 @@ contract("Olympus Index", accounts => {
   it("Index shall be able to deploy", async () => {
     assert.equal(await index.name(), indexData.name);
     assert.equal(await index.description(), indexData.description);
-    assert.equal(await index.category(), indexData.category);
+    assert.equal(calc.bytes32ToString(await index.category()), indexData.category);
     assert.equal(await index.symbol(), indexData.symbol);
     assert.equal((await index.fundType()).toNumber(), DerivativeType.Index);
     assert.equal((await index.totalSupply()).toNumber(), 0);
@@ -376,7 +374,6 @@ contract("Olympus Index", accounts => {
   });
 
   it("Shall be able to withdraw only after frequency", async () => {
-
     let tx;
     const interval = 5; //5 seconds frequency
     await index.setMaxSteps(DerivativeProviders.WITHDRAW, 1); // For testing
@@ -594,8 +591,8 @@ contract("Olympus Index", accounts => {
     await index.setAllowed([bot], WhitelistType.Maintenance, true);
     let rebalanceFinished = false;
     while (rebalanceFinished == false) {
-      rebalanceFinished = await index.rebalance.call({from: bot});
-      tx = await index.rebalance({from: bot});
+      rebalanceFinished = await index.rebalance.call({ from: bot });
+      tx = await index.rebalance({ from: bot });
       assert.ok(tx);
     }
     await index.setAllowed([bot], WhitelistType.Maintenance, false);

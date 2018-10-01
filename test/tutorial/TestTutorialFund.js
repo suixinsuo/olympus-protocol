@@ -47,7 +47,7 @@ contract("Tutorial Fund", accounts => {
     mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = (await mockKyber.supportedTokens()).slice(0,2);
+    tokens = (await mockKyber.supportedTokens()).slice(0, 2);
     exchange = await ExchangeProvider.deployed();
     asyncWithdraw = await AsyncWithdraw.deployed();
     lockerProvider = await LockerProvider.deployed();
@@ -74,7 +74,7 @@ contract("Tutorial Fund", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], fund.address);
     assert.equal((await fund.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not taken in account in the price but as a fee
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
     assert.equal(
       (await fund.MAX_INVESTORS()).toNumber(),
@@ -108,7 +108,7 @@ contract("Tutorial Fund", accounts => {
     assert.equal(await fund.name(), fundData.name);
     assert.equal(await fund.description(), fundData.description);
     assert.equal(await fund.symbol(), fundData.symbol);
-    assert.equal(await fund.category(), fundData.category);
+    assert.equal(calc.bytes32ToString(await fund.category()), fundData.category);
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
 

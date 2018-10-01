@@ -1,6 +1,10 @@
 module.exports = {
+  bytes32ToString: bytes32 => {
+    return web3.toAscii(bytes32).replace(/\u0000/g, "");
+  },
+
   getRandomDecimals: () => {
-    const [min, max] = [1, 18];
+    const [min, max] = [3, 18];
     return Math.floor(Math.random() * (max - min + 1) + min);
   },
 
@@ -13,7 +17,7 @@ module.exports = {
   },
 
   fromWei: number => {
-    return parseFloat(web3.fromWei(number , "ether"), 10);
+    return parseFloat(web3.fromWei(number, "ether"), 10);
   },
 
   inRange: async (value, range, offset) => {

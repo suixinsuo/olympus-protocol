@@ -23,11 +23,10 @@ contract OlympusIndex is IndexInterface, Derivative {
     using SafeMath for uint256;
 
     bytes32 public constant BUYTOKENS = "BuyTokens";
-    enum Status { AVAILABLE, WITHDRAWING, REBALANCING, BUYING }
+    enum Status { AVAILABLE, WITHDRAWING, REBALANCING, BUYING, SELLINGTOKENS }
     Status public productStatus = Status.AVAILABLE;
     // event ChangeStatus(DerivativeStatus status);
 
-    uint public constant DENOMINATOR = 10000;
     uint public constant INITIAL_VALUE =  10**18;
     uint public constant INITIAL_FEE = 10**17;
     uint[] public weights;
@@ -37,13 +36,12 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public freezeBalance; // For operations (Buy tokens and sellTokens)
     ERC20Extended[]  freezeTokens;
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
-    bool public unhandledWithdraws;
-
+ 
     constructor (
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals,
       address[] _tokens,
       uint[] _weights)
@@ -66,7 +64,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         decimals = _decimals;
         description = _description;
         category = _category;
-        version = "1.1-20180913";
+        version = "1.1-20180930";
         fundType = DerivativeType.Index;
         tokens = _tokens;
         weights = _weights;
@@ -86,7 +84,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(status == DerivativeStatus.New);
         require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable. 0.1ETH
         require(_componentList != 0x0);
-        require(_rebalanceDeltaPercentage <= DENOMINATOR);
+        require(_rebalanceDeltaPercentage <= (10 ** decimals));
 
         pausedCycle = 365 days;
 
@@ -142,9 +140,14 @@ contract OlympusIndex is IndexInterface, Derivative {
     }
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
-        require(status == DerivativeStatus.Closed && unhandledWithdraws == false);
+        require(status == DerivativeStatus.Closed );
+        require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
-        bool result = !getETHFromTokens(DENOMINATOR);
+        productStatus = Status.SELLINGTOKENS;
+        bool result = getETHFromTokens((10 ** decimals));
+        if(result) {
+            productStatus = Status.AVAILABLE;
+        }
         reimburse();
         return result;
     }
@@ -222,9 +225,9 @@ contract OlympusIndex is IndexInterface, Derivative {
 
   // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
-        require(_amount > 0);
+        require(_amount > 0 );
         require((
-            status == DerivativeStatus.Closed && getAssetsValue() == 0) ? // everything is done, take all.
+            status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == 0 ) ? // everything is done, take all.
             (_amount <= accumulatedFee)
             :
             (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
@@ -244,7 +247,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
 
-
     // ----------------------------- WITHDRAW -----------------------------
     // solhint-disable-next-line
     function requestWithdraw(uint amount) external
@@ -253,14 +255,13 @@ contract OlympusIndex is IndexInterface, Derivative {
     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
-        if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
+        if(status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == amount) {
             withdrawProvider.freeze();
             handleWithdraw(withdrawProvider, msg.sender);
             withdrawProvider.finalize();
             return;
         }
-        unhandledWithdraws = true;
-    }
+     }
 
     function guaranteeLiquidity(uint tokenBalance) internal returns(bool success){
 
@@ -269,8 +270,9 @@ contract OlympusIndex is IndexInterface, Derivative {
             if (_totalETHToReturn <= getETHBalance()) {
                 return true;
             }
+
             // tokenPercentToSell must be freeze as class variable
-            freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
+            freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul((10 ** decimals)).div(getAssetsValue());
         }
         return getETHFromTokens(freezeBalance);
     }
@@ -299,8 +301,8 @@ contract OlympusIndex is IndexInterface, Derivative {
             }
         }
 
-        if (_transfers == 0){
-            if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){
+        if (_transfers == 0) {
+            if(!guaranteeLiquidity(getWithdrawAmount())) {
                 reimburse();
                 return false;
             }
@@ -314,14 +316,12 @@ contract OlympusIndex is IndexInterface, Derivative {
         if (i == _requests.length) {
             withdrawProvider.finalize();
             finalizeStep(WITHDRAW);
-            unhandledWithdraws = false;
             productStatus = Status.AVAILABLE;
         }
         reimburse();
         return i == _requests.length; // True if completed
     }
 
-    event TOTALSUPPLY(uint i, uint y);
     function handleWithdraw(WithdrawInterface _withdrawProvider, address _investor) private returns (bool) {
         uint _eth;
         uint _tokenAmount;
@@ -332,7 +332,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         balances[_investor] =  balances[_investor].sub(_tokenAmount);
         emit Transfer(_investor, 0x0, _tokenAmount); // ERC20 Required event
 
-        emit TOTALSUPPLY(totalSupply_, _tokenAmount);
         totalSupply_ = totalSupply_.sub(_tokenAmount);
         address(_investor).transfer(_eth);
 
@@ -394,7 +393,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         for(i = currentStep;i < freezeTokens.length && goNextStep(GETETH); i++){
             uint sellIndex = i.sub(currentStep);
             _tokensThisStep[sellIndex] = freezeTokens[i];
-            _amounts[sellIndex] = _tokenPercentage.mul(freezeTokens[i].balanceOf(address(this))).div(DENOMINATOR);
+            _amounts[sellIndex] = _tokenPercentage.mul(freezeTokens[i].balanceOf(address(this))).div((10 ** decimals));
             (, _sellRates[sellIndex] ) = exchange.getPrice(freezeTokens[i], ETH, _amounts[sellIndex], 0x0);
             // require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
@@ -542,6 +541,10 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     function updateStatusStep(bytes32 category) internal returns(bool) {
         return StepInterface(getComponentByName(STEP)).updateStatus(category);
+    }
+
+    function getWithdrawAmount() internal view returns(uint) {
+        return WithdrawInterface(getComponentByName(WITHDRAW)).getTotalWithdrawAmount();
     }
 
     function getNextArrayLength(bytes32 stepCategory, uint currentStep) internal view returns(uint) {

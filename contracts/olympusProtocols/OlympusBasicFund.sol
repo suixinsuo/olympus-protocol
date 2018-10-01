@@ -28,7 +28,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals
      ) public {
         require(0<=_decimals&&_decimals<=18);
@@ -36,7 +36,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20180913";
+        version = "1.1-20180930";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -170,7 +170,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
 
     function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
-        getETHFromTokens(DENOMINATOR); // 100% all the tokens
+        getETHFromTokens((10 ** decimals)); // 100% all the tokens
         status = DerivativeStatus.Closed;
         emit FundStatusChanged(status);
         return true;
@@ -215,7 +215,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
     function guaranteeLiquidity(uint tokenBalance) internal {
         uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
         if (_totalETHToReturn > address(this).balance) {
-            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul(DENOMINATOR)).div(getAssetsValue());
+            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul((10 ** decimals))).div(getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
     }
@@ -275,7 +275,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div((10 ** decimals));
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
