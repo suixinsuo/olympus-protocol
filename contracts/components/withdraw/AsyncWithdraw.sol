@@ -51,7 +51,6 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
     function request(address _investor, uint256 _amount) external returns (bool) {
         ERC20Extended derivative = ERC20Extended(msg.sender);
          // Safe checks
-        require(contracts[msg.sender].withdrawRequestLock == false); // Cant request while withdrawing
         require(derivative.totalSupply() >= contracts[msg.sender].totalWithdrawAmount.add(_amount));
         require(
             derivative.balanceOf(_investor) >= _amount
@@ -62,7 +61,7 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
             contracts[msg.sender].userRequests.push(_investor);
         }
         contracts[msg.sender].amountPerUser[_investor] = contracts[msg.sender].amountPerUser[_investor].add(_amount);
-        contracts[msg.sender].totalWithdrawAmount =  contracts[msg.sender].totalWithdrawAmount.add(_amount);
+        contracts[msg.sender].totalWithdrawAmount = contracts[msg.sender].totalWithdrawAmount.add(_amount);
 
         emit WithdrawRequest(_investor, contracts[msg.sender].amountPerUser[_investor]);
 
@@ -79,8 +78,8 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         ERC20Extended derivative = ERC20Extended(msg.sender);
 
         _tokens = contracts[msg.sender].pendingAmountPerUser[_investor];
-        _eth = _tokens.mul(contracts[msg.sender].price).div(10 ** derivative.decimals());
-        
+        _eth = _tokens.mul(contracts[msg.sender].price).div( 10 ** derivative.decimals());
+
         // If he doesn't have this amount, the request will be closed and no ETH will be returned
         if(_tokens > derivative.balanceOf(_investor)) {
             emit Withdrawed(_investor, 0, 0);
@@ -122,14 +121,14 @@ contract AsyncWithdraw is FeeCharger, WithdrawInterface {
         // Case we have enough ETH
         if(_requireEther <= _derivativeEth) {
             contracts[msg.sender].price = _price;
-            contracts[msg.sender].pendingTotalETHAmount = _requireEther; 
+            contracts[msg.sender].pendingTotalETHAmount = _requireEther;
 
         } else {
             // Special scenario, we got not enough ETH to satisfy this price
             // PRICE = ETH*DECIMALS / AMOUNT
 
             contracts[msg.sender].price = _derivativeEth.mul(10 ** derivative.decimals()).div(_withdrawAmount);
-            contracts[msg.sender].pendingTotalETHAmount = _derivativeEth; 
+            contracts[msg.sender].pendingTotalETHAmount = _derivativeEth;
         }
 
         contracts[msg.sender].withdrawRequestLock = true;
