@@ -22,8 +22,6 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer {
     bytes32 public constant REIMBURSABLE = "Reimbursable";
     bytes32 public constant STEP = "StepProvider";
 
-    uint public constant DENOMINATOR = 10000;
-
     mapping(bytes32 => bool) internal excludedComponents;
 
     function _initialize (address _componentList) internal {

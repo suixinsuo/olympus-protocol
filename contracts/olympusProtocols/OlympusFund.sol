@@ -22,8 +22,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // Does not fit in derivative, index out of gas
     bytes32 public constant TOKENBROKEN = "TokenBroken";
 
-
-    uint public constant DENOMINATOR = 10000;
+    enum Status { AVAILABLE, WITHDRAWING, SELLINGTOKENS }
+    Status public productStatus = Status.AVAILABLE;
     uint private freezeTokenPercentage; // Freeze variable for ETH tokens
     ERC20Extended[] private tokenBrokensERC20Freeze;
 
@@ -32,8 +32,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping(address => uint) public investors;
     mapping(address => uint) public amounts;
     mapping(address => bool) public activeTokens;
-    address[] public tokensToRelease; // List of tokens brokens with balance to release
     mapping(address=> bool) public isBrokenToken; // Starts from 1
+    address[] public tokensToRelease; // List of tokens brokens with balance to release
 
     uint public accumulatedFee = 0;
 
@@ -41,14 +41,13 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     mapping (address => uint) public activeInvestorIndex; // Starts from 1 (0 is not existing)
     address[] public activeInvestors; // Start in 0
 
-    bool public isWithdrawing = false;
     bool public unhandledWithdraws;
 
     constructor(
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals
      ) public {
         require(0<=_decimals&&_decimals<=18);
@@ -56,7 +55,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20180913";
+        version = "1.1-20180930";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -108,7 +107,8 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // ----------------------------- FUND INTERFACE -----------------------------
     function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[] _minimumRates)
          public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns(bool) {
-        require(isWithdrawing == false);
+        require(productStatus == Status.AVAILABLE);
+
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _tokens.length; i++) {
@@ -139,7 +139,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
-        require(isWithdrawing == false);
+        
+        require(productStatus == Status.AVAILABLE);
+
         OlympusExchangeInterface exchange = getExchangeInterface();
 
         for (uint i = 0; i < _tokens.length; i++) {
@@ -203,8 +205,13 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
         require(status == DerivativeStatus.Closed && unhandledWithdraws == false);
+        require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
-        bool result = !getETHFromTokens(DENOMINATOR);
+        productStatus = Status.SELLINGTOKENS;
+        bool result = getETHFromTokens((10 ** decimals));
+        if(result) {
+            productStatus = Status.AVAILABLE;
+        }
         reimburse();
         return result;
     }
@@ -259,7 +266,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
         require(_amount > 0);
         require((
-            status == DerivativeStatus.Closed && getAssetsValue() == 0) ? // everything is done, take all.
+            status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == 0 ) ? // everything is done, take all.
             (_amount <= accumulatedFee)
             :
             (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
@@ -290,10 +297,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
-        if(status == DerivativeStatus.Closed && getAssetsValue() == 0){
-            withdrawProvider.freeze();
+        if(status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == amount){
+            withdrawFreeze();
             handleWithdraw(withdrawProvider, msg.sender);
-            withdrawProvider.finalize();
+            withdrawFinalize();
             return;
         }
         unhandledWithdraws = true;
@@ -305,7 +312,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         if(getStatusStep(GETETH) == 0) {
             // Case price is broken while withdrawing
             if(_price == 0) {
-                freezeTokenPercentage = DENOMINATOR; // Tokens got broken?
+                freezeTokenPercentage = (10 ** decimals); // Tokens got broken?
                 return getETHFromTokens(freezeTokenPercentage);
             }
            // Case is not required to sell Assets (we will not detect token brokens)
@@ -315,7 +322,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             }
             // Case is required to sell some assets
             // tokenPercentToSell must be freeze as class variable
-            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul(DENOMINATOR).div(getAssetsValue());
+            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul((10 ** decimals)).div(getAssetsValue());
             return getETHFromTokens(freezeTokenPercentage);
         }
         // Case second call
@@ -331,9 +338,11 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         returns(bool)
     {
         startGasCalculation();
-        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
+        
+        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
+        productStatus = Status.WITHDRAWING;
 
-        isWithdrawing = true;
+        WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
@@ -345,18 +354,18 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
 
-                isWithdrawing = false;
+                productStatus = Status.AVAILABLE;
                 reimburse();
                 return true;
             }
         }
 
         if (_transfers == 0) {
-            if(!guaranteeLiquidity(withdrawProvider.getTotalWithdrawAmount())){
+            if(!guaranteeLiquidity(getWithdrawAmount())) {
                 reimburse();
                 return false;
             }
-            withdrawProvider.freeze();
+            withdrawFreeze();
         }
 
         for (i = _transfers; i < _requests.length && goNextStep(WITHDRAW); i++) {
@@ -364,10 +373,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
 
         if (i == _requests.length) {
-            withdrawProvider.finalize();
+            withdrawFinalize();
             finalizeStep(WITHDRAW);
             unhandledWithdraws = false;
-            isWithdrawing = false;
+            productStatus = Status.AVAILABLE;
         }
 
         reimburse();
@@ -466,7 +475,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             uint sellIndex = i.sub(currentStep);
             _tokensThisStep[sellIndex] = _tokensToSell[i];
-            _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div(DENOMINATOR);
+            _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div((10 ** decimals));
             (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
@@ -574,20 +583,15 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function addInvestor(address investor) internal {
         if (activeInvestorIndex[investor] == 0) {
-            uint index = activeInvestors.push(investor);
-            activeInvestorIndex[investor] = index;
+            activeInvestorIndex[investor] = activeInvestors.push(investor);
         }
     }
     function removeInvestor(address investor) internal {
-
         if (balances[investor] > 0) {return;}
-        // activeInvestorIndex starts in 1. We iterate until one before the last
-        for (uint i = activeInvestorIndex[investor] - 1; i + 1 < activeInvestors.length; i++) {
-            activeInvestors[i] = activeInvestors[i+1];
-            activeInvestorIndex[activeInvestors[i+1]] -= 1;
-        }
-        activeInvestorIndex[investor] = 0; // Removed
+        activeInvestors[activeInvestorIndex[investor]-1] = activeInvestors[activeInvestors.length - 1];
+        activeInvestorIndex[activeInvestors[activeInvestors.length - 1]] = activeInvestorIndex[investor];
         activeInvestors.length -= 1;
+        activeInvestorIndex[investor] = 0;
     }
 
     function getActiveInvestors() external view returns(address[]) {
@@ -611,6 +615,17 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return OlympusExchangeInterface(getComponentByName(EXCHANGE));
     }
 
+    function getWithdrawAmount() internal view returns(uint) {
+        return WithdrawInterface(getComponentByName(WITHDRAW)).getTotalWithdrawAmount();
+    }
+
+    function withdrawFreeze() internal {
+        WithdrawInterface(getComponentByName(WITHDRAW)).freeze();
+    }
+
+    function withdrawFinalize() internal {
+        WithdrawInterface(getComponentByName(WITHDRAW)).finalize();
+    }
     // // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
     // function panic() external onlyOwner {
     //     _transfer(owner, address(this).balance);
