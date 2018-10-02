@@ -139,7 +139,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens, uint[] _amounts, uint[]  _rates)
       public onlyOwnerOrWhitelisted(WhitelistKeys.Admin) returns (bool) {
-        
+
         require(productStatus == Status.AVAILABLE);
 
         OlympusExchangeInterface exchange = getExchangeInterface();
@@ -338,7 +338,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         returns(bool)
     {
         startGasCalculation();
-        
+
         require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
         productStatus = Status.WITHDRAWING;
 

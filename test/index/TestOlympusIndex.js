@@ -38,7 +38,7 @@ const indexData = {
   wrongEthDeposit: 0.05,
   ethDeposit: 0.5, // ETH
   weights: [50, 50],
-  tokensLenght: 2,
+  tokensLength: 2,
   maxTransfers: 10,
   rebalanceDelta: 0.003 * 10 ** 18
 };
@@ -129,7 +129,7 @@ contract("Olympus Index", accounts => {
           indexData.description,
           indexData.category,
           indexData.decimals,
-          tokens.slice(0, indexData.tokensLenght),
+          tokens.slice(0, indexData.tokensLength),
           [],
           { gas: 8e6 } // At the moment require 6.7M
         ),
@@ -152,6 +152,25 @@ contract("Olympus Index", accounts => {
       "Shall revert"
     ));
 
+  it("Required tokens cant have more than 18 decimals", async () => {
+    const token20Decimals = await MockToken.new("20 DECIMALS", "T20", 20, 10 ** 32);
+
+    await calc.assertReverts(
+      async () =>
+        await OlympusIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          [tokens[0], token20Decimals.address], // Second token has more than 18 deciamls
+          [30, 70],
+          { gas: 8e6 } // At the moment require 6.7M
+        ),
+      "Shall revert"
+    );
+  });
+
   it("Create a index", async () => {
     index = await OlympusIndex.new(
       indexData.name,
@@ -159,7 +178,7 @@ contract("Olympus Index", accounts => {
       indexData.description,
       indexData.category,
       indexData.decimals,
-      tokens.slice(0, indexData.tokensLenght),
+      tokens.slice(0, indexData.tokensLength),
       indexData.weights,
       { gas: 8e6 } // At the moment require 6.7M
     );
@@ -230,7 +249,7 @@ contract("Olympus Index", accounts => {
     assert.equal((await index.totalSupply()).toNumber(), 0);
     const [indexTokens, weights] = await index.getTokens();
 
-    for (let i = 0; i < indexData.tokensLenght; i++) {
+    for (let i = 0; i < indexData.tokensLength; i++) {
       assert.equal(tokens[i], indexTokens[i], "Token is set correctly");
       assert.equal(indexData.weights[i], weights[i].toNumber(), "Weight is set correctly");
     }
@@ -652,7 +671,7 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
     // TODO VERIFY TOKENS ARE SOLD (refactor with getTokensAndAmounts())
-    for (let i = 0; i < indexData.tokensLenght; i++) {
+    for (let i = 0; i < indexData.tokensLength; i++) {
       let erc20 = await ERC20.at(tokens[i]);
       let balance = await erc20.balanceOf(index.address);
       assert.equal(balance.toNumber(), 0, "Tokens are sold");

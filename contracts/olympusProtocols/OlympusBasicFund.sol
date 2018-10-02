@@ -15,6 +15,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH
+    uint public constant TOKEN_DENOMINATOR = 10**18; // Apply % to a denominator, 18 is the minimum highetst precision required
 
     event TokenUpdated(address _token, uint amount);
     event FundStatusChanged(DerivativeStatus status);

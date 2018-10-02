@@ -29,6 +29,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     uint public constant INITIAL_VALUE =  10**18;
     uint public constant INITIAL_FEE = 10**17;
+    uint public constant TOKEN_DENOMINATOR = 10**18; // Apply % to a denominator, 18 is the minimum highetst precision required
     uint[] public weights;
     uint public accumulatedFee = 0;
     uint public rebalanceDeltaPercentage = 0; // by default, can be 30, means 0.3%.
@@ -36,7 +37,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public freezeBalance; // For operations (Buy tokens and sellTokens)
     ERC20Extended[]  freezeTokens;
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
- 
+
     constructor (
       string _name,
       string _symbol,
@@ -55,6 +56,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             _totalWeight = _totalWeight.add(_weights[i]);
             // Check all tokens are ERC20Extended
             ERC20Extended(_tokens[i]).balanceOf(address(this));
+            require( ERC20Extended(_tokens[i]).decimals() <= 18);
         }
         require(_totalWeight == 100);
 
@@ -128,10 +130,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         return (tokens, weights);
     }
 
-    function getProductStatus() public view returns (uint _status) {
-        return uint(productStatus);
-    }
-
     // solhint-disable-next-line
     function close() OnlyOwnerOrPausedTimeout public returns(bool success) {
         require(status != DerivativeStatus.New);
@@ -144,7 +142,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
         productStatus = Status.SELLINGTOKENS;
-        bool result = getETHFromTokens((10 ** decimals));
+        bool result = getETHFromTokens(TOKEN_DENOMINATOR);
         if(result) {
             productStatus = Status.AVAILABLE;
         }
@@ -271,8 +269,9 @@ contract OlympusIndex is IndexInterface, Derivative {
                 return true;
             }
 
-            // tokenPercentToSell must be freeze as class variable
-            freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul((10 ** decimals)).div(getAssetsValue());
+            // tokenPercentToSell must be freeze as class variable.
+            // 10**18 is the highest preccision for all possible tokens
+            freezeBalance = _totalETHToReturn.sub(getETHBalance()).mul(TOKEN_DENOMINATOR).div(getAssetsValue());
         }
         return getETHFromTokens(freezeBalance);
     }
@@ -376,6 +375,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return _tokensWithAmount;
     }
 
+    // _tokenPercentage must come in TOKEN_DENOMIANTOR
     function getETHFromTokens(uint _tokenPercentage) internal returns(bool success) {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
@@ -393,7 +393,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         for(i = currentStep;i < freezeTokens.length && goNextStep(GETETH); i++){
             uint sellIndex = i.sub(currentStep);
             _tokensThisStep[sellIndex] = freezeTokens[i];
-            _amounts[sellIndex] = _tokenPercentage.mul(freezeTokens[i].balanceOf(address(this))).div((10 ** decimals));
+            _amounts[sellIndex] = _tokenPercentage.mul(freezeTokens[i].balanceOf(address(this))).div(TOKEN_DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(freezeTokens[i], ETH, _amounts[sellIndex], 0x0);
             // require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
