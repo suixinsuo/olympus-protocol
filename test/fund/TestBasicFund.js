@@ -165,6 +165,20 @@ contract("BasicFund", accounts => {
     );
   });
 
+  it("Buy tokens fails if token has more than 18 decimals", async () => {
+
+    const fundBalance = (await fund.getETHBalance()).toNumber();
+    assert.isAbove(fundBalance, 0, "This test must start with some ETH invested eth");
+
+    const token20Decimals = await MockToken.new("20 DECIMALS", "T20", 20, 10 ** 32);
+
+    await calc.assertReverts(
+      async () => await fund.buyTokens(0x0, [token20Decimals.address], [fundBalance], [0]),
+      "Revert buy tokens with more than 18 decimals"
+    );
+  });
+
+
   it("Shall be able to buy tokens", async () => {
     // From the previous test we got 1.8 ETH
     const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();

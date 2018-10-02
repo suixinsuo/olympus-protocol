@@ -234,7 +234,7 @@ contract("Olympus Index Special Scenarios", accounts => {
   })
   // --------------------------------------------------------------------------
   // ----------------------------- DECIMALS ISSUES -------------
-  it("withdraw all less 100 wei, price is correct", async () => {
+  it("withdraw all less 100 wei with 15 decimals, price is correct ", async () => {
 
     await mockKyber.setSlippageMockRate(99);
     const weis = 100;
