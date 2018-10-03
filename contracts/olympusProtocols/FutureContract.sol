@@ -76,6 +76,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
 
+    /// --------------------------------- INITIALIZE ---------------------------------
 
     function initialize(address _componentList, uint _deliveryDate) public payable {
 
@@ -106,11 +107,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
 
-    function getTargetPrice() public view returns(uint) {
-        return targetPrice;
-    }
-
-
 
     function initializeTokens() internal {
         longToken = new FutureERC721Token(name, symbol, LONG);
@@ -119,14 +115,14 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         outShortSupply = 0;
     }
 
-    // Return the value required to buy a share to a current price
-    function calculateShareDeposit(uint _amountOfShares, uint _targetPrice) public view returns(uint) {
-        return _amountOfShares
-            .mul(amountOfTargetPerShare)
-            .mul(_targetPrice)
-            .mul(depositPercentage)
-            .div(DENOMINATOR);
+    /// --------------------------------- END INITIALIZE ---------------------------------
+
+    /// --------------------------------- ORACLES ---------------------------------
+
+    function getTargetPrice() public view returns(uint) {
+        return targetPrice;
     }
+    /// --------------------------------- END ORACLES ---------------------------------
 
     /// --------------------------------- TOKENS ---------------------------------
     function getToken(int _direction) public view returns(FutureERC721Token) {
@@ -138,12 +134,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function getTokenOutSupply(int _direction) public view returns(uint) {
         if(_direction == LONG) {return outLongSupply; }
         if(_direction == SHORT) {return outShortSupply; }
-        revert();
-    }
-
-    function increaseOutSupply(int _direction) internal {
-        if(_direction == LONG) { outLongSupply++;  return;}
-        if(_direction == SHORT) { outShortSupply++; return; }
         revert();
     }
 
@@ -207,6 +197,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return deposit.sub(deposit.mul(forceClosePositionDelta).div(DENOMINATOR));
     }
 
+    /// ---------------------------------  END TOKENS ---------------------------------
+
     /// --------------------------------- INVEST ---------------------------------
     function invest(
         int _direction, // long or short
@@ -232,6 +224,18 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         msg.sender.transfer(msg.value.sub(_totalEthDeposit.mul(_shares)));
         return true;
     }
+
+    // Return the value required to buy a share to a current price
+    function calculateShareDeposit(uint _amountOfShares, uint _targetPrice) public view returns(uint) {
+        return _amountOfShares
+            .mul(amountOfTargetPerShare)
+            .mul(_targetPrice)
+            .mul(depositPercentage)
+            .div(DENOMINATOR);
+    }
+    /// --------------------------------- END INVEST ---------------------------------
+
+    /// --------------------------------- CHECK POSITION ---------------------------------
 
     // bot system
     function checkPosition() external returns (bool) {
@@ -314,18 +318,26 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return false;
     }
 
+    function increaseOutSupply(int _direction) internal {
+        if(_direction == LONG) { outLongSupply++;  return;}
+        if(_direction == SHORT) { outShortSupply++; return; }
+        revert();
+    }
+    /// --------------------------------- END CHECK POSITION ---------------------------------
+
+    /// --------------------------------- CLEAR ---------------------------------
+
     // for bot.
     function clear() external returns (bool) {
         return false;
     }
+    /// --------------------------------- END CLEAR ---------------------------------
 
 
-    // helpers
+    /// --------------------------------- ASSETS VALUE  ---------------------------------
     function getTotalAssetValue(int /*_direction*/) external view returns (uint) {
         return 0;
     }
-
-
 
     // in ETH
     function getMyAssetValue(int _direction) external view returns (uint){
@@ -337,8 +349,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         }
          return balance;
     }
+    /// --------------------------------- END ASSETS VALUE  ---------------------------------
 
-    // Getters
+    /// --------------------------------- GETTERS   ---------------------------------
     function getName() external view returns (string) { return name; }
     function getDescription() external view returns (string) { return description; }
 
@@ -349,8 +362,10 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function getAmountOfTargetPerShare() external view returns (uint) { return amountOfTargetPerShare;}
     function getLongToken() external view returns (ERC721) {return longToken; }
     function getShortToken() external view returns (ERC721) {return shortToken; }
+    /// --------------------------------- END GETTERS   ---------------------------------
 
-    // Call to other contracts
+    /// --------------------------------- CONTRACTS CALLS   ---------------------------------
+    // Rebalance
     function startGasCalculation() internal {
         ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
     }
@@ -360,8 +375,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         accumulatedFee = accumulatedFee.sub(reimbursedAmount);
         msg.sender.transfer(reimbursedAmount);
     }
-    // Locker and Step
 
+    // Locker and Step
     function checkLocker(bytes32 category) internal {
         LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(category);
     }
@@ -390,6 +405,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         StepInterface(getComponentByName(STEP)).setMaxCalls(_category,  _maxSteps);
     }
 
+    /// --------------------------------- END CONTRACTS CALLS   ---------------------------------
+
+    /// --------------------------------- MANAGER   ---------------------------------
 
     // Payable
     function() public payable {
@@ -400,6 +418,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function addOwnerBalance() external payable {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
+    /// --------------------------------- END MANAGER   ---------------------------------
+
 
 
 
