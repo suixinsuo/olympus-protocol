@@ -11,9 +11,9 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
     uint tokenIdCounter = 0;
     int tokenPosition_;
     // (tokenId > future data)
-    mapping(uint => uint) public tokenBuyingPrice;
-    mapping(uint => uint) public tokenDeposit;
-    mapping(uint => bool) public tokenValid;
+    mapping(uint => uint) public tokenBuyingPrice; // The price when they buy the token
+    mapping(uint => uint) public tokenDeposit; // Their actual deposit
+    mapping(uint => bool) public tokenValid; // Is valid or not (A token can be invalidated on a check position or after clear)
 
 
 
@@ -65,6 +65,12 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         tokenValid[_tokenId] = false;
     }
 
+    function invalidateTokens(uint[] _tokens) external onlyOwner {
+        for(uint i = 0; i < _tokens.length; i++){
+            tokenValid[_tokens[i]] = false;
+        }
+    }
+
     function isTokenValid(uint _tokenId) external view returns (bool _tokenValid) {
         return tokenValid[_tokenId];
     }
@@ -85,20 +91,28 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         return ownedTokens[_owner];
     }
 
+    function getValidTokenIdsByOwner(address _owner) external view returns (uint[] _tokenIds){
+        return getValidTokensList(ownedTokens[_owner]);
+    }
+
     function getValidTokens() external view returns(uint[] memory) {
+        return getValidTokensList(allTokens);
+    }
+
+    function getValidTokensList(uint[] _tokens) internal view returns(uint[] memory) {
         uint _length = 0;
         uint i;
 
-        for(i = 0; i < allTokens.length; i++) {
-            if(tokenValid[allTokens[i]]) { _length++; }
+        for(i = 0; i < _tokens.length; i++) {
+            if(tokenValid[_tokens[i]]) { _length++; }
         }
 
         uint[] memory validTokens = new uint[](_length);
         uint _counter = 0;
 
-        for(i = 0; i < allTokens.length; i++) {
-            if(tokenValid[allTokens[i]]) {
-                validTokens[_counter] = allTokens[i];
+        for(i = 0; i < _tokens.length; i++) {
+            if(tokenValid[_tokens[i]]) {
+                validTokens[_counter] = _tokens[i];
                 _counter++;
             }
         }

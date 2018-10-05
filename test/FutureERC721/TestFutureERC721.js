@@ -104,8 +104,73 @@ contract("FutureERC721Token", accounts => {
   });
 
   it("Should be able to invalidate a token", async () => {
+    // We update the hashmap, is not really required this token exists
     const invalidateTx = await futureERC721TokenShort.invalidateToken(randomTokenId);
     assert.ok(invalidateTx);
     assert.equal(await futureERC721TokenShort.isTokenValid(randomTokenId), false);
+  });
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- FILTERS  -------------------------------
+  // We depend of the first test that create long token.
+  // Previous test uses short token, we expected long token to be empty,
+
+
+  it("Should be able to filter valid tokens", async () => {
+    let validTokenList;
+
+    validTokenList = await futureERC721TokenLong.getValidTokens();
+    assert.equal(validTokenList.length, 0, ' Future LONG has no tokens at the starting of the test');
+
+    await futureERC721TokenLong.mintMultiple(
+      accountA,
+      depositAmount,
+      initialBuyingPrice,
+      amountOfTokensToMint
+    );
+
+    validTokenList = await futureERC721TokenLong.getValidTokens();
+    assert.equal(validTokenList.length, amountOfTokensToMint, 'All tokens are valid');
+
+    validTokenList = await futureERC721TokenLong.getValidTokenIdsByOwner(accountA);
+    assert.equal(validTokenList.length, amountOfTokensToMint, 'All tokens by owner are valid');
+
+    const firstTokenId = validTokenList[0];
+
+    // We invalidate 1 token
+    await futureERC721TokenLong.invalidateToken(firstTokenId);
+
+    validTokenList = await futureERC721TokenLong.getValidTokens();
+    assert.equal(validTokenList.length, amountOfTokensToMint - 1, 'All tokens are valid less 1');
+    assert.notEqual(validTokenList[0], firstTokenId, 'Invalidated token doesn\'t  appear in array');
+
+    validTokenList = await futureERC721TokenLong.getValidTokenIdsByOwner(accountA);
+    assert.equal(validTokenList.length, amountOfTokensToMint - 1, 'All tokens by owner are valid less 1');
+    assert.notEqual(validTokenList[0], firstTokenId, 'Invalidated token doesn\'t appear in array');
+  });
+
+  it("Should be able to invalidate several tokens", async () => {
+    let validTokenList;
+
+    validTokenList = await futureERC721TokenLong.getValidTokens();
+    assert.equal(validTokenList.length, amountOfTokensToMint - 1, ' Dependency from previous test');
+
+    // Empty array
+    const tx = await futureERC721TokenLong.invalidateTokens([]);
+    assert.ok(tx, 'Empty array doesnt revert');
+
+    // We will disable all except the last token
+    const lastTokenId = validTokenList[validTokenList.length - 1];
+
+    await futureERC721TokenLong.invalidateTokens(validTokenList.splice(0, validTokenList.length - 1));
+
+
+    validTokenList = await futureERC721TokenLong.getValidTokens();
+    assert.equal(validTokenList.length, 1, 'Only 1 token is valid');
+    assert.notEqual(validTokenList[0], lastTokenId, 'Only last token is valid');
+
+    validTokenList = await futureERC721TokenLong.getValidTokenIdsByOwner(accountA);
+    assert.equal(validTokenList.length, 1, 'Only 1 token is valid by owner');
+    assert.notEqual(validTokenList[0], lastTokenId, 'Only last token is valid by owner');
   });
 });

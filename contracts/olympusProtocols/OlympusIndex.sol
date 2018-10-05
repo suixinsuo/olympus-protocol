@@ -36,7 +36,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     uint public freezeBalance; // For operations (Buy tokens and sellTokens)
     ERC20Extended[]  freezeTokens;
     enum RebalancePhases { Initial, SellTokens, BuyTokens }
- 
+
     constructor (
       string _name,
       string _symbol,
@@ -539,7 +539,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return StepInterface(getComponentByName(STEP)).goNextStep(category);
     }
 
-    function updateStatusStep(bytes32 category) internal returns(bool) {
+    function updateStatusStep(bytes32 category) internal returns(uint) {
         return StepInterface(getComponentByName(STEP)).updateStatus(category);
     }
 

@@ -11,10 +11,10 @@ contract StepProvider is StepInterface, ComponentInterface, Ownable {
     string public category = "Steps";
     string public version = "1.0";
 
-    mapping (address => mapping(bytes32 => uint)) public maxCalls;
-    mapping (address => mapping(bytes32 => uint)) public status;
-    mapping (address => mapping(bytes32 => uint)) public currentCallStep;
-    mapping (address => mapping(bytes32 => uint)) public currentFunctionStep;
+    mapping (address => mapping(bytes32 => uint)) public maxCalls; // Max
+    mapping (address => mapping(bytes32 => uint)) public status; //
+    mapping (address => mapping(bytes32 => uint)) public currentCallStep; // Will be reseted in a new call
+    mapping (address => mapping(bytes32 => uint)) public currentFunctionStep; // Keeps the counter between calls
 
     function setMaxCalls(bytes32 _category, uint _maxCalls) external {
         require( _maxCalls > 0);
@@ -46,10 +46,10 @@ contract StepProvider is StepInterface, ComponentInterface, Ownable {
         return status[msg.sender][_category];
     }
 
-    function updateStatus(bytes32 _category) external returns (bool _success) {
+    function updateStatus(bytes32 _category) external returns (uint) {
         status[msg.sender][_category]++;
         currentFunctionStep[msg.sender][_category] = 0;
-        return true;
+        return status[msg.sender][_category];
     }
 
     function goNextStep(bytes32 _category) external returns (bool _shouldCallAgain) {
