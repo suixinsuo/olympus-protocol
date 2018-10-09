@@ -180,7 +180,7 @@ fundContract.initialize(_componentList, {from: web3.eth.accounts[0]},
 
 ``` {.sourceCode .javascript}
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
-  uint[] _amounts, uint[] _minimumRates)
+  uint[] _amounts, uint[] _rates)
     public onlyOwner returns(bool);
 ```
 
@@ -227,7 +227,7 @@ fundContract.buyTokens(_exchangeId, _tokens, _amounts, _minimumRates,
 
 ``` {.sourceCode .javascript}
 function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
-  uint[] _amounts, uint[]  _rates)
+  uint[] _amounts, uint[] _rates)
     public onlyOwner returns (bool);
 ```
 
@@ -244,7 +244,7 @@ Call the function to sell any combination of tokens that are available in the fu
 > 1.  exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
 > 2.  tokens: ERC20 addresses of the tokens to sell.
 > 3.  amounts: The corresponding amount of tokens to sell.
-> 4.  minimumRates: The minimum return amount of ETH per token in wei.
+> 4.  rates: The minimum return amount of ETH per token in wei.
 
 ####  Example code
 
@@ -259,9 +259,9 @@ const _exchangeId = 0x0;
 const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
   "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
 const _amounts = [10**17,10**17];
-const _minimumRates = [0,0];
+const _rates = [0,0];
 
-fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates,
+fundContract.sellTokens(_exchangeId, _tokens, _amounts, _rates,
   (err, result) => {
     if (err) {
       return console.log(err)
@@ -269,7 +269,55 @@ fundContract.sellTokens(_exchangeId, _tokens, _amounts, _minimumRates,
 });
 ```
 
-4. withdraw
+4. tokenSwap
+-------------
+
+``` {.sourceCode .javascript}
+function tokenSwap(bytes32 _exchangeId, ERC20Extended _src, ERC20Extended _dest, uint _amount, 
+    uint _rate)
+    public onlyOwner returns (bool);
+```
+
+####  Description
+
+Call the function to swap between two tokens that are available in the fund.
+
+####  Returns
+
+> Whether the function executed successfully or not.
+
+####  Parameters
+
+> 1.  exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  src: ERC20 addresses of the token to swap.
+> 3.  dest: ERC20 addresses of the token you want to get.
+> 4.  amount: The amount of src token to swap.
+> 5.  rate: The exchange rate from src token to dest token in wei.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const _exchangeId = 0x0;
+const _src = "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a";
+const _dest = "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _amount = 10**17;
+const _rate = 0;
+
+fundContract.tokenSwap(_exchangeId, _src, _dest, _amount, _rate,
+  (err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+5. withdraw
 -----------
 
 ``` {.sourceCode .javascript}
@@ -301,7 +349,7 @@ fundContract.withdraw((err, result) => {
 });
 ```
 
-5. close
+6. close
 --------
 
 ``` {.sourceCode .javascript}

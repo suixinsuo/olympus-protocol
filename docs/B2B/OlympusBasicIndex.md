@@ -29,7 +29,7 @@ constructor (
 > 4.  category: Index category
 > 5.  decimals: Index decimals (normally it should be 18)
 > 6.  tokens: The token addresses that the index will buy, sell and rebalance
-> 7.  \_weights: The weights of the tokens
+> 7.  weights: The weights of the tokens
 
 ####  Example code
 
@@ -172,7 +172,7 @@ Initialize the Index, after which it is listed in the Olympus Product List and o
 >     -   100 = 1%
 >     -   1000 = 10%
 >     -   10000 = 100%
->
+
 ####  Example code
 
 The code below shows how to call this function with Web3.
@@ -196,12 +196,12 @@ indexContract.initialize(_componentList, _rebalanceDeltaPercentage,
 ------------
 
 ``` {.sourceCode .javascript}
-function buyTokens() external returns(bool);
+function buyTokens() external onlyOwner returns(bool);
 ```
 
 ####  Description
 
-Index manager or bot system executes the function to allocate the Ether, accumulated through investment, to the tokens defined in the index.
+Index manager executes the function to allocate the Ether, accumulated through investment, to the tokens defined in the index.
 
 ####  Returns
 
@@ -228,7 +228,7 @@ indexContract.buyTokens((err, result) => {
 ------------
 
 ``` {.sourceCode .javascript}
-function rebalance() public  returns (bool success);
+function rebalance() public onlyOwner returns (bool success);
 ```
 
 ####  Description

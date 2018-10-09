@@ -17,7 +17,7 @@ constructor (
   uint _decimals,
   address[] _tokens,
   uint[] _weights)
-  checkLength(_tokens, _weights) public;
+  public;
 ```
 
 ####  Parameters
@@ -28,7 +28,7 @@ constructor (
 > 4.  category: Index category
 > 5.  decimals: Index decimals (normally it should be 18)
 > 6.  tokens: The token addresses that the index will buy, sell and rebalance
-> 7.  \_weights: The weights of the tokens
+> 7.  weights: The weights of the tokens
 
 ####  Example code
 
@@ -179,7 +179,7 @@ Initialize the Index, after which it is listed in the Olympus Product List and o
 > -   1000 = 10%
 > -   10000 = 100%
 >
-> \_initialFundFee: the initial balance of the index
+> initialFundFee: the initial balance of the index
 
 ####  Example code
 
@@ -212,12 +212,12 @@ function setMultipleTimeIntervals(bytes32[] _timerNames,
 
 ####  Description
 
-Index manager can configure the withdraw frequency, buy token (Ether allocation) frequency and rebalance frequency for their OlympusIndex. By setting up the frequency, the bot system will execute withdraw/buy token and rebalance based on the configured frequency.
+Index manager can configure the withdraw frequency, buy token (Ether allocation) frequency and rebalance frequency for their index. By setting up the frequency, the bot system will execute withdraw/buy token and rebalance based on the configured frequency.
 
 ####  Parameters
 
 > 1.  timerNames: Array of the bytes32 encoded strings of the frequency names: RedeemFrequency, BuyTokensFrequency and RebalanceFrequency.
-> 2.  \_secondsList: Array of the frequency for the redeem, buy tokens and rebalance functions, should be converted to use number of seconds as the unit of time.
+> 2.  secondsList: Array of the frequency for the redeem, buy tokens and rebalance functions, should be converted to use number of seconds as the unit of time.
 
 ####  Example code
 
@@ -342,7 +342,7 @@ rebalance((err,result)=>{
 -------------------
 
 ``` {.sourceCode .javascript}
-function setManagementFee(uint _fee) external onlyOwner;
+function setManagementFee(uint _fee) public onlyOwner;
 ```
 
 ####  Description
@@ -447,7 +447,7 @@ indexContract.withdrawFee(amount, (err, result) => {
 ------------------
 
 ``` {.sourceCode .javascript}
-function enableWhitelist(WhitelistKeys _key) external onlyOwner
+function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner
   returns(bool);
 ```
 
@@ -469,6 +469,8 @@ If type 0 Investment whitelist is enabled, only users' addresses that are added 
 > -   1: Maintenance
 > -   2: Admin
 
+> enable: Set the parameter to true to enable the selected whitelist; false to disable the selected whitelist.
+
 ####  Returns
 
 > Whether the function executed successfully or not.
@@ -482,8 +484,10 @@ const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-const key = 0; // To enable the Investment whitelist
-indexContract.enableWhitelist(key, (err, result) => {
+// To enable the Investment whitelist
+const key = 0; 
+const enable = true; 
+indexContract.enableWhitelist(key, enable (err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -532,52 +536,11 @@ indexContract.setAllowed(accounts, key, allowed, (err, result) => {
 });
 ```
 
-10. disableWhitelist
---------------------
-
-``` {.sourceCode .javascript}
-function disableWhitelist(WhitelistKeys _key)
-  external onlyOwner returns(bool)
-```
-
-####  Description
-
-Owner of the index can disable a category of whitelist that has been enabled before.
-
-####  Parameters
-
-> \_key: A specific category of whitelist to be disabled for the index. The following three keys are available:
->
-> -   0: Investment
-> -   1: Maintenance
-> -   2: Admin
-
-####  Returns
-
-> Whether the function executed successfully or not.
-
-####  Example code
-
-The code below shows how to call this function with Web3.
-
-``` {.sourceCode .javascript}
-const Web3 = require("web3");
-const web3 = new Web3
-  (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-const key = 0; // To disable the Investment whitelist
-indexContract.disableWhitelist(key, (err, result) => {
-  if (err) {
-    return console.log(err)
-  }
-});
-```
-
-11. close
+10. close
 ---------
 
 ``` {.sourceCode .javascript}
-function close() public onlyOwner returns(bool success);
+function close() OnlyOwnerOrPausedTimeout public returns(bool success);
 ```
 
 ####  Description
