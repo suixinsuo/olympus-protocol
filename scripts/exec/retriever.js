@@ -1,8 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const Promise = require("bluebird");
-const _ = require("underscore");
-const Web3 = require("Web3");
 
 // ensure folder exists
 if (!fs.existsSync("./.temp")) {
