@@ -99,7 +99,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         return getValidTokensList(allTokens);
     }
 
-    function getValidTokensList(uint[] _tokens) internal view returns(uint[] memory) {
+    function getValidTokensList(uint[] _tokens) internal view returns(uint[] memory _validTokens ) {
         uint _length = 0;
         uint i;
 
@@ -107,16 +107,16 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
             if(tokenValid[_tokens[i]]) { _length++; }
         }
 
-        uint[] memory validTokens = new uint[](_length);
+        _validTokens = new uint[](_length);
         uint _counter = 0;
 
         for(i = 0; i < _tokens.length; i++) {
             if(tokenValid[_tokens[i]]) {
-                validTokens[_counter] = _tokens[i];
+                _validTokens[_counter] = _tokens[i];
                 _counter++;
             }
         }
 
-        return validTokens;
+        return _validTokens;
     }
 }

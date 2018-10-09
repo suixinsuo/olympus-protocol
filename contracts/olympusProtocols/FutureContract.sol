@@ -50,12 +50,12 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     uint public winnersBalance;
     // Manager balance for reiumursable
     uint public accumulatedFee;
-    // Check position freeze data
-    uint[] public freezeLongTokens;
-    uint[] public freezeShortTokens;
+    // Check position frozen data
+    uint[] public frozenLongTokens;
+    uint[] public frozenShortTokens;
     // TODO: Maybe struct will compact for optimizing (but will need getters)
-    uint public freezePrice; // Keep same price on clear and check position.
-    uint public freezeTotalWinnersSupply; // To check the percentage of each winner
+    uint public frozenPrice; // Keep same price on clear and check position.
+    uint public frozenTotalWinnersSupply; // To check the percentage of each winner
     uint public winnersBalanceRedeemed; // To check at the end decimals or not winers
 
     // TODO: Change this event for real transfer to user holder OL-1369
@@ -92,7 +92,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function initialize(address _componentList, uint _deliveryDate) public payable {
 
         require(status == DerivativeStatus.New);
-        require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable
+        // Require some balance for internal opeations such a reimbursable
+        require(msg.value >= INITIAL_FEE);
 
         _initialize(_componentList);
         bytes32[4] memory _names = [MARKET, LOCKER, REIMBURSABLE, STEP];
@@ -193,12 +194,18 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         if(_startPrice > _price) {_priceDifference = _startPrice.sub(_price);}
         else {_priceDifference = _price.sub(_startPrice);}
 
+        /**
+         * percentagePrice = Difference / actualPrice -> Gives the percentage changed, but added * TOKEN_DENOMINATOR to avoid decimals
+         * percentageDeposit = percentagePrice * (DENOMINATOR/depositPercentage) -> calculates the the variance respect to our deposit
+         * percentageDeposit/tokenDeposit -> Gives us the actual value, of curse, divided TOKEN_DENOMIANTOR that we used at the starting.
+         * All this simplify is the next formula
+         */
+
         uint _depositUpdate = _priceDifference
             .mul(TOKEN_DENOMINATOR)
-            .div(_startPrice)
-            .mul(DENOMINATOR.div(depositPercentage))
+            .mul(DENOMINATOR)
             .mul(_tokenDeposit)
-            .div(TOKEN_DENOMINATOR)
+            .div(_startPrice.mul(depositPercentage).mul(TOKEN_DENOMINATOR))
         ;
 
         // LONG and Positive OR short and Negative
@@ -214,7 +221,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     function getTokenRedLine(int _direction, uint _id) public view returns(uint) {
         uint deposit = getTokenDeposit(_direction, _id);
-        return deposit.sub(deposit.mul(forceClosePositionDelta).div(DENOMINATOR)); // This DENOMINATOR is base on the deposit
+        return deposit.sub(deposit.mul(forceClosePositionDelta).div(DENOMINATOR)); // This DENOMINATOR is based on the deposit
     }
 
     // This will check all the tokens and execute the function passed as parametter
@@ -230,11 +237,11 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         // CHECK VALID LONG TOKENS
         if(_stepStatus == CheckPositionPhases.LongTokens) {
 
-            for (i = _transfers; i < freezeLongTokens.length && goNextStep(CHECK_POSITION); i++) {
-                checkFunction(LONG, freezeLongTokens[i]);
+            for (i = _transfers; i < frozenLongTokens.length && goNextStep(CHECK_POSITION); i++) {
+                checkFunction(LONG, frozenLongTokens[i]);
             }
 
-            if(i == freezeLongTokens.length) {
+            if(i == frozenLongTokens.length) {
                 _stepStatus = CheckPositionPhases(updateStatusStep(CHECK_POSITION));
                 _transfers = 0;
             }
@@ -243,15 +250,15 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         // CHECK VALID SHORT TOKENS
         if(_stepStatus == CheckPositionPhases.ShortTokens) {
 
-            for (i = _transfers; i < freezeShortTokens.length && goNextStep(CHECK_POSITION); i++) {
-                checkFunction(SHORT, freezeShortTokens[i]);
+            for (i = _transfers; i < frozenShortTokens.length && goNextStep(CHECK_POSITION); i++) {
+                checkFunction(SHORT, frozenShortTokens[i]);
             }
 
             // FINISH
-            if(i == freezeShortTokens.length) {
+            if(i == frozenShortTokens.length) {
                 finalizeStep(CHECK_POSITION);
-                delete freezeShortTokens;
-                delete freezeLongTokens;
+                delete frozenShortTokens;
+                delete frozenLongTokens;
                 return true;
             }
         }
@@ -308,18 +315,18 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         CheckPositionPhases _stepStatus = CheckPositionPhases(getStatusStep(CHECK_POSITION));
         if (_stepStatus == CheckPositionPhases.Initial) {
             checkLocker(CHECK_POSITION);
-            freezeLongTokens = getValidTokens(LONG);
-            freezeShortTokens = getValidTokens(SHORT);
-            if (freezeLongTokens.length.add(freezeShortTokens.length) == 0) {
+            frozenLongTokens = getValidTokens(LONG);
+            frozenShortTokens = getValidTokens(SHORT);
+            if (frozenLongTokens.length.add(frozenShortTokens.length) == 0) {
                 reimburse();
                 return true;
             }
-            freezePrice = getTargetPrice();
+            frozenPrice = getTargetPrice();
         }
 
         bool completed = checkTokens(checkTokenValidity);
         if(completed) {
-            freezePrice = 0;
+            frozenPrice = 0;
         }
 
         reimburse();
@@ -331,7 +338,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
 
-        uint _tokenValue = getTokenActualValue(_direction, _id, freezePrice);
+        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
         uint _redLine = getTokenRedLine(_direction, _id);
 
         // Is valid
@@ -373,18 +380,18 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             checkLocker(CLEAR);
             status = DerivativeStatus.Closed;
 
-            freezeLongTokens = getValidTokens(LONG);
-            freezeShortTokens = getValidTokens(SHORT);
-            if (freezeLongTokens.length.add(freezeShortTokens.length) == 0) {
+            frozenLongTokens = getValidTokens(LONG);
+            frozenShortTokens = getValidTokens(SHORT);
+            if (frozenLongTokens.length.add(frozenShortTokens.length) == 0) {
                 // TODO: Special case, no winners, what to do with winnerBalance?
                 accumulatedFee = accumulatedFee.add(winnersBalance);
-                unFreezeClear();
+                unfreezeClear();
                 reimburse();
                 return true;
             }
 
-            freezePrice = getTargetPrice();
-            require(freezePrice > 0);
+            frozenPrice = getTargetPrice();
+            require(frozenPrice > 0);
             _stepStatus = ClearPositionPhases(updateStatusStep(CLEAR));
 
         }
@@ -394,9 +401,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             if(checkTokens(checkLosersOnClear)) {
                 _stepStatus = ClearPositionPhases(updateStatusStep(CLEAR));
                 // Get the valid tokens, withouth the losers
-                freezeLongTokens = getValidTokens(LONG);
-                freezeShortTokens = getValidTokens(SHORT);
-                freezeTotalWinnersSupply = freezeLongTokens.length.add(freezeShortTokens.length);
+                frozenLongTokens = getValidTokens(LONG);
+                frozenShortTokens = getValidTokens(SHORT);
+                frozenTotalWinnersSupply = frozenLongTokens.length.add(frozenShortTokens.length);
                 winnersBalanceRedeemed = 0; // We start to redeem now
                 reimburse();
                 return false;
@@ -411,7 +418,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
                     // TODO: no winners (give to the manager?)
                     accumulatedFee = accumulatedFee.add(winnersBalance);
                 }
-                unFreezeClear();
+                unfreezeClear();
                 reimburse();
                 return true;
             }
@@ -422,17 +429,17 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return false;
     }
 
-    function unFreezeClear() internal {
-        freezeTotalWinnersSupply = 0;
+    function unfreezeClear() internal {
+        frozenTotalWinnersSupply = 0;
         winnersBalance = 0;
-        freezePrice = 0;
+        frozenPrice = 0;
         winnersBalanceRedeemed = 0;
     }
 
     function checkLosersOnClear(int _direction, uint _id)  internal returns(bool) {
         if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
 
-        uint _tokenValue = getTokenActualValue(_direction, _id, freezePrice);
+        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
 
         // Is winner
@@ -457,9 +464,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function checkWinnersOnClear(int _direction, uint _id) internal returns(bool) {
         if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
 
-        uint _tokenValue = getTokenActualValue(_direction, _id, freezePrice);
+        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
-        uint _benefits;
 
         // Is loser (in theory shall be already out)
         if(_tokenValue  <=  _tokenDeposit) { return false;}
@@ -471,7 +477,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         uint _ethToReturn = calculateBenefits(_direction, _validTokens);
         invalidateTokens(_direction, _validTokens);
 
-        _holder.transfer(_ethToReturn.add(_benefits));
+        _holder.transfer(_ethToReturn);
         emit Benefits(_direction, _holder, _ethToReturn);
 
         return false;
@@ -490,12 +496,12 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         // Benefits in function of his total supply
         // Is important winners balance doesnt reduce, as is frozen during clear.
-        uint _benefits = winnersBalance.mul(_winnerTokens.length).div(freezeTotalWinnersSupply);
+        uint _benefits = winnersBalance.mul(_winnerTokens.length).div(frozenTotalWinnersSupply);
         winnersBalanceRedeemed = winnersBalanceRedeemed.add(_benefits); // Keep track
 
         // Special cases decimals
         _pendingBalance = winnersBalance.sub(winnersBalanceRedeemed);
-        if(_pendingBalance > 0 && _pendingBalance < freezeTotalWinnersSupply) {
+        if(_pendingBalance > 0 && _pendingBalance < frozenTotalWinnersSupply) {
             _benefits = _benefits.add(_pendingBalance);
         }
 
@@ -534,9 +540,11 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function getShortToken() external view returns (ERC721) {return shortToken; }
 
     // This can be removed for optimization if required
+    // Only help to check interal algorithm value, but is not for use of the final user.
+    // Client side could just fech them one buy one in a loop.
     function getFreezedTokens(int _direction) external view returns(uint[]) {
-        if(_direction == LONG) { return freezeLongTokens;}
-        if(_direction == SHORT) { return freezeShortTokens;}
+        if(_direction == LONG) { return frozenLongTokens;}
+        if(_direction == SHORT) { return frozenShortTokens;}
         revert();
     }
     /// --------------------------------- END GETTERS   ---------------------------------

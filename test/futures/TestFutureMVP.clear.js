@@ -18,7 +18,7 @@ const futureData = futureUtils.futureData;
  *    4. Every test must be run if set it.only without parent dependency
  */
 
-contract("", accounts => {
+contract("Test Future MVP Clear special cases", accounts => {
 
   let providers;
 
@@ -86,9 +86,9 @@ contract("", accounts => {
 
     // Is properly closed
     assert.equal((await future.status()).toNumber(), DerivativeStatus.Closed, 'Future is closed');
-    assert.equal((await future.freezeTotalWinnersSupply()).toNumber(), 0, 'Winners Supply reset');
+    assert.equal((await future.frozenTotalWinnersSupply()).toNumber(), 0, 'Winners Supply reset');
     assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance reset');
-    assert.equal((await future.freezePrice()).toNumber(), 0, 'Freezed price reset');
+    assert.equal((await future.frozenPrice()).toNumber(), 0, 'frozen price reset');
 
     const managerFeeAfter = await future.accumulatedFee(); // BigNumber
 
@@ -238,7 +238,7 @@ contract("", accounts => {
 
     // Investor B has 5 short
     tx = await futureUtils.safeInvest(future, FutureDirection.Short, 5, investorB);
-
+    // This number is being chosen to create a decimal issue
     const updatePrice = new BigNumber(1.05112212 * futureData.defaultTargetPrice).add(777); // Force decimals
     await future.setTargetPrice(updatePrice); // Short lose  part
 
@@ -254,11 +254,10 @@ contract("", accounts => {
 
     tx = await future.clear();
     events = calc.getEvent(tx, 'Benefits');
-    events.forEach((event) => console.log(event.args.amount.toNumber()));
 
     assert.equal(events.length, 3, 'All tokens are redeemed at once');
 
-    // TODO, all winnder balance is giving to the manager, may need to change
+    // TODO, all winner balance is giving to the manager, may need to change
     // No ETH holded
     assert.equal(
       (await web3.eth.getBalance(future.address)).toString(),

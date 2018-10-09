@@ -2,6 +2,7 @@
 const {
   DerivativeProviders,
 } = require("../utils/constants");
+const BigNumber = web3.BigNumber;
 
 
 const FutureContract = artifacts.require("FutureContractStub"); // FutureContract With functions for testing
@@ -98,14 +99,14 @@ module.exports = {
 
 
   calculateShareDeposit: (_amountOfShares, price) => {
-    // Price for 1 share
-    return (_amountOfShares * futureData.amountOfTargetPerShare * price * futureData.depositPercentage) / DENOMINATOR;
+
+    return new BigNumber(_amountOfShares).mul(futureData.amountOfTargetPerShare).mul(price).mul(futureData.depositPercentage).div(DENOMINATOR).toNumber();
   },
 
   // Actual Value
   getTokenActualValue: (direction, deposit, startPrice, currentPrice) => {
-    const pricePercentage = (startPrice - currentPrice) / startPrice * (DENOMINATOR / futureData.depositPercentage);
-    return deposit + direction * deposit * pricePercentage;
+    const pricePercentage = new BigNumber(startPrice).minus(currentPrice).div(startPrice).mul(new BigNumber(DENOMINATOR).div(futureData.depositPercentage));
+    return new BigNumber(direction).mul(deposit).mul(pricePercentage).add(deposit).toNumber();
   },
 
   getStepStatus: async (future, stepProvider, category) => {
