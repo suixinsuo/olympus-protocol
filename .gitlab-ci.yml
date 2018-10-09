@@ -55,7 +55,7 @@ deploy:
   stage: deploy
   tags: [aireach]
   before_script:
-    - apk add --no-cache nodejs nodejs-npm git python g++ make
+    - apk add --no-cache nodejs nodejs-npm git python g++ make openssh-client
     - node scripts/exec/retriever
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
