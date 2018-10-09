@@ -21,11 +21,11 @@ constructor(
 
 ####  Parameters
 
-> 1.  \_name: Fund name
-> 2.  \_symbol: Fund symbol (The fund is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
-> 3.  \_description: Fund description
-> 4.  \_category: Fund category
-> 5.  \_decimals: Fund decimals (normally it should be 18)
+> 1. \_name: Fund name
+> 2. \_symbol: Fund symbol (The fund is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 3. \_description: Fund description
+> 4. \_category: Fund category
+> 5. \_decimals: Fund decimals (normally it should be 18)
 
 ####  Example code
 
@@ -155,10 +155,10 @@ Initialize the fund contract that was created before, with the specified configu
 
 ####  Parameters
 
-> 1.  \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
-> 2.  \_initialFundFee: The fee that the owner will receive for managing the fund. Must be based on DENOMINATOR, so 1% is 1000
-> 3.  _withdrawFrequency: the frequency that will trigger the auto withdraw process.
-> 4.  value: The initial balance of the fund
+> 1. \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc).
+> 2. \_initialFundFee: The fee that the owner will receive for managing the fund. Must be based on DENOMINATOR, so 1% is 1000.
+> 3. \_withdrawFrequency: the frequency that will trigger the auto withdraw process.
+> 4. value: The initial balance of the fund.
 
 ####  Example code
 
@@ -174,7 +174,7 @@ const _componentList = "0x...";
 const _initialFundFee = "0x...";
 const _withdrawFrequency = 5; // 5 seconds
 const initialBalance = 1 ** 17
-fundContract.initialize(_componentList, _initialFundFee, _withdrawFrequency
+fundContract.initialize(_componentList, _initialFundFee, _withdrawFrequency,
   {from: web3.eth.accounts[0],value: initialBalance}, err => {
   if (err) {
     return console.error(err);
@@ -201,10 +201,10 @@ Call the function to buy any combination of tokens.
 
 ####  Parameters
 
-> 1.  exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
-> 2.  tokens: ERC20 addresses of the tokens to buy.
-> 3.  amounts: The corresponding amount of tokens to buy.
-> 4.  minimumRates: The minimum return amount of tokens per ETH in wei.
+> 1. \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2. \_tokens: ERC20 addresses of the tokens to buy.
+> 3. \_amounts: The corresponding amount of tokens to buy.
+> 4. \_minimumRates: The minimum return amount of tokens per ETH in wei.
 
 ####  Example code
 
@@ -248,10 +248,10 @@ Call the function for fund manager or whitelisted fund administrator to sell any
 
 ####  Parameters
 
-> 1.  exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
-> 2.  tokens: ERC20 addresses of the tokens to sell.
-> 3.  amounts: The corresponding amount of tokens to sell.
-> 4.  rates: The minimum return amount of ETH per token in wei.
+> 1. \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2. \_tokens: ERC20 addresses of the tokens to sell.
+> 3. \_amounts: The corresponding amount of tokens to sell.
+> 4. \_rates: The minimum return amount of ETH per token in wei.
 
 ####  Example code
 
@@ -276,7 +276,72 @@ fundContract.sellTokens(_exchangeId, _tokens, _amounts, _rates,
 });
 ```
 
-4. setManagementFee
+4. getTokens
+-------------
+
+``` {.sourceCode .javascript}
+function getTokens() external view returns(address[], uint[]);
+```
+
+####  Description
+
+Call the function to get all the underlying tokens with their amounts.
+
+####  Returns
+
+> Array of all the underlying tokens with their amounts.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+
+fundContract.getTokens((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+5. tokensWithAmount
+-------------
+
+``` {.sourceCode .javascript}
+function tokensWithAmount() public view
+    returns( ERC20Extended[] memory);
+```
+
+####  Description
+
+Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
+
+####  Returns
+
+> Array of the actual active tokens with amounts.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+
+fundContract.tokensWithAmount((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+6. setManagementFee
 -------------------
 
 ``` {.sourceCode .javascript}
@@ -294,7 +359,7 @@ Set the management fee percentage. This is being calculated with a denominator, 
 
 ####  Parameters
 
-> fee: The percentage of investors' funds that will be set aside for management fee (Note: fee must be equal to or bigger than 0 and less than 10000)
+> \_fee: The percentage of investors' funds that will be set aside for management fee (Note: fee must be equal to or bigger than 0 and less than 10000)
 
 ####  Example code
 
@@ -313,7 +378,164 @@ fundContract.setManagementFee(_fee, (err, result) => {
 });
 ```
 
-5. withdraw
+7. getPrice
+-------------
+
+``` {.sourceCode .javascript}
+function getPrice() public view returns(uint);
+```
+
+####  Description
+
+Call the function to get the unit price of the fund.
+
+####  Returns
+
+> The unit price of the fund.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+
+fundContract.getPrice((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+8. getAssetsValue
+-------------
+
+``` {.sourceCode .javascript}
+function getAssetsValue() public view returns (uint);
+```
+
+####  Description
+
+Call the function to get the total fund value according to its underlying assets.
+
+####  Returns
+
+> The total value of the fund.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+
+fundContract.getAssetsValue((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+9. getETHBalance
+-------------
+
+``` {.sourceCode .javascript}
+function getETHBalance() public view returns(uint);
+```
+
+####  Description
+
+Call the function to get the remaining ETH balance of the fund, the accumulated fee has been deducted.
+
+####  Returns
+
+> The remaining ETH balance of the fund.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+
+fundContract.getETHBalance((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+10. addOwnerBalance
+-----------
+
+``` {.sourceCode .javascript}
+function addOwnerBalance() external payable;
+```
+
+####  Description
+
+This function is for the fund manager. Fund manager can send ETH to the index, the ETH will be added to the existing management fee.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const balance = 1 ** 18;
+
+fundContract.addOwnerBalance(from: web3.eth.accounts[0], value: balance}, (err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+
+11. getActiveInvestors
+-------------
+
+``` {.sourceCode .javascript}
+function getActiveInvestors() external view returns(address[]);
+```
+
+####  Description
+
+Call the function to get all the active investors.
+
+####  Returns
+
+> Array of all the active investors' addresses.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+
+fundContract.getActiveInvestors((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+12. withdraw
 -----------
 
 ``` {.sourceCode .javascript}
@@ -324,6 +546,10 @@ function withdraw() external onlyOwnerOrWhitelisted
 ####  Description
 
 This function is for the fund manager. Investors that have requested to withdraw their investment will get their investment back after the fund manager or bot system executes this function.
+
+####  Returns
+
+> Whether the function executed successfully or not.
 
 ####  Example code
 
@@ -342,7 +568,7 @@ fundContract.withdraw((err, result) => {
 });
 ```
 
-6. withdrawFee
+13. withdrawFee
 --------------
 
 ``` {.sourceCode .javascript}
@@ -357,6 +583,10 @@ This function is for the fund manager to withdraw the fund management fee.
 ####  Parameters
 
 > amount: Amount of management fee the fund manager would like to withdraw.
+
+####  Returns
+
+> Whether the function executed successfully or not.
 
 ####  Example code
 
@@ -375,7 +605,7 @@ fundContract.withdrawFee(amount, (err, result) => {
 });
 ```
 
-7. enableWhitelist
+14. enableWhitelist
 ------------------
 
 ``` {.sourceCode .javascript}
@@ -397,10 +627,10 @@ If type 0 Investment whitelist is enabled, only users' addresses that are added 
 
 > \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:
 >
-> -   0: Investment
-> -   1: Maintenance
-> -   2: Admin
-> enable: Set the parameter to true to enable the selected whitelist; false to disable the selected whitelist.
+>  -   0: Investment
+>  -   1: Maintenance
+>  -   2: Admin
+>  enable: Set the parameter to true to enable the selected whitelist; false to disable the selected whitelist.
 
 ####  Returns
 
@@ -416,8 +646,8 @@ const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 // To enable the Investment whitelist
-const key = 0; 
-const enable = true; 
+const key = 0;
+const enable = true;
 fundContract.enableWhitelist(key, enable, (err, result) => {
   if (err) {
     return console.log(err)
@@ -425,7 +655,7 @@ fundContract.enableWhitelist(key, enable, (err, result) => {
 });
 ```
 
-8. setAllowed
+15. setAllowed
 -------------
 
 ``` {.sourceCode .javascript}
@@ -438,9 +668,9 @@ After enabling a specific category of whitelist, the owner of the fund can add a
 
 ####  Parameters
 
-> 1.  accounts: Array of addresses
-> 2.  \_key: A specific category of whitelist to be enabled for the fund
-> 3.  allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
+> 1. accounts: Array of addresses
+> 2. \_key: A specific category of whitelist to be enabled for the fund
+> 3. allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
 
 ####  Returns
 
@@ -466,7 +696,7 @@ fundContract.setAllowed(accounts, key, allowed, (err, result) => {
 });
 ```
 
-9. close
+16. close
 ---------
 
 ``` {.sourceCode .javascript}
@@ -492,6 +722,39 @@ const web3 = new Web3
 const fundContract = web3.eth.contract(abi).at(address);
 
 fundContract.close((err, result) => {
+  if (err) {
+    return console.log(err)
+  }
+});
+```
+
+17. sellAllTokensOnClosedFund
+---------
+
+``` {.sourceCode .javascript}
+function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted
+    (WhitelistKeys.Maintenance) public returns (bool);
+```
+
+####  Description
+
+After a fund is closed, owner or bot can call the function to sell all existing tokens.
+
+####  Returns
+
+> Whether the function executed successfully or not.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+
+fundContract.sellAllTokensOnClosedFund((err, result) => {
   if (err) {
     return console.log(err)
   }

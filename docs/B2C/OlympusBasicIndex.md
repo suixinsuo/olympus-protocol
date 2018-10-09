@@ -86,7 +86,199 @@ if (err) {
 });
 ```
 
-2. withdraw
+2. getTokens
+-------------
+
+``` {.sourceCode .javascript}
+function getTokens() public view returns (address[] _tokens, uint[] _weights);
+```
+
+####  Description
+
+Call the function to get all the tokens with their weights.
+
+####  Returns
+
+> Array of all the tokens with their weights.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getTokens((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+3. tokensWithAmount
+-------------
+
+``` {.sourceCode .javascript}
+function getTokensAndAmounts() external view returns(address[], uint[]);
+```
+
+####  Description
+
+Call the function to get the underlying tokens with amounts.
+
+####  Returns
+
+> Arrays of the underlying tokens with amounts, tokens that have been all sold will not be returned.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.tokensWithAmount((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+4. getTokensAndAmounts
+-------------
+
+``` {.sourceCode .javascript}
+function getTokensAndAmounts() external view returns(address[], uint[]);
+```
+
+####  Description
+
+Call the function to get all tokens with amounts.
+
+####  Returns
+
+> Arrays of all tokens with amounts.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getTokensAndAmounts((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+5. getPrice
+-------------
+
+``` {.sourceCode .javascript}
+function getPrice() public view returns(uint);
+```
+
+####  Description
+
+Call the function to get the unit price of the index.
+
+####  Returns
+
+> The unit price of the index.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getPrice((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+6. getAssetsValue
+-------------
+
+``` {.sourceCode .javascript}
+function getAssetsValue() public view returns (uint);
+```
+
+####  Description
+
+Call the function to get the total index value according to its underlying assets.
+
+####  Returns
+
+> The total value of the index.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getAssetsValue((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+7. getETHBalance
+-------------
+
+``` {.sourceCode .javascript}
+function getETHBalance() public view returns(uint);
+```
+
+####  Description
+
+Call the function to get the remaining ETH balance of the index.
+
+####  Returns
+
+> The remaining ETH balance of the index.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getETHBalance((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+8. withdraw
 -----------
 
 ``` {.sourceCode .javascript}
