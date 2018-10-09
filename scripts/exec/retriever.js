@@ -1,3 +1,9 @@
+/* 
+* This file is to retrieve meta information from contracts and complied json files.
+* And to push them to the server by the gitlab ci later on.
+* It generates content inside a folder called .temp by default/
+*/
+
 const fs = require("fs");
 const path = require("path");
 const Promise = require("bluebird");
