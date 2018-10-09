@@ -566,7 +566,7 @@ contract("Fund Special Scenarios", accounts => {
     const amounts = [web3.toWei(0.333, "ether"), web3.toWei(0.667, "ether")]; // Buy with special amounts
     await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
     // Request withdraw all except few weis
-    await fund.requestWithdraw((await fund.balanceOf(investorA)).min(100).toNumber(), { from: investorA });
+    await fund.requestWithdraw((await fund.balanceOf(investorA)).minus(100).toNumber(), { from: investorA });
 
     // Withdraw
     await fund.withdraw();
