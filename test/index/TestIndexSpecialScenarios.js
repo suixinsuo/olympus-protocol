@@ -253,7 +253,7 @@ contract("Olympus Index Special Scenarios", accounts => {
     await index.buyTokens();
     await index.buyTokens();
     // Request withdraw all except few weis
-    await index.requestWithdraw((await index.balanceOf(investorA)).toNumber() - 100, { from: investorA });
+    await index.requestWithdraw((await index.balanceOf(investorA)).min(100).toNumber(), { from: investorA });
 
     // Withdraw (twice to complete)
     await index.withdraw();

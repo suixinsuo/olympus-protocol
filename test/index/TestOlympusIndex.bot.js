@@ -209,10 +209,9 @@ contract.skip("Olympus Index Bot", accounts => {
   let allDone = false;
 
   const investorsGroupA = accounts.slice(1, 11);
-  const investorsGroupB = accounts.slice(11);
 
   before("Initialize tokens", async () => {
-    assert(accounts.length == 21, "Require 21 investors for this test case");
+    assert(accounts.length >= 11, "Require at least 11 investors for this test case");
 
     mockKyber = await MockKyberNetwork.deployed();
     const mockTokens = await mockKyber.supportedTokens();
