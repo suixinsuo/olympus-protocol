@@ -1,10 +1,23 @@
 module.exports = {
+  bytes32ToString: bytes32 => {
+    return web3.toAscii(bytes32).replace(/\u0000/g, "");
+  },
+
+  getRandomDecimals: () => {
+    const [min, max] = [3, 18];
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  },
+
   roundTo: (value, decimals) => {
     return Math.round(10 ** decimals * value) / 10 ** decimals;
   },
 
   ethBalance: async address => {
     return parseFloat(web3.fromWei((await web3.eth.getBalance(address)).toNumber(), "ether"), 10);
+  },
+
+  fromWei: number => {
+    return parseFloat(web3.fromWei(number, "ether"), 10);
   },
 
   inRange: async (value, range, offset) => {

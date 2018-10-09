@@ -17,15 +17,30 @@
 
 1.  Create
     //50,50 KNC, MANA
-    `"Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x569b92514e4ea12413df6e02e1639976940cde70"] , [50,50]`
+    `"Test Index" ,"TIX","Test index in kovan","0x696e646578",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x569b92514e4ea12413df6e02e1639976940cde70"] , [50,50]`
     // 100 KNC
     ```s
-    "Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"] , [100]
+    "Test Index" ,"TIX","Test index in kovan","0x696e646578",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"] , [100]
     ```
+    // 6 tokens KNC MOT SNT POWR, MANA, EOS, for stress
+     `
+     "Test Index" ,"TIX","Test index in kovan","0x696e646578",15,
+     [
+       "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b",
+       "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
+       "0x81c9756442e26b9017a12db2321fe9490416533d",
+       "0x71da415026fa64d1e348415e9486253e94333acc",
+       "0x569b92514e4ea12413df6e02e1639976940cde70",
+       "0xea1887835d177ba8052e5461a269f42f9d77a5af"
+     ],
+     ["15", "22",  "17", "26", "12" ,"8"]
+     `
+
+
 2.  Initalize
 
-"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0 // Olympus labs
-"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 0,0 // Gerdinand
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",1 // Olympus labs
+"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 1 // Gerdinand
 
 
 3. Set intervals (1 days)
@@ -35,7 +50,7 @@
 
 Mainnet fund 0xcc6402e1fbc7fb3f5e5543ecdd3d7978904f617a
 1.  Create
-    "Sample Fund","SFP","Testing fund","Funds","18"
+    "Sample Fund","SFP","Testing fund","0x66756e6473","18"
 
 2.  Initalize
 

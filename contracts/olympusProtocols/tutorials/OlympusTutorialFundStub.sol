@@ -11,7 +11,7 @@ contract OlympusTutorialFundStub is OlympusTutorialFund {
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals
      ) public OlympusTutorialFund(_name, _symbol, _description, _category, _decimals) {
 

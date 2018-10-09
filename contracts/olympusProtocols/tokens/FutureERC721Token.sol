@@ -38,7 +38,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         super._mint(_to, tokenIdCounter);
         _setFutureData(tokenIdCounter, _deposit, _buyingPrice);
         tokenIdCounter = tokenIdCounter.add(1);
-     }
+    }
 
     function mint(
         address _to,
@@ -46,7 +46,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         uint _buyingPrice
     ) external onlyOwner returns (bool) {
         _mint(_to,_deposit,_buyingPrice);
-         return true;
+        return true;
     }
 
     function mintMultiple(

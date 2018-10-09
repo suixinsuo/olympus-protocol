@@ -14,15 +14,13 @@ const expectedRate = web3.toBigNumber("1000" + "000000000000000000");
 const expectedRateToSell = web3.toBigNumber("1000000000000000");
 const BigNumber = web3.BigNumber;
 const calc = require("../utils/calc");
-const brokenTokenList = ["0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42000", "0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42001"]
+const brokenTokenList = ["0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42000", "0x65B1FaAD1b4d331Fd0ea2a50D5Be2c20abE42001"];
 
 function bytes32ToString(bytes32) {
   return web3.toAscii(bytes32).replace(/\u0000/g, "");
 }
 
-const getAmountWithRates = async () => {
-
-}
+const getAmountWithRates = async () => {};
 
 const Promise = require("bluebird");
 
@@ -47,15 +45,25 @@ contract("ExchangeProvider", accounts => {
       ExchangeProvider.deployed()
     ])
       .spread(
-        async (_mockKyberNetwork, _mockBrokenTokenKyberNetworkAdapter, _kyberNetworkAdapter, _exchangeAdapterManager, _mockToken, _exchangeProvider) => {
+        async (
+          _mockKyberNetwork,
+          _mockBrokenTokenKyberNetworkAdapter,
+          _kyberNetworkAdapter,
+          _exchangeAdapterManager,
+          _mockToken,
+          _exchangeProvider
+        ) => {
           assert.ok(_mockKyberNetwork, "MockKyberNetwork contract is not deployed.");
-          assert.ok(_mockBrokenTokenKyberNetworkAdapter, "MockBrokenTokenKyberNetworkAdapter contract is not deployed.");
+          assert.ok(
+            _mockBrokenTokenKyberNetworkAdapter,
+            "MockBrokenTokenKyberNetworkAdapter contract is not deployed."
+          );
           assert.ok(_kyberNetworkAdapter, "KyberNetworkExchange contract is not deployed.");
           assert.ok(_exchangeAdapterManager, "ExchangeAdapterManager contract is not deployed.");
           assert.ok(_mockToken, "MockToken contract is not deployed.");
           assert.ok(_exchangeProvider, "ExchangeProvider contract is not deployed.");
           await _exchangeProvider.setMotAddress(_mockToken.address);
-          tokens = await _mockKyberNetwork.supportedTokens();
+          tokens = (await _mockKyberNetwork.supportedTokens()).slice(0, 2);
           mockKyberNetwork = _mockKyberNetwork;
           return (exchangeProvider = _exchangeProvider);
         }
@@ -79,8 +87,11 @@ contract("ExchangeProvider", accounts => {
     });
 
     const afterBalance = await erc20Token.balanceOf(deposit);
-    assert.equal(new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(), afterBalance.toNumber(),
-      "Did receive the right amount of tokens");
+    assert.equal(
+      new BigNumber(beforeBalance).plus(expectedRate.mul(srcAmountETH)).toNumber(),
+      afterBalance.toNumber(),
+      "Did receive the right amount of tokens"
+    );
   });
 
   it("OlympusExchange should return the ETH if the single buy trade cannot be executed", async () => {
@@ -96,8 +107,10 @@ contract("ExchangeProvider", accounts => {
 
     const endBalance = web3.eth.getBalance(accounts[0]);
     // Still uses some ETH for the gas, as long as the difference is not 0.001 ETH we know it got returned succesfully
-    assert.ok(await calc.inRange(endBalance.toNumber(), initialBalance.toNumber(), 10 ** 15),
-      "Did return the Ether back after trade failure");
+    assert.ok(
+      await calc.inRange(endBalance.toNumber(), initialBalance.toNumber(), 10 ** 15),
+      "Did return the Ether back after trade failure"
+    );
   });
 
   it("OlympusExchange should be able to buy multiple tokens.", async () => {
@@ -155,7 +168,9 @@ contract("ExchangeProvider", accounts => {
 
     // Total amount used is 2 ETH, but we should have still spent 1ETH, for the token that we didn't break
     assert.ok(
-      await calc.inRange(afterETHBalance.toNumber(), (beforeETHBalance.toNumber() - srcAmountETH * 10 ** 18), 10 ** 15), `Did use only one ETH`);
+      await calc.inRange(afterETHBalance.toNumber(), beforeETHBalance.toNumber() - srcAmountETH * 10 ** 18, 10 ** 15),
+      `Did use only one ETH`
+    );
     // We start at 1, because the 0 index is our artificially broken token
     for (let i = 1; i < tokens.length; i++) {
       const erc20Token = await ERC20Extended.at(tokens[i]);
@@ -198,13 +213,13 @@ contract("ExchangeProvider", accounts => {
 
     await exchangeProvider.sellToken(tokens[0], amount, rate, deposit, 0x0);
     // Only the gas should be used, we shouldn't have received any ETH
-    assert.ok(await calc.inRange(await web3.eth.getBalance(deposit).toNumber(), beforeBalance.toNumber(), 10 ** 15),
-      `Did only use gas, haven't received ETH`);
+    assert.ok(
+      await calc.inRange(await web3.eth.getBalance(deposit).toNumber(), beforeBalance.toNumber(), 10 ** 15),
+      `Did only use gas, haven't received ETH`
+    );
     // Amount of tokens we have shouldn't have changed
-    assert.equal(amount.toNumber(), (await erc20Token.balanceOf(deposit)).toNumber(),
-      `Did not take any tokens`);
+    assert.equal(amount.toNumber(), (await erc20Token.balanceOf(deposit)).toNumber(), `Did not take any tokens`);
     await mockKyberNetwork.toggleSimulatePriceZero(false);
-
   });
 
   it("OlympusExchange should return the tokens if one of the sell trades in multiple sell cannot be executed.", async () => {
@@ -256,8 +271,10 @@ contract("ExchangeProvider", accounts => {
       ),
       `Did receive expected ETH for the sale of a token`
     );
-    assert.ok(new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber() > 0,
-      `Did have more ETH than at the start due to the sale`);
+    assert.ok(
+      new BigNumber(await web3.eth.getBalance(mockFund.address)).minus(beforeBalance).toNumber() > 0,
+      `Did have more ETH than at the start due to the sale`
+    );
   });
 
   it("Should be able to check availability for a token", async () => {
@@ -293,7 +310,7 @@ contract("ExchangeProvider", accounts => {
     assert.equal(result[0].toNumber(), 0, `ExpectedRate is zero`);
     assert.equal(result[1].toNumber(), 0, `SlippageRate is zero`);
     assert.equal(result[2], false, `ExpectedRate should not come from cache`); // Didn't come from cache, because there is none for the specified maxAge
-    await mockKyberNetwork.toggleSimulatePriceZero(false);//reset
+    await mockKyberNetwork.toggleSimulatePriceZero(false); //reset
   });
 
   it("Should not be able to get the price from 2rd exchanges", async () => {
@@ -319,12 +336,12 @@ contract("ExchangeProvider", accounts => {
   it("Should get mock token price from mockBrokenTokenKyber", async () => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
     let motPrice = await mockKyberNetworkAdapter.getPrice(ethToken, MockToken.address, 1000);
-    assert.notEqual(motPrice.toString(), '0')
+    assert.notEqual(motPrice.toString(), "0");
   });
   it("Should set broken token address for mockBrokenTokenKyber", async () => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
     let result = await mockKyberNetworkAdapter.setBrokenTokens(brokenTokenList);
-    assert.equal(result.receipt.status, '0x1')
+    assert.equal(result.receipt.status.replace("0x0", "0x"), "0x1");
   });
   it("Should get broken token address from mockBrokenTokenKyber", async () => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
@@ -337,7 +354,7 @@ contract("ExchangeProvider", accounts => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
     for (let i in brokenTokenList) {
       let tokenPrice = await mockKyberNetworkAdapter.getPrice(ethToken, brokenTokenList[i], 1000);
-      assert.equal(tokenPrice.toString(), '0,0')
+      assert.equal(tokenPrice.toString(), "0,0");
     }
   });
   it("Should revert from mockBrokenTokenKyber when the buy broken token", async () => {
@@ -347,17 +364,23 @@ contract("ExchangeProvider", accounts => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
 
     for (let i in brokenTokenList) {
-      await calc.assertReverts(async () => await mockKyberNetworkAdapter.buyToken(brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+      await calc.assertReverts(
+        async () => await mockKyberNetworkAdapter.buyToken(brokenTokenList[i], amount, rate, accounts[0]),
+        "Shall revert"
+      );
     }
   });
   it("Should revert from mockBrokenTokenKyber when the sell broken token", async () => {
     const srcAmountETH = 1;
     const amount = web3.toWei(srcAmountETH);
-    const rate = 1000*10**18;
+    const rate = 1000 * 10 ** 18;
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
 
     for (let i in brokenTokenList) {
-      await calc.assertReverts(async () => await mockKyberNetworkAdapter.sellToken(brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+      await calc.assertReverts(
+        async () => await mockKyberNetworkAdapter.sellToken(brokenTokenList[i], amount, rate, accounts[0]),
+        "Shall revert"
+      );
     }
   });
 
@@ -368,7 +391,11 @@ contract("ExchangeProvider", accounts => {
     let mockKyberNetworkAdapter = await MockBrokenTokenKyberNetworkAdapter.deployed();
 
     for (let i in brokenTokenList) {
-      await calc.assertReverts(async () => await mockKyberNetworkAdapter.tokenExchange(ethToken, brokenTokenList[i], amount, rate, accounts[0]), "Shall revert");
+      await calc.assertReverts(
+        async () =>
+          await mockKyberNetworkAdapter.tokenExchange(ethToken, brokenTokenList[i], amount, rate, accounts[0]),
+        "Shall revert"
+      );
     }
   });
   it("Should support buy token from token swap", async () => {
@@ -379,37 +406,39 @@ contract("ExchangeProvider", accounts => {
     const erc20Token = await ERC20Extended.at(tokens[0]);
     const beforeBalance = await erc20Token.balanceOf(deposit);
 
-    await kyberNetworkAdapter.tokenExchange(ethToken,tokens[0],amount,rate,deposit,{value: web3.toWei(srcAmountETH)});
+    await kyberNetworkAdapter.tokenExchange(ethToken, tokens[0], amount, rate, deposit, {
+      value: web3.toWei(srcAmountETH)
+    });
     const afterBalance = await erc20Token.balanceOf(deposit);
-    assert.equal((afterBalance - beforeBalance), rate , `BestRate`);
+    assert.equal(afterBalance - beforeBalance, rate, `BestRate`);
   });
   it("Should support token to stoken swap", async () => {
     let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
     const erc20Token = await ERC20Extended.at(tokens[0]);
     const erc20Token2 = await ERC20Extended.at(tokens[1]);
     const beforeBalance = await erc20Token2.balanceOf(deposit);
-    await erc20Token.transfer(kyberNetworkAdapter.address, 1000*10**18);
+    await erc20Token.transfer(kyberNetworkAdapter.address, 1000 * 10 ** 18);
     const beforeBalance2 = await erc20Token.balanceOf(kyberNetworkAdapter.address);
     /*
     Normally srctoken is approved by exchange provider , but I don't use it, so I send it directly to kyber adapter.
     */
-    await kyberNetworkAdapter.tokenExchange(tokens[0],tokens[1],1000*10**18,10**18,deposit);
+    await kyberNetworkAdapter.tokenExchange(tokens[0], tokens[1], 1000 * 10 ** 18, 10 ** 18, deposit);
     const afterBalance = await erc20Token2.balanceOf(deposit);
     const afterBalance2 = await erc20Token.balanceOf(kyberNetworkAdapter.address);
-    assert.equal((afterBalance-beforeBalance), 1000*10**18 , `Success`);
-    assert.equal((beforeBalance2-afterBalance2), 1000*10**18 , `Success`);
+    assert.equal(afterBalance - beforeBalance, 1000 * 10 ** 18, `Success`);
+    assert.equal(beforeBalance2 - afterBalance2, 1000 * 10 ** 18, `Success`);
   });
   it("exchange provider should support token to stoken swap", async () => {
     const erc20Token = await ERC20Extended.at(tokens[0]);
     const erc20Token2 = await ERC20Extended.at(tokens[1]);
     const beforeBalance = await erc20Token.balanceOf(deposit);
-    await erc20Token2.approve(exchangeProvider.address, 1000*10**18);
+    await erc20Token2.approve(exchangeProvider.address, 1000 * 10 ** 18);
     const beforeBalance2 = await erc20Token2.balanceOf(deposit);
 
-    await exchangeProvider.tokenExchange(tokens[1],tokens[0],1000*10**18,10**18,deposit,"");
+    await exchangeProvider.tokenExchange(tokens[1], tokens[0], 1000 * 10 ** 18, 10 ** 18, deposit, "");
     const afterBalance = await erc20Token.balanceOf(deposit);
     const afterBalance2 = await erc20Token2.balanceOf(deposit);
-    assert.equal((afterBalance-beforeBalance), 1000*10**18 , `Success`);
-    assert.equal((beforeBalance2-afterBalance2), 1000*10**18 , `Success`);
+    assert.equal(afterBalance - beforeBalance, 1000 * 10 ** 18, `Success`);
+    assert.equal(beforeBalance2 - afterBalance2, 1000 * 10 ** 18, `Success`);
   });
 });

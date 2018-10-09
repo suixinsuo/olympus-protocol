@@ -9,9 +9,9 @@ contract DerivativeInterface is  Ownable, ComponentContainerInterface {
     enum DerivativeType { Index, Fund, Future }
 
     string public description;
-    string public category;
+    bytes32 public category;
     
-    string public version;
+    bytes32 public version;
     DerivativeType public fundType;
     DerivativeStatus public status;
 
