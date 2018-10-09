@@ -89,7 +89,7 @@ When a fund is being deployed on the blockchain, the constructor will be called 
 
 ``` {.sourceCode .javascript}
 constructor(string _name, string _symbol,
-            string _description, string_category,  uint _decimals) public
+            string _description, string_category,  uint _decimals) public;
 ```
 
 After the fund contract is deployed, an initialization call connects this newly deployed fund to the Olympus ComponentList and changes the fund's status to active, allowing investors to start investing.
@@ -112,7 +112,7 @@ function tokensWithAmount() public view returns( ERC20Extended[] memory);
 
 ``` {.sourceCode .javascript}
 // get the unit price of a fund token
-        function getPrice() public view returns(uint);
+function getPrice() public view returns(uint);
 ```
 
 ``` {.sourceCode .javascript}
@@ -163,7 +163,10 @@ If the fund manager decides to stop managing his fund, he/she can choose to clos
 ``` {.sourceCode .javascript}
 function changeStatus(DerivativeStatus _status)
           public onlyOwner returns(bool);
-        function close() public onlyOwner returns(bool success);
+```
+
+``` {.sourceCode .javascript}
+function close() public onlyOwner returns(bool success);
 ```
 
 For the complete documentation of the BasicFund, please refer to [OlympusBasicFund.sol](./OlympusBasicFund).
