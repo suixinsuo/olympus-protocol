@@ -90,7 +90,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function initialize(address _componentList, uint _deliveryDate) public payable {
 
         require(status == DerivativeStatus.New);
-        // Require some balance for internal opeations such a reimbursable
+        // Require some balance for internal operations such as reimbursable
         require(msg.value >= INITIAL_FEE);
 
         _initialize(_componentList);
@@ -180,14 +180,18 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         else {_priceDifference = _price.sub(_startPrice);}
 
         /**
-         * percentagePrice = Difference / actualPrice -> Gives the percentage changed, but added * TOKEN_DENOMINATOR to avoid decimals
-         * percentageDeposit = percentagePrice * (DENOMINATOR/depositPercentage) -> calculates the the variance respect to our deposit
-         * percentageDeposit/tokenDeposit -> Gives us the actual value, of curse, divided TOKEN_DENOMIANTOR that we used at the starting.
+         * TOKEN_DENOMINATOR. (We start multiplying for the precision, as we will finis dividing)
+         * .mul(_priceDifference.div(_startPrice))  We multiply per the percentage of price changed
+            (price changed 2% since we buy for example)
+         * .mul (DENOMINATOR.div(tokenDeposit)) We multuply per the % of the deposit.
+            So if the deposit represents 5%, reduce price of 2% means a 10% of deposit reduction.
+         *  .mul(tokenDeposit)  OurToken depoist multiplied 10% reduction, gets his real value (90% of the starting deposit)
+         * .div(TOKEN_DENOMINATOR) Eliminate the precision.
          * All this simplify is the next formula
          */
 
-        uint _depositUpdate = _priceDifference
-            .mul(TOKEN_DENOMINATOR)
+        uint _depositUpdate = TOKEN_DENOMINATOR
+            .mul(_priceDifference)
             .mul(DENOMINATOR)
             .mul(_tokenDeposit)
             .div(_startPrice.mul(depositPercentage).mul(TOKEN_DENOMINATOR))

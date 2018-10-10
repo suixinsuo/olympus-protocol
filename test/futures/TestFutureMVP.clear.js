@@ -195,8 +195,8 @@ contract("Test Future MVP Clear special cases", accounts => {
 
     // Both investor A and investor B has 1 long 1 short.
     tx = await futureUtils.safeInvest(future, FutureDirection.Long, 4, investorA);
-
-    await future.setTargetPrice(0.85 * futureData.defaultTargetPrice); // Long lose all deposit
+    const updatePrice = 0.85 * futureData.defaultTargetPrice; // Long lose all deposit (Valid only for this set of prices)
+    await future.setTargetPrice(updatePrice);
 
     // Clear 1 Losers
     assert.notOk(await future.clear.call(), 'First will clear LOSERS');
@@ -212,9 +212,10 @@ contract("Test Future MVP Clear special cases", accounts => {
 
     tx = await future.clear();
     events = calc.getEvent(tx, 'Benefits');
-    assert.equal(events.length, 0, 'All tokens are redeemed at once');
+    assert.equal(events.length, 0, 'There are no benefits');
 
     // TODO, all winnder balance is giving to the manager, may need to change
+
     // No ETH holded
     assert.equal(
       (await web3.eth.getBalance(future.address)).toString(),
