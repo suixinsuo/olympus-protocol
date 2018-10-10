@@ -108,6 +108,25 @@ contract("Basic Index", accounts => {
       "Shall revert"
     ));
 
+  it("Required tokens cant have more than 18 decimals", async () => {
+    const token20Decimals = await MockToken.new("20 DECIMALS", "T20", 20, 10 ** 32);
+
+    await calc.assertReverts(
+      async () =>
+        await BasicIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          [tokens[0], token20Decimals.address], // Second token has more than 18 deciamls
+          [30, 70],
+          { gas: 8e6 } // At the moment require 6.7M
+        ),
+      "Shall revert"
+    );
+  });
+
   it("Create a index", async () => {
     index = await BasicIndex.new(
       indexData.name,

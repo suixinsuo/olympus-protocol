@@ -244,7 +244,7 @@ function deployOnMainnet(deployer) {
   return deploy;
 }
 
-module.exports = function(deployer, network) {
+module.exports = function (deployer, network) {
   let flags = Args.parseArgs();
 
   if (flags.suite && typeof eval(`deploy${flags.suite}`) === "function") {

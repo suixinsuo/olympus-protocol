@@ -42,13 +42,13 @@ const toTokenWei = amount => {
   return amount * 10 ** fundData.decimals;
 };
 
-const createNewFund = async componentList => {
+const createNewFund = async (componentList, { decimals } = { decimals: null }) => {
   const fund = await Fund.new(
     fundData.name,
     fundData.symbol,
     fundData.description,
     fundData.category,
-    fundData.decimals,
+    decimals || fundData.decimals,
     { gas: 8e6 } // At the moment require 5.7M
   );
 
@@ -546,6 +546,47 @@ contract("Fund Special Scenarios", accounts => {
     const withdrawStatus = (await stepProvider.status(fund.address, DerivativeProviders.WITHDRAW)).toNumber();
     assert.equal(withdrawStatus, 0);
   });
+
+  // --------------------------------------------------------------------------
+  // ----------------------------- DECIMALS ISSUES -------------
+  it("withdraw all less 100 wei with 15 decimals, price is correct ", async () => {
+
+    await mockKyber.setSlippageMockRate(99);
+    const weis = 100;
+    // Create index with 6 tokens
+    const fund = await createNewFund(componentList, { decimals: 15 });
+
+    // Invest
+    const investAmount = web3.toWei(1, "ether");
+    await fund.invest({ value: investAmount, from: investorA });
+    // Buy token
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const amounts = [web3.toWei(0.333, "ether"), web3.toWei(0.667, "ether")]; // Buy with special amounts
+    await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
+    // Request withdraw all except few weis
+    await fund.requestWithdraw((await fund.balanceOf(investorA)).minus(100).toNumber(), { from: investorA });
+
+    // Withdraw
+    await fund.withdraw();
+
+    // Check the price is correct
+    const balanceAfter = (await fund.balanceOf(investorA)).toString();
+    const price = (await fund.getPrice()).toNumber();
+    const totalSupply = (await fund.totalSupply()).toNumber();
+
+    assert.equal(balanceAfter, weis.toString(), 'Investor A is remaining weis (100)');
+    assert.equal(totalSupply, weis.toString(), 'Total supply is also remaining weis (100)');
+    assert.equal((await fund.getETHBalance()).toNumber(), 0, 'ETH balance is 0');
+
+    assert.equal(price, web3.toWei(1, 'ether'), 'Price has value of 1ETH');
+
+    // Reset
+    await mockKyber.setSlippageMockRate(100);
+
+  })
+
   // --------------------------------------------------------------------------
   // ----------------------------- OTHER TEST --------------------------------
   // Add other integration or road-end test here

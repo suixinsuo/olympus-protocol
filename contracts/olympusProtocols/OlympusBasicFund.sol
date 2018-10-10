@@ -15,6 +15,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH
+    uint public constant TOKEN_DENOMINATOR = 10**18; // Apply % to a denominator, 18 is the minimum highetst precision required
 
     event TokenUpdated(address _token, uint amount);
     event FundStatusChanged(DerivativeStatus status);
@@ -36,7 +37,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20180930";
+        version = "1.1-20181002";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -85,8 +86,10 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
+            require(ERC20Extended(_tokens[i]).decimals() <= 18);
             totalEthRequired = totalEthRequired.add(_amounts[i]);
         }
+
         require(address(this).balance >= totalEthRequired);
 
         require(
@@ -170,7 +173,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
 
     function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
-        getETHFromTokens((10 ** decimals)); // 100% all the tokens
+        getETHFromTokens(TOKEN_DENOMINATOR); // 100% all the tokens
         status = DerivativeStatus.Closed;
         emit FundStatusChanged(status);
         return true;
@@ -215,7 +218,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
     function guaranteeLiquidity(uint tokenBalance) internal {
         uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
         if (_totalETHToReturn > address(this).balance) {
-            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul((10 ** decimals))).div(getAssetsValue());
+            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul(TOKEN_DENOMINATOR)).div(getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
     }
@@ -275,7 +278,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, Stand
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div((10 ** decimals));
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(TOKEN_DENOMINATOR);
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);

@@ -72,7 +72,7 @@ const delay = async sec => {
 };
 
 const availableStatus = async (index, current) => {
-  const status = await index.getProductStatus();
+  const status = await index.productStatus();
   return status.toNumber() === 0 || status.toNumber() === current;
 };
 
@@ -122,7 +122,7 @@ const safeRebalance = async (index, rebalanceProvider) => {
   } catch (e) {
     if (e.message.includes("revert")) {
       console.log("safeRebalance revert");
-      status = await index.getProductStatus();
+      status = await index.productStatus();
       console.log("index status:", status.toNumber());
       await delay(1000);
       processingRebalance = false;
@@ -151,7 +151,7 @@ const safeWithdraw = async (index, asyncWithdraw) => {
     }
   } catch (e) {
     if (e.message.includes("revert")) {
-      const status = await index.getProductStatus();
+      const status = await index.productStatus();
       console.log("safeWithdraw revert", status.toNumber());
       await delay(1000);
       processingWithdraw = false;
@@ -183,7 +183,7 @@ const safeBuyTokens = async index => {
     }
   } catch (e) {
     if (e.message.includes("revert")) {
-      const status = await index.getProductStatus();
+      const status = await index.productStatus();
       console.log("safeBuyTokens revert", status.toNumber());
       await delay(1000);
       processingBuyToken = false;
@@ -209,9 +209,10 @@ contract.skip("Olympus Index Bot", accounts => {
   let allDone = false;
 
   const investorsGroupA = accounts.slice(1, 11);
-  const investorsGroupB = accounts.slice(11);
 
   before("Initialize tokens", async () => {
+    assert(accounts.length >= 11, "Require at least 11 investors for this test case");
+
     mockKyber = await MockKyberNetwork.deployed();
     const mockTokens = await mockKyber.supportedTokens();
     tokens = mockTokens.slice(0, indexData.weights.length);

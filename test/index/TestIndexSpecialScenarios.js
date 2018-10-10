@@ -34,7 +34,7 @@ const indexData = {
   initialManagementFee: 0,
   ethDeposit: 0.5, // ETH
   weights: [50, 50],
-  tokensLenght: 2,
+  tokensLength: 2,
   maxTransfers: 10,
   rebalanceDelta: 30
 };
@@ -53,19 +53,20 @@ const getTokensAndAmounts = async (index) => {
     let erc20 = await ERC20.at(token);
     return erc20.balanceOf(index.address);
   }));
-  return [tokensWeights[0], amounts];
+  return [tokensWeights[0], amounts.map((amount) => amount.toString())];
 }
 
 
-const createNewIndex = async (componentList, tokens) => {
+const createNewIndex = async (componentList, tokens, { weights, decimals, tokensLength } = { weights: null, decimals: null, tokensLength: null }) => {
+
   const index = await OlympusIndex.new(
     indexData.name,
     indexData.symbol,
     indexData.description,
     indexData.category,
-    indexData.decimals,
-    tokens.slice(0, indexData.tokensLenght),
-    indexData.weights,
+    decimals || indexData.decimals,
+    tokens.slice(0, tokensLength || indexData.tokensLength),
+    weights || indexData.weights,
     { gas: 8e6 } // At the moment require 6.7M
   );
 
@@ -98,7 +99,7 @@ contract("Olympus Index Special Scenarios", accounts => {
 
   before("Create Index", async () => {
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = (await mockKyber.supportedTokens()).slice(0,2);
+    tokens = (await mockKyber.supportedTokens());
 
     market = await Marketplace.deployed();
     mockMOT = await MockToken.deployed();
@@ -231,6 +232,47 @@ contract("Olympus Index Special Scenarios", accounts => {
     await mockKyber.setSlippageMockRate(100);
 
   })
+  // --------------------------------------------------------------------------
+  // ----------------------------- DECIMALS ISSUES -------------
+  it("withdraw all less 100 wei with 15 decimals, price is correct ", async () => {
 
+    await mockKyber.setSlippageMockRate(99);
+    const weis = 100;
+    // Create index with 6 tokens
+    const index = await createNewIndex(componentList, tokens,
+      {
+        tokensLength: 6,
+        weights: [15, 22, 17, 26, 12, 8],
+        decimals: 15
+      }
+    );
+    // Invest
+    const investAmount = web3.toWei(1, "ether");
+    await index.invest({ value: investAmount, from: investorA });
+    // Buy token (6 tokens by default require 2 calls)
+    await index.buyTokens();
+    await index.buyTokens();
+    // Request withdraw all except few weis
+    await index.requestWithdraw((await index.balanceOf(investorA)).minus(100).toNumber(), { from: investorA });
+
+    // Withdraw (twice to complete)
+    await index.withdraw();
+    await index.withdraw();
+
+    // Check the price is correct
+    const balanceAfter = (await index.balanceOf(investorA)).toString();
+    const price = (await index.getPrice()).toNumber();
+    const totalSupply = (await index.totalSupply()).toNumber();
+
+    assert.equal(balanceAfter, weis.toString(), 'Investor A is remaining weis (100)');
+    assert.equal(totalSupply, weis.toString(), 'Total supply is also remaining weis (100)');
+    assert.equal((await index.getETHBalance()).toNumber(), 0, 'ETH balance is 0');
+
+    assert.equal(price, web3.toWei(1, 'ether'), 'Price has value of 1ETH');
+
+    // Reset
+    await mockKyber.setSlippageMockRate(100);
+
+  })
 
 });
