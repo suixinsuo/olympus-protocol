@@ -219,7 +219,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
 
-    function getTokenRedLine(int _direction, uint _id) public view returns(uint) {
+    function getTokenBottomPosition(int _direction, uint _id) public view returns(uint) {
         uint deposit = getTokenDeposit(_direction, _id);
         return deposit.sub(deposit.mul(forceClosePositionDelta).div(DENOMINATOR)); // This DENOMINATOR is based on the deposit
     }
@@ -339,7 +339,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
 
         uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
-        uint _redLine = getTokenRedLine(_direction, _id);
+        uint _redLine = getTokenBottomPosition(_direction, _id);
 
         // Is valid
         if(_tokenValue  >  _redLine) { return true;}

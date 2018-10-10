@@ -256,10 +256,10 @@ contract("Test Future MVP", accounts => {
 
     let redLine;
     // LONG
-    redLine = (await future.getTokenRedLine(FutureDirection.Long, investorATokens[0])).toNumber();
+    redLine = (await future.getTokenBottomPosition(FutureDirection.Long, investorATokens[0])).toNumber();
     assert.equal(redLine, tokenDeposit - (tokenDeposit * futureData.forceClosePositionDelta / futureUtils.DENOMINATOR), 'Red line for long tokens');
     // SHORT
-    redLine = (await future.getTokenRedLine(FutureDirection.Short, investorBTokens[0])).toNumber();
+    redLine = (await future.getTokenBottomPosition(FutureDirection.Short, investorBTokens[0])).toNumber();
     assert.equal(redLine, tokenDeposit - (tokenDeposit * futureData.forceClosePositionDelta / futureUtils.DENOMINATOR), 'Red line for short tokens');
   });
 
