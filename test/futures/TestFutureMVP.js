@@ -387,7 +387,7 @@ contract("Test Future MVP", accounts => {
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B reduced');
 
     // -------------------------- PRICE is TOO LOW -----------------------
-    updatePrice = 0.9 * futureData.defaultTargetPrice; // SHORT win
+    updatePrice = SHORT_WIN_ALL * futureData.defaultTargetPrice; // SHORT win
     await future.setTargetPrice(updatePrice);
     // LONG
     myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
@@ -441,8 +441,8 @@ contract("Test Future MVP", accounts => {
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Short');
 
     // No red line cross, nothing is deactivated
-    assert.equal((await future.outLongSupply()).toNumber(), 0, 'No token invalidated');
-    assert.equal((await future.outShortSupply()).toNumber(), 0, 'No token invalidated');
+    assert.notEqual((await longToken.getValidTokens()).length, 0, 'No token invalidated');
+    assert.notEqual((await shortToken.getValidTokens()).length, 0, 'No token invalidated');
 
     // Reset
     await future.setMaxSteps(DerivativeProviders.CHECK_POSITION, futureData.maxSteps);
@@ -452,14 +452,15 @@ contract("Test Future MVP", accounts => {
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Check Position');
 
     // No redline cross, nothing is deactivated
-    assert.equal((await future.outLongSupply()).toNumber(), 0, 'No token invalidated');
-    assert.equal((await future.outShortSupply()).toNumber(), 0, 'No token invalidated');
+    assert.notEqual((await longToken.getValidTokens()).length, 0, 'No token invalidated');
+    assert.notEqual((await shortToken.getValidTokens()).length, 0, 'No token invalidated');
     // Reset
     await future.setTargetPrice(new BigNumber(1).mul(1 ** 18));
   });
 
   it("Check position Long go out", async () => {
     const investorATokens = await longToken.getTokenIdsByOwner(investorA);
+    // This number make deposit go under bottom position but without getting value 0
     const updatePrice = new BigNumber(0.91).mul(futureData.defaultTargetPrice);
     const tokenDeposit = futureUtils.calculateShareDeposit(1, futureData.defaultTargetPrice); // Initial Deposit
 
@@ -476,8 +477,8 @@ contract("Test Future MVP", accounts => {
 
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Check Position');
 
-    assert.equal((await future.outLongSupply()).toNumber(), investorATokens.length, 'All long tokens invalidated');
-    assert.equal((await future.outShortSupply()).toNumber(), 0, 'All short tokens are still valid');
+    assert.equal((await longToken.getValidTokens()).length, 0, 'All long tokens invalidated');
+    assert.notEqual((await shortToken.getValidTokens()).length, 0, 'All short tokens are still valid');
 
     assert.equal(await longToken.isTokenValid(investorATokens[0]), false, ' Token 0 invalid');
     assert.equal(await longToken.isTokenValid(investorATokens[1]), false, ' Token 1 invalid');
@@ -513,7 +514,7 @@ contract("Test Future MVP", accounts => {
 
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Check Position');
 
-    assert.equal((await future.outShortSupply()).toNumber(), investorBTokens.length, 'All long tokens invalidated');
+    assert.equal((await shortToken.getValidTokens()).length, 0, 'All long tokens invalidated');
 
     assert.equal(await shortToken.isTokenValid(investorBTokens[0]), false, ' Token 0 invalid');
     assert.equal(await shortToken.isTokenValid(investorBTokens[1]), false, ' Token 1 invalid');

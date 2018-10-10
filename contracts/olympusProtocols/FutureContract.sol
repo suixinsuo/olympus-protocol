@@ -44,9 +44,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     uint public amountOfTargetPerShare;
     // Information of the tokens and balance
     FutureERC721Token public longToken;
-    uint public outLongSupply;
     FutureERC721Token public shortToken;
-    uint public outShortSupply;
     uint public winnersBalance;
     // Manager balance for reiumursable
     uint public accumulatedFee;
@@ -124,8 +122,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function initializeTokens() internal {
         longToken = new FutureERC721Token(name, symbol, LONG);
         shortToken = new FutureERC721Token(name, symbol, SHORT);
-        outLongSupply = 0;
-        outShortSupply = 0;
     }
 
     /// --------------------------------- END INITIALIZE ---------------------------------
@@ -141,12 +137,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function getToken(int _direction) public view returns(FutureERC721Token) {
         if(_direction == LONG) {return longToken; }
         if(_direction == SHORT) {return shortToken; }
-        revert();
-    }
-
-    function getTokenOutSupply(int _direction) public view returns(uint) {
-        if(_direction == LONG) {return outLongSupply; }
-        if(_direction == SHORT) {return outShortSupply; }
         revert();
     }
 
@@ -177,11 +167,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function getValidTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
         return getToken(_direction).getValidTokenIdsByOwner(_owner);
     }
-
-    function getTokenSupply(int _direction) public  view returns(uint) {
-        return getToken(_direction).totalSupply().sub(getTokenOutSupply(_direction));
-    }
-
 
     function getTokenActualValue(int _direction, uint _id, uint _price) public  view  returns(uint) {
         if(!isTokenValid(_direction, _id)) {return 0;}
@@ -352,17 +337,10 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         }
 
         getToken(_direction).invalidateToken(_id);
-        increaseOutSupply(_direction);
         // Keep the lost investment into the winner balance
         winnersBalance = winnersBalance.add(getTokenDeposit(_direction, _id).sub(_tokenValue));
 
         return false;
-    }
-
-    function increaseOutSupply(int _direction) internal {
-        if(_direction == LONG) { outLongSupply++;  return;}
-        if(_direction == SHORT) { outShortSupply++; return; }
-        revert();
     }
     /// --------------------------------- END CHECK POSITION ---------------------------------
 
@@ -453,8 +431,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         }
 
         getToken(_direction).invalidateToken(_id);
-        increaseOutSupply(_direction);
-        // Keep the lost investment into the winner balance
+         // Keep the lost investment into the winner balance
         winnersBalance = winnersBalance.add(_tokenDeposit.sub(_tokenValue));
 
         return true;
