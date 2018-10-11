@@ -539,7 +539,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         return StepInterface(getComponentByName(STEP)).goNextStep(category);
     }
 
-    function updateStatusStep(bytes32 category) internal returns(bool) {
+    function updateStatusStep(bytes32 category) internal returns(uint) {
         return StepInterface(getComponentByName(STEP)).updateStatus(category);
     }
 

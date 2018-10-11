@@ -9,11 +9,14 @@ contract StepProvider is StepInterface, ComponentInterface, Ownable {
     string public name = "StepProvider";
     string public description = "Allow a function execution to span multiple transactions";
     string public category = "Steps";
-    string public version = "1.0";
-
+    string public version = "1.1-20181010";
+    // Max number of calls allowed in  a single transaction
     mapping (address => mapping(bytes32 => uint)) public maxCalls;
+    // Phase of the step. 0 is not started. 1 is started, some operations can have 2nd, 3rd... phases for their own use
     mapping (address => mapping(bytes32 => uint)) public status;
+    // Call in the current transactions (will reset each transaction)
     mapping (address => mapping(bytes32 => uint)) public currentCallStep;
+    // Keeps the counter between calls
     mapping (address => mapping(bytes32 => uint)) public currentFunctionStep;
 
     function setMaxCalls(bytes32 _category, uint _maxCalls) external {
@@ -46,10 +49,10 @@ contract StepProvider is StepInterface, ComponentInterface, Ownable {
         return status[msg.sender][_category];
     }
 
-    function updateStatus(bytes32 _category) external returns (bool _success) {
+    function updateStatus(bytes32 _category) external returns (uint) {
         status[msg.sender][_category]++;
         currentFunctionStep[msg.sender][_category] = 0;
-        return true;
+        return status[msg.sender][_category];
     }
 
     function goNextStep(bytes32 _category) external returns (bool _shouldCallAgain) {

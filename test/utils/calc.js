@@ -26,12 +26,12 @@ module.exports = {
 
   getEvent: (tx, name) => {
     const results = tx.logs.map(log => ({ event: log.event, args: log.args })).filter(event => event.event === name);
-    return results.length;
+    return results;
   },
   assertReverts: async (call, message) => {
     try {
       await call();
-      assert(false, "Failed: " + message);
+      assert(false, "Failed to revert: " + message);
     } catch (e) {
       if (!e.message.includes("revert")) {
         throw e; // Error is not caused by revert but for another reason
