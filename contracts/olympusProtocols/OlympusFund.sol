@@ -21,6 +21,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // Does not fit in derivative, index out of gas
     bytes32 public constant TOKENBROKEN = "TokenBroken";
+    uint public constant TOKEN_DENOMINATOR = 10**18; // Apply % to a denominator, 18 is the minimum highetst precision required
 
     enum Status { AVAILABLE, WITHDRAWING, SELLINGTOKENS }
     Status public productStatus = Status.AVAILABLE;
@@ -55,7 +56,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20180930";
+        version = "1.1-20181002";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -117,6 +118,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
                 _amounts[i] = 0;
                 continue;
             }
+            require(erc20Decimals(_tokens[i]) <=18);  // Cant buy tokens with more than 18
             require(
                 !hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i])
             );
@@ -208,7 +210,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
         productStatus = Status.SELLINGTOKENS;
-        bool result = getETHFromTokens((10 ** decimals));
+        bool result = getETHFromTokens(TOKEN_DENOMINATOR);
         if(result) {
             productStatus = Status.AVAILABLE;
         }
@@ -244,7 +246,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             if(isBrokenToken[tokens[i]]) {continue;}
 
             token = ERC20Extended(tokens[i]);
-            _decimals = token.decimals();
+            _decimals = erc20Decimals(tokens[i]);
             _balance = token.balanceOf(address(this));
 
             if (_balance == 0) {continue;}
@@ -322,7 +324,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             }
             // Case is required to sell some assets
             // tokenPercentToSell must be freeze as class variable
-            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul((10 ** decimals)).div(getAssetsValue());
+            freezeTokenPercentage = _totalETHToReturn.sub(getETHBalance()).mul(TOKEN_DENOMINATOR).div(getAssetsValue());
             return getETHFromTokens(freezeTokenPercentage);
         }
         // Case second call
@@ -475,7 +477,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
             uint sellIndex = i.sub(currentStep);
             _tokensThisStep[sellIndex] = _tokensToSell[i];
-            _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div((10 ** decimals));
+            _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div(TOKEN_DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
             require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
@@ -625,6 +627,10 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function withdrawFinalize() internal {
         WithdrawInterface(getComponentByName(WITHDRAW)).finalize();
+    }
+
+    function erc20Decimals(address erc20) internal view returns(uint) {
+        return ERC20Extended(erc20).decimals();
     }
     // // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
     // function panic() external onlyOwner {

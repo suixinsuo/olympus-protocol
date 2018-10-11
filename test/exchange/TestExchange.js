@@ -20,7 +20,7 @@ function bytes32ToString(bytes32) {
   return web3.toAscii(bytes32).replace(/\u0000/g, "");
 }
 
-const getAmountWithRates = async () => {};
+const getAmountWithRates = async () => { };
 
 const Promise = require("bluebird");
 

@@ -15,6 +15,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH
+    uint public constant TOKEN_DENOMINATOR = 10**18; // Apply % to a denominator, 18 is the minimum highetst precision required
 
     event TokenUpdated(address _token, uint amount);
     event StatusChanged(DerivativeStatus status);
@@ -53,6 +54,8 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         // Check all tokens are ERC20Extended
         for (uint i = 0 ; i < tokens.length; i++) {
             ERC20Extended(_tokens[i]).balanceOf(address(this));
+            require( ERC20Extended(_tokens[i]).decimals() <= 18);
+
         }
 
         name = _name;
@@ -62,7 +65,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         description = _description;
         category = _category;
 
-        version = "1.1-20180930";
+        version = "1.1-20181002";
         fundType = DerivativeType.Index;
         tokens = _tokens;
         weights = _weights;
@@ -144,7 +147,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
 
     function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
-        getETHFromTokens((10 ** decimals)); // 100% all the tokens
+        getETHFromTokens(TOKEN_DENOMINATOR); // 100% all the tokens
         status = DerivativeStatus.Closed;
         emit StatusChanged(status);
         return true;
@@ -179,7 +182,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
             if (_expectedRate == 0) {continue;}
             _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**_decimals));
         }
-        
+
         return _totalTokensValue;
     }
 
@@ -187,7 +190,7 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         uint _totalETHToReturn = tokenBalance.mul(getPrice()).div( 10 ** decimals);
 
         if (_totalETHToReturn > address(this).balance) {
-            uint _ethDifference = _totalETHToReturn.sub(address(this).balance).mul((10 ** decimals));
+            uint _ethDifference = _totalETHToReturn.sub(address(this).balance).mul(TOKEN_DENOMINATOR);
             uint _tokenPercentToSell = _ethDifference.div( getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
@@ -242,14 +245,14 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         return _tokensWithAmount;
     }
 
-    // solhint-disable-next-line
+    // _tokenPercentage must come in TOKEN_DENOMIANTOR
     function getETHFromTokens(uint _tokenPercentage) internal {
         ERC20Extended[] memory _tokensToSell = tokensWithAmount();
         uint[] memory _amounts = new uint[](_tokensToSell.length);
         uint[] memory _sellRates = new uint[](_tokensToSell.length);
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div((10 ** decimals));
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(TOKEN_DENOMINATOR);
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);
@@ -324,14 +327,6 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
 
     function getETHBalance() public view returns(uint) {
         return address(this).balance;
-    }
-
-    // THIS IS FOR TESTING ONLY, DO MEMEMBER TO REMOVE IT WHEN GOING ON PRODUCTION!!!!!
-    function panic() external onlyOwner {
-        owner.transfer(address(this).balance);
-        for (uint i = 0; i < tokens.length; i++) {
-            ERC20NoReturn(tokens[i]).transfer(owner, ERC20Extended(tokens[i]).balanceOf(address(this)));
-        }
     }
 
 }
