@@ -72,6 +72,10 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
       uint _depositPercentage,
       uint _forceClosePositionDelta
     ) public {
+        require( _amountOfTargetPerShare > 0);
+        require( _depositPercentage > 0 && _depositPercentage <= DENOMINATOR);
+        require( _forceClosePositionDelta > 0 && _forceClosePositionDelta <= DENOMINATOR);
+
         name = _name;
         description = _description;
         symbol = _symbol;

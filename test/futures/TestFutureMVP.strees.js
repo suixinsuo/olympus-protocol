@@ -124,7 +124,58 @@ contract("Basic Future", accounts => {
     // Config for the stub
     await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, 0);
   });
- 
- 
+
+
 
 });
+
+
+//  Stress test case 1:
+//  Investors invest in long with a random price between 0.9 and 1.1 ETH
+//  10 investor invest long, other 10 invest short.
+//  With random price between 0.85 and 1.15 ETH we check positions 5 times.
+//  Then we call clear until is finish.
+//  Nothing reverts, when withdraw all management fee ETH balance is 0.
+
+
+//  Stress test case 2:
+//  Investors invest in long with a random price between 0.9 and 1.1 ETH
+//  The same 20 investors invest long, and also short
+//  With random price between 0.85 and 1.15 ETH we check positions 5 times.
+//  Then we call clear until is finish.
+//  Nothing reverts, when withdraw all management fee ETH balance is 0.
+
+
+
+//  Stress test case 3:
+//  Investors invest in long with a 1 ETH. deposit %  is 1% amounts per share is 1.
+//  1 investor invest Long but buy 100 tokens, same does investor short
+//  Price at 0.95 ETH, and check position til is finished
+//  Price at 1.05 ETH, and check position til is finished
+//  Then we call clear until is finish.
+//  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
+
+//  Stress test case 4:
+//  Investors invest in long and short from 0.99 to 1.01  ETH with a lot of decimals. deposit %  is 1% amounts per share is 1.
+//  1 investor invest Long but buy 10 tokens, same does investor short
+//  Price at really random decimal number between 0.92 and 0.96, and check position til is finished
+//  Price at really random decimal number between 1.02 and 1.06, and check position til is finished
+//  Then we call clear until is finish.
+//  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
+
+//  Stress test case 5:
+//  Investors invest in long with a 1 ETH. deposit %  is 1% amounts per share is 1.
+//  1 investor invest Long but buy 10 tokens, same does investor short
+//  Price at really random decimal number between 0.92 and 0.96, and check position til is finished
+//  Price at really random decimal number between 1.02 and 1.06, and check position til is finished
+//  Then we call clear until is finish.
+//  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
+
+
+//  Bot test case 1:
+//  Investors invest in long with a random price between 0.99 and 1.01 ETH. Long and Short buy 4 tokens each
+//  Change change position for each 1.5 second. Change step provider to execute 3 by 3 times.
+//  Set a timer to call check position like the bot.
+// Set a timer to change the price randomly between 0.97 and and 1.03 with some more decimals
+// Once 3 times check position is finish, execute clear position until is finish.
+//  Nothing reverts, when withdraw all management fee ETH balance is 0.
