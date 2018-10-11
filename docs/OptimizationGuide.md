@@ -3,7 +3,6 @@
 This is a draft document with the notes of which changes have allowed us
 to optimize the contracts. This document is about optimization in the source code to prevent smart contracts from exceeding the gas limit
 
-
 ## 1. Data types
 
 Every private or public parameter of the contract is using storage.
@@ -14,7 +13,7 @@ a) Changes the stings to bytes32
 
 b) Reutilize information you have
 
-Lets tell a little story:
+Let's tell a little story:
 In Olympus fund we have the mapping of amounts of the ERC20 tokens purchased by the fund with the current balance.
 
 In order to keep this information each buy/sell operation we update the values as per ERC20 balanceOf function.

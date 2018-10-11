@@ -87,7 +87,167 @@ if (err) {
 });
 ```
 
-2. requestWithdraw
+2. getTokens
+-------------
+
+``` {.sourceCode .javascript}
+function getTokens() public view returns (address[] _tokens, uint[] _weights);
+```
+
+####  Description
+
+Call the function to get all the tokens with their weights.
+
+####  Returns
+
+> Two Arrays {[Tokens],[Weights]} of the same length, where the token at the position 0 have the weight at the position 0.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getTokens((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+3. tokensWithAmount
+-------------
+
+``` {.sourceCode .javascript}
+function tokensWithAmount() public view returns( ERC20Extended[] memory);
+```
+
+####  Description
+
+Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
+
+####  Returns
+
+> Array of the actual active tokens with amounts.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.tokensWithAmount((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+4. getPrice
+-------------
+
+``` {.sourceCode .javascript}
+function getPrice() public view returns(uint);
+```
+
+####  Description
+
+Call the function to get the unit price of the index.
+
+####  Returns
+
+> The unit price of the index.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getPrice((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+5. getAssetsValue
+-------------
+
+``` {.sourceCode .javascript}
+function getAssetsValue() public view returns (uint);
+```
+
+####  Description
+
+Call the function to get the total value calculated based on the value of the index's underlying assets.
+
+####  Returns
+
+> The total value calculated based on the value of the index's underlying assets.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getAssetsValue((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+6. getETHBalance
+-------------
+
+``` {.sourceCode .javascript}
+function getETHBalance() public view returns(uint);
+```
+
+####  Description
+
+Call the function to get the remaining ETH balance of the index.
+
+####  Returns
+
+> The remaining ETH balance of the index.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getETHBalance((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+7. requestWithdraw
 ------------------
 
 ``` {.sourceCode .javascript}
@@ -103,10 +263,6 @@ function requestWithdraw(uint amount) external
 ####  Parameters
 
 > amount: Amount of ETH the investor would like to withdraw.
-
-####  Returns
-
-> No return.
 
 ####  Example code
 
