@@ -302,7 +302,7 @@ Call the function to get all the tokens with their weights.
 
 ####  Returns
 
-> Arrays all the tokens with their weights.
+> Two Arrays {[Tokens],[Weights]} of the same length, where the token at the position 0 have the weight at the position 0.
 
 ####  Example code
 
@@ -330,11 +330,11 @@ function tokensWithAmount() public view returns( ERC20Extended[] memory);
 
 ####  Description
 
-Call the function to get the underlying tokens with amounts.
+Call the function to get the underlying tokens with amounts, tokens that have been all sold will not be returned.
 
 ####  Returns
 
-> Arrays of the underlying tokens with amounts, tokens that have been all sold will not be returned.
+> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
 ####  Example code
 
@@ -394,11 +394,11 @@ function getAssetsValue() public view returns (uint);
 
 ####  Description
 
-Call the function to get the total index value according to its underlying assets.
+Call the function to get the total value calculated based on the value of the index's underlying assets.
 
 ####  Returns
 
-> The total value of the index.
+> The total value calculated based on the value of the index's underlying assets.
 
 ####  Example code
 
@@ -733,7 +733,7 @@ function close() OnlyOwnerOrPausedTimeout public returns(bool success);
 
 ####  Description
 
-Close the index to stop investors from investing into the index. This function also sells all of the tokens for ETH. (Note: After closing the index, investors can still withdraw their investment and index managers can also withdraw their management fee.)
+Close the index to stop investors from investing into the fund. (Note: After closing the index, investors can still withdraw their investment. Index manager will not be able to withdraw all management fee until all tokens are sold.)
 
 ####  Returns
 
@@ -766,7 +766,7 @@ function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted
 
 ####  Description
 
-After a fund is closed, owner or bot can call the function to sell all existing tokens.
+After a index is closed, owner or bot can call the function to sell all existing tokens.
 
 ####  Returns
 

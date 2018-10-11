@@ -99,7 +99,7 @@ Call the function to get all the tokens with their weights.
 
 ####  Returns
 
-> Array of all the tokens with their weights.
+> Two Arrays {[Tokens],[Weights]} of the same length, where the token at the position 0 have the weight at the position 0.
 
 ####  Example code
 
@@ -127,11 +127,11 @@ function getTokensAndAmounts() external view returns(address[], uint[]);
 
 ####  Description
 
-Call the function to get the underlying tokens with amounts.
+Call the function to get the underlying tokens with amounts, tokens that have been all sold will not be returned.
 
 ####  Returns
 
-> Arrays of the underlying tokens with amounts, tokens that have been all sold will not be returned.
+> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
 ####  Example code
 
@@ -163,7 +163,7 @@ Call the function to get all tokens with amounts.
 
 ####  Returns
 
-> Arrays of all tokens with amounts.
+> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
 ####  Example code
 
@@ -223,11 +223,11 @@ function getAssetsValue() public view returns (uint);
 
 ####  Description
 
-Call the function to get the total index value according to its underlying assets.
+Call the function to get the total value calculated based on the value of the index's underlying assets.
 
 ####  Returns
 
-> The total value of the index.
+> The total value calculated based on the value of the index's underlying assets.
 
 ####  Example code
 

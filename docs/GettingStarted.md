@@ -116,7 +116,7 @@ function getPrice() public view returns(uint);
 ```
 
 ``` {.sourceCode .javascript}
-// get the total fund value according to its underlying assets
+// get the total value calculated based on the value of its underlying assets
 function getAssetsValue() public view returns (uint)
 ```
 

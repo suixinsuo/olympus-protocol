@@ -96,7 +96,11 @@ function getTokens() external view returns(address[], uint[]);
 
 ####  Description
 
-Call the function to get the underlying tokens with their weights.
+Call the function to get the underlying tokens with their amounts.
+
+###   Returns
+
+Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
 ####  Example code
 
@@ -119,7 +123,7 @@ fundContract.getTokens((err, result) => {
 -------------
 
 ``` {.sourceCode .javascript}
-function tokensWithAmount() public view 
+function tokensWithAmount() public view
     returns( ERC20Extended[] memory);
 ```
 
@@ -189,11 +193,11 @@ function getAssetsValue() public view returns (uint);
 
 ####  Description
 
-Call the function to get the total fund value according to its underlying assets.
+Call the function to get the total value calculated based on the value of the fund's underlying assets.
 
 ####  Returns
 
-> The total value of the fund.
+> The total value calculated based on the value of the fund's underlying assets.
 
 ####  Example code
 

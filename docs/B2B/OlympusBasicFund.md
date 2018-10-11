@@ -330,7 +330,7 @@ Call the function to get all the underlying tokens with their amounts.
 
 ####  Returns
 
-> Arrays all the underlying tokens with their amounts.
+> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
 ####  Example code
 
@@ -468,11 +468,11 @@ function getAssetsValue() public view returns (uint);
 
 ####  Description
 
-Call the function to get the total fund value according to its underlying assets.
+Call the function to get the total value calculated based on the value of the fund's underlying assets.
 
 ####  Returns
 
-> The total value of the fund.
+> The total value calculated based on the value of the fund's underlying assets.
 
 ####  Example code
 
