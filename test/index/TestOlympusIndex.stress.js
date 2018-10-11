@@ -99,7 +99,8 @@ contract("Olympus Index Stress", accounts => {
   const investorsGroupB = accounts.slice(11, 21);
 
   before("Initialize tokens", async () => {
-    assert(accounts.length == 21, "Require 21 investors for this test case");
+    assert(accounts.length >= 21, "Require at least 21 investors for this test case");
+
     mockKyber = await MockKyberNetwork.deployed();
     const mockTokens = await mockKyber.supportedTokens();
     tokens = mockTokens.slice(0, 4);
