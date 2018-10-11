@@ -330,11 +330,11 @@ function tokensWithAmount() public view returns( ERC20Extended[] memory);
 
 ####  Description
 
-Call the function to get the underlying tokens with amounts, tokens that have been all sold will not be returned.
+Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
 
 ####  Returns
 
-> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
+> Array of the actual active tokens with amounts.
 
 ####  Example code
 
@@ -545,7 +545,7 @@ Set the management fee percentage. This is being calculated with a denominator, 
 
 ####  Parameters
 
-> \_fee: The percentage of investors' funds that will be set aside for management fee (Note: fee must be equal to or bigger than 0 and less than 10000)
+> \_fee: The percentage of investors' funds that will be set aside for management fee (Note: fee must be equal to or bigger than 0 and less than 10000), refer to the list above to get the correct value.
 
 ####  Example code
 

@@ -128,11 +128,11 @@ function tokensWithAmount() public view returns( ERC20Extended[] memory);
 
 ####  Description
 
-Call the function to get the underlying tokens with amounts, tokens that have been all sold will not be returned.
+Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
 
 ####  Returns
 
-> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
+> Array of the actual active tokens with amounts.
 
 ####  Example code
 

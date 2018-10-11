@@ -304,7 +304,7 @@ indexContract.getTokens((err, result) => {
 });
 ```
 
-5. tokensWithAmount
+5. getTokensAndAmounts
 -------------
 
 ``` {.sourceCode .javascript}
@@ -313,39 +313,7 @@ function getTokensAndAmounts() external view returns(address[], uint[]);
 
 ####  Description
 
-Call the function to get the underlying tokens with amounts, tokens that have been all sold will not be returned.
-
-####  Returns
-
-> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
-
-####  Example code
-
-The code below shows how to call this function with Web3.
-
-``` {.sourceCode .javascript}
-const Web3 = require("web3");
-const web3 = new Web3
-  (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-
-indexContract.tokensWithAmount((err, result) => {
-    if (err) {
-      return console.log(err)
-    }
-});
-```
-
-6. getTokensAndAmounts
--------------
-
-``` {.sourceCode .javascript}
-function getTokensAndAmounts() external view returns(address[], uint[]);
-```
-
-####  Description
-
-Call the function to get all tokens with amounts.
+Call the function to get the underlying tokens with amounts.
 
 ####  Returns
 
@@ -362,6 +330,38 @@ const web3 = new Web3
 const indexContract = web3.eth.contract(abi).at(address);
 
 indexContract.getTokensAndAmounts((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+6. tokensWithAmount
+-------------
+
+``` {.sourceCode .javascript}
+function tokensWithAmount() public view returns( ERC20Extended[] memory);
+```
+
+####  Description
+
+Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
+
+####  Returns
+
+> Array of the actual active tokens with amounts.
+
+####  Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.tokensWithAmount((err, result) => {
     if (err) {
       return console.log(err)
     }
