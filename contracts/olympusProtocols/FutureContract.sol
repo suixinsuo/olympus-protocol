@@ -89,9 +89,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     function initialize(address _componentList, uint _deliveryDate) public payable {
 
-        require(status == DerivativeStatus.New, 0x01);
+        require(status == DerivativeStatus.New, "1");
         // Require some balance for internal operations such as reimbursable
-        require(msg.value >= INITIAL_FEE, 0x02);
+        require(msg.value >= INITIAL_FEE, "2");
 
         _initialize(_componentList);
         bytes32[4] memory _names = [MARKET, LOCKER, REIMBURSABLE, STEP];
@@ -264,12 +264,12 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         ) external payable returns (bool) {
 
         uint _targetPrice = getTargetPrice();
-        require( status == DerivativeStatus.Active,0x03);
-        require(_targetPrice > 0, 0x04);
+        require( status == DerivativeStatus.Active,"3");
+        require(_targetPrice > 0, "4");
 
         uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
 
-        require(msg.value >= _totalEthDeposit ,0x05); // Enough ETH to buy the share
+        require(msg.value >= _totalEthDeposit ,"5"); // Enough ETH to buy the share
 
         require(
             getToken(_direction).mintMultiple(
@@ -277,7 +277,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             _totalEthDeposit.div(_shares),
             _targetPrice,
             _shares
-        ) == true, 0x06);
+        ) == true, "6");
 
         // Return maining ETH to the token
         msg.sender.transfer(msg.value.sub(_totalEthDeposit));
@@ -298,7 +298,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     /// --------------------------------- CHECK POSITION ---------------------------------
     function checkPosition() external returns (bool) {
         startGasCalculation();
-        require(status != DerivativeStatus.Closed, 0x07);
+        require(status != DerivativeStatus.Closed, "7");
 
          // INITIALIZE
         CheckPositionPhases _stepStatus = CheckPositionPhases(getStatusStep(CHECK_POSITION));
@@ -526,7 +526,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function getFrozenTokens(int _direction) external view returns(uint[]) {
         if(_direction == LONG) { return frozenLongTokens;}
         if(_direction == SHORT) { return frozenShortTokens;}
-        revert(0x08);
+        revert("8");
     }
     /// --------------------------------- END GETTERS   ---------------------------------
 
@@ -581,13 +581,13 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     function getManagerFee(uint _amount) external returns(bool) {
-        require(_amount > 0, 0x09 );
+        require(_amount > 0, "9" );
         require(
             status == DerivativeStatus.Closed ? // everything is done, take all.
             (_amount <= accumulatedFee)
             :
             (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
-            , 0x10);
+            , "10");
         accumulatedFee = accumulatedFee.sub(_amount);
         owner.transfer(_amount);
         return true;
