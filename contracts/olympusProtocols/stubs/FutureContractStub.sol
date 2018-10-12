@@ -10,6 +10,7 @@ contract FutureContractStub is FutureContract  {
         string _name,
         string _description,
         string _symbol,
+        bytes32 _category,
         uint _target,
         address _targetAddress,
         uint _amountOfTargetPerShare,
@@ -19,6 +20,7 @@ contract FutureContractStub is FutureContract  {
         _name,
         _description,
         _symbol,
+        _category,
         _target,
         _targetAddress,
         _amountOfTargetPerShare,
@@ -26,7 +28,7 @@ contract FutureContractStub is FutureContract  {
         _forceClosePositionDelta) {
     }
 
-    function setTargetPrice(uint _price) external returns(uint) {
+    function setTargetPrice(uint _price) external  {
         targetPrice = _price;
     }
 

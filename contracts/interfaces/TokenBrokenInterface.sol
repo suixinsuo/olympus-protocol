@@ -1,8 +1,9 @@
 pragma solidity 0.4.24;
 
 import "../libs/ERC20Extended.sol";
+import "./ComponentInterface.sol";
 
-interface TokenBrokenInterface {
+contract TokenBrokenInterface is ComponentInterface {
     /**
      * @dev Calculate the balance of a token corresponeding to each investor.
      * The Sender is not expected to be a derivative, but a MappeableDerivative.
@@ -20,7 +21,7 @@ interface TokenBrokenInterface {
      * @param _investor User address that is being queried
      * @return Current balance
      */
-      function tokenBalanceOf(address _derivative, address _token, address _investor) external view returns(uint);
+    function tokenBalanceOf(address _derivative, address _token, address _investor) external view returns(uint);
 
     /**
      * @dev  Return the token balances to withdraw or 0.
