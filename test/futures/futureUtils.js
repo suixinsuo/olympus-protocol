@@ -1,4 +1,3 @@
-
 const {
   DerivativeProviders,
 } = require("../utils/constants");
@@ -25,7 +24,6 @@ const futureData = {
   version: 'v0.2',
   target: 1,
   clearInterval: 2, // seconds
-  amountOfTargetPerShare: 2,
   depositPercentage: 0.1 * DENOMINATOR, // 1000 DENOMINATOR, 10%
   forceClosePositionDelta: 0.8 * DENOMINATOR,
   ethDeposit: 0.1, // 'ETHER'
@@ -41,96 +39,129 @@ module.exports = {
 
   setUpComponentList: async () => {
 
-    const market = await Marketplace.deployed();
-    const mockMOT = await MockToken.deployed();
-    const locker = await Locker.deployed();
-    const reimbursable = await Reimbursable.deployed();
-    const stepProvider = await StepProvider.deployed();
+      const market = await Marketplace.deployed();
+      const mockMOT = await MockToken.deployed();
+      const locker = await Locker.deployed();
+      const reimbursable = await Reimbursable.deployed();
+      const stepProvider = await StepProvider.deployed();
 
-    const componentList = await ComponentList.deployed();
+      const componentList = await ComponentList.deployed();
 
-    await reimbursable.setMotAddress(mockMOT.address);
+      await reimbursable.setMotAddress(mockMOT.address);
 
-    componentList.setComponent(DerivativeProviders.MARKET, market.address);
-    componentList.setComponent(DerivativeProviders.LOCKER, locker.address);
-    componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
-    componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
+      componentList.setComponent(DerivativeProviders.MARKET, market.address);
+      componentList.setComponent(DerivativeProviders.LOCKER, locker.address);
+      componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
+      componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
 
-    return { componentList, market, mockMOT, locker, reimbursable, stepProvider };
-  },
+      return {
+        componentList,
+        market,
+        mockMOT,
+        locker,
+        reimbursable,
+        stepProvider
+      };
+    },
+    /**
+     * Creates a future which default data
+     * @param {*} componentList
+     * @param {*} targetAddress
+     * @returns {future, longToken, shortToken}
+     */
+    createDefaultFuture: async (componentList, targetAddress, {
+        clearInterval,
+        depositPercentage,
+        amountOfTargetPerShare,
+      } = {
+        clearInterval: null,
+        depositPercentage: 0,
+        amountOfTargetPerShare: 0
+      }) => {
+        const future = await FutureContract.new(
+          futureData.name,
+          futureData.description,
+          futureData.symbol,
 
+          futureData.target,
+          targetAddress,
+          amountOfTargetPerShare || futureData.amountOfTargetPerShare,
+          depositPercentage || futureData.depositPercentage,
+          futureData.forceClosePositionDelta
+        );
 
-  /**
-   * Creates a future which default data
-   * @param {*} componentList
-   * @param {*} targetAddress
-   * @returns {future, longToken, shortToken}
-   */
-  createDefaultFuture: async (componentList, targetAddress, { clearInterval, depositPercentage } = { clearInterval: null, depositPercentage: 0 }) => {
-    const future = await FutureContract.new(
-      futureData.name,
-      futureData.description,
-      futureData.symbol,
+        await future.initialize(componentList.address, clearInterval === null ? futureData.clearInterval :
+          clearInterval, {
+            value: web3.toWei(futureData.ethDeposit, "ether")
+          });
 
-      futureData.target,
-      targetAddress,
-      futureData.amountOfTargetPerShare,
+        const longAddress = await future.getLongToken();
+        const shortAddress = await future.getShortToken();
 
-      depositPercentage || futureData.depositPercentage,
-      futureData.forceClosePositionDelta
-    );
+        longToken = new FutureToken(longAddress);
+        shortToken = new FutureToken(shortAddress);
 
-    await future.initialize(componentList.address, clearInterval === null ? futureData.clearInterval : clearInterval, {
-      value: web3.toWei(futureData.ethDeposit, "ether")
-    });
+        // Config for the stub
+        await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, 0);
+        await future.setTargetPrice(futureData.defaultTargetPrice);
 
-    const longAddress = await future.getLongToken();
-    const shortAddress = await future.getShortToken();
+        return {
+          future,
+          longToken,
+          shortToken
+        };
+      },
+      calculateShareDeposit: (_amountOfShares, price) => {
 
-    longToken = new FutureToken(longAddress);
-    shortToken = new FutureToken(shortAddress);
-
-    // Config for the stub
-    await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, 0);
-    await future.setTargetPrice(futureData.defaultTargetPrice);
-
-    return { future, longToken, shortToken };
-  },
-
-
-  calculateShareDeposit: (_amountOfShares, price) => {
-
-    return new BigNumber(_amountOfShares).mul(futureData.amountOfTargetPerShare).mul(price).mul(futureData.depositPercentage).div(DENOMINATOR).toNumber();
-  },
-
-  // Actual Value
-  getTokenActualValue: (direction, deposit, startPrice, currentPrice) => {
-    const pricePercentage = new BigNumber(startPrice).minus(currentPrice).div(startPrice).mul(new BigNumber(DENOMINATOR).div(futureData.depositPercentage));
-    return new BigNumber(direction).mul(deposit).mul(pricePercentage).add(deposit).toNumber();
-  },
-
-  getStepStatus: async (future, stepProvider, category) => {
-    return (await stepProvider.status(future.address, category)).toNumber();
-  },
-
-
-  safeInvest: async (future, direction, amountsOfShares, investor) => {
-    const targetPrice = await future.getTargetPrice(); // Big Number
-    const depositValue = (await future.calculateShareDeposit(amountsOfShares, targetPrice)); // Big Number
-    tx = await future.invest(direction, amountsOfShares, { from: investor, value: depositValue });
-    return tx;
-  },
-  /**
-   * @param token Token to get the list
-   * @param investor If investor is null will provided all tokens list.
-   */
-  validTokens: async (token, investor = null) => {
-    if (investor == null) {
-      return (await token.getValidTokens()).map((id) => id.toNumber());
-    }
-    return (await token.getValidTokenIdsByOwner(investor)).map((id) => id.toNumber());
-  }
-
-
-
+        return new BigNumber(_amountOfShares).mul(futureData.amountOfTargetPerShare).mul(price).mul(futureData.depositPercentage)
+          .div(DENOMINATOR).toNumber();
+      },
+      // Actual Value
+      getTokenActualValue: (direction, deposit, startPrice, currentPrice) => {
+        const pricePercentage = new BigNumber(startPrice).minus(currentPrice).div(startPrice).mul(new BigNumber(
+          DENOMINATOR).div(futureData.depositPercentage));
+        return new BigNumber(direction).mul(deposit).mul(pricePercentage).add(deposit).toNumber();
+      },
+      getStepStatus: async (future, stepProvider, category) => {
+          return (await stepProvider.status(future.address, category)).toNumber();
+        },
+        safeInvest: async (future, direction, amountsOfShares, investor) => {
+            const targetPrice = await future.getTargetPrice(); // Big Number
+            const depositValue = (await future.calculateShareDeposit(amountsOfShares, targetPrice)); // Big Number
+            tx = await future.invest(direction, amountsOfShares, {
+              from: investor,
+              value: depositValue
+            });
+            return tx;
+          },
+          safeCheckPosition: async (future) => {
+            let tx;
+            while (!(await future.checkPosition.call())) {
+              console.log('checkPosition false');
+              tx = await future.checkPosition();
+            }
+            console.log('checkPosition true');
+            tx = await future.checkPosition();
+            return tx;
+          },
+          safeClear: async (future) => {
+              let tx;
+              while (!(await future.clear.call())) {
+                console.log('clear false');
+                tx = await future.clear();
+              }
+              console.log('clear true');
+              tx = await future.clear();
+              return tx;
+            },
+            /**
+             * @param token Token to get the list
+             * @param investor If investor is null will provided all tokens list.
+             */
+            validTokens: async (token, investor = null) => {
+              if (investor == null) {
+                return (await token.getValidTokens()).map((id) => id.toNumber());
+              }
+              return (await token.getValidTokenIdsByOwner(investor)).map((id) => id.toNumber());
+            }
 }
