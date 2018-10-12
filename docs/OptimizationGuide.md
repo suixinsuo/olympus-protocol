@@ -10,9 +10,9 @@ This is a draft document with the notes of which changes have allowed us to opti
 
 Every private or public parameter of the contract is using storage.
 
-a) Changes the stings to bytes32 \> string public constant A = "A" \> bytes32 public constant A = "A"
+a.  Changes the stings to bytes32 \> string public constant A = "A" \> bytes32 public constant A = "A"
 
-b) Reutilize information you have
+b.  Reutilize information you have
 
 Let's tell a little story: In Olympus fund we have the mapping of amounts of the ERC20 tokens purchased by the fund with the current balance.
 
@@ -25,7 +25,7 @@ In conclusion, try to check that you are not calling to get information that you
 2. Internal call to another contracts
 -------------------------------------
 
-a) Avoid redundant calls
+a. Avoid redundant calls
 
 We have two calls to another contract where it could be done in a single call if we change Whitelist Interface to accept a second parameter.
 
@@ -54,7 +54,7 @@ function enableWhitelist(WhitelistKeys _key, bool enable)
 }
 ```
 
-b) Call a contract in only one place.
+b. Call a contract in only one place
 
 Before, we called the `checkLockerByTime` function in different functions.
 
@@ -86,7 +86,7 @@ checkLocker(REBALANCE);
 
 This optimization saved us several hundred thousand of gas.
 
-c) Remove call to another contracts for view functions.
+c. Remove call to another contracts for view functions
 
 Before in the index we had a function `getStep(bytes32 category) public view`. This value wasn't store in the index, but in a StepProvider component. In order to get the value the index itself was calling to the stepProvider, to get the value from the provider which is holding it.
 
@@ -95,7 +95,7 @@ Remove this function, if you need to use getStep as a DAPP, then rather call the
 3. Others
 ---------
 
-1.  Require without comment
+a. Require without comment
 
 > `require(total > 0, "Total higher than 0")`
 
