@@ -7,7 +7,7 @@ import "../../libs/ERC20Extended.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract TokenBroken is TokenBrokenInterface , Ownable, ComponentInterface {
+contract TokenBroken is TokenBrokenInterface , Ownable {
     using SafeMath for uint256;
 
     uint constant public DENOMINATOR = 10000;

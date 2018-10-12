@@ -56,7 +56,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20181002";
+        version = "x";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -348,11 +348,9 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
+        uint _withdrawStatus = getStatusStep(WITHDRAW);
 
-        uint _transfers = initializeOrContinueStep(WITHDRAW);
-        uint i;
-
-        if (_transfers == 0 && getStatusStep(GETETH) == 0) {
+        if (_withdrawStatus == 0 && getStatusStep(GETETH) == 0) {
             LockerInterface(getComponentByName(LOCKER)).checkLockerByTime(WITHDRAW);
             if (_requests.length == 0) {
 
@@ -362,13 +360,16 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             }
         }
 
-        if (_transfers == 0) {
+        if (_withdrawStatus == 0) {
             if(!guaranteeLiquidity(getWithdrawAmount())) {
                 reimburse();
                 return false;
             }
             withdrawFreeze();
         }
+
+        uint _transfers = initializeOrContinueStep(WITHDRAW);
+        uint i;
 
         for (i = _transfers; i < _requests.length && goNextStep(WITHDRAW); i++) {
             if(!handleWithdraw(withdrawProvider, _requests[i])){ continue; }

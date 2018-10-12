@@ -287,11 +287,11 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         // Check if there is request
         address[] memory _requests = withdrawProvider.getUserRequests();
+        uint _withdrawStatus = getStatusStep(WITHDRAW);
 
-        uint _transfers = initializeOrContinueStep(WITHDRAW);
-        uint i;
 
-        if (_transfers == 0 && getStatusStep(GETETH) == 0) {
+
+        if (_withdrawStatus == 0 && getStatusStep(GETETH) == 0) {
             checkLocker(WITHDRAW);
             if (_requests.length == 0) {
                 productStatus = Status.AVAILABLE;
@@ -300,13 +300,16 @@ contract OlympusIndex is IndexInterface, Derivative {
             }
         }
 
-        if (_transfers == 0) {
+        if (_withdrawStatus == 0) {
             if(!guaranteeLiquidity(getWithdrawAmount())) {
                 reimburse();
                 return false;
             }
             withdrawProvider.freeze();
         }
+
+        uint _transfers = initializeOrContinueStep(WITHDRAW);
+        uint i;
 
         for (i = _transfers; i < _requests.length && goNextStep(WITHDRAW); i++) {
             if(!handleWithdraw(withdrawProvider, _requests[i])){ continue; }
