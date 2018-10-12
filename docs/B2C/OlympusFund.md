@@ -1,6 +1,8 @@
 Fund
 ====
 
+[TOC]
+
 ### Introduction
 
 A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. This document walks you through the basic functions of the customized fund (created by the Olympus team) that are targeted at investors.
@@ -13,7 +15,8 @@ A cryptocurrency fund is a vehicle that allows an investment manager to pool tog
 const Web3 = require("web3");
 const web3 = new Web3
 (new Web3.providers.HttpProvider("http://localhost:8545"));
-const fundContract = web3.eth.contract(abi).at(address); // address: deployed fund contract address
+// address: deployed fund contract address
+const fundContract = web3.eth.contract(abi).at(address);
 // Name
 fundContract.name((err,name)=>{
 if (err) {
@@ -90,7 +93,7 @@ if (err) {
 ```
 
 2. getTokens
--------------
+------------
 
 ``` {.sourceCode .javascript}
 function getTokens() external view returns(address[], uint[]);
@@ -122,7 +125,7 @@ fundContract.getTokens((err, result) => {
 ```
 
 3. tokensWithAmount
--------------
+-------------------
 
 ``` {.sourceCode .javascript}
 function tokensWithAmount() public view
@@ -155,7 +158,7 @@ fundContract.tokensWithAmount((err, result) => {
 ```
 
 4. getPrice
--------------
+-----------
 
 ``` {.sourceCode .javascript}
 function getPrice() public view returns(uint);
@@ -187,7 +190,7 @@ fundContract.getPrice((err, result) => {
 ```
 
 5. getAssetsValue
--------------
+-----------------
 
 ``` {.sourceCode .javascript}
 function getAssetsValue() public view returns (uint);
@@ -219,7 +222,7 @@ fundContract.getAssetsValue((err, result) => {
 ```
 
 6. getETHBalance
--------------
+----------------
 
 ``` {.sourceCode .javascript}
 function getETHBalance() public view returns(uint);
@@ -251,7 +254,7 @@ fundContract.getETHBalance((err, result) => {
 ```
 
 7. getActiveInvestors
--------------
+---------------------
 
 ``` {.sourceCode .javascript}
 function getActiveInvestors() external view returns(address[]);
@@ -288,7 +291,8 @@ fundContract.getActiveInvestors((err, result) => {
 ``` {.sourceCode .javascript}
 function requestWithdraw(uint amount) external
     whenNotPaused
-    withoutRisk(msg.sender, address(this), address(this), amount, getPrice());
+    withoutRisk(msg.sender, address(this), address(this), amount,
+    getPrice());
 ```
 
 ####  Description
@@ -305,7 +309,8 @@ function requestWithdraw(uint amount) external
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3(new Web3.providers.HttpProvider
+  ("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 const amount = 10 ** 17;
 fundContract.requestWithdraw(amount, (err, result) => {

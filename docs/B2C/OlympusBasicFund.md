@@ -1,6 +1,8 @@
 Basic Fund
 ==========
 
+[TOC]
+
 ### Introduction
 
 A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. The Olympus Basic Fund contains the basic interfaces that a fund needs. This document walks you through the functions of the basic fund (created by the Olympus team) that are targeted at investors.
@@ -88,7 +90,7 @@ if (err) {
 ```
 
 2. getTokens
--------------
+------------
 
 ``` {.sourceCode .javascript}
 function getTokens() external view returns(address[], uint[]);
@@ -98,7 +100,7 @@ function getTokens() external view returns(address[], uint[]);
 
 Call the function to get the underlying tokens with their amounts.
 
-###   Returns
+### Returns
 
 Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
@@ -120,7 +122,7 @@ fundContract.getTokens((err, result) => {
 ```
 
 3. tokensWithAmount
--------------
+-------------------
 
 ``` {.sourceCode .javascript}
 function tokensWithAmount() public view
@@ -153,7 +155,7 @@ fundContract.tokensWithAmount((err, result) => {
 ```
 
 4. getPrice
--------------
+-----------
 
 ``` {.sourceCode .javascript}
 function getPrice() public view returns(uint);
@@ -185,7 +187,7 @@ fundContract.getPrice((err, result) => {
 ```
 
 5. getAssetsValue
--------------
+-----------------
 
 ``` {.sourceCode .javascript}
 function getAssetsValue() public view returns (uint);
@@ -217,7 +219,7 @@ fundContract.getAssetsValue((err, result) => {
 ```
 
 6. getETHBalance
--------------
+----------------
 
 ``` {.sourceCode .javascript}
 function getETHBalance() public view returns(uint);

@@ -1,6 +1,8 @@
 Basic Index
 ===========
 
+[TOC]
+
 ### Introduction
 
 A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. The Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the functions of the basic index (created by the Olympus team) that are targeted at investors.
@@ -87,10 +89,11 @@ if (err) {
 ```
 
 2. getTokens
--------------
+------------
 
 ``` {.sourceCode .javascript}
-function getTokens() public view returns (address[] _tokens, uint[] _weights);
+function getTokens() public view
+  returns (address[] _tokens, uint[] _weights);
 ```
 
 ####  Description
@@ -119,7 +122,7 @@ indexContract.getTokens((err, result) => {
 ```
 
 3. getTokensAndAmounts
--------------
+----------------------
 
 ``` {.sourceCode .javascript}
 function getTokensAndAmounts() external view returns(address[], uint[]);
@@ -151,7 +154,7 @@ indexContract.getTokensAndAmounts((err, result) => {
 ```
 
 4. tokensWithAmount
--------------
+-------------------
 
 ``` {.sourceCode .javascript}
 function tokensWithAmount() public view returns( ERC20Extended[] memory);
@@ -183,7 +186,7 @@ indexContract.tokensWithAmount((err, result) => {
 ```
 
 5. getPrice
--------------
+-----------
 
 ``` {.sourceCode .javascript}
 function getPrice() public view returns(uint);
@@ -215,7 +218,7 @@ indexContract.getPrice((err, result) => {
 ```
 
 6. getAssetsValue
--------------
+-----------------
 
 ``` {.sourceCode .javascript}
 function getAssetsValue() public view returns (uint);
@@ -247,7 +250,7 @@ indexContract.getAssetsValue((err, result) => {
 ```
 
 7. getETHBalance
--------------
+----------------
 
 ``` {.sourceCode .javascript}
 function getETHBalance() public view returns(uint);

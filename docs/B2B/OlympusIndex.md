@@ -4,6 +4,7 @@ Index
 [TOC]
 
 ### Introduction
+
 A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. This document walks you through the customized template for an index created by the Olympus team.
 
 ### Constructor
@@ -22,13 +23,13 @@ constructor (
 
 ####  Parameters
 
-> 1. \_name: Index name
-> 2. \_symbol: Index symbol (The index is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
-> 3. \_description: Index description
-> 4. \_category: Index category
-> 5. \_decimals: Index decimals (normally it should be 18)
-> 6. \_tokens: The token addresses that the index will buy, sell and rebalance
-> 7. \_weights: The weights of the tokens
+> 1.  \_name: Index name
+> 2.  \_symbol: Index symbol (The index is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 3.  \_description: Index description
+> 4.  \_category: Index category
+> 5.  \_decimals: Index decimals (normally it should be 18)
+> 6.  \_tokens: The token addresses that the index will buy, sell and rebalance
+> 7.  \_weights: The weights of the tokens
 
 ####  Example code
 
@@ -96,7 +97,7 @@ web3.eth.contract(abi).new(
       return console.error(err);
     }
     if (newIndex && newIndex.address) {
-      // Now the index is deployed,you can get the deployed index address,
+      // Index deployed, you can get the deployed index address,
       // do whatever you need to do.
       console.log(newIndex.address)
     }
@@ -216,8 +217,8 @@ Index manager can configure the withdraw frequency, buy token (Ether allocation)
 
 ####  Parameters
 
-> 1. \_timerNames: Array of the bytes32 encoded strings of the frequency names: RedeemFrequency, BuyTokensFrequency and RebalanceFrequency.
-> 2. \_secondsList: Array of the frequency for the redeem, buy tokens and rebalance functions, should be converted to use number of seconds as the unit of time.
+> 1.  \_timerNames: Array of the bytes32 encoded strings of the frequency names: RedeemFrequency, BuyTokensFrequency and RebalanceFrequency.
+> 2.  \_secondsList: Array of the frequency for the redeem, buy tokens and rebalance functions, should be converted to use number of seconds as the unit of time.
 
 ####  Example code
 
@@ -290,10 +291,11 @@ indexContract.buyTokens((err, result) => {
 ```
 
 4. getTokens
--------------
+------------
 
 ``` {.sourceCode .javascript}
-function getTokens() public view returns (address[] _tokens, uint[] _weights);
+function getTokens() public view
+  returns (address[] _tokens, uint[] _weights);
 ```
 
 ####  Description
@@ -322,10 +324,11 @@ indexContract.getTokens((err, result) => {
 ```
 
 5. tokensWithAmount
--------------
+-------------------
 
 ``` {.sourceCode .javascript}
-function tokensWithAmount() public view returns( ERC20Extended[] memory);
+function tokensWithAmount() public view
+  returns(ERC20Extended[] memory);
 ```
 
 ####  Description
@@ -354,7 +357,7 @@ indexContract.tokensWithAmount((err, result) => {
 ```
 
 6. getPrice
--------------
+-----------
 
 ``` {.sourceCode .javascript}
 function getPrice() public view returns(uint);
@@ -386,7 +389,7 @@ indexContract.getPrice((err, result) => {
 ```
 
 7. getAssetsValue
--------------
+-----------------
 
 ``` {.sourceCode .javascript}
 function getAssetsValue() public view returns (uint);
@@ -418,7 +421,7 @@ indexContract.getAssetsValue((err, result) => {
 ```
 
 8. getETHBalance
--------------
+----------------
 
 ``` {.sourceCode .javascript}
 function getETHBalance() public view returns(uint);
@@ -450,7 +453,7 @@ indexContract.getETHBalance((err, result) => {
 ```
 
 9. addOwnerBalance
------------
+------------------
 
 ``` {.sourceCode .javascript}
 function addOwnerBalance() external payable;
@@ -471,7 +474,8 @@ const web3 = new Web3
 const fundContract = web3.eth.contract(abi).at(address);
 const balance = 1 ** 18;
 
-fundContract.addOwnerBalance(from: web3.eth.accounts[0], value: balance}, (err, result) => {
+fundContract.addOwnerBalance
+  (from: web3.eth.accounts[0], value: balance}, (err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -479,7 +483,7 @@ fundContract.addOwnerBalance(from: web3.eth.accounts[0], value: balance}, (err, 
 ```
 
 10. rebalance
-------------
+-------------
 
 ``` {.sourceCode .javascript}
 function rebalance() public onlyOwnerOrWhitelisted
@@ -528,7 +532,7 @@ rebalance((err,result)=>{
 ```
 
 11. setManagementFee
--------------------
+--------------------
 
 ``` {.sourceCode .javascript}
 function setManagementFee(uint _fee) public onlyOwner;
@@ -565,7 +569,7 @@ indexContract.setManagementFee(_fee, (err, result) => {
 ```
 
 12. withdraw
------------
+------------
 
 ``` {.sourceCode .javascript}
 function withdraw() external onlyOwnerOrWhitelisted
@@ -579,7 +583,6 @@ This function is for the index manager. Investors that have requested to withdra
 ####  Returns
 
 > Whether the function executed successfully or not.
-
 
 ####  Example code
 
@@ -599,7 +602,7 @@ indexContract.withdraw((err, result) => {
 ```
 
 13. withdrawFee
---------------
+---------------
 
 ``` {.sourceCode .javascript}
 function withdrawFee(uint amount) external onlyOwner
@@ -632,11 +635,11 @@ indexContract.withdrawFee(amount, (err, result) => {
 ```
 
 14. enableWhitelist
-------------------
+-------------------
 
 ``` {.sourceCode .javascript}
-function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner
-  returns(bool);
+function enableWhitelist(WhitelistKeys _key, bool enable)
+  external onlyOwner returns(bool);
 ```
 
 ####  Description
@@ -653,9 +656,9 @@ If type 0 Investment whitelist is enabled, only users' addresses that are added 
 
 > \_key: A specific category of whitelist to be enabled for the index. The following three keys are available:
 >
->  -   0: Investment
->  -   1: Maintenance
->  -   2: Admin
+> -   0: Investment
+> -   1: Maintenance
+> -   2: Admin
 
 > enable: Set the parameter to true to enable the selected whitelist; false to disable the selected whitelist.
 
@@ -686,8 +689,8 @@ indexContract.enableWhitelist(key, enable (err, result) => {
 --------------
 
 ``` {.sourceCode .javascript}
-function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed)
-  public onlyOwner returns(bool);
+function setAllowed(address[] accounts, WhitelistKeys _key,
+  bool allowed) public onlyOwner returns(bool);
 ```
 
 ####  Description
@@ -696,9 +699,9 @@ After enabling a specific category of whitelist, the owner of the index can add 
 
 ####  Parameters
 
-> 1. accounts: Array of addresses
-> 2. \_key: A specific category of whitelist to be enabled for the index
-> 3. allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
+> 1.  accounts: Array of addresses
+> 2.  \_key: A specific category of whitelist to be enabled for the index
+> 3.  allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
 
 ####  Returns
 
@@ -757,7 +760,7 @@ indexContract.close((err, result) => {
 ```
 
 17. sellAllTokensOnClosedFund
----------
+-----------------------------
 
 ``` {.sourceCode .javascript}
 function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted
