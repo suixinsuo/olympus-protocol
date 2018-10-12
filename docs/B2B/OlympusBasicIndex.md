@@ -5,7 +5,7 @@ Basic Index
 
 ### Introduction
 
-A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens.  Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the basic template for an index.
+A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the basic template for an index.
 
 ### Constructor
 
@@ -23,13 +23,13 @@ constructor (
 
 ####  Parameters
 
-> 1. \_name: Index name
-> 2. \_symbol: Index symbol (The index is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
-> 3. \_description: Index description
-> 4. \_category: Index category
-> 5. \_decimals: Index decimals (normally it should be 18)
-> 6. \_tokens: The token addresses that the index will buy, sell and rebalance
-> 7. \_weights: The weights of the tokens
+> 1.  \_name: Index name
+> 2.  \_symbol: Index symbol (The index is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 3.  \_description: Index description
+> 4.  \_category: Index category
+> 5.  \_decimals: Index decimals (normally it should be 18)
+> 6.  \_tokens: The token addresses that the index will buy, sell and rebalance
+> 7.  \_weights: The weights of the tokens
 
 ####  Example code
 
@@ -97,7 +97,7 @@ web3.eth.contract(abi).new(
           return console.error(err);
         }
   if (newIndex && newIndex.address) {
-    // Now the index is deployed,you can get the deployed index address.
+    // Index deployed, you can get the deployed index address.
     console.log(newIndex.address)
   }
 }));
@@ -166,13 +166,13 @@ Initialize the Index, after which it is listed in the Olympus Product List and o
 
 ####  Parameters
 
-> 1. \_componentList: address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
-> 2. \_rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:
+> 1.  \_componentList: address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
+> 2.  \_rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:
 >     -   1 = 0.01%
 >     -   100 = 1%
 >     -   1000 = 10%
 >     -   10000 = 100%
-
+>
 ####  Example code
 
 The code below shows how to call this function with Web3.
@@ -273,10 +273,11 @@ function rebalance(callback){
 ```
 
 4. getTokens
--------------
+------------
 
 ``` {.sourceCode .javascript}
-function getTokens() public view returns (address[] _tokens, uint[] _weights);
+function getTokens() public view
+  returns (address[] _tokens, uint[] _weights);
 ```
 
 ####  Description
@@ -305,7 +306,7 @@ indexContract.getTokens((err, result) => {
 ```
 
 5. getTokensAndAmounts
--------------
+----------------------
 
 ``` {.sourceCode .javascript}
 function getTokensAndAmounts() external view returns(address[], uint[]);
@@ -337,10 +338,11 @@ indexContract.getTokensAndAmounts((err, result) => {
 ```
 
 6. tokensWithAmount
--------------
+-------------------
 
 ``` {.sourceCode .javascript}
-function tokensWithAmount() public view returns( ERC20Extended[] memory);
+function tokensWithAmount() public view
+  returns(ERC20Extended[] memory);
 ```
 
 ####  Description
@@ -369,7 +371,7 @@ indexContract.tokensWithAmount((err, result) => {
 ```
 
 7. changeStatus
--------------
+---------------
 
 ``` {.sourceCode .javascript}
 function changeStatus(DerivativeStatus _status)
@@ -386,14 +388,12 @@ Call the function to change status in the case when the index is not New or Clos
 
 ####  Parameters
 
-> 1. \_status: new status of the fund.
-The following status corresponds to a number value:
+> 1.  \_status: new status of the fund. The following status corresponds to a number value:
 >     -   New: 0
 >     -   Active: 1
 >     -   Paused: 2
->     -   Closed: 3
-0 and 3 cannot be passed as parameter.
-
+>     -   Closed: 3 0 and 3 cannot be passed as parameter.
+>
 ####  Example code
 
 The code below shows how to call this function with Web3.
@@ -414,7 +414,7 @@ indexContract.changeStatus(status,
 ```
 
 8. getPrice
--------------
+-----------
 
 ``` {.sourceCode .javascript}
 function getPrice() public view returns(uint);
@@ -446,7 +446,7 @@ indexContract.getPrice((err, result) => {
 ```
 
 9. getAssetsValue
--------------
+-----------------
 
 ``` {.sourceCode .javascript}
 function getAssetsValue() public view returns (uint);
@@ -478,7 +478,7 @@ indexContract.getAssetsValue((err, result) => {
 ```
 
 10. getETHBalance
--------------
+-----------------
 
 ``` {.sourceCode .javascript}
 function getETHBalance() public view returns(uint);
@@ -510,7 +510,7 @@ indexContract.getETHBalance((err, result) => {
 ```
 
 11. withdraw
------------
+------------
 
 ``` {.sourceCode .javascript}
 function withdraw() external returns(bool);
@@ -542,7 +542,7 @@ indexContract.withdraw((err, result) => {
 ```
 
 12. close
---------
+---------
 
 ``` {.sourceCode .javascript}
 function close() public onlyOwner returns(bool success);

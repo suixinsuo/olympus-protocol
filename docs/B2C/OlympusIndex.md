@@ -1,6 +1,8 @@
 Index
 =====
 
+[TOC]
+
 ### Introduction
 
 A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. This document walks you through the functions of the customized index (created by the Olympus team) that are targeted at investors.
@@ -11,8 +13,10 @@ A cryptocurrency index is a vehicle that allows investors to mimic the investmen
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address); // address: deployed index address
+const web3 = new Web3(new Web3.providers.HttpProvider
+  ("http://localhost:8545"));
+// address: deployed index address
+const indexContract = web3.eth.contract(abi).at(address);
 // Name
 indexContract.name((err,name)=>{
 if (err) {
@@ -77,7 +81,8 @@ function invest() public payable
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3(new Web3.providers.HttpProvider
+  ("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 const investAmount = 1 ** 17;
 indexContract.invest({value: investAmount}, (err, result) => {
@@ -88,10 +93,11 @@ if (err) {
 ```
 
 2. getTokens
--------------
+------------
 
 ``` {.sourceCode .javascript}
-function getTokens() public view returns (address[] _tokens, uint[] _weights);
+function getTokens() public view
+  returns (address[] _tokens, uint[] _weights);
 ```
 
 ####  Description
@@ -120,10 +126,11 @@ indexContract.getTokens((err, result) => {
 ```
 
 3. tokensWithAmount
--------------
+-------------------
 
 ``` {.sourceCode .javascript}
-function tokensWithAmount() public view returns( ERC20Extended[] memory);
+function tokensWithAmount() public view
+  returns(ERC20Extended[] memory);
 ```
 
 ####  Description
@@ -152,7 +159,7 @@ indexContract.tokensWithAmount((err, result) => {
 ```
 
 4. getPrice
--------------
+-----------
 
 ``` {.sourceCode .javascript}
 function getPrice() public view returns(uint);
@@ -184,7 +191,7 @@ indexContract.getPrice((err, result) => {
 ```
 
 5. getAssetsValue
--------------
+-----------------
 
 ``` {.sourceCode .javascript}
 function getAssetsValue() public view returns (uint);
@@ -216,7 +223,7 @@ indexContract.getAssetsValue((err, result) => {
 ```
 
 6. getETHBalance
--------------
+----------------
 
 ``` {.sourceCode .javascript}
 function getETHBalance() public view returns(uint);
@@ -253,7 +260,8 @@ indexContract.getETHBalance((err, result) => {
 ``` {.sourceCode .javascript}
 function requestWithdraw(uint amount) external
     whenNotPaused
-    withoutRisk(msg.sender, address(this), address(this), amount, getPrice());
+    withoutRisk(msg.sender, address(this),
+  address(this), amount, getPrice());
 ```
 
 ####  Description

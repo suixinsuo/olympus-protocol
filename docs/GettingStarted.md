@@ -1,12 +1,13 @@
-[TOC]
-
 Getting Started
 ===============
+
+[TOC]
 
 Welcome to the Olympus Labs Open API, powering your application with cryptocurrency financial protocols and tokenized financial products. In this document, we are going to introduce the Olympus protocol and walk you through the basic steps to get started on working with the Olympus Protocol.
 
 Olympus Derivative Protocols
 ----------------------------
+
 Blockchain technology traces its roots back to Bitcoin, a cryptocurrency designed as an alternative to fiat currencies. It is therefore unsurprising that blockchain technology and cryptocurrencies should have an outsized impact on the financial industry. Yet the overall cryptocurrency marketplace is in its nascent stages and needs to mature in order to fulfill the vision of a decentralized and democratized financial future. One of the key developments necessary for such a future to become reality is the creation of a broad set of cryptocurrency financial products. That is why we have built the Olympus Protocol, and we invite you to work with us to usher in a new financial revolution.
 
 Olympus Protocol is a set of protocols that support developers in creating tokenized cryptocurrency financial products and financial applications.
@@ -19,7 +20,7 @@ The Olympus Protocol can be broken down into three layers:
 
 -   DApps: Applications (web/mobile apps) that integrate the Olympus Protocol to bring tokenized cryptocurrency financial products to end users.
 
-We have separated this documentation into two parts; the first part, called [B2B](./B2B), is for applications whose end users are the creators of financial products (e.g., investment managers, product creators, etc.). Such applications allow investment managers to create and manage financial products. The second part, called [B2C](./B2C), is for applications whose end users are cryptocurrency investors. Such applications include wallets, exchanges, portfolio management applications, and more.
+We have separated this documentation into two parts; the first part, called [B2B](/pages/b2b/olympusfund.html), is for applications whose end users are the creators of financial products (e.g., investment managers, product creators, etc.). Such applications allow investment managers to create and manage financial products. The second part, called [B2C](/pages/b2c/olympusfund.html), is for applications whose end users are cryptocurrency investors. Such applications include wallets, exchanges, portfolio management applications, and more.
 
 To get started on integrating the Olympus Protocol into your application, please follow the steps below:
 
@@ -35,7 +36,7 @@ You can start by forking the repository or, if you only want to try it out, by c
 Environment preparation
 -----------------------
 
-Before we start, we need to install the  necessary supporting tools/libraries.
+Before we start, we need to install the necessary supporting tools/libraries.
 
 Node.JS and npm/yarn.
 
@@ -69,7 +70,7 @@ Once you have cloned the project onto your own machine, you can open the project
 -   libs: Some basic Solidity libraries for common purposes.
 
 Create your first financial product template
--------------------------------------------
+--------------------------------------------
 
 To get yourself warmed up, we will walk you through creating and customizing your own template with a basic example.
 
@@ -89,7 +90,7 @@ When a fund is being deployed on the blockchain, the constructor will be called 
 
 ``` {.sourceCode .javascript}
 constructor(string _name, string _symbol,
-            string _description, string_category,  uint _decimals) public;
+    string _description, string_category,  uint _decimals) public;
 ```
 
 After the fund contract is deployed, an initialization call connects this newly deployed fund to the Olympus ComponentList and changes the fund's status to active, allowing investors to start investing.
@@ -107,7 +108,8 @@ function getTokens() external view returns(address[], uint[]);
 
 ``` {.sourceCode .javascript}
 // return the actual active tokens with amounts
-function tokensWithAmount() public view returns( ERC20Extended[] memory);
+function tokensWithAmount() public view
+    returns(ERC20Extended[] memory);
 ```
 
 ``` {.sourceCode .javascript}
@@ -116,7 +118,8 @@ function getPrice() public view returns(uint);
 ```
 
 ``` {.sourceCode .javascript}
-// get the total value calculated based on the value of its underlying assets
+// get the total value calculated based on
+// the value of its underlying assets
 function getAssetsValue() public view returns (uint)
 ```
 
@@ -143,36 +146,36 @@ As a basic principle, the owner (Fund manager) should be able to trade tokens in
 
 ``` {.sourceCode .javascript}
 function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
-  uint[] _amounts, uint[] _minimumRates);
+    uint[] _amounts, uint[] _minimumRates);
 ```
 
 ``` {.sourceCode .javascript}
 function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
-  uint[] _amounts, uint[]  _rates);
+    uint[] _amounts, uint[]  _rates);
 ```
 
 ``` {.sourceCode .javascript}
 // internal function to update the underlying tokens
 // after each buy/sell operation
 function updateTokens(ERC20Extended[] _updatedTokens)
-  private returns(bool success);
+    private returns(bool success);
 ```
 
 If the fund manager decides to stop managing his fund, he/she can choose to close the fund, which will trigger the closing procedures (sell all of the tokens in the fund so that the investors can redeem their investment back in Ether).
 
 ``` {.sourceCode .javascript}
 function changeStatus(DerivativeStatus _status)
-          public onlyOwner returns(bool);
+    public onlyOwner returns(bool);
 ```
 
 ``` {.sourceCode .javascript}
 function close() public onlyOwner returns(bool success);
 ```
 
-For the complete documentation of the BasicFund, please refer to [OlympusBasicFund.sol](./OlympusBasicFund).
+For the complete documentation of the BasicFund, please refer to [](/pages/b2b/olympusbasicfund.html)OlympusBasicFund.
 
 Customize your template
-----------------------
+-----------------------
 
 Let’s suppose we are going to launch a new fund which only accepts a maximum of 100 lucky investors. Once there are 100 investors in the fund, a new investor can only invest if a current investor leaves the fund.
 
@@ -190,16 +193,16 @@ uint public currentNumberOfInvestors;
 After creating these initial variables, we can modify the initialize function.
 
 ``` {.sourceCode .javascript}
-function initialize(address _componentList, uint _maxInvestors)
-  external onlyOwner {
-  require(_componentList != 0x0);
-  require(status == DerivativeStatus.New);
-  require(_maxInvestors >
-  0); // New Line
+function initialize (address _componentList,
+    uint _maxInvestors) external onlyOwner {
+    require(_componentList != 0x0);
+    require(status == DerivativeStatus.New);
+    require(_maxInvestors >
+    0); // New Line
 
-  /// Current code
-  // …
-  maxInvestors = _maxInvestors; // New Line
+    /// Current code
+    // …
+    maxInvestors = _maxInvestors; // New Line
 }
 ```
 
@@ -211,28 +214,35 @@ In this initialize function we have made three changes:
 
 Now we need to keep track of the number of investors and check if it reaches the maximum when investing.
 
-> balances[msg.sender] \> 0 currentNumberOfInvestors \< maxInvestors
+> balances[msg.sender] \> 0
+>
+> currentNumberOfInvestors \< maxInvestors
 
 We will allow you to invest either if you are a current investor `balances[msg.sender] > 0` OR if there is room for new investors `currentNumberOfInvestors < maxInvestors`
 
 ``` {.sourceCode .javascript}
 function invest() public payable returns(bool) {
-  require(status == DerivativeStatus.Active, "The Fund is not active");
-  require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
-  require(balances[msg.sender] > 0 currentNumberOfInvestors < maxInvestors, "Only limited number can invest");
-  // New line
+    require(status == DerivativeStatus.Active,
+    "The Fund is not active");
+    require(msg.value >= 10**15,
+    "Minimum value to invest is 0.001 ETH");
+    require(balances[msg.sender] > 0
+    currentNumberOfInvestors < maxInvestors,
+    "Only limited number can invest");
+    // New line
 
-  /// Current code
+    /// Current code
 
-  // only increase the number of investors when this is a new investor
-  if( balances[msg.sender] == 0) {
+    // only increase the number of investors
+    // when this is a new investor
+    if( balances[msg.sender] == 0) {
       currentNumberOfInvestors++;
-  }
+    }
 
-  // SafeMath is used here to prevent overflow attack.
-  balances[msg.sender] = balances[msg.sender].add(_investorShare);
-  totalSupply_ = totalSupply_.add(_investorShare);
-  return true;
+    // SafeMath is used here to prevent overflow attack.
+    balances[msg.sender] = balances[msg.sender].add(_investorShare);
+    totalSupply_ = totalSupply_.add(_investorShare);
+    return true;
 }
 ```
 
@@ -240,15 +250,15 @@ We also need to decrease the counter when redeeming, allowing new investors when
 
 ``` {.sourceCode .javascript}
 function withdraw() external returns(bool)  {
-  // Rest of the code
-  currentNumberOfInvestors--;
+    // Rest of the code
+    currentNumberOfInvestors--;
 }
 ```
 
 In this basic implementation, the investor can only redeem all of his investment at once. In a more complex situation, we need to decrease the counter when the balance becomes zero.
 
 Compile the new template
-==========================
+========================
 
 We have just made a new fund with new functions and now we need to get it ready for compilation. We have set some helper functions that you can find in our `packages.json` file.
 
@@ -278,7 +288,7 @@ We have already created several test cases for all of our functionalities. You c
 
 > npm run test
 
-This command will test all of the test cases. This is not optimal when creating test cases, as we want to run only the test that we are creating. Run the  following command in one terminal
+This command will test all of the test cases. This is not optimal when creating test cases, as we want to run only the test that we are creating. Run the following command in one terminal
 
 > \$ './node\_modules/.bin/testrpc-sc'
 
@@ -327,12 +337,12 @@ The worst part of a failing test is that the result of a test case affects the f
 
 ``` {.sourceCode .javascript}
 const fundData = {
-  name: "OlympusBasicFund",
-  symbol: "MBF",
-  category: "Tests",
-  description: "Sample of base fund",
-  decimals: 18,
-  maxInvestors: 2  // Add this line
+    name: "OlympusBasicFund",
+    symbol: "MBF",
+    category: "Tests",
+    description: "Sample of base fund",
+    decimals: 18,
+    maxInvestors: 2  // Add this line
 };
 ```
 
@@ -340,8 +350,9 @@ Modify the test of creating the fund.
 
 ``` {.sourceCode .javascript}
 it("Create a fund", async () => {
-  // Find initialize line and add the parameter
-  await fund.initialize(componentList.address, indexData.maxInvestors);
+    // Find initialize line and add the parameter
+    await fund.initialize(componentList.address,
+    indexData.maxInvestors);
 });
 ```
 
@@ -349,9 +360,10 @@ There is a second test case checking that we can't initialize twice (meaning tha
 
 ``` {.sourceCode .javascript}
 it("Cant call initialize twice ", async () => {
-  await calc.assertReverts(async () => {
-    await fund.initialize(componentList.address, fundData.maxInvestors);
-  }, "Shall revert");
+    await calc.assertReverts(async () => {
+        await fund.initialize(componentList.address,
+    fundData.maxInvestors);
+    }, "Shall revert");
 });
 ```
 
@@ -378,7 +390,8 @@ What is missing? - We need to add a test to check whether or not the value of th
 Let's start checking in the create index test that the `maxInvestors` variable is initialized correctly.
 
 ``` {.sourceCode .javascript}
-assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
+assert.equal((await fund.getPrice()).toNumber(),
+    web3.toWei(1, "ether"));
 // Add this line below
 assert.equal((await fund.maxInvestors()).toNumber(),
 fundData.maxInvestors, 'Max Investors is correctly initialized');
@@ -391,21 +404,25 @@ Also important to know is that every time we call a function in the fund we use 
 Let's rename the test "Shall be able to invest" to "Shall be able to invest until maximum investors" and add a check for the currentNumberOfInvestors counter.
 
 ``` {.sourceCode .javascript}
-await fund.invest({ value: web3.toWei(1, "ether"), from: investorA });
+await fund.invest({ value: web3.toWei(1, "ether"),
+    from: investorA });
 assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
-await fund.invest({ value: web3.toWei(1, "ether"), from: investorB });
+await fund.invest({ value: web3.toWei(1, "ether"),
+    from: investorB });
 assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
 ```
 
 Add a check as well that the counter gets reduced on withdrawing.
 
 ``` {.sourceCode .javascript}
-await fund.withdraw({ from: investorA });
+await fund.withdraw
+    ({ from: investorA });
 assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
 ```
 
 ``` {.sourceCode .javascript}
-await fund.withdraw({ from: investorB });
+await fund.withdraw
+    ({ from: investorB });
 assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 0);
 ```
 
@@ -419,14 +436,18 @@ In the test above we invested 1 ETH, lets split it into two parts, investing 0.5
 
 ``` {.sourceCode .javascript}
 // Invest allowed
-await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
+await fund.invest({ value: web3.toWei(0.5, "ether"),
+    from: investorA });
 assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 1);
-await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
+await fund.invest({ value: web3.toWei(0.5, "ether"),
+    from: investorB });
 assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
 
 // Actual investors can invest again
-await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorA });
-await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorB });
+await fund.invest({ value: web3.toWei(0.5, "ether"),
+    from: investorA });
+await fund.invest({ value: web3.toWei(0.5, "ether"),
+    from: investorB });
 assert.equal((await fund.currentNumberOfInvestors()).toNumber(), 2);
 ```
 
@@ -434,8 +455,9 @@ The active investors can keep investing, but a new, third investor, investorC ca
 
 ``` {.sourceCode .javascript}
 await calc.assertReverts(async () =>
-await fund.invest({ value: web3.toWei(0.5, "ether"), from: investorC }),
-  'Third investor can`t invest'
+await fund.invest({ value: web3.toWei(0.5, "ether"),
+    from: investorC }),
+    'Third investor can`t invest'
 );
 ```
 
@@ -509,7 +531,7 @@ Test the functions one by one and make sure that they all pass before you releas
 Copy the address of your deployed testing template; it will remain on the blockchain forever! Next time you want to use it, you can utilize the Remix function "At Address" (the address of your contract) and the template will appear in the bottom right of your Remix again (this is required if you reload the page).
 
 Troubleshooting in Remix
---------------------
+------------------------
 
 > errored: Error encoding arguments: Error: invalid address (arg="", type="string", value="")
 

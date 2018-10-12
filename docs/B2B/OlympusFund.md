@@ -21,11 +21,11 @@ constructor(
 
 ####  Parameters
 
-> 1. \_name: Fund name
-> 2. \_symbol: Fund symbol (The fund is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
-> 3. \_description: Fund description
-> 4. \_category: Fund category
-> 5. \_decimals: Fund decimals (normally it should be 18)
+> 1.  \_name: Fund name
+> 2.  \_symbol: Fund symbol (The fund is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 3.  \_description: Fund description
+> 4.  \_category: Fund category
+> 5.  \_decimals: Fund decimals (normally it should be 18)
 
 ####  Example code
 
@@ -86,7 +86,7 @@ web3.eth.contract(abi).new(
       return console.error(err);
     }
     if (newFund && newFund.address) {
-      // Now the fund is deployed, you can get the fund contract address.
+      // Fund deployed, you can get the fund contract address.
       console.log(newFund.address)
     }
 }));
@@ -145,8 +145,8 @@ fundContract.decimals((err,decimals)=>{
 -------------
 
 ``` {.sourceCode .javascript}
-function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency)
-  external onlyOwner payable;
+function initialize(address _componentList, uint _initialFundFee,
+  uint _withdrawFrequency) external onlyOwner payable;
 ```
 
 ####  Description
@@ -155,10 +155,10 @@ Initialize the fund contract that was created before, with the specified configu
 
 ####  Parameters
 
-> 1. \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc).
-> 2. \_initialFundFee: The fee that the owner will receive for managing the fund. Must be based on DENOMINATOR, so 1% is 1000.
-> 3. \_withdrawFrequency: the frequency that will trigger the auto withdraw process.
-> 4. value: The initial balance of the fund.
+> 1.  \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc).
+> 2.  \_initialFundFee: The fee that the owner will receive for managing the fund. Must be based on DENOMINATOR, so 1% is 1000.
+> 3.  \_withdrawFrequency: the frequency that will trigger the auto withdraw process.
+> 4.  value: The initial balance of the fund.
 
 ####  Example code
 
@@ -174,8 +174,9 @@ const _componentList = "0x...";
 const _initialFundFee = "0x...";
 const _withdrawFrequency = 5; // 5 seconds
 const initialBalance = 1 ** 17
-fundContract.initialize(_componentList, _initialFundFee, _withdrawFrequency,
-  {from: web3.eth.accounts[0],value: initialBalance}, err => {
+fundContract.initialize(_componentList, _initialFundFee,
+  _withdrawFrequency, {from: web3.eth.accounts[0],
+    value: initialBalance}, err => {
   if (err) {
     return console.error(err);
   }
@@ -201,10 +202,10 @@ Call the function to buy any combination of tokens.
 
 ####  Parameters
 
-> 1. \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
-> 2. \_tokens: ERC20 addresses of the tokens to buy.
-> 3. \_amounts: The corresponding amount of tokens to buy.
-> 4. \_minimumRates: The minimum return amount of tokens per ETH in wei.
+> 1.  \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  \_tokens: ERC20 addresses of the tokens to buy.
+> 3.  \_amounts: The corresponding amount of tokens to buy.
+> 4.  \_minimumRates: The minimum return amount of tokens per ETH in wei.
 
 ####  Example code
 
@@ -248,10 +249,10 @@ Call the function for fund manager or whitelisted fund administrator to sell any
 
 ####  Parameters
 
-> 1. \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
-> 2. \_tokens: ERC20 addresses of the tokens to sell.
-> 3. \_amounts: The corresponding amount of tokens to sell.
-> 4. \_rates: The minimum return amount of ETH per token in wei.
+> 1.  \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  \_tokens: ERC20 addresses of the tokens to sell.
+> 3.  \_amounts: The corresponding amount of tokens to sell.
+> 4.  \_rates: The minimum return amount of ETH per token in wei.
 
 ####  Example code
 
@@ -277,7 +278,7 @@ fundContract.sellTokens(_exchangeId, _tokens, _amounts, _rates,
 ```
 
 4. getTokens
--------------
+------------
 
 ``` {.sourceCode .javascript}
 function getTokens() external view returns(address[], uint[]);
@@ -309,11 +310,11 @@ fundContract.getTokens((err, result) => {
 ```
 
 5. tokensWithAmount
--------------
+-------------------
 
 ``` {.sourceCode .javascript}
 function tokensWithAmount() public view
-    returns( ERC20Extended[] memory);
+    returns(ERC20Extended[] memory);
 ```
 
 ####  Description
@@ -379,7 +380,7 @@ fundContract.setManagementFee(_fee, (err, result) => {
 ```
 
 7. getPrice
--------------
+-----------
 
 ``` {.sourceCode .javascript}
 function getPrice() public view returns(uint);
@@ -411,7 +412,7 @@ fundContract.getPrice((err, result) => {
 ```
 
 8. getAssetsValue
--------------
+-----------------
 
 ``` {.sourceCode .javascript}
 function getAssetsValue() public view returns (uint);
@@ -443,7 +444,7 @@ fundContract.getAssetsValue((err, result) => {
 ```
 
 9. getETHBalance
--------------
+----------------
 
 ``` {.sourceCode .javascript}
 function getETHBalance() public view returns(uint);
@@ -475,7 +476,7 @@ fundContract.getETHBalance((err, result) => {
 ```
 
 10. addOwnerBalance
------------
+-------------------
 
 ``` {.sourceCode .javascript}
 function addOwnerBalance() external payable;
@@ -496,7 +497,8 @@ const web3 = new Web3
 const fundContract = web3.eth.contract(abi).at(address);
 const balance = 1 ** 18;
 
-fundContract.addOwnerBalance(from: web3.eth.accounts[0], value: balance}, (err, result) => {
+fundContract.addOwnerBalance
+  (from: web3.eth.accounts[0], value: balance}, (err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -504,7 +506,7 @@ fundContract.addOwnerBalance(from: web3.eth.accounts[0], value: balance}, (err, 
 ```
 
 11. getActiveInvestors
--------------
+----------------------
 
 ``` {.sourceCode .javascript}
 function getActiveInvestors() external view returns(address[]);
@@ -536,7 +538,7 @@ fundContract.getActiveInvestors((err, result) => {
 ```
 
 12. withdraw
------------
+------------
 
 ``` {.sourceCode .javascript}
 function withdraw() external onlyOwnerOrWhitelisted
@@ -569,7 +571,7 @@ fundContract.withdraw((err, result) => {
 ```
 
 13. withdrawFee
---------------
+---------------
 
 ``` {.sourceCode .javascript}
 function withdrawFee(uint amount)
@@ -606,11 +608,11 @@ fundContract.withdrawFee(amount, (err, result) => {
 ```
 
 14. enableWhitelist
-------------------
+-------------------
 
 ``` {.sourceCode .javascript}
-function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner
-  returns(bool);
+function enableWhitelist(WhitelistKeys _key, bool enable)
+  external onlyOwner returns(bool);
 ```
 
 ####  Description
@@ -627,10 +629,9 @@ If type 0 Investment whitelist is enabled, only users' addresses that are added 
 
 > \_key: A specific category of whitelist to be enabled for the fund. The following three keys are available:
 >
->  -   0: Investment
->  -   1: Maintenance
->  -   2: Admin
->  enable: Set the parameter to true to enable the selected whitelist; false to disable the selected whitelist.
+> -   0: Investment
+> -   1: Maintenance
+> -   2: Admin enable: Set the parameter to true to enable the selected whitelist; false to disable the selected whitelist.
 
 ####  Returns
 
@@ -656,10 +657,11 @@ fundContract.enableWhitelist(key, enable, (err, result) => {
 ```
 
 15. setAllowed
--------------
+--------------
 
 ``` {.sourceCode .javascript}
-function setAllowed(address[] accounts, WhitelistKeys _key, bool allowed) public onlyOwner returns(bool)
+function setAllowed(address[] accounts, WhitelistKeys _key,
+  bool allowed) public onlyOwner returns(bool)
 ```
 
 ####  Description
@@ -668,9 +670,9 @@ After enabling a specific category of whitelist, the owner of the fund can add a
 
 ####  Parameters
 
-> 1. accounts: Array of addresses
-> 2. \_key: A specific category of whitelist to be enabled for the fund
-> 3. allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
+> 1.  accounts: Array of addresses
+> 2.  \_key: A specific category of whitelist to be enabled for the fund
+> 3.  allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
 
 ####  Returns
 
@@ -700,7 +702,8 @@ fundContract.setAllowed(accounts, key, allowed, (err, result) => {
 ---------
 
 ``` {.sourceCode .javascript}
-function close() OnlyOwnerOrPausedTimeout public returns(bool success);
+function close() OnlyOwnerOrPausedTimeout
+  public returns(bool success);
 ```
 
 ####  Description
@@ -729,7 +732,7 @@ fundContract.close((err, result) => {
 ```
 
 17. sellAllTokensOnClosedFund
----------
+-----------------------------
 
 ``` {.sourceCode .javascript}
 function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted
