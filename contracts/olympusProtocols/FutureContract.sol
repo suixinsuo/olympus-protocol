@@ -356,6 +356,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     // for bot.
     function clear() external returns (bool) {
+
+        require(getStatusStep(CHECK_POSITION) == 0, "8");
         startGasCalculation();
         ClearPositionPhases _stepStatus = ClearPositionPhases(getStatusStep(CLEAR));
 

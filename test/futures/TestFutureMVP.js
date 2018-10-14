@@ -434,6 +434,8 @@ contract("Test Future MVP", accounts => {
     // Check that is frozen
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 1, 'Is started');
 
+    // While check position has started clear cant executed
+    await assert.reverts( async() => await future.clear(), 'Clear cant revert, mutex');
     await future.checkPosition();
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 2, 'Finish LONG');
     await future.checkPosition();

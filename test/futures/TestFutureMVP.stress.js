@@ -18,7 +18,7 @@ const futureData = futureUtils.futureData;
  *    4. Every test must be run if set it.only without parent dependency
  */
 
-contract("Test Future MVP Clear special cases", accounts => {
+contract("Test Future MVP Stress", accounts => {
 
   let providers;
 
@@ -34,7 +34,7 @@ contract("Test Future MVP Clear special cases", accounts => {
   });
 
   // ----------------------------- REQUIRED FOR CREATION ----------------------
-  it("Create a future", async () => {
+  it.only("Create a future", async () => {
     const {
       future,
       longToken,
@@ -57,8 +57,7 @@ contract("Test Future MVP Clear special cases", accounts => {
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-  it("Investors invest ", async () => {
-
+  it("Stress test case 1 ", async () => {
     const {
       future,
       longToken,
@@ -99,7 +98,7 @@ contract("Test Future MVP Clear special cases", accounts => {
     for (let i = 0; i < 5; i++) {
       const targetPrice = futureData.defaultTargetPrice * (0.85 + (0.3 * Math.random()));
       await future.setTargetPrice(targetPrice);
-      await future.safeCheckPosition(future);
+      await futureUtils.safeCheckPosition(future);
     }
 
     const txClear = await futureUtils.safeClear(future);
@@ -120,7 +119,7 @@ contract("Test Future MVP Clear special cases", accounts => {
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-  it("Investors invest again ", async () => {
+  it("Stress test case 2 ", async () => {
 
     const {
       future,
@@ -134,10 +133,10 @@ contract("Test Future MVP Clear special cases", accounts => {
           const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
           await future.setTargetPrice(targetPrice);
 
-          const txLong = await futureUtils.safeInvest(future, FutureDirection.Short, amountsOfShares,
+          const txLong = await futureUtils.safeInvest(future, FutureDirection.Short, 2,
             account);
           assert.ok(txLong, 'invest should not be revert');
-          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, amountsOfShares,
+          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 2,
             account);
           assert.ok(txShort, 'invest should not be revert');
         }
@@ -147,7 +146,7 @@ contract("Test Future MVP Clear special cases", accounts => {
     for (let i = 0; i < 5; i++) {
       const targetPrice = futureData.defaultTargetPrice * (0.85 + (0.3 * Math.random()));
       await future.setTargetPrice(targetPrice);
-      await future.safeCheckPosition(future);
+      await futureUtils.safeCheckPosition(future);
     }
 
     const txClear = await futureUtils.safeClear(future);
@@ -170,34 +169,36 @@ contract("Test Future MVP Clear special cases", accounts => {
   //  Nothing reverts, when withdraw all management fee ETH balance is 0,
   //  investor LONG gets all winner balance.
 
-  it("Stress test case 3", async () => {
+  it.only("Stress test case 3", async () => {
+
+
     const {
       future,
       longToken,
       shortToken
     } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address, {
-      depositPercentage: futureUtils.DENOMINATOR * 0.01,
-      amountOfTargetPerShare: 1,
+      depositPercentage: 0.1,
+      amountOfTargetPerShare: 2,
     });
 
     const investA = groupAll[0];
-    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 100);
-    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 100);
+    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 100, investA);
+    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 100, investA);
 
-    let targetPrice = futureData.defaultTargetPrice * 0.95;
-    await future.setTargetPrice(targetPrice);
-    await futureUtils.safeCheckPosition(future);
-    targetPrice = futureData.defaultTargetPrice * 1.05;
-    await future.setTargetPrice(targetPrice);
-    await futureUtils.safeCheckPosition(future);
+    // let targetPrice = futureData.defaultTargetPrice * 0.95;
+    // await future.setTargetPrice(targetPrice);
+    // await futureUtils.safeCheckPosition(future);
+    // targetPrice = futureData.defaultTargetPrice * 1.05;
+    // await future.setTargetPrice(targetPrice);
+    // await futureUtils.safeCheckPosition(future);
 
-    const txClear = await futureUtils.safeClear(future);
-    assert.ok(txClear, 'clear should be success');
+    // const txClear = await futureUtils.safeClear(future);
+    // assert.ok(txClear, 'clear should be success');
 
-    assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
-    const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    const txGetManagerFee = await future.getManagerFee(accumulatedFee);
-    assert.ok(txGetManagerFee);
+    // assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
+    // const accumulatedFee = (await future.accumulatedFee()).toNumber();
+    // const txGetManagerFee = await future.getManagerFee(accumulatedFee);
+    // assert.ok(txGetManagerFee);
 
   });
 
@@ -210,7 +211,7 @@ contract("Test Future MVP Clear special cases", accounts => {
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
 
-  it("Stress test case 4", async () => {
+  it.skip("Stress test case 4", async () => {
     const {
       future,
       longToken,
@@ -248,7 +249,7 @@ contract("Test Future MVP Clear special cases", accounts => {
   //  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
 
 
-  it("Stress test case 5", async () => {
+  it.skip("Stress test case 5", async () => {
     const {
       future,
       longToken,
@@ -259,20 +260,20 @@ contract("Test Future MVP Clear special cases", accounts => {
     });
 
 
-    // let targetPrice = futureData.defaultTargetPrice * (0.92 + (0.04 * Math.random()));
-    // await future.setTargetPrice(targetPrice);
-    // await futureUtils.safeCheckPosition(future);
-    // targetPrice = futureData.defaultTargetPrice * (1.02 + (0.04 * Math.random()));
-    // await future.setTargetPrice(targetPrice);
-    // await futureUtils.safeCheckPosition(future);
+    let targetPrice = futureData.defaultTargetPrice * (0.92 + (0.04 * Math.random()));
+    await future.setTargetPrice(targetPrice);
+    await futureUtils.safeCheckPosition(future);
+    targetPrice = futureData.defaultTargetPrice * (1.02 + (0.04 * Math.random()));
+    await future.setTargetPrice(targetPrice);
+    await futureUtils.safeCheckPosition(future);
 
-    // const txClear = await futureUtils.safeClear(future);
-    // assert.ok(txClear, 'clear should be success');
+    const txClear = await futureUtils.safeClear(future);
+    assert.ok(txClear, 'clear should be success');
 
-    // assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
-    // const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    // const txGetManagerFee = await future.getManagerFee(accumulatedFee);
-    // assert.ok(txGetManagerFee);
+    assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
+    const accumulatedFee = (await future.accumulatedFee()).toNumber();
+    const txGetManagerFee = await future.getManagerFee(accumulatedFee);
+    assert.ok(txGetManagerFee);
 
   });
 
@@ -286,7 +287,7 @@ contract("Test Future MVP Clear special cases", accounts => {
 
   // check position then change price.
 
-  it("Bot test case 1", async () => {
+  it.skip("Bot test case 1", async () => {
     const {
       future,
       longToken,
@@ -297,20 +298,20 @@ contract("Test Future MVP Clear special cases", accounts => {
     });
 
 
-    // let targetPrice = futureData.defaultTargetPrice * (0.92 + (0.04 * Math.random()));
-    // await future.setTargetPrice(targetPrice);
-    // await futureUtils.safeCheckPosition(future);
-    // targetPrice = futureData.defaultTargetPrice * (1.02 + (0.04 * Math.random()));
-    // await future.setTargetPrice(targetPrice);
-    // await futureUtils.safeCheckPosition(future);
+    let targetPrice = futureData.defaultTargetPrice * (0.92 + (0.04 * Math.random()));
+    await future.setTargetPrice(targetPrice);
+    await futureUtils.safeCheckPosition(future);
+    targetPrice = futureData.defaultTargetPrice * (1.02 + (0.04 * Math.random()));
+    await future.setTargetPrice(targetPrice);
+    await futureUtils.safeCheckPosition(future);
 
-    // const txClear = await futureUtils.safeClear(future);
-    // assert.ok(txClear, 'clear should be success');
+    const txClear = await futureUtils.safeClear(future);
+    assert.ok(txClear, 'clear should be success');
 
-    // assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
-    // const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    // const txGetManagerFee = await future.getManagerFee(accumulatedFee);
-    // assert.ok(txGetManagerFee);
+    assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
+    const accumulatedFee = (await future.accumulatedFee()).toNumber();
+    const txGetManagerFee = await future.getManagerFee(accumulatedFee);
+    assert.ok(txGetManagerFee);
 
   });
 

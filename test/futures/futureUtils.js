@@ -24,6 +24,7 @@ const futureData = {
   version: 'v0.2',
   target: 1,
   clearInterval: 2, // seconds
+  amountOfTargetPerShare: 2,
   depositPercentage: 0.1 * DENOMINATOR, // 1000 DENOMINATOR, 10%
   forceClosePositionDelta: 0.8 * DENOMINATOR,
   ethDeposit: 0.1, // 'ETHER'
@@ -74,10 +75,11 @@ module.exports = {
         depositPercentage,
         amountOfTargetPerShare,
       } = {
-        clearInterval: null,
+        clearInterval: undefined,
         depositPercentage: 0,
         amountOfTargetPerShare: 0
       }) => {
+
         const future = await FutureContract.new(
           futureData.name,
           futureData.description,
@@ -85,15 +87,17 @@ module.exports = {
 
           futureData.target,
           targetAddress,
-          amountOfTargetPerShare || futureData.amountOfTargetPerShare,
-          depositPercentage || futureData.depositPercentage,
+          futureData.amountOfTargetPerShare,
+          futureData.depositPercentage,
           futureData.forceClosePositionDelta
         );
 
-        await future.initialize(componentList.address, clearInterval === null ? futureData.clearInterval :
-          clearInterval, {
-            value: web3.toWei(futureData.ethDeposit, "ether")
-          });
+        const interval = (clearInterval === undefined) ? futureData.clearInterval :
+          clearInterval;
+
+        await future.initialize(componentList.address, interval, {
+          value: web3.toWei(futureData.ethDeposit, "ether")
+        });
 
         const longAddress = await future.getLongToken();
         const shortAddress = await future.getShortToken();
@@ -104,7 +108,7 @@ module.exports = {
         // Config for the stub
         await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, 0);
         await future.setTargetPrice(futureData.defaultTargetPrice);
-
+ 
         return {
           future,
           longToken,
@@ -135,33 +139,33 @@ module.exports = {
             return tx;
           },
           safeCheckPosition: async (future) => {
-            let tx;
-            while (!(await future.checkPosition.call())) {
-              console.log('checkPosition false');
-              tx = await future.checkPosition();
-            }
-            console.log('checkPosition true');
-            tx = await future.checkPosition();
-            return tx;
-          },
-          safeClear: async (future) => {
               let tx;
-              while (!(await future.clear.call())) {
-                console.log('clear false');
-                tx = await future.clear();
+              while (!(await future.checkPosition.call())) {
+                console.log('checkPosition false');
+                tx = await future.checkPosition();
               }
-              console.log('clear true');
-              tx = await future.clear();
+              console.log('checkPosition true');
+              tx = await future.checkPosition();
               return tx;
             },
-            /**
-             * @param token Token to get the list
-             * @param investor If investor is null will provided all tokens list.
-             */
-            validTokens: async (token, investor = null) => {
-              if (investor == null) {
-                return (await token.getValidTokens()).map((id) => id.toNumber());
+            safeClear: async (future) => {
+                let tx;
+                while (!(await future.clear.call())) {
+                  console.log('clear false');
+                  tx = await future.clear();
+                }
+                console.log('clear true');
+                tx = await future.clear();
+                return tx;
+              },
+              /**
+               * @param token Token to get the list
+               * @param investor If investor is null will provided all tokens list.
+               */
+              validTokens: async (token, investor = null) => {
+                if (investor == null) {
+                  return (await token.getValidTokens()).map((id) => id.toNumber());
+                }
+                return (await token.getValidTokenIdsByOwner(investor)).map((id) => id.toNumber());
               }
-              return (await token.getValidTokenIdsByOwner(investor)).map((id) => id.toNumber());
-            }
 }
