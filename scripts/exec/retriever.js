@@ -15,7 +15,13 @@ if (!fs.existsSync("./.temp")) {
 
 const names = ["OlympusBasicFund", "OlympusBasicIndex", "OlympusFund", "OlympusIndex"];
 const versionRegEx = /version = \"(.*)\"/gi;
-names.forEach(name => {
+const templateListJson = [];
+
+const getPath = (name, version) => {
+  return path.resolve("./.temp", name, version + ".json");
+};
+
+names.forEach((name, index) => {
   const json = require(path.resolve("./build/contracts", name + ".json"));
   const contract = fs.readFileSync(path.resolve("./contracts/olympusProtocols", name + ".sol"));
   const version = versionRegEx.exec(contract)[1] || "default";
@@ -31,11 +37,23 @@ names.forEach(name => {
     fs.mkdirSync(`./.temp/${name}`);
   }
 
-  fs.writeFile(path.resolve("./.temp", name, version + ".json"), JSON.stringify(data, null, 2), err => {
+  const jsonData = JSON.stringify(data, null, 2);
+  templateListJson.push(data);
+
+  fs.writeFile(getPath(name, version), jsonData, err => {
     if (err) {
       return console.error(err);
     }
 
+    fs.writeFile(getPath(name, "latest"), jsonData, () => {
+      console.log(`${name}-v${version} renamed to latest.json.`);
+    });
     console.log(`${name}-v${version} created.`);
   });
+
+  if (index == names.length - 1) {
+    fs.writeFile(path.resolve("./.temp/templateList.json"), JSON.stringify(templateListJson, null, 2), () => {
+      console.log("templateList.json created.");
+    });
+  }
 });
