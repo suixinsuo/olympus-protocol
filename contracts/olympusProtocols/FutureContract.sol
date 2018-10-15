@@ -66,6 +66,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
       string _name,
       string _description,
       string _symbol,
+      bytes32 _category,
       uint _target,
       address _targetAddress,
       uint _amountOfTargetPerShare,
@@ -75,6 +76,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         name = _name;
         description = _description;
         symbol = _symbol;
+        category = _category;
         target = _target;
         targetAddress = _targetAddress;
         amountOfTargetPerShare = _amountOfTargetPerShare;
@@ -82,6 +84,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         forceClosePositionDelta = _forceClosePositionDelta;
         //
         status = DerivativeStatus.New;
+        fundType = DerivativeType.Future;
     }
 
 

@@ -5,6 +5,7 @@ const {
   DerivativeProviders,
   DerivativeStatus,
   FutureDirection,
+  DerivativeType,
   CheckPositionPhases,
   ClearPositionPhases,
 } = require("../utils/constants");
@@ -50,6 +51,7 @@ contract("Test Future MVP", accounts => {
       futureData.name,
       futureData.description,
       futureData.symbol,
+      futureData.category,
 
       futureData.target,
       providers.mockMOT.address,
@@ -119,6 +121,7 @@ contract("Test Future MVP", accounts => {
     assert.equal(await future.name(), futureData.name);
     assert.equal(await future.description(), futureData.description);
     assert.equal(await future.symbol(), futureData.symbol);
+    assert.equal(calc.bytes32ToString(await future.category()), futureData.category);
     assert.equal(await future.version(), "v0.1");
     assert.equal(await future.getTarget(), futureData.target);
     assert.equal(await future.getTargetAddress(), providers.mockMOT.address);
@@ -126,6 +129,7 @@ contract("Test Future MVP", accounts => {
     assert.equal((await future.getAmountOfTargetPerShare()).toNumber(), futureData.amountOfTargetPerShare);
     assert.equal((await future.forceClosePositionDelta()).toNumber(), futureData.forceClosePositionDelta);
     assert.equal((await future.getDeliveryDate()).toNumber(), futureData.clearInterval);
+    assert.equal(await future.fundType(), DerivativeType.Future);
 
 
   });
@@ -147,7 +151,7 @@ contract("Test Future MVP", accounts => {
       futureData.name,
       futureData.description,
       futureData.symbol,
-
+      futureData.category,
       futureData.target,
       providers.mockMOT.address,
       futureData.amountOfTargetPerShare,

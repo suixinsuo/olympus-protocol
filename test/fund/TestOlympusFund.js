@@ -311,7 +311,10 @@ contract("Fund", accounts => {
 
     await calc.waitSeconds(interval);
     // Lock is over, we can witdraw again
+    // Withdraw with no requests
     tx = await fund.withdraw(); // This withdraw has the previus time lock , but will set a new one with 0
+
+    assert.equal(await stepProvider.status(fund.address, (await fund.WITHDRAW())), 0, 'Withdraw not steps finalize correctly');
     assert.ok(tx);
   });
 

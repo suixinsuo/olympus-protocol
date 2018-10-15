@@ -21,7 +21,7 @@ const futureData = {
   name: "Future Test",
   description: "Sample of future mvp",
   symbol: 'FTK',
-
+  category: 'General',
   version: 'v0.2',
   target: 1,
   clearInterval: 2, // seconds
@@ -71,7 +71,7 @@ module.exports = {
       futureData.name,
       futureData.description,
       futureData.symbol,
-
+      futureData.category,
       futureData.target,
       targetAddress,
       futureData.amountOfTargetPerShare,

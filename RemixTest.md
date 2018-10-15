@@ -10,9 +10,9 @@
 1. Create
 // Direction address is MOT, must be change later on
 `
-  "Test Future", "For testing purposes", "TFT", 1, 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a,  2, 100, 800
+  "Test Future", "For testing purposes", "TFT","0x696e646578", 1, 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a,  2, 100, 800
 
-"Test Future","For testing purposes","TFT","0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","2","1000","8000"
+"Test Future","For testing purposes","TFT","0x696e646578", "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","2","1000","8000"
 # Index
 
 1.  Create
