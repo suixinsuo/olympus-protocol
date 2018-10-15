@@ -152,7 +152,7 @@ module.exports = {
                 let tx;
                 while (!(await future.clear.call())) {
                   console.log('clear false');
-                  tx = await future.clear();
+                  // tx = await future.clear();
                 }
                 console.log('clear true');
                 tx = await future.clear();

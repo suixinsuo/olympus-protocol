@@ -34,7 +34,7 @@ contract("Test Future MVP Stress", accounts => {
   });
 
   // ----------------------------- REQUIRED FOR CREATION ----------------------
-  it.only("Create a future", async () => {
+  it("Create a future", async () => {
     const {
       future,
       longToken,
@@ -108,7 +108,7 @@ contract("Test Future MVP Stress", accounts => {
     const accumulatedFee = (await future.accumulatedFee()).toNumber();
     const txGetManagerFee = await future.getManagerFee(accumulatedFee);
     assert.ok(txGetManagerFee);
-    assert.equal((await web3.eth.getBalance(future.address)).toString(), 0, 'Future should be empty');
+    assert.equal((await web3.eth.getBalance(future.address)).toString(), 0, 'Future should be empty');  // sometimes balance remain (800)
     assert.equal((await future.accumulatedFee()).toNumber(), 0, 'Accumulated fee should be withdrawn');
 
   });
@@ -148,15 +148,16 @@ contract("Test Future MVP Stress", accounts => {
       await future.setTargetPrice(targetPrice);
       await futureUtils.safeCheckPosition(future);
     }
+    console.log('safeClear ...');
 
-    const txClear = await futureUtils.safeClear(future);
+    const txClear = await futureUtils.safeClear(future); // sometime can't not clear.
     assert.ok(txClear, 'clear should be success');
 
+    console.log('safeClear done');
     assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
     const accumulatedFee = (await future.accumulatedFee()).toNumber();
     const txGetManagerFee = await future.getManagerFee(accumulatedFee);
     assert.ok(txGetManagerFee);
-
 
   });
 
@@ -170,20 +171,37 @@ contract("Test Future MVP Stress", accounts => {
   //  investor LONG gets all winner balance.
 
   it.only("Stress test case 3", async () => {
-
-
     const {
       future,
       longToken,
       shortToken
     } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address, {
       depositPercentage: 0.1,
-      amountOfTargetPerShare: 2,
+      amountOfTargetPerShare: 2,  
     });
 
     const investA = groupAll[0];
     const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 100, investA);
     const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 100, investA);
+
+    console.log('future created');
+    // await Promise.all(
+    //   groupAll.map(
+    //     async (account, index) => {
+    //       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+    //       await future.setTargetPrice(targetPrice);
+
+    //       const txLong = await futureUtils.safeInvest(future, FutureDirection.Short, 100,
+    //         account);
+    //       assert.ok(txLong, 'invest should not be revert');
+    //       const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 100,
+    //         account);
+    //       assert.ok(txShort, 'invest should not be revert');
+    //     }
+    //   )
+    // );
+
+    // console.log('invested');
 
     // let targetPrice = futureData.defaultTargetPrice * 0.95;
     // await future.setTargetPrice(targetPrice);
