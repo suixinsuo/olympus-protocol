@@ -39,7 +39,6 @@
   "dependencies": {
     "aws-sdk": "^2.255.1",
     "bluebird": "^3.5.1",
-    "chainlink": "https://github.com/smartcontractkit/chainlink.git",
     "crypto-js": "^3.1.9-1",
     "eth-gas-reporter": "^0.1.7",
     "lodash": "^4.17.10",
