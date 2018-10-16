@@ -57,6 +57,7 @@ deploy:
   before_script:
     - apk add --no-cache nodejs nodejs-npm git python g++ make openssh-client
     - node scripts/exec/retriever
+    - node scripts/exec/markdown_parser
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 700 ~/.ssh/id_rsa
