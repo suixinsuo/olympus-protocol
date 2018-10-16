@@ -67,15 +67,15 @@ function invest() public payable
     returns(bool);
 ```
 
-####  Description
+#### Description
 
 > Invest in the fund by calling the invest function while sending Ether to the fund. If the whitelist is enabled, it will check if the investor's address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 > The code below shows how to call this function with Web3.
 
@@ -99,15 +99,15 @@ if (err) {
 function getTokens() external view returns(address[], uint[]);
 ```
 
-####  Description
+#### Description
 
 Call the function to get all the underlying tokens with their amounts.
 
-####  Returns
+#### Returns
 
 > Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -132,15 +132,15 @@ function tokensWithAmount() public view
     returns( ERC20Extended[] memory);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
 
-####  Returns
+#### Returns
 
 > Array of the actual active tokens with amounts.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -164,15 +164,15 @@ fundContract.tokensWithAmount((err, result) => {
 function getPrice() public view returns(uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the unit price of the fund.
 
-####  Returns
+#### Returns
 
 > The unit price of the fund.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -196,15 +196,15 @@ fundContract.getPrice((err, result) => {
 function getAssetsValue() public view returns (uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the total value calculated based on the value of the fund's underlying assets.
 
-####  Returns
+#### Returns
 
 > The total value calculated based on the value of the fund's underlying assets.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -228,15 +228,15 @@ fundContract.getAssetsValue((err, result) => {
 function getETHBalance() public view returns(uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the remaining ETH balance of the fund, the accumulated fee has been deducted.
 
-####  Returns
+#### Returns
 
 > The remaining ETH balance of the fund.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -260,15 +260,15 @@ fundContract.getETHBalance((err, result) => {
 function getActiveInvestors() external view returns(address[]);
 ```
 
-####  Description
+#### Description
 
 Call the function to get all the active investors.
 
-####  Returns
+#### Returns
 
 > Array of all the active investors' addresses.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -295,15 +295,15 @@ function requestWithdraw(uint amount) external
     getPrice());
 ```
 
-####  Description
+#### Description
 
-> Investor can use this function to request withdraw of a certain amount of his investment.(Note: The investment will be withdrawn after the fund manager or bot system executes the withdraw function.)
+Investor can use this function to request withdraw of a certain amount of his investment.(Note: The investment will be withdrawn after the fund manager or bot system executes the withdraw function.)
 
-####  Parameters
+#### Parameters
 
 > amount: Amount of fund tokens the investor would like to withdraw.
 
-####  Example code
+#### Example code
 
 > The code below shows how to call this function with Web3.
 

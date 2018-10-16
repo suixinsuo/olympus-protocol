@@ -1,23 +1,26 @@
-ProductList
-===========
+Product List
+============
 
 [TOC]
 
-ProductList is a storage smart contract that stores the addresses of all initialized funds and indices. Funds and indexes will be stored in the ProductList when the initialize function is executed. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
+Product List is a storage smart contract that stores the addresses of all initialized funds and indices. Funds and indexes will be stored in the ProductList when the initialize function is executed. The document serves as a guideline to build applications and tools to serve a new rising group of cryptocurrency product creators and investment managers.
 
-### Get the productListAddress
+Get the productListAddress
+--------------------------
 
-> To use the Product List, first of all, you will have to get the productListAddress from the ComponentList contract.
+To use the Product List, first of all, you will have to get the productListAddress from the ComponentList contract.
 
-####  Example code
+#### Example code
 
 > The code below shows how to get the productListAddress with Web3.
 
 ``` {.sourceCode .javascript}
 const productListName = web3.fromAscii('Marketplace');
-const componentListContract = web3.eth.contract(abi).at(componentListAddress);
+const componentListContract = web3.eth.contract(abi)
+    .at(componentListAddress);
 const productListAddress;
-componentListContract.getComponentByName(productListName,(err, address)=>{
+componentListContract.getComponentByName(productListName,
+    (err, address)=>{
     if (err) {
         return console.error(err);
     }
@@ -27,32 +30,38 @@ componentListContract.getComponentByName(productListName,(err, address)=>{
 
 ### Interface
 
-#### 1. getAllProducts
+1. getAllProducts
+-----------------
 
 ``` {.sourceCode .javascript}
-function getAllProducts() external view returns (address[] allProducts);
+function getAllProducts()
+    external view returns (address[] allProducts);
 ```
 
-####  Description
+#### Description
 
-> Call this function to get all products (including funds and indexes) that are in the product list.
+Call this function to get all products (including funds and indexes) that are in the product list.
 
-####  Example code
+#### Example code
 
 > The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const productListContract = web3.eth.contract(abi).at(productListAddress);
+const web3 = new Web3
+    (new Web3.providers.HttpProvider("http://localhost:8545"));
+const productListContract = web3.eth.contract(abi)
+    .at(productListAddress);
 
 productListContract.getAllProducts((err,productAddresses) => {
     if (err) {
     return console.error(err);
     }
     console.log(productAddresses);
-    // We can use the following code to distinguish between index and fund addresses.
-    const indexContract = web3.eth.contract(indexAbi).at(productAddresses[0])
+    // We can use the following code to distinguish
+    // between index and fund addresses.
+    const indexContract = web3.eth.contract(indexAbi)
+    .at(productAddresses[0])
     indexContract.fundType((err,fundType)=>{
         if (err) {
         return console.error(err);
@@ -67,7 +76,8 @@ productListContract.getAllProducts((err,productAddresses) => {
 
     })
     // Or
-    const fundContract = web3.eth.contract(fundAbi).at(productAddresses[0])
+    const fundContract = web3.eth.contract(fundAbi)
+    .at(productAddresses[0])
     fundContract.fundType((err,fundType)=>{
         if (err) {
         return console.error(err);
@@ -83,24 +93,28 @@ productListContract.getAllProducts((err,productAddresses) => {
 });
 ```
 
-#### 2. getOwnProducts
+2. getOwnProducts
+-----------------
 
 ``` {.sourceCode .javascript}
-function getOwnProducts() external view returns (address[] addresses) ;
+function getOwnProducts()
+    external view returns (address[] addresses);
 ```
 
-####  Description
+#### Description
 
-> Call this function to get a creator's products (including fund and index) that are in the product list.
+Call this function to get a creator's products (including fund and index) that are in the product list.
 
-####  Example code
+#### Example code
 
 > The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-const productListContract = web3.eth.contract(abi).at(address);
+const web3 = new Web3
+    (new Web3.providers.HttpProvider("http://localhost:8545"));
+const productListContract = web3.eth.contract(abi)
+    .at(address);
 
 productListContract.getOwnProducts((err,productAddresses) => {
     if (err) {
@@ -112,8 +126,8 @@ productListContract.getOwnProducts((err,productAddresses) => {
 
 ### abi & bytecode
 
-> You can get the [abi & bytecode](../contracts/templateList.json) from our API.
+> You can get the [abi & bytecode](../api.html) from our API.
 
 ### component list address
 
-> You can get the [componentListAddress](../pages/deployedAddress.html) from the deployed productAddresses
+> You can get the [componentListAddress](../../pages/deployedaddress.html) from the deployed productAddresses
