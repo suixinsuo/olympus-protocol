@@ -9,7 +9,7 @@ A cryptocurrency index is a vehicle that allows investors to mimic the investmen
 
 ### Basic info
 
-> The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
+The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -65,7 +65,7 @@ function invest() public payable returns(bool);
 
 #### Description
 
-> Invest in the index by calling the invest function while sending Ether to the index.
+Invest in the index by calling the invest function while sending Ether to the index.
 
 #### Returns
 
@@ -73,7 +73,7 @@ function invest() public payable returns(bool);
 
 #### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -298,7 +298,7 @@ This function is for investors to withdraw all of their investment.
 
 #### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");

@@ -9,7 +9,7 @@ A cryptocurrency fund is a vehicle that allows an investment manager to pool tog
 
 ### Basic info
 
-> The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
+The code below shows how to get fund's basic information, including fund's name, symbol, description, category and decimals.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -74,7 +74,7 @@ Invest in the fund by calling the invest function while sending Ether to the fun
 
 #### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -267,7 +267,7 @@ This function is for investors to withdraw all of their investment.
 
 #### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");

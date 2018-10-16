@@ -9,11 +9,11 @@ ProductList is a storage that stores all of the funds and indices. The document 
 
 ### Get the productListAddress
 
-> To use the ProductList, you will first need to get the productListAddress from the ComponentList contract.
+To use the ProductList, you will first need to get the productListAddress from the ComponentList contract.
 
 #### Example code
 
-> The code below shows how to get the productListAddress with Web3.
+The code below shows how to get the productListAddress with Web3.
 
 ``` {.sourceCode .javascript}
 const productListName = web3.fromAscii('Marketplace');
@@ -44,7 +44,7 @@ Call this function to get all of the products (including funds and indexes) that
 
 #### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");

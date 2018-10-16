@@ -9,7 +9,7 @@ A cryptocurrency index is a vehicle that allows investors to mimic the investmen
 
 ### Basic info
 
-> The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
+The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -69,7 +69,7 @@ function invest() public payable
 
 #### Description
 
-> Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if the investor's address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
+Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if the investor's address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
 
 #### Returns
 
@@ -77,7 +77,7 @@ function invest() public payable
 
 #### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -266,7 +266,7 @@ function requestWithdraw(uint amount) external
 
 #### Description
 
-> Investors can use this function to request withdrawal of a certain amount of his investment. (Note: The investment will be withdrawn after the index manager or a bot system executes the withdraw function.)
+Investors can use this function to request withdrawal of a certain amount of his investment. (Note: The investment will be withdrawn after the index manager or a bot system executes the withdraw function.)
 
 #### Parameters
 
@@ -274,7 +274,7 @@ function requestWithdraw(uint amount) external
 
 #### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
