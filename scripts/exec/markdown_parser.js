@@ -36,7 +36,7 @@ const selectAPIKey = async () => {
 }
 
 
-const run = async (key) => {
+const parseMarkdown = async (key) => {
 
   // Make sure folder structure exists
   folders.forEach((folder) => {
@@ -45,18 +45,18 @@ const run = async (key) => {
   })
 
 
-  const counter = 0; // Of conversion
+  let counter = 0; // Of conversion
 
-  folders.forEach((folder) => {
+  for (const folder of folders) {
     const files = filterFiles(folder, fs.readdirSync(`./docs/${folder}`));
 
-    files.forEach(async (file) => {
+    for (const file of files) {
       const success = await convertFile(key, folder, file.slice(0, -3));
       if (success) { counter++; }
-    })
+    }
 
 
-  });
+  };
   return counter;
 }
 
@@ -77,6 +77,7 @@ const filterFiles = (folder, files) => {
     // Compare the hashes to find if there is any difference
     const originHash = crypto.createHash('md5').update(fs.readFileSync(originPath)).digest('hex');
     const latestHash = crypto.createHash('md5').update(fs.readFileSync(latestPath)).digest('hex');
+    fs.copyFileSync(originPath, latestPath); // Updated the latest
     return originHash !== latestHash; // The original has changed
   });
 
@@ -85,21 +86,23 @@ const filterFiles = (folder, files) => {
 
 const convertFile = async (key, folder, name) => {
   const cloudconvert = new (require('cloudconvert'))(key);
+  console.log('Converting File', folder, name);
 
-  return fs.createReadStream(`./docs/${folder}${name}.md`)
+  return new Promise((resolve, _reject) => fs.createReadStream(`./docs/${folder}${name}.md`)
     .pipe(cloudconvert.convert({
       inputformat: "md",
       outputformat: "html",
       input: "upload"
     }))
-    .pipe(fs.createWriteStream(`./docs/build/${folder}${name}.html`))
+    .pipe(fs.createWriteStream(`./docs/build/${folder}${name}.html`, { flags: 'w' }))
     .on('finish', function (error) {
-      return true;
+      console.log('Finished', folder, name);
+      resolve(true);
     })
     .on('error', function (error) {
       handleError(`Error while converting ${folder}${name}`, error)
-      return false;
-    });
+      resolve(false);
+    }));
 }
 
 const handleError = (stage, err) => {
@@ -124,18 +127,19 @@ const handleError = (stage, err) => {
 
 
 // RUN
-
-console.log(`Executing Mark Down converter`);
-selectAPIKey()
-  .then((api_key) => {
+const run = async () => {
+  try {
+    const api_key = await selectAPIKey();
     console.log(`Using KEY  ${api_key} for conversion`);
-    return run(api_key);
-  })
-  .then((counter) => {
+
+    const counter = await parseMarkdown(api_key);
     console.log(`Conversion finished with ${counter} documents converted`);
-    return 0;
-  })
-  .catch((e) => {
+
+  } catch (e) {
     console.error('Error on conversion:', e);
-    return -1;
-  });
+    process.exit(-1);
+  };
+}
+
+
+run();
