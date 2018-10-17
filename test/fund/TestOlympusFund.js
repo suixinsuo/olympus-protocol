@@ -211,6 +211,8 @@ contract("Fund", accounts => {
     assert.equal((await fund.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
     assert.equal(await fund.activeInvestors(0), investorB, "Investor B is still active");
 
+    await assertReverts(async () => await fund.close(), 'Can`t close while mutex is busy');
+
     // Cant request while withdrawing
     await calc.assertReverts(
       async () => await fund.requestWithdraw(toTokenWei(1), { from: investorA }),
@@ -498,6 +500,7 @@ contract("Fund", accounts => {
     // GET ETH steps is 1, need 2 times to sell all 2 tokens, and in the second will withdraw
     tx = await fund.withdraw();
     // getTokens will return amounts, but they are not updated til the steps are finished.
+    await assertReverts(async () => await fund.close(), 'Can`t close while mutex is busy');
     // So that we check directly the balance of erc20
     assert.equal((await token0_erc20.balanceOf(fund.address)).toNumber(), 0, "First step sell 1st token");
     assert.isAbove((await token1_erc20.balanceOf(fund.address)).toNumber(), 0, "First step dont sell 2nd token");
@@ -543,6 +546,8 @@ contract("Fund", accounts => {
     await fund.close(); // Just set to close but not sell
 
     await fund.sellAllTokensOnClosedFund(); // Owner can sell tokens after close
+
+    await assertReverts(async () => await fund.close(), 'Can`t close while mutex is busy');
 
     // getTokens will return amounts, but they are not updated til the steps are finished.
     // So that we check directly the balance of erc20

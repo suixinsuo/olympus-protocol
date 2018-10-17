@@ -281,6 +281,9 @@ contract("Olympus Index", accounts => {
     await index.setMultipleTimeIntervals([await index.REBALANCE()], [TIME_LOCK_TEST_SECONDS]);
     while (rebalanceFinished == false) {
       rebalanceFinished = await index.rebalance.call();
+      if (!rebalanceFinished) {
+        await assertReverts(async () => await index.close(), 'Can`t close while mutex is busy');
+      }
       tx = await index.rebalance();
       assert.ok(tx);
     }
@@ -328,6 +331,8 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1), " B has no withdrawn");
+
+    await assertReverts(async () => await index.close(), 'Can`t close while mutex is busy');
 
     // Second withdraw succeeds
     tx = await index.withdraw();
@@ -476,6 +481,8 @@ contract("Olympus Index", accounts => {
     await index.setMaxSteps(await index.BUYTOKENS(), 1); // 2 tokens need to calls
     await index.buyTokens();
     const status = await stepProvider.status.call(index.address, await index.BUYTOKENS());
+    await assertReverts(async () => await index.close(), 'Can`t close while mutex is busy');
+
     assert.equal(status.toNumber(), 1, "Buy is in progress");
     await index.buyTokens();
 
@@ -515,6 +522,8 @@ contract("Olympus Index", accounts => {
     await index.requestWithdraw(toTokenWei(1.8), { from: investorA });
     tx = await index.withdraw();
     // getTokens will return amounts, but they are not updated til the steps are finished.
+    await assertReverts(async () => await index.close(), 'Can`t close while mutex is busy');
+
     // So that we check directly the balance of erc20
     assert.equal((await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
     assert.isAbove((await token1_erc20.balanceOf(index.address)).toNumber(), 0, "First step dont sell 2nd token");
@@ -651,6 +660,9 @@ contract("Olympus Index", accounts => {
     await index.close(); // Thats only closing, not selling tokens
 
     await index.sellAllTokensOnClosedFund(); // Owner can sell tokens after close
+
+    await assertReverts(async () => await index.close(), 'Can`t close while mutex is busy');
+
     // getTokens will return amounts, but they are not updated til the steps are finished.
     // So that we check directly the balance of erc20
     assert.equal((await token0_erc20.balanceOf(index.address)).toNumber(), 0, "First step sell 1st token");
