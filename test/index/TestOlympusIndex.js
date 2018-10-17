@@ -26,7 +26,7 @@ const Reimbursable = artifacts.require("Reimbursable");
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
 const MockKyberNetwork = artifacts.require("../contracts/components/exchange/exchanges/MockKyberNetwork");
 const ERC20 = artifacts.require("../contracts/libs/ERC20Extended");
-
+const TIME_LOCK_TEST_SECONDS = 5;
 const indexData = {
   name: "OlympusIndex",
   symbol: "OlympusIndex",
@@ -38,9 +38,9 @@ const indexData = {
   wrongEthDeposit: 0.05,
   ethDeposit: 0.5, // ETH
   weights: [50, 50],
-  tokensLenght: 2,
+  tokensLength: 2,
   maxTransfers: 10,
-  rebalanceDelta: 30
+  rebalanceDelta: 0.003 * 10 ** 18
 };
 const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
@@ -83,9 +83,9 @@ contract("Olympus Index", accounts => {
   const investorB = accounts[2];
   const investorC = accounts[3];
 
-  before("Initalize tokens", async () => {
+  before("Initialize tokens", async () => {
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = await mockKyber.supportedTokens();
+    tokens = (await mockKyber.supportedTokens()).slice(0, 2);
 
     market = await Marketplace.deployed();
     mockMOT = await MockToken.deployed();
@@ -129,11 +129,47 @@ contract("Olympus Index", accounts => {
           indexData.description,
           indexData.category,
           indexData.decimals,
-          tokens.slice(0, indexData.tokensLenght),
-          []
+          tokens.slice(0, indexData.tokensLength),
+          [],
+          { gas: 8e6 } // At the moment require 6.7M
         ),
       "Shall revert"
     ));
+
+  it("Required tokens to be ERC20Extended Standard", async () =>
+    await calc.assertReverts(
+      async () =>
+        await OlympusIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          [rebalance.address, asyncWithdraw.address], // NOT erc20
+          indexData.weights,
+          { gas: 8e6 } // At the moment require 6.7M
+        ),
+      "Shall revert"
+    ));
+
+  it("Required tokens cant have more than 18 decimals", async () => {
+    const token20Decimals = await MockToken.new("20 DECIMALS", "T20", 20, 10 ** 32);
+
+    await calc.assertReverts(
+      async () =>
+        await OlympusIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          [tokens[0], token20Decimals.address], // Second token has more than 18 deciamls
+          [30, 70],
+          { gas: 8e6 } // At the moment require 6.7M
+        ),
+      "Shall revert"
+    );
+  });
 
   it("Create a index", async () => {
     index = await OlympusIndex.new(
@@ -142,7 +178,7 @@ contract("Olympus Index", accounts => {
       indexData.description,
       indexData.category,
       indexData.decimals,
-      tokens.slice(0, indexData.tokensLenght),
+      tokens.slice(0, indexData.tokensLength),
       indexData.weights,
       { gas: 8e6 } // At the moment require 6.7M
     );
@@ -169,7 +205,7 @@ contract("Olympus Index", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], index.address);
     assert.equal((await index.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not taken in account in the price but as a fee
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
     assert.equal((await index.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
   });
@@ -207,14 +243,13 @@ contract("Olympus Index", accounts => {
   it("Index shall be able to deploy", async () => {
     assert.equal(await index.name(), indexData.name);
     assert.equal(await index.description(), indexData.description);
-    assert.equal(await index.category(), indexData.category);
+    assert.equal(calc.bytes32ToString(await index.category()), indexData.category);
     assert.equal(await index.symbol(), indexData.symbol);
-    assert.equal(await index.version(), "1.0");
     assert.equal((await index.fundType()).toNumber(), DerivativeType.Index);
     assert.equal((await index.totalSupply()).toNumber(), 0);
     const [indexTokens, weights] = await index.getTokens();
 
-    for (let i = 0; i < indexData.tokensLenght; i++) {
+    for (let i = 0; i < indexData.tokensLength; i++) {
       assert.equal(tokens[i], indexTokens[i], "Token is set correctly");
       assert.equal(indexData.weights[i], weights[i].toNumber(), "Weight is set correctly");
     }
@@ -242,6 +277,8 @@ contract("Olympus Index", accounts => {
   it("Rebalance works with no tokens", async () => {
     let tx;
     let rebalanceFinished = false;
+    // Set the interval for TIME_LOCK_TEST_SECONDS seconds, so the next test can test the timeLock
+    await index.setMultipleTimeIntervals([await index.REBALANCE()], [TIME_LOCK_TEST_SECONDS]);
     while (rebalanceFinished == false) {
       rebalanceFinished = await index.rebalance.call();
       tx = await index.rebalance();
@@ -255,8 +292,9 @@ contract("Olympus Index", accounts => {
   });
 
   it("Can't rebalance so frequently", async () => {
-    await calc.assertReverts(async () => await index.rebalance(), "Should be reverted");
-    // disable the lock
+    await calc.assertReverts(async () => await index.rebalance(), "Should be reverted because of the time lock");
+    // disable the lock, wait TIME_LOCK_TEST_SECONDS seconds to make sure the previous time lock is expired.
+    await calc.waitSeconds(TIME_LOCK_TEST_SECONDS);
     await index.setMultipleTimeIntervals([await index.REBALANCE()], [0]);
   });
 
@@ -318,7 +356,6 @@ contract("Olympus Index", accounts => {
     // Request is always allowed
     await index.requestWithdraw(toTokenWei(1), { from: investorA });
     await index.requestWithdraw(toTokenWei(1), { from: investorB });
-
     tx = await index.withdraw();
 
     assert.equal((await index.balanceOf(investorA)).toNumber(), 0, " A has withdrawn");
@@ -328,12 +365,10 @@ contract("Olympus Index", accounts => {
     await index.setAllowed([investorA, investorB], WhitelistType.Investment, false);
     await index.enableWhitelist(WhitelistType.Investment, false);
   });
-
   // In this scenario, there are not request, but is enought to check the modifier
   it("Shall be able to execute mainetnance operations while whitelisted", async () => {
     const bot = accounts[4];
     let tx;
-
     // Only owner is allowed
     await calc.assertReverts(async () => await index.withdraw({ from: bot }), "Whitdraw (only owner)");
     await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Whitdraw (only owner)");
@@ -347,8 +382,7 @@ contract("Olympus Index", accounts => {
 
     await index.setAllowed([bot], WhitelistType.Maintenance, true);
     tx = await index.withdraw({ from: bot });
-    tx = await index.rebalance({ from: bot });
-
+    // tx = await index.rebalance({ from: bot });
     // Permissions removed
     await index.setAllowed([bot], WhitelistType.Maintenance, false);
     await calc.assertReverts(async () => await index.withdraw({ from: bot }), "Is not allowed to withdraw");
@@ -370,7 +404,6 @@ contract("Olympus Index", accounts => {
 
     await index.requestWithdraw(toTokenWei(1), { from: investorA });
     await index.requestWithdraw(toTokenWei(1), { from: investorB });
-
     await index.withdraw();
     assert.notEqual((await index.balanceOf(investorB)).toNumber(), 0, " B hasn't withdraw yet, step 1/2");
     await index.withdraw(); // Lock is active, but multistep also
@@ -383,7 +416,11 @@ contract("Olympus Index", accounts => {
 
     await calc.waitSeconds(interval);
     // Lock is over, we can witdraw again
+    // Check also withdraw with no requests
     tx = await index.withdraw(); // This withdraw has the previus time lock , but will set a new one with 0
+
+    assert.equal(await stepProvider.status(index.address, (await index.WITHDRAW())), 0, 'Withdraw not steps finalize correctly');
+
     assert.ok(tx);
   });
 
@@ -545,6 +582,47 @@ contract("Olympus Index", accounts => {
     );
     assert.ok(priceInRange, "Price updated");
   });
+  it("Shall be able to execute rebalance operations while whitelisted", async () => {
+    let tx;
+    let tokenAmounts;
+    // Invest and get initial data
+    await index.invest({ value: web3.toWei(1, "ether"), from: investorA });
+    const initialIndexBalance = (await index.getETHBalance()).toNumber();
+    const rates = await Promise.all(
+      tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
+    );
+    const extraAmount = +web3.toWei(1, "ether");
+    // Buy tokens and sent to index, forcing increase his total assets value
+    tx = await index.buyTokens();
+    assert.ok(tx);
+
+    assert.equal((await index.getETHBalance()).toNumber(), 0, "ETH used to buy"); // All ETH has been sald
+    const initialAssetsValue = +(await index.getAssetsValue()).toNumber();
+
+    exchange.buyToken(tokens[0], extraAmount, 0, index.address, 0x0, {
+      value: extraAmount
+    });
+    const endTotalAssetsValue = (await index.getAssetsValue()).toNumber();
+    assert.equal(endTotalAssetsValue, initialAssetsValue + extraAmount, "Increased Assets Value");
+    // Execute Rebalance
+    // Make sure it has to do multiple calls
+    await index.setMaxSteps(DerivativeProviders.REBALANCE, 1);
+
+    const bot = accounts[4];
+    await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Whitdraw (only owner)");
+    await index.enableWhitelist(WhitelistType.Maintenance, true);
+    await index.setAllowed([bot], WhitelistType.Maintenance, true);
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call({ from: bot });
+      tx = await index.rebalance({ from: bot });
+      assert.ok(tx);
+    }
+    await index.setAllowed([bot], WhitelistType.Maintenance, false);
+    await calc.assertReverts(async () => await index.rebalance({ from: bot }), "Is not allowed to rebalance");
+    // // //Reset
+    await index.enableWhitelist(WhitelistType.Maintenance, true);
+  });
 
   it("Shall be able to close (by step) a index", async () => {
     const bot = investorA;
@@ -597,7 +675,7 @@ contract("Olympus Index", accounts => {
 
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, " Status is closed");
     // TODO VERIFY TOKENS ARE SOLD (refactor with getTokensAndAmounts())
-    for (let i = 0; i < indexData.tokensLenght; i++) {
+    for (let i = 0; i < indexData.tokensLength; i++) {
       let erc20 = await ERC20.at(tokens[i]);
       let balance = await erc20.balanceOf(index.address);
       assert.equal(balance.toNumber(), 0, "Tokens are sold");

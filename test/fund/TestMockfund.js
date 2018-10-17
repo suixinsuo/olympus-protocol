@@ -33,7 +33,7 @@ contract("Mock Fund", accounts => {
     exchange = await ExchangeProvider.deployed();
     await exchange.setMotAddress(mockMOT.address);
 
-    tokens = await mockKyber.supportedTokens();
+    tokens = (await mockKyber.supportedTokens()).slice(0,2);
 
     fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, exchange.address);
   });

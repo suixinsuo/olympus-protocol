@@ -21,7 +21,5 @@ contract MockRiskControl is MockDerivative  {
     function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
         return riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
     }
-
-    event LogNumber(string _text, uint _number);
 }
 

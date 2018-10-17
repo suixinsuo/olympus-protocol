@@ -1,4 +1,5 @@
 const log = require("../utils/log");
+const calc = require("../utils/calc");
 const MockWithdraw = artifacts.require("MockWithdrawClient");
 const AsyncWithdraw = artifacts.require("../../contracts/components/widrwaw/AsyncWithdraw.sol");
 const SimpleWithdraw = artifacts.require("../../contracts/components/widrwaw/SimpleWithdraw.sol");
@@ -15,7 +16,7 @@ contract("Withdraw", accounts => {
 
   before("Run marketplace", async () => {
     asyncWithdraw = await AsyncWithdraw.deployed();
-    let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
+    let mockMot = await MockToken.new("", "MOT", calc.getRandomDecimals(), 10 ** 9 * 10 ** 18);
     await asyncWithdraw.setMotAddress(mockMot.address);
   });
 
@@ -77,7 +78,7 @@ contract("Withdraw", accounts => {
   });
 
   it("Most simple implementation of withdraw", async () => {
-    let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
+    let mockMot = await MockToken.new("", "MOT", calc.getRandomDecimals(), 10 ** 9 * 10 ** 18);
     const instance = await SimpleWithdraw.deployed();
     await instance.setMotAddress(mockMot.address);
 

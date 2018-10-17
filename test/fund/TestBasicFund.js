@@ -17,7 +17,7 @@ const fundData = {
   symbol: "MBF",
   category: "Tests",
   description: "Sample of base fund",
-  decimals: 18,
+  decimals: 18
 };
 
 const toTokenWei = amount => {
@@ -37,11 +37,12 @@ contract("BasicFund", accounts => {
   const investorA = accounts[1];
   const investorB = accounts[2];
   const investorC = accounts[3];
+
   before("Set Component list", async () => {
     mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = await mockKyber.supportedTokens();
+    tokens = (await mockKyber.supportedTokens()).slice(0, 2);
     exchange = await ExchangeProvider.deployed();
     asyncWithdraw = await AsyncWithdraw.deployed();
     componentList = await ComponentList.deployed();
@@ -55,13 +56,7 @@ contract("BasicFund", accounts => {
   });
 
   it("Create a fund", async () => {
-    fund = await Fund.new(
-      fundData.name,
-      fundData.symbol,
-      fundData.description,
-      fundData.category,
-      fundData.decimals
-    );
+    fund = await Fund.new(fundData.name, fundData.symbol, fundData.description, fundData.category, fundData.decimals);
     assert.equal((await fund.status()).toNumber(), 0); // new
 
     await calc.assertReverts(async () => await fund.changeStatus(DerivativeStatus.Active), "Must be still new");
@@ -72,7 +67,7 @@ contract("BasicFund", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], fund.address);
     assert.equal((await fund.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not took in account in the price but as a fee
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
   });
 
@@ -100,8 +95,7 @@ contract("BasicFund", accounts => {
     assert.equal(await fund.name(), fundData.name);
     assert.equal(await fund.description(), fundData.description);
     assert.equal(await fund.symbol(), fundData.symbol);
-    assert.equal(await fund.category(), fundData.category);
-    assert.equal(await fund.version(), "1.0");
+    assert.equal(calc.bytes32ToString(await fund.category()), fundData.category);
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
 
@@ -167,12 +161,26 @@ contract("BasicFund", accounts => {
 
     await calc.assertReverts(
       async () => await fund.buyTokens(0x0, tokens, amounts, rates.map(rate => rate[0])),
-      "reverte if fund balance is not enough"
+      "revert if fund balance is not enough"
     );
   });
 
+  it("Buy tokens fails if token has more than 18 decimals", async () => {
+
+    const fundBalance = (await fund.getETHBalance()).toNumber();
+    assert.isAbove(fundBalance, 0, "This test must start with some ETH invested eth");
+
+    const token20Decimals = await MockToken.new("20 DECIMALS", "T20", 20, 10 ** 32);
+
+    await calc.assertReverts(
+      async () => await fund.buyTokens(0x0, [token20Decimals.address], [fundBalance], [0]),
+      "Revert buy tokens with more than 18 decimals"
+    );
+  });
+
+
   it("Shall be able to buy tokens", async () => {
-    // From the preivus test we got 1.8 ETH
+    // From the previous test we got 1.8 ETH
     const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
     assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
 
@@ -200,9 +208,21 @@ contract("BasicFund", accounts => {
     assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(0.8, "ether"), "ETH balance reduced");
   });
 
+  it("Shall be able to support token swap", async () => {
+    let token0 = await ERC20.at(tokens[0]);
+    let token1 = await ERC20.at(tokens[1]);
+    let beforebalance0 = await token0.balanceOf(fund.address);
+    let beforebalance1 = await token1.balanceOf(fund.address);
+    await fund.tokenSwap("", tokens[0], tokens[1], 100 * 10 ** 18, 10 ** 18);
+    let afterbalance0 = await token0.balanceOf(fund.address);
+    let afterbalance1 = await token1.balanceOf(fund.address);
+    assert.equal(beforebalance0 - afterbalance0, 100 * 10 ** 18, "Token Swap");
+    assert.equal(afterbalance1 - beforebalance1, 100 * 10 ** 18, "Token Swap");
+  });
+
   it("Shall be able to sell tokens", async () => {
     let tx;
-    // From the preivus test we got 1.8 ETH
+    // From the previous test we got 1.8 ETH
     const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
 
     assert.equal(initialBalance, web3.toWei(0.8, "ether"), "This test must start with 1.8 eth");
@@ -232,7 +252,7 @@ contract("BasicFund", accounts => {
   });
 
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
-    // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
+    // From the previous test we got 1.8 ETH, and investor got 1.8 Token
     const initialBalance = (await web3.eth.getBalance(fund.address)).toNumber();
     assert.equal(initialBalance, web3.toWei(1.8, "ether"), "This test must start with 1.8 eth");
     assert.equal((await fund.balanceOf(investorA)).toNumber(), toTokenWei(1.8), "A has invested with fee");
@@ -250,7 +270,11 @@ contract("BasicFund", accounts => {
       assert.equal(balance.toNumber(), 0.9 * rates[i][0], " Fund get ERC20 correct balance");
     }
 
-    assert.equal((await web3.eth.getBalance(fund.address)).toNumber(), web3.toWei(0, "ether"), "We sold all underlying tokens");
+    assert.equal(
+      (await web3.eth.getBalance(fund.address)).toNumber(),
+      web3.toWei(0, "ether"),
+      "We sold all underlying tokens"
+    );
     // Request withdraw, it should sell all tokens.
     await fund.withdraw({ from: investorA });
 

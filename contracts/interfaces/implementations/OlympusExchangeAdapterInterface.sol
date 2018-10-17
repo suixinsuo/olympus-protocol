@@ -7,6 +7,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract OlympusExchangeAdapterInterface is Ownable {
 
+
     function supportsTradingPair(address _srcAddress, address _destAddress)
         external view returns(bool supported);
 
@@ -24,12 +25,16 @@ contract OlympusExchangeAdapterInterface is Ownable {
         ERC20Extended _token, uint _amount, uint _minimumRate,
         address _depositAddress
         ) external payable returns(bool success);
-
+    function tokenExchange
+        (
+        ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _minimumRate, address _depositAddress
+        )external payable returns(bool success);
     function enable() external returns(bool);
     function disable() external returns(bool);
     function isEnabled() external view returns (bool success);
 
     function setExchangeDetails(bytes32 _id, bytes32 _name) external returns(bool success);
+    function setExchangeProvider(address _exchangeProvider) external;
     function getExchangeDetails() external view returns(bytes32 _name, bool _enabled);
 
     function approveToken(ERC20Extended _token) external returns(bool success);

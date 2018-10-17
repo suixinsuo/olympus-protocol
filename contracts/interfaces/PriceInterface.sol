@@ -1,0 +1,10 @@
+pragma solidity 0.4.24;
+
+import "../libs/ERC20Extended.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./ComponentContainerInterface.sol";
+
+contract ERC20PriceInterface {
+    function getPrice() public view returns(uint);
+    function getETHBalance() public view returns(uint);
+}

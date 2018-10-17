@@ -7,9 +7,11 @@ import "../../interfaces/WithdrawInterface.sol";
 import "../../interfaces/MarketplaceInterface.sol";
 import "../../interfaces/LockerInterface.sol";
 import "../../libs/ERC20NoReturn.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../../libs/ERC20Extended.sol";
 
 
-contract OlympusTutorialFund is FundInterface, BaseDerivative {
+contract OlympusTutorialFund is FundInterface, BaseDerivative, StandardToken, ERC20Extended {
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH
@@ -38,7 +40,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals
      ) public {
         require(0<=_decimals&&_decimals<=18);
@@ -55,13 +57,14 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
     // ----------------------------- CONFIG -----------------------------
     // One time call
     function initialize(address _componentList, uint _maxInvestors) external onlyOwner {
+
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(_maxInvestors > 0);
 
         super._initialize(_componentList);
         bytes32[4] memory names = [MARKET, EXCHANGE, WITHDRAW, LOCKER];
-        excludedComponents.push(LOCKER);
+        excludedComponents[LOCKER] = true;
 
         for (uint i = 0; i < names.length; i++) {
             // update component and approve MOT for charging fees
@@ -163,7 +166,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
 
     function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
-        getETHFromTokens(DENOMINATOR); // Denominator equals to 100%, so we sell all the tokens in the fund
+        getETHFromTokens((10 ** decimals)); // (10 ** decimals) equals to 100%, so we sell all the tokens in the fund
         status = DerivativeStatus.Closed;
         emit FundStatusChanged(status);
         return true;
@@ -205,7 +208,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
     function guaranteeLiquidity(uint tokenBalance) internal {
         uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
         if (_totalETHToReturn > address(this).balance) {
-            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul(DENOMINATOR)).div(getAssetsValue());
+            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul((10 ** decimals))).div(getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
     }
@@ -267,7 +270,7 @@ contract OlympusTutorialFund is FundInterface, BaseDerivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div((10 ** decimals));
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);

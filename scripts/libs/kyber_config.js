@@ -6,6 +6,6 @@ module.exports = {
     "mockTokenNum": 2
   },
   "development": {
-    "mockTokenNum": 2
+    "mockTokenNum": 15
   }
 }

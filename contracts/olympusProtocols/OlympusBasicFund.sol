@@ -6,12 +6,16 @@ import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../libs/ERC20NoReturn.sol";
+import "../libs/ERC20Extended.sol";
+
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 
 
-contract OlympusBasicFund is FundInterface, BaseDerivative {
+contract OlympusBasicFund is FundInterface, BaseDerivative, ERC20Extended, StandardToken {
     using SafeMath for uint256;
 
     uint public constant INITIAL_VALUE = 10**18; // 1 ETH
+    uint public constant TOKEN_DENOMINATOR = 10**18; // Apply % to a denominator, 18 is the minimum highetst precision required
 
     event TokenUpdated(address _token, uint amount);
     event FundStatusChanged(DerivativeStatus status);
@@ -25,7 +29,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
       string _name,
       string _symbol,
       string _description,
-      string _category,
+      bytes32 _category,
       uint _decimals
      ) public {
         require(0<=_decimals&&_decimals<=18);
@@ -33,7 +37,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.0";
+        version = "1.1-20181002";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -82,14 +86,38 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
          // Check we have the ethAmount required
         uint totalEthRequired = 0;
         for (uint i = 0; i < _amounts.length; i++) {
+            require(ERC20Extended(_tokens[i]).decimals() <= 18);
             totalEthRequired = totalEthRequired.add(_amounts[i]);
         }
+
         require(address(this).balance >= totalEthRequired);
 
         require(
             OlympusExchangeInterface(getComponentByName(EXCHANGE))
             .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)
         );
+        updateTokens(_tokens);
+        return true;
+
+    }
+
+    function tokenSwap(bytes32 _exchangeId, ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _rate)
+         public onlyOwner returns(bool) {
+
+        //Only Support Token Swap
+        require(_src!=ETH&&_dest!=ETH);
+
+        OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+
+        ERC20NoReturn(_src).approve(exchange, 0);
+        ERC20NoReturn(_src).approve(exchange, _amount);
+
+        require(exchange.tokenExchange(_src,_dest, _amount, _rate, address(this), _exchangeId));
+
+        ERC20Extended[] memory _tokens = new ERC20Extended[](2);
+        _tokens[0] = _src;
+        _tokens[1] = _dest;
+
         updateTokens(_tokens);
         return true;
 
@@ -130,6 +158,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
         balances[msg.sender] = balances[msg.sender].add(_investorShare);
         totalSupply_ = totalSupply_.add(_investorShare);
+        emit Transfer(0x0, msg.sender, _investorShare); // ERC20 Required event
 
         return true;
     }
@@ -144,7 +173,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
 
     function close() public onlyOwner returns(bool success) {
         require(status != DerivativeStatus.New);
-        getETHFromTokens(DENOMINATOR); // 100% all the tokens
+        getETHFromTokens(TOKEN_DENOMINATOR); // 100% all the tokens
         status = DerivativeStatus.Closed;
         emit FundStatusChanged(status);
         return true;
@@ -168,17 +197,20 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         // Iterator
         uint _expectedRate;
         uint _balance;
+        uint _decimals;
+        ERC20Extended token;
 
         for (uint i = 0; i < tokens.length; i++) {
-            _balance = ERC20(tokens[i]).balanceOf(address(this));
+            token = ERC20Extended(tokens[i]);
+            _decimals = token.decimals();
+            _balance = token.balanceOf(address(this));
+
             if (_balance == 0) {continue;}
-
-            (_expectedRate, ) = exchangeProvider.getPrice(ETH, ERC20Extended(tokens[i]), 10**18, 0x0);
-
+            (_expectedRate, ) = exchangeProvider.getPrice(token, ETH, 10**_decimals, 0x0);
             if (_expectedRate == 0) {continue;}
-            _totalTokensValue = _totalTokensValue.add(_balance.mul(10**18).div(_expectedRate));
-
+            _totalTokensValue = _totalTokensValue.add(_balance.mul(_expectedRate).div(10**_decimals));
         }
+
         return _totalTokensValue;
     }
 
@@ -186,7 +218,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
     function guaranteeLiquidity(uint tokenBalance) internal {
         uint _totalETHToReturn = tokenBalance.mul(getPrice()).div(10**decimals);
         if (_totalETHToReturn > address(this).balance) {
-            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul(DENOMINATOR)).div(getAssetsValue());
+            uint _tokenPercentToSell = ((_totalETHToReturn.sub(address(this).balance)).mul(TOKEN_DENOMINATOR)).div(getAssetsValue());
             getETHFromTokens(_tokenPercentToSell);
         }
     }
@@ -212,6 +244,8 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         totalSupply_ = totalSupply_.sub(tokenAmount);
         msg.sender.transfer(ethAmount);
         withdrawProvider.finalize();
+        emit Transfer(msg.sender, 0x0, tokenAmount); // ERC20 Required event
+
 
         return true;
     }
@@ -244,7 +278,7 @@ contract OlympusBasicFund is FundInterface, BaseDerivative {
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
 
         for (uint i = 0; i < _tokensToSell.length; i++) {
-            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(DENOMINATOR);
+            _amounts[i] = _tokenPercentage.mul(_tokensToSell[i].balanceOf(address(this))).div(TOKEN_DENOMINATOR);
             (, _sellRates[i] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[i], 0x0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, 0);
             ERC20NoReturn(_tokensToSell[i]).approve(exchange, _amounts[i]);

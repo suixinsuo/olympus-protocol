@@ -15,20 +15,20 @@
 `truffle test --suite=Mockfund ./test/fund/*` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
 The suit option will limit the number of deployment required for the concrete test file.
 
+
 ## Mainnet (September 4, 2018)
 Exchange subcomponent:
-
-- KyberNetworkAdapter 0xb4ca82eda9fd642add19c7ab143c91ac9819aeb9
-- ExchangeAdapterManager 0x5c3dab41bad87bf56ec91acc873b6fd966cf6e96
+- KyberNetworkAdapter: 0x27fe7372da5398ab0d524b27595dd33ffd0fa34c
+- ExchangeAdapterManager: 0xab7f3f34f6b79d59173b7152e814e02d1ca8d8ec
 
 - ComponentList 0xb3c8d8713c1bfdefd2c8bed7594e1103da0e650a
-  - ExchangeProvider 0xb5ef3debae3cb2e2bb1ed3e615992f71e560a98b Name: 0x45786368616e676550726f7669646572
+  - ExchangeProvider 0x7B48cC0E7F2bD9F2cA17881758fb2dfCD839BA4c Name: 0x45786368616e676550726f7669646572
   - Marketplace 0x4e3b84f966733ff182666ff6987d98c5004057c0 Name: 0x4d61726b657450726f7669646572
-  - AsyncWithdraw 0x521810d890c702d9c8be8b021ad62ded28887e71 Name: 0x576974686472617750726f7669646572
+  - AsyncWithdraw 0x534004Ede1a26752e6373Dc55c73596A0B549312 Name: 0x576974686472617750726f7669646572
   - Reimbursable 0x3a91a1108506b90b3a7347db4a670d145f95d3dc Name: 0x5265696d6275727361626c65
   - PercentageFee 0x0e38cbccfbacd083a4a3403ca453245b3a954751 Name: 0x46656550726f7669646572
   - WhitelistProvider 0xa05d9428f76463fbe54e71109bf392c9c114e792 Name: 0x57686974656c69737450726f7669646572
-  - Rebalance Provider 0x5bb307f38f8473e218896fc00639fa6b478a30b6 Name: 0x526562616c616e636550726f7669646572
+  - Rebalance Provider 0xbcb4dcea717dc20f3e6dffcd9c9ef85e9b5f960d Name: 0x526562616c616e636550726f7669646572
   - RISK (DUMMY) 0xa954773926607b366f04a82b4c72519db0c618fc Name: 0x5269736b50726f7669646572
   - Locker 0x726677d34e4fa66c1594528ecb6f23e7c0ba6e08 Name: 0x4c6f636b657250726f7669646572
   - Step 0xcc8447a301568e61e1aa79c5046f2e4b17753187 Name: 0x5374657050726f7669646572
@@ -38,21 +38,30 @@ Exchange subcomponent:
 
 Exchange subcomponent:
 
-- KyberNetworkAdapter 0xf75edc5caa70a79d4e2905be8cc9d6199b160946
-- ExchangeAdapterManager 0xab52f697f320b92007b516265afd2b43a251ba8b
+
+<!--
+Only KyberNetworkAdapter currently included, change this if these are added
+- MockKyber  0x20462bd14c7a1e524d19ef6a7a291297c7135b4c
+- Adapter with fake kyber 0xd0e3d1390c9757545647053b23d5173b0933c9f3 name: 0x66616b656b79626572 ('fakekyber')
+-->
+- KyberNetworkAdapter 0x0de7f1f45152e8ac837f9f0f16b7bf04868c5e97 - name: 0x6b79626572 ('kyber')
+- ExchangeAdapterManager 0xd65a1e96908ad5221baac03376d13df12238f084
+
 
 - ComponentList 0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e
-  - ExchangeProvider 0x389561ac7a1ca2b48da717769cda7de81fe56c16 Name: 0x45786368616e676550726f7669646572
+  - ExchangeProvider 0xf6a327e3c1aa560b89cb92cb118585aed094befb Name: 0x45786368616e676550726f7669646572
   - Marketplace 0x610a2d32c4d426f3712c4d0b39edce82434d7a23 Name: 0x4d61726b657450726f7669646572
-  - AsyncWithdraw 0x4c3244b29cd1c1d999c1b2d3c787a956a7c47d97 Name: 0x576974686472617750726f7669646572
+  - AsyncWithdraw 0x488254c8d395ec36f2892bdaca083bfaab0d05bd Name: 0x576974686472617750726f7669646572
   - Reimbursable 0x3016f17d5f585E1A2E2B22C858A88201a7902060 Name: 0x5265696d6275727361626c65
   - PercentageFee 0x8701ef2028e540cb00e50e0f830aad738be8e6c5 Name: 0x46656550726f7669646572
   - WhitelistProvider 0xefecfb7976b271c38101955ac2f1406e2c1ae5db Name: 0x57686974656c69737450726f7669646572
-  - Rebalance Provider 0x80Ff02f22E9C19Bc33900770250ffB359254AEc3 Name: 0x526562616c616e636550726f7669646572
+  - Rebalance Provider 0x0e7ed209f5ff2ad0a89cd172f3dceb9018e4a02f Name: 0x526562616c616e636550726f7669646572
   - RISK (DUMMY) 0x3b021c90fd2f5ff847a1d363532531bd496ddb9d Name: 0x5269736b50726f7669646572
   - Locker 0xbf73cf3d850bc021593fa2b70b8782f5678ca8c9 Name: 0x4c6f636b657250726f7669646572
   - Step 0x97a2abb256769450c4cc0a0b72ada72c1998cba8 Name: 0x5374657050726f7669646572
   - TokenBroken 0xed365f7c04877ca18cd33d3dc3e51333eb4d545f Name: 0x546f6b656e42726f6b656e
+  - Buy Tokens name: 0x427579546f6b656e73
+  - GetEth (for get ETH from tokens) 0x476574457468
 
  # Deployed addresses (Mainnet 13 ,July, 2018)
 

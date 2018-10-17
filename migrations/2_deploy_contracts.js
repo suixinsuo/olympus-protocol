@@ -5,6 +5,9 @@ const KyberConfig = require("../scripts/libs/kyber_config");
 let ExchangeProvider = artifacts.require("ExchangeProvider");
 let ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
 let KyberNetworkAdapter = artifacts.require("../contracts/components/exchange/exchanges/KyberNetworkAdapter.sol");
+let MockBrokenTokenKyberNetworkAdapter = artifacts.require(
+  "../contracts/components/exchange/exchanges/MockBrokenTokenKyberNetworkAdapter.sol"
+);
 let MockKyberNetwork = artifacts.require("MockKyberNetwork");
 let MockDDEXAdapter = artifacts.require("MockDDEXAdapter");
 let MockDDEX = artifacts.require("MockDDEX");
@@ -38,13 +41,17 @@ function deployWithdraw(deployer, network) {
   deployer.deploy([AsyncWithdraw, SimpleWithdraw]);
 }
 
+function getRandomDecimals() {
+  return Math.floor(Math.random() * 18) + 1;
+}
+
 function deployTutorial(deployer, network) {
   deployer.deploy([
     Locker,
     MarketplaceProvider,
     ComponentList,
     AsyncWithdraw,
-    [MockToken, "", "MOT", 18, mockTokenSupply],
+    [MockToken, "", "MOT", getRandomDecimals(), mockTokenSupply]
   ]);
   deployExchange(deployer, network);
 }
@@ -73,19 +80,31 @@ function deployExchange(deployer, network) {
       }
     })
     .then(() => deployer.deploy(ExchangeProvider, ExchangeAdapterManager.address))
-    .then(() => deployer.deploy(KyberNetworkAdapter, kyberAddress, ExchangeAdapterManager.address, ExchangeProvider.address))
-    .then(() => deployer.deploy(MockDDEXAdapter, kyberAddress, ExchangeAdapterManager.address, ExchangeProvider.address))
+    .then(() =>
+      deployer.deploy(KyberNetworkAdapter, kyberAddress, ExchangeAdapterManager.address, ExchangeProvider.address)
+    )
+    .then(() =>
+      deployer.deploy(MockDDEXAdapter, kyberAddress, ExchangeAdapterManager.address, ExchangeProvider.address)
+    )
     .then(() => {
       if (network === "development") {
-        return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18);
+        return deployer.deploy(MockKyberNetwork, kyberNetwork.mockTokenNum, 18).then(mockKyberNetworkInstance => {
+          // deployer.deploy(KyberNetworkAdapter, mockKyberNetworkInstance.address, ExchangeAdapterManager.address, ExchangeProvider.address)
+          deployer.deploy(
+            MockBrokenTokenKyberNetworkAdapter,
+            mockKyberNetworkInstance.address,
+            ExchangeAdapterManager.address,
+            ExchangeProvider.address
+          );
+        });
       }
-    }).then(async () => {
-      console.log('Deploying!!!');
+    })
+    .then(async () => {
+      console.log("Deploying!!!");
       let mockNetwork = await MockKyberNetwork.deployed();
       devTokens = await mockNetwork.supportedTokens();
       return deployer.deploy(MockDDEX, devTokens);
-    }
-    )
+    })
     .then(async () => {
       let kyberNetworkAdapter = await KyberNetworkAdapter.deployed();
       let exchangeAdapterManager = await ExchangeAdapterManager.deployed();
@@ -106,6 +125,11 @@ function deployExchange(deployer, network) {
       await exchangeAdapterManager.addExchange("kyber", kyberNetworkAdapter.address);
       return deployer;
     });
+}
+
+async function deployFuture(deployer, network) {
+  deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, ComponentList]);
+  await deployExchange(deployer, network);
 }
 
 async function deployMockfund(deployer, network) {
@@ -135,6 +159,7 @@ async function deployOlympusFund(deployer, network) {
     ComponentList,
     Steps,
     TokenBroken,
+    [MockToken, "", "MOT", 18, mockTokenSupply]
   ]);
   await deployExchange(deployer, network);
 }
@@ -152,7 +177,6 @@ async function deployOlympusBasicFund(deployer, network) {
   ]);
 }
 
-
 async function deployOlympusIndex(deployer, network) {
   const args = Args.parseArgs();
 
@@ -167,6 +191,7 @@ async function deployOlympusIndex(deployer, network) {
     ComponentList,
     Steps,
     TokenBroken,
+    [MockToken, "", "MOT", 18, mockTokenSupply]
   ]);
   await deployExchange(deployer, network);
   await deployer.deploy(RebalanceProvider, ExchangeProvider.address);

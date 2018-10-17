@@ -5,41 +5,80 @@
 - MOT 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a
 - KNC 0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b
 
+# Future
+
+1. Create
+// Direction address is MOT, must be change later on
+`
+  "Test Future", "For testing purposes", "TFT","0x696e646578", 1, 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a,  2, 100, 800
+
+"Test Future","For testing purposes","TFT","0x696e646578", "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","2","1000","8000"
 # Index
 
 1.  Create
     //50,50 KNC, MANA
-    `"Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x569b92514e4ea12413df6e02e1639976940cde70"] , [50,50]`
+    `"Test Index" ,"TIX","Test index in kovan","0x696e646578",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x569b92514e4ea12413df6e02e1639976940cde70"] , [50,50]`
     // 100 KNC
     ```s
-    "Test Index" ,"TIX","Test index in kovan","index",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"] , [100]
+    "Test Index" ,"TIX","Test index in kovan","0x696e646578",18,["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"] , [100]
     ```
+    // 6 tokens KNC MOT SNT POWR, MANA, EOS, for stress
+     `
+     "Test Index" ,"TIX","Test index in kovan","0x696e646578",15,
+     [
+       "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b",
+       "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
+       "0x81c9756442e26b9017a12db2321fe9490416533d",
+       "0x71da415026fa64d1e348415e9486253e94333acc",
+       "0x569b92514e4ea12413df6e02e1639976940cde70",
+       "0xea1887835d177ba8052e5461a269f42f9d77a5af"
+     ],
+     ["15", "22",  "17", "26", "12" ,"8"]
+     `
+
+
 2.  Initalize
 
-"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0 // Olympus labs
-"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 0 // Gerdinand
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",1 // Olympus labs
+"0xc212438ab81c07ea9d9f5e993161010ab1dbae68" , 1 // Gerdinand
+
 
 3. Set intervals (1 days)
 ["0x576974686472617750726f766964657200000000000000000000000000000000", "0x427579546f6b656e730000000000000000000000000000000000000000000000", "0x526562616c616e636550726f7669646572000000000000000000000000000000"]
 , ["86400","86400","86400"]
 # Fund
 
+Mainnet fund 0xcc6402e1fbc7fb3f5e5543ecdd3d7978904f617a
 1.  Create
-    "Sample Fund","SFP","Testing fund","Funds","18"
+    "Sample Fund","SFP","Testing fund","0x66756e6473","18"
 
 2.  Initalize
 
 "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e",0,0 // Basic
-"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","1","1296000" // As the portal will do
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","100","1296000" // As the portal will do
 3.  Buy
     // MANA (0.001 ETH)
     `"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["1000000000000000"],[0]`
+    `"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["4000000000000000"],["6872228904967590000000"]`
+
     // MOT (0.001 ETH)
     `"0x0",["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a"],["1000000000000000"],[0]`
+    // Mainnet Addresses
+    MANA = 0x0f5d2fb29fb7d3cfee444a200298f468908cc942
+    OMG = 0xd26114cd6EE289AccF82350c8d8487fedB8A0C07
+    KNC = 0xdd974d5c2e2928dea5f71b9825b8b646686bd200
+    ENG = 0xf0ee6b27b759c9893ce4f094b49ad28fd15a23e4
+    LINK = 0x514910771af9ca656af840dff83e8264ecf986ca
+    `"0x0",["0x0f5d2fb29fb7d3cfee444a200298f468908cc942"],["1000000000000000"],[0]`
+    // Buying mana omg and eng in mainnet
+    "0x0",["0x0f5d2fb29fb7d3cfee444a200298f468908cc942", "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07", "0xf0ee6b27b759c9893ce4f094b49ad28fd15a23e4"],["5000000000000000","5000000000000000","5000000000000000"],[0,"0",0]
 
 4.  Sell MANA (check balance)
 
 `"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["292344449412625772"],[0]`
+`"0x0",["0x569b92514e4ea12413df6e02e1639976940cde70"],["2000000000000000000"],[141218919641028]`
+
+""
 (same on the exchange provider) -- Remember to have tokens and approve before -- And change deposit address
 `["0x965e1449b880ae4e24f8dcd6537d0bef79c7a731"],["292344449412625772"],[0],"0x13a1e7155e4da0aba3e05df8f6b3018666837f4a","0x0000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000"`
 
@@ -52,6 +91,13 @@
     "Reimbursable","ADDRESS"
 ## Mock Rebalance
 ["0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b","0x569b92514e4ea12413df6e02e1639976940cde70"] , [50,50], "0x7A9305A0f2a0A9b088Aef901A68A1E4B9212e195", "0x023d373f70662e8b7031421cfc513aeeaffb983a"
+
+## Check rates
+MOT Buy Rate
+"0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","1000000000000000000","0x0"
+
+
+
 ## Kovan Addresses
 
 ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
@@ -83,3 +129,7 @@ DGX: '0x5a060e07ae8c5b670d2fd1af4b8f6e8c2e09b8e6', // No tested
 
 "Olympus Fund","OLF","Derivative which base his assets value in diversification of tokens","General","18"
 "0x0",["0x0f5d2fb29fb7d3cfee444a200298f468908cc942"],["844242424242425"],[0]
+
+
+
+
