@@ -50,8 +50,11 @@ const run = async (key) => {
   folders.forEach((folder) => {
     const files = filterFiles(folder, fs.readdirSync(`./docs/${folder}`));
 
-    const success = files.forEach(async (file) => await convertFile(key, folder, file.slice(0, -3)))
-    if (success) { counter++; }
+    files.forEach(async (file) => {
+      const success = await convertFile(key, folder, file.slice(0, -3));
+      if (success) { counter++; }
+    })
+
 
   });
   return counter;
