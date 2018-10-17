@@ -76,25 +76,6 @@ const createNewIndex = async (componentList, tokens, { weights, decimals, tokens
   return index;
 }
 
-
-const createNewIndex = async (componentList, tokens) => {
-  const index = await OlympusIndex.new(
-    indexData.name,
-    indexData.symbol,
-    indexData.description,
-    indexData.category,
-    indexData.decimals,
-    tokens.slice(0, indexData.tokensLenght),
-    indexData.weights,
-    { gas: 8e6 } // At the moment require 6.7M
-  );
-
-  await index.initialize(componentList.address, indexData.initialManagementFee, indexData.rebalanceDelta, {
-    value: web3.toWei(indexData.ethDeposit, "ether")
-  });
-  return index;
-}
-
 contract("Olympus Index Special Scenarios", accounts => {
   let market;
   let mockKyber;
