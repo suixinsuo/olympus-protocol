@@ -21,7 +21,7 @@ constructor (
   public;
 ```
 
-####  Parameters
+#### Parameters
 
 > 1.  \_name: Index name
 > 2.  \_symbol: Index symbol (The index is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
@@ -31,7 +31,7 @@ constructor (
 > 6.  \_tokens: The token addresses that the index will buy, sell and rebalance
 > 7.  \_weights: The weights of the tokens
 
-####  Example code
+#### Example code
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -165,11 +165,11 @@ function initialize(
   external onlyOwner payable;
 ```
 
-####  Description
+#### Description
 
 Initialize the Index, after which it is listed in the Olympus Product List and opened up for investment. (Note: The derivative has to hold some MOT as the possible fee for calling components. So it is required to transfer some MOT to your deployed OlympusIndex.)
 
-####  Parameters
+#### Parameters
 
 > \_componentList: address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
 >
@@ -182,7 +182,7 @@ Initialize the Index, after which it is listed in the Olympus Product List and o
 >
 > \_initialFundFee: the initial balance of the index
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -211,16 +211,16 @@ function setMultipleTimeIntervals(bytes32[] _timerNames,
   uint[] _secondsList) external onlyOwner;
 ```
 
-####  Description
+#### Description
 
 Index manager can configure the withdraw frequency, buy token (Ether allocation) frequency and rebalance frequency for their index. By setting up the frequency, the bot system will execute withdraw/buy token and rebalance based on the configured frequency.
 
-####  Parameters
+#### Parameters
 
 > 1.  \_timerNames: Array of the bytes32 encoded strings of the frequency names: RedeemFrequency, BuyTokensFrequency and RebalanceFrequency.
 > 2.  \_secondsList: Array of the frequency for the redeem, buy tokens and rebalance functions, should be converted to use number of seconds as the unit of time.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -265,15 +265,15 @@ function buyTokens() external onlyOwnerOrWhitelisted
   (WhitelistKeys.Maintenance) whenNotPaused returns(bool);
 ```
 
-####  Description
+#### Description
 
 Index manager executes the function to buy tokens that are defined in the index using the investor's funds.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -298,15 +298,15 @@ function getTokens() public view
   returns (address[] _tokens, uint[] _weights);
 ```
 
-####  Description
+#### Description
 
 Call the function to get all the tokens with their weights.
 
-####  Returns
+#### Returns
 
 > Two Arrays {[Tokens],[Weights]} of the same length, where the token at the position 0 have the weight at the position 0.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -331,15 +331,15 @@ function tokensWithAmount() public view
   returns(ERC20Extended[] memory);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
 
-####  Returns
+#### Returns
 
 > Array of the actual active tokens with amounts.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -363,15 +363,15 @@ indexContract.tokensWithAmount((err, result) => {
 function getPrice() public view returns(uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the unit price of the index.
 
-####  Returns
+#### Returns
 
 > The unit price of the index.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -395,15 +395,15 @@ indexContract.getPrice((err, result) => {
 function getAssetsValue() public view returns (uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the total value calculated based on the value of the index's underlying assets.
 
-####  Returns
+#### Returns
 
 > The total value calculated based on the value of the index's underlying assets.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -427,15 +427,15 @@ indexContract.getAssetsValue((err, result) => {
 function getETHBalance() public view returns(uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the remaining ETH balance of the index.
 
-####  Returns
+#### Returns
 
 > The remaining ETH balance of the index.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -459,11 +459,11 @@ indexContract.getETHBalance((err, result) => {
 function addOwnerBalance() external payable;
 ```
 
-####  Description
+#### Description
 
 This function is for the fund manager. Fund manager can send ETH to the index, the ETH will be added to the existing management fee.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -490,15 +490,15 @@ function rebalance() public onlyOwnerOrWhitelisted
   (WhitelistKeys.Maintenance) whenNotPaused returns (bool success);
 ```
 
-####  Description
+#### Description
 
 Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the complete asset value in the value might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased. As the blockchain limits the number of operations done per transaction, this function has a built-in feature for executing this function over multiple transactions. So to be sure that the function will be completed, as long as the result of the function is false, the function should be called again. Once the rebalance function returns true, the rebalance will be completed, and can only be called again after the interval period has passed.
 
-####  Returns
+#### Returns
 
 > In cases where there are a lot of tokens in the index, we need to process rebalancing in multiple steps due to gas limits. The function will return false for each step and then return true once all of the steps in the rebalancing are complete. If there are any issues, rebalance will revert.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -538,7 +538,7 @@ rebalance((err,result)=>{
 function setManagementFee(uint _fee) public onlyOwner;
 ```
 
-####  Description
+#### Description
 
 Set the management fee percentage. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. This value is only restricted to be less than 100% (10000). The following example values correspond to the following percentages:
 
@@ -547,11 +547,11 @@ Set the management fee percentage. This is being calculated with a denominator, 
 -   1000 = 10%
 -   10000 = 100%
 
-####  Parameters
+#### Parameters
 
 > \_fee: The percentage of investors' funds that will be set aside for management fee (Note: fee must be equal to or bigger than 0 and less than 10000), refer to the list above to get the correct value.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -576,15 +576,15 @@ function withdraw() external onlyOwnerOrWhitelisted
   (WhitelistKeys.Maintenance) whenNotPaused returns(bool);
 ```
 
-####  Description
+#### Description
 
 This function is for the index manager. Investors that have requested to withdraw their investment will get their investment back after the index manager or bot system executes this function.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -609,15 +609,15 @@ function withdrawFee(uint amount) external onlyOwner
   whenNotPaused returns(bool);
 ```
 
-####  Description
+#### Description
 
 This function is for the index manager to withdraw the index management fee.
 
-####  Parameters
+#### Parameters
 
 > amount: Amount of management fee the index manager would like to withdraw.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -642,7 +642,7 @@ function enableWhitelist(WhitelistKeys _key, bool enable)
   external onlyOwner returns(bool);
 ```
 
-####  Description
+#### Description
 
 Owner of the Index can enable a category of whitelist to facilitate access control for the index. The following three categories of whitelist are available:
 
@@ -652,7 +652,7 @@ Owner of the Index can enable a category of whitelist to facilitate access contr
 
 If type 0 Investment whitelist is enabled, only users' addresses that are added to the whitelist are allowed to invest into the index. If type 1 Maintenance whitelist is enabled, only users' addresses that have been added to the whitelist are allowed to trigger the withdraw process, rebalance the tokens or trigger the allocation process; otherwise, only the owner of the index can perform those actions. Type 2 Admin whitelist is not used in the OlympusIndex for now.
 
-####  Parameters
+#### Parameters
 
 > \_key: A specific category of whitelist to be enabled for the index. The following three keys are available:
 >
@@ -662,11 +662,11 @@ If type 0 Investment whitelist is enabled, only users' addresses that are added 
 
 > enable: Set the parameter to true to enable the selected whitelist; false to disable the selected whitelist.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -693,21 +693,21 @@ function setAllowed(address[] accounts, WhitelistKeys _key,
   bool allowed) public onlyOwner returns(bool);
 ```
 
-####  Description
+#### Description
 
 After enabling a specific category of whitelist, the owner of the index can add and remove accounts from the whitelist.
 
-####  Parameters
+#### Parameters
 
 > 1.  accounts: Array of addresses
 > 2.  \_key: A specific category of whitelist to be enabled for the index
 > 3.  allowed: Set the parameter to true to add accounts to the whitelist; false to remove accounts from the whitelist.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -734,15 +734,15 @@ indexContract.setAllowed(accounts, key, allowed, (err, result) => {
 function close() OnlyOwnerOrPausedTimeout public returns(bool success);
 ```
 
-####  Description
+#### Description
 
 Close the index to stop investors from investing into the fund. (Note: After closing the index, investors can still withdraw their investment. Index manager will not be able to withdraw all management fee until all tokens are sold.)
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -767,15 +767,15 @@ function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted
     (WhitelistKeys.Maintenance) public returns (bool);
 ```
 
-####  Description
+#### Description
 
 After a index is closed, owner or bot can call the function to sell all existing tokens.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -794,4 +794,4 @@ fundContract.sellAllTokensOnClosedFund((err, result) => {
 
 ### abi & bytecode
 
-> You can get the [abi & bytecode](../contracts/templateList.json) from our API.
+> You can get the [abi & bytecode](../api.html) from our API.
