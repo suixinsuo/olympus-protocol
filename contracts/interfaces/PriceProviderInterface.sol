@@ -31,4 +31,14 @@ contract PriceProviderInterface is ComponentInterface {
     function getPriceOrCacheFallback(
         ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId, uint _maxPriceAgeIfCache)
         external returns(uint expectedRate, uint slippageRate, bool isCached);
+
+    /*
+     * @dev Returns the prices for multiple tokens in the form of ETH to token rates. If their prices are currently not available, the last known prices will be returned from cache.
+     * Note: when the price comes from cache, this should only be used as a backup, when there are no alternatives
+     * @param address _destAddress The token for which to get the ETH to token rate.
+     * @param uint _maxPriceAgeIfCache If any price is not available at the moment, choose the maximum age in seconds of the cached price to return.
+     * @return returns an array of the expected and slippage rates for the specified tokens and whether or not the price comes from cache
+     */
+    function getMultiplePricesOrCacheFallback(ERC20Extended[] _destAddresses, uint _maxPriceAgeIfCache)
+        external returns(uint[] expectedRates, uint[] slippageRates, bool[] isCached);
 }

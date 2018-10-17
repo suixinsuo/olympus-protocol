@@ -14,25 +14,27 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     string public description =
     "Exchange provider of Olympus Labs, which additionally supports buy\and sellTokens for multiple tokens at the same time";
     string public category = "exchange";
-    string public version = "v1.0";
+    string public version = "1.2-20180919";
     ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
     uint public registerTradeFailureInterval = 1 days;
     bytes4 public constant BUY_FUNCTION_SELECTOR = bytes4(keccak256("buyToken(address,uint256,uint256,address)"));
     bytes4 public constant SELL_FUNCTION_SELECTOR = bytes4(keccak256("sellToken(address,uint256,uint256,address)"));
+    bytes4 public constant SWAP_FUNCTION_SELECTOR = bytes4(keccak256("tokenExchange(address,address,uint256,uint256,address)"));
+
     uint public failureFeeToDeduct = 0;
-    uint sellMultipleTokenFee = 0; // Used in sellTokens, put as a storage variable because the stack got too deep
-    bool functionCompleteSuccess = true;
+    uint public sellMultipleTokenFee = 0; // Used in sellTokens, put as a storage variable because the stack got too deep
+    bool public functionCompleteSuccess = true;
 
     // exchangeId > sourceAddress > destAddress
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceExpected;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceSlippage;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public lastCachedPriceTime;
     // msg.sender => sourceAddress > destAddress
-    mapping(address => mapping(address => mapping(address => uint))) firstTradeFailure;
-    mapping(address => mapping(address => mapping(address => uint))) amountOfTradeFailures;
-    mapping(address => mapping(address => mapping(address => uint))) lastTradeFailure;
+    mapping(address => mapping(address => mapping(address => uint))) public firstTradeFailure;
+    mapping(address => mapping(address => mapping(address => uint))) public amountOfTradeFailures;
+    mapping(address => mapping(address => mapping(address => uint))) public lastTradeFailure;
 
-    OlympusExchangeAdapterManagerInterface private exchangeAdapterManager;
+    OlympusExchangeAdapterManagerInterface public exchangeAdapterManager;
 
     constructor(address _exchangeManager) public {
         exchangeAdapterManager = OlympusExchangeAdapterManagerInterface(_exchangeManager);
@@ -64,7 +66,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
             msg.sender.transfer(_amount);
         } else if(_needToRefund) {
             uint beforeBalance = ERC20Extended(_sourceAddress).balanceOf(msg.sender);
-            ERC20Extended(_sourceAddress).transferFrom(_adapter, msg.sender, _amount);
+            ERC20NoReturn(_sourceAddress).transferFrom(_adapter, msg.sender, _amount);
             require(ERC20Extended(_sourceAddress).balanceOf(msg.sender) == beforeBalance.add(_amount));
         }
     }
@@ -88,7 +90,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
         OlympusExchangeAdapterInterface adapter;
         // solhint-disable-next-line
-        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, true) : _exchangeId;
+        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(ETH, _token, _amount, _minimumRate) : _exchangeId;
         if(exchangeId == 0){
             exitTrade(address(ETH), address(_token), msg.value, address(adapter), true);
             return false;
@@ -122,7 +124,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         ) checkAllowance(_token, _amount) external returns(bool success) {
 
         OlympusExchangeAdapterInterface adapter;
-        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token, _amount, _minimumRate, false) : _exchangeId;
+        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token,ETH , _amount, _minimumRate) : _exchangeId;
         if(exchangeId == 0) {
             // Tokens are not transferred yet, so we don't need to refund.
             exitTrade(address(_token), address(ETH), _amount, address(adapter), false);
@@ -146,6 +148,42 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         }
         require(payFee(sellTokenFee(_token,_amount, exchangeId)));
         registerSuccesfullTrade(address(_token), address(ETH));
+
+        return true;
+        //return (true, 0);
+    }
+
+    function tokenExchange
+        (
+        ERC20Extended _src, ERC20Extended _dest, uint _amount, uint _minimumRate,
+        address _depositAddress, bytes32 _exchangeId
+        ) checkAllowance(_src, _amount) external returns(bool success) {
+
+        OlympusExchangeAdapterInterface adapter;
+        bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_src, _dest , _amount, _minimumRate) : _exchangeId;
+        if(exchangeId == 0) {
+            // Tokens are not transferred yet, so we don't need to refund.
+            exitTrade(address(_src), address(_dest), _amount, address(adapter), false);
+            return false;
+        }
+
+        adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
+
+        // Let the adapter approve the token for the exchange provider address, so that in the event of a failure, we can return the tokens
+        // This is needed because we use the low level call for function selector, which doesn't propagate the error
+        if (_src.allowance(address(adapter), address(this)) == 0) {
+            adapter.approveToken(_src);
+        }
+        ERC20NoReturn(_src).transferFrom(msg.sender, address(adapter), _amount);
+
+        bool result = address(adapter).call(SWAP_FUNCTION_SELECTOR,_src,_dest,_amount,_minimumRate, _depositAddress);
+        if (!result) {
+            exitTrade(address(_src), address(_dest), _amount, address(adapter), true);
+            return false;
+            //return (false, amountOfTradeFailures[msg.sender][address(ETH)][address(_token)]);
+        }
+        require(payFee(sellTokenFee(_src,_amount, exchangeId)));
+        registerSuccesfullTrade(address(_src), address(_dest));
 
         return true;
         //return (true, 0);
@@ -194,9 +232,10 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
             if(_amounts[i] == 0) {continue;} // Skip token
 
-            adapter = OlympusExchangeAdapterInterface(
-                exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
-                exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
+            if(_exchangeId == ""){
+                bytes32 exchangeId = exchangeAdapterManager.pickExchange(ETH, _tokens[i], _amounts[i], _minimumRates[i]);
+            }
+            adapter = OlympusExchangeAdapterInterface(exchangeAdapterManager.getExchangeAdapter(exchangeId));
             if(address(adapter) == 0x0) {
                 completeSuccess = false;
                 failureFeeToDeduct += _amounts[i];
@@ -233,7 +272,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
 
             adapter = OlympusExchangeAdapterInterface(
                 exchangeAdapterManager.getExchangeAdapter(_exchangeId == "" ?
-                exchangeAdapterManager.pickExchange(_tokens[i], _amounts[i], _minimumRates[i], true) : _exchangeId));
+                exchangeAdapterManager.pickExchange(_tokens[i],ETH, _amounts[i], _minimumRates[i]) : _exchangeId));
             if (address(adapter) == 0x0) {
                 functionCompleteSuccess = false;
                 exitTrade(address(_tokens[i]), address(ETH), _amounts[i], address(adapter), false);
@@ -271,6 +310,38 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     function getPrice(ERC20Extended _sourceAddress, ERC20Extended _destAddress, uint _amount, bytes32 _exchangeId)
         external view returns(uint expectedRate, uint slippageRate) {
         return exchangeAdapterManager.getPrice(_sourceAddress, _destAddress, _amount, _exchangeId);
+    }
+
+    function getMultiplePricesOrCacheFallback(ERC20Extended[] _destAddresses, uint _maxPriceAgeIfCache)
+        external returns(uint[] expectedRates, uint[] slippageRates, bool[] isCached) {
+        expectedRates = new uint[](_destAddresses.length);
+        slippageRates = new uint[](_destAddresses.length);
+        isCached = new bool[](_destAddresses.length);
+        uint[] memory _expectedRates;
+        uint[] memory _slippageRates;
+        (_expectedRates, _slippageRates) = exchangeAdapterManager.getPrices(_destAddresses);
+        for(uint i = 0; i < _expectedRates.length; i++){
+
+            if (_expectedRates[i] > 0){
+                currentPriceExpected[0x0][ETH][_destAddresses[i]] = _expectedRates[i];
+                currentPriceSlippage[0x0][ETH][_destAddresses[i]] = _slippageRates[i];
+                lastCachedPriceTime[0x0][ETH][_destAddresses[i]] = now;
+                expectedRates[i] = _expectedRates[i];
+                slippageRates[i] = _slippageRates[i];
+                isCached[i] = false;
+                continue;
+            }
+            if (lastCachedPriceTime[0x0][ETH][_destAddresses[i]] + _maxPriceAgeIfCache < now) {
+                expectedRates[i] = 0;
+                slippageRates[i] = 0;
+                isCached[i] = false;
+                continue;
+            }
+            expectedRates[i] = currentPriceExpected[0x0][ETH][_destAddresses[i]];
+            slippageRates[i] = currentPriceSlippage[0x0][ETH][_destAddresses[i]];
+            isCached[i] = true;
+            continue;
+        }
     }
 
     function getPriceOrCacheFallback(

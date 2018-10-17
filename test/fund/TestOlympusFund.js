@@ -69,7 +69,7 @@ contract("Fund", accounts => {
     mockMOT = await MockToken.deployed();
     market = await Marketplace.deployed();
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = await mockKyber.supportedTokens();
+    tokens = (await mockKyber.supportedTokens()).slice(0, 2);
     exchange = await ExchangeProvider.deployed();
     asyncWithdraw = await AsyncWithdraw.deployed();
     riskControl = await RiskControl.deployed();
@@ -127,7 +127,7 @@ contract("Fund", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], fund.address);
     assert.equal((await fund.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not taken in account in the price but as a fee
     assert.equal((await fund.getPrice()).toNumber(), web3.toWei(1, "ether"));
     assert.equal((await fund.accumulatedFee()).toNumber(), web3.toWei(0.5, "ether"));
   });
@@ -161,8 +161,7 @@ contract("Fund", accounts => {
     assert.equal(await fund.name(), fundData.name);
     assert.equal(await fund.description(), fundData.description);
     assert.equal(await fund.symbol(), fundData.symbol);
-    assert.equal(await fund.category(), fundData.category);
-    assert.equal(await fund.version(), "1.0");
+    assert.equal(calc.bytes32ToString(await fund.category()), fundData.category);
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
   });
 
@@ -312,7 +311,10 @@ contract("Fund", accounts => {
 
     await calc.waitSeconds(interval);
     // Lock is over, we can witdraw again
+    // Withdraw with no requests
     tx = await fund.withdraw(); // This withdraw has the previus time lock , but will set a new one with 0
+
+    assert.equal(await stepProvider.status(fund.address, (await fund.WITHDRAW())), 0, 'Withdraw not steps finalize correctly');
     assert.ok(tx);
   });
 
@@ -392,6 +394,19 @@ contract("Fund", accounts => {
     await calc.assertReverts(
       async () => await fund.buyTokens(0x0, tokens, amounts, rates.map(rate => rate[0])),
       "reverte if fund balance is not enough"
+    );
+  });
+
+  it("Buy tokens fails if token has more than 18 decimals", async () => {
+
+    const fundBalance = (await fund.getETHBalance()).toNumber();
+    assert.isAbove(fundBalance, 0, "This test must start with some ETH invested eth");
+
+    const token20Decimals = await MockToken.new("20 DECIMALS", "T20", 20, 10 ** 32);
+
+    await calc.assertReverts(
+      async () => await fund.buyTokens(0x0, [token20Decimals.address], [fundBalance], [0]),
+      "Revert buy tokens with more than 18 decimals"
     );
   });
 

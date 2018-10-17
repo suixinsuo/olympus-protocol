@@ -30,8 +30,9 @@ const indexData = {
   initialManagementFee: 0,
   weights: [50, 50],
   tokensLenght: 2,
-  rebalanceDelta: 30
+  rebalanceDelta: 0.003 * 10 ** 18
 };
+
 const toTokenWei = amount => {
   return amount * 10 ** indexData.decimals;
 };
@@ -42,7 +43,6 @@ const expectedTokenAmount = (balance, rates, tokenIndex) => {
 };
 
 contract("Basic Index", accounts => {
-
   let index;
   let market;
   let mockKyber;
@@ -57,9 +57,9 @@ contract("Basic Index", accounts => {
   const investorB = accounts[2];
   const investorC = accounts[3];
 
-  before("Initalize tokens", async () => {
+  before("Initialize tokens", async () => {
     mockKyber = await MockKyberNetwork.deployed();
-    tokens = await mockKyber.supportedTokens();
+    tokens = (await mockKyber.supportedTokens()).slice(0, 2);
 
     market = await Marketplace.deployed();
     mockMOT = await MockToken.deployed();
@@ -93,6 +93,40 @@ contract("Basic Index", accounts => {
       "Shall revert"
     ));
 
+  it("Required tokens to be ERC20Extended Standard", async () =>
+    await calc.assertReverts(
+      async () =>
+        await BasicIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          [rebalance.address, asyncWithdraw.address], // NOT erc20
+          indexData.weights
+        ),
+      "Shall revert"
+    ));
+
+  it("Required tokens cant have more than 18 decimals", async () => {
+    const token20Decimals = await MockToken.new("20 DECIMALS", "T20", 20, 10 ** 32);
+
+    await calc.assertReverts(
+      async () =>
+        await BasicIndex.new(
+          indexData.name,
+          indexData.symbol,
+          indexData.description,
+          indexData.category,
+          indexData.decimals,
+          [tokens[0], token20Decimals.address], // Second token has more than 18 deciamls
+          [30, 70],
+          { gas: 8e6 } // At the moment require 6.7M
+        ),
+      "Shall revert"
+    );
+  });
+
   it("Create a index", async () => {
     index = await BasicIndex.new(
       indexData.name,
@@ -101,7 +135,7 @@ contract("Basic Index", accounts => {
       indexData.category,
       indexData.decimals,
       tokens.slice(0, indexData.tokensLenght),
-      indexData.weights,
+      indexData.weights
     );
 
     assert.equal((await index.status()).toNumber(), 0); // new
@@ -115,7 +149,7 @@ contract("Basic Index", accounts => {
     assert.equal(myProducts.length, 1);
     assert.equal(myProducts[0], index.address);
     assert.equal((await index.status()).toNumber(), 1); // Active
-    // The fee send is not taked in account in the price but as a fee
+    // The fee send is not taken in account in the price but as a fee
     assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
   });
 
@@ -150,9 +184,8 @@ contract("Basic Index", accounts => {
   it("Index shall be able to deploy", async () => {
     assert.equal(await index.name(), indexData.name);
     assert.equal(await index.description(), indexData.description);
-    assert.equal(await index.category(), indexData.category);
+    assert.equal(calc.bytes32ToString(await index.category()), indexData.category);
     assert.equal(await index.symbol(), indexData.symbol);
-    assert.equal(await index.version(), "1.0");
     assert.equal((await index.fundType()).toNumber(), DerivativeType.Index);
     assert.equal((await index.totalSupply()).toNumber(), 0);
     const [indexTokens, weights] = await index.getTokens();
@@ -210,8 +243,6 @@ contract("Basic Index", accounts => {
     assert.equal((await index.balanceOf(investorB)).toNumber(), 0, "B has withdrawn");
   });
 
-
-
   it("Shall be able to buy tokens with eth", async () => {
     // From the preivus test we got 1.8 ETH
 
@@ -234,7 +265,6 @@ contract("Basic Index", accounts => {
       assert.equal(amount.toNumber(), expectedAmount, "Got expected amount");
     });
   });
-
 
   it("Shall be able to sell tokens to get enough eth for withdraw", async () => {
     // From the preivus test we got 1.8 ETH, and investor got 1.8 Token
@@ -291,9 +321,12 @@ contract("Basic Index", accounts => {
     // Price is updated because we force the total assets value increase while not the supply
     const price = (await index.getPrice()).toNumber();
     const supply = (await index.totalSupply()).toNumber();
-    const priceInRange = await calc.inRange(price, (initialAssetsValue + extraAmount) * 10 ** indexData.decimals / supply, web3.toWei(0.00001, "ether"));
+    const priceInRange = await calc.inRange(
+      price,
+      ((initialAssetsValue + extraAmount) * 10 ** indexData.decimals) / supply,
+      web3.toWei(0.00001, "ether")
+    );
     assert.ok(priceInRange, "Price updated");
-
   });
 
   it("Shall be able to change the status", async () => {

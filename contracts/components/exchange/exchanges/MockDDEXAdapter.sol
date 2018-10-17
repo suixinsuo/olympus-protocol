@@ -58,6 +58,10 @@ contract MockDDEXAdapter is OlympusExchangeAdapterInterface{
         return Utils.calcDstQty(eth, 18, destDecimals, rate);
     }
 
+    function tokenExchange(ERC20Extended /*_src*/, ERC20Extended /*_dest*/, uint /*_amount*/, uint /*_minimumRate*/, address /*_depositAddress*/)
+    external payable returns(bool success){
+        return false;
+    }
     function configAdapter(KyberNetworkInterface _kyber, address _walletId) external onlyOwner returns(bool success) {
         if(address(_kyber) != 0x0){
             kyber = _kyber;

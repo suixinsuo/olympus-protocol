@@ -4,6 +4,7 @@ const RiskControl = artifacts.require("RiskControl");
 const MockToken = artifacts.require("MockToken");
 const MockRiskControl = artifacts.require("MockRiskControl");
 const Promise = require("bluebird");
+const calc = require("../utils/calc");
 
 contract("RiskControl", accounts => {
   it("RiskControl should be able to deploy.", async () => {
@@ -14,7 +15,7 @@ contract("RiskControl", accounts => {
 
   it("RiskControl should be able to return false.", async () => {
     let riskControl = await RiskControl.deployed();
-    let mockMot = await MockToken.new("", "MOT", 18, 10 ** 9 * 10 ** 18);
+    let mockMot = await MockToken.new("", "MOT", calc.getRandomDecimals(), 10 ** 9 * 10 ** 18);
     await riskControl.setMotAddress(mockMot.address);
     let instance = await MockRiskControl.new(riskControl.address);
     await instance.initialize();
