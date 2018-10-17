@@ -416,7 +416,11 @@ contract("Olympus Index", accounts => {
 
     await calc.waitSeconds(interval);
     // Lock is over, we can witdraw again
+    // Check also withdraw with no requests
     tx = await index.withdraw(); // This withdraw has the previus time lock , but will set a new one with 0
+
+    assert.equal(await stepProvider.status(index.address, (await index.WITHDRAW())), 0, 'Withdraw not steps finalize correctly');
+
     assert.ok(tx);
   });
 
