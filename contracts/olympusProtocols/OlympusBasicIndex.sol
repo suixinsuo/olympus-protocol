@@ -329,8 +329,4 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         return address(this).balance;
     }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 80be357eb9896b879125e0631c3cf796910324b6
 }
