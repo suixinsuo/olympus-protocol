@@ -133,6 +133,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function close() OnlyOwnerOrPausedTimeout public returns(bool success) {
         require(status != DerivativeStatus.New);
+        require(productStatus == Status.AVAILABLE);
+
         status = DerivativeStatus.Closed;
         return true;
     }
