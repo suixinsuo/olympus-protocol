@@ -7,7 +7,7 @@ const CentralizedExchange = artifacts.require("CentralizedExchange");
 const ExchangeProvider = artifacts.require("ExchangeProvider");
 
 const args = require('../libs/args')
-const KyberConfig = require('../libs/kyber_config');
+const KyberConfig = require('../conf/kyber_config');
 
 
 function buyOnDev() {

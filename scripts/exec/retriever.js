@@ -1,4 +1,4 @@
-/* 
+/*
 * This file is to retrieve meta information from contracts and complied json files.
 * And to push them to the server by the gitlab ci later on.
 * It generates content inside a folder called .temp by default/
@@ -18,13 +18,24 @@ const versionRegEx = /version = \"(.*)\"/gi;
 const templateListJson = [];
 
 const getPath = (name, version) => {
+
+  if (!fs.existsSync(`./.temp/${name}`)) {
+    fs.mkdirSync(`./.temp/${name}`);
+  }
+
   return path.resolve("./.temp", name, version + ".json");
 };
 
-names.forEach((name, index) => {
-  const json = require(path.resolve("./build/contracts", name + ".json"));
+const getVersion = (name) => {
   const contract = fs.readFileSync(path.resolve("./contracts/olympusProtocols", name + ".sol"));
   const version = versionRegEx.exec(contract)[1] || "default";
+  return version;
+}
+
+names.forEach((name, _index) => {
+
+  const json = require(path.resolve("./build/contracts", name + ".json"));
+  const version = getVersion(name);
   const data = {
     contractName: json.contractName,
     type: name.indexOf("Index") === -1 ? "Fund" : "Index",
@@ -33,9 +44,6 @@ names.forEach((name, index) => {
     version
   };
 
-  if (!fs.existsSync(`./.temp/${name}`)) {
-    fs.mkdirSync(`./.temp/${name}`);
-  }
 
   const jsonData = JSON.stringify(data, null, 2);
   templateListJson.push(data);
@@ -44,16 +52,17 @@ names.forEach((name, index) => {
     if (err) {
       return console.error(err);
     }
-
+    // Override the previus latest
     fs.writeFile(getPath(name, "latest"), jsonData, () => {
       console.log(`${name}-v${version} renamed to latest.json.`);
     });
     console.log(`${name}-v${version} created.`);
   });
 
-  if (index == names.length - 1) {
-    fs.writeFile(path.resolve("./.temp/templateList.json"), JSON.stringify(templateListJson, null, 2), () => {
-      console.log("templateList.json created.");
-    });
-  }
+
 });
+// Completed
+fs.writeFile(path.resolve("./.temp/templateList.json"), JSON.stringify(templateListJson, null, 2), () => {
+  console.log("templateList.json created.");
+});
+

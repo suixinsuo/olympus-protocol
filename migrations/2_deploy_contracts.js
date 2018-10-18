@@ -1,6 +1,6 @@
 "use strict";
 
-const KyberConfig = require("../scripts/libs/kyber_config");
+const KyberConfig = require("../scripts/conf/kyber_config");
 
 let ExchangeProvider = artifacts.require("ExchangeProvider");
 let ExchangeAdapterManager = artifacts.require("ExchangeAdapterManager");
