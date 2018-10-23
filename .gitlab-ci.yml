@@ -66,5 +66,6 @@ deploy:
     - ssh-keyscan -H '188.166.218.211' >> ~/.ssh/known_hosts
   script:
     - scp -r ./.temp/* root@188.166.218.211:/var/www/Olympus/Website/contracts/
+    - scp -r ./docs/build/* root@188.166.218.211:/var/www/Olympus/Website/docs/
   only:
     - develop
