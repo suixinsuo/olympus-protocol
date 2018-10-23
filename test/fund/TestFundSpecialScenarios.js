@@ -141,11 +141,11 @@ contract("Fund Special Scenarios", accounts => {
     // I try to buy tokens broken
     await mockKyber.toggleSimulatePriceZero(true);
     await exchange.updateInterval(0);
+    const maxTimes = await fund.MAX_BROKEN_TIMES();
 
-    for (var i = 0; i <= 5; i++) {
+    for (var i = 0; i < maxTimes; i++) {
       // 5 times error to mark a token to broken.
       const result = await fund.buyTokens.call("", tokens, amounts, rates.map(rate => rate[0]));
-      console.log({ i, result });
       await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
     }
 
@@ -179,11 +179,11 @@ contract("Fund Special Scenarios", accounts => {
     // I mark tokens as broken
     await mockKyber.toggleSimulatePriceZero(true);
     await exchange.updateInterval(0);
+    const maxTimes = await fund.MAX_BROKEN_TIMES();
 
-    for (var i = 0; i <= 5; i++) {
+    for (var i = 0; i < maxTimes; i++) {
       // 5 times error to mark a token to broken.
       const result = await fund.buyTokens.call("", tokens, amounts, rates.map(rate => rate[0]));
-      console.log({ i, result });
       await fund.buyTokens("", tokens, amounts, rates.map(rate => rate[0]));
     }
 
@@ -248,8 +248,9 @@ contract("Fund Special Scenarios", accounts => {
     // We sell all but are broken
     await mockKyber.toggleSimulatePriceZero(true);
     await exchange.updateInterval(0);
+    const maxTimes = await fund.MAX_BROKEN_TIMES();
 
-    for (var i = 0; i <= 5; i++) {
+    for (var i = 0; i < maxTimes; i++) {
       // 5 times error to mark a token to broken.
       tx = await fund.sellTokens("", fundTokensAndBalance[0], balancesToSell, sellRates.map(rate => rate[0]));
     }
@@ -393,6 +394,7 @@ contract("Fund Special Scenarios", accounts => {
   });
 
   it("All Tokens marked as broken while withdrawing", async () => {
+
     const fund = await createNewFund(componentList);
     // Invest
     const investAmount = web3.toWei(2, "ether");
@@ -412,10 +414,8 @@ contract("Fund Special Scenarios", accounts => {
     // Tokens get broken while withdrawing
     await mockKyber.toggleSimulatePriceZero(true);
     await exchange.updateInterval(0);
+
     // Withdraw
-    for (var i = 0; i <= 5; i++) {
-      await fund.withdraw();
-    }
     await fund.withdraw();
 
     const investorAfterBalance = await calc.ethBalance(investorA);
@@ -462,10 +462,10 @@ contract("Fund Special Scenarios", accounts => {
     // Gets broken and we close the fund
     await mockKyber.toggleSimulatePriceZero(true);
     await exchange.updateInterval(0);
-    for (var i = 0; i <= 5; i++) {
-      await fund.close();
-      await fund.sellAllTokensOnClosedFund(); // All tokens get mark as broken on sell
-    }
+    await fund.close();
+
+    await fund.sellAllTokensOnClosedFund(); // All tokens get mark as broken on sell (at once trial)
+
 
     // Request withdraw
     const investorBeforeBalance = await calc.ethBalance(investorA);

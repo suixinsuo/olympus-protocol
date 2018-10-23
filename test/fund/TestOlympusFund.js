@@ -163,6 +163,7 @@ contract("Fund", accounts => {
     assert.equal(await fund.symbol(), fundData.symbol);
     assert.equal(calc.bytes32ToString(await fund.category()), fundData.category);
     assert.equal((await fund.fundType()).toNumber(), DerivativeType.Fund);
+    assert.equal((await fund.MAX_BROKEN_TIMES()).toNumber(), 5); // Aribitrary constant in the fund
   });
 
   // --------------------------------------------------------------------------
