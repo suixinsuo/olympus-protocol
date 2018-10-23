@@ -1,8 +1,6 @@
 Fund
 ====
 
-[TOC]
-
 ### Introduction
 
 A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. This document walks you through a customized template for a fund created by the Olympus team.
