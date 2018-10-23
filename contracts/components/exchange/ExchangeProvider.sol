@@ -53,7 +53,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     function exitTrade(address _sourceAddress, address _destAddress, uint _amount, address _adapter, bool _needToRefund) private {
 
         // Updating lastTradeFailure
-        if (lastTradeFailure[msg.sender][_sourceAddress][_destAddress].add(registerTradeFailureInterval) < now) {
+        if (lastTradeFailure[msg.sender][_sourceAddress][_destAddress].add(registerTradeFailureInterval) <= now) {
             if (amountOfTradeFailures[msg.sender][_sourceAddress][_destAddress] == 0) {
                 firstTradeFailure[msg.sender][_sourceAddress][_destAddress] = now;
             }

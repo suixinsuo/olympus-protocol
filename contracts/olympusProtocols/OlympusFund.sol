@@ -22,6 +22,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // Does not fit in derivative, index out of gas
     bytes32 public constant TOKENBROKEN = "TokenBroken";
     uint public constant TOKEN_DENOMINATOR = 10**18; // Apply % to a denominator, 18 is the minimum highetst precision required
+    uint public constant MAX_BROKEN_TIMES = 5;
 
     enum Status { AVAILABLE, WITHDRAWING, SELLINGTOKENS }
     Status public productStatus = Status.AVAILABLE;
@@ -56,7 +57,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20181017";
+        version = "x";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -129,7 +130,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         if (!getExchangeInterface()
             .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)) {
-            checkBrokenTokens(_tokens);
+            checkBrokenTokens(_tokens, MAX_BROKEN_TIMES);
             updateTokens(_tokens);
             return false;
         }
@@ -158,7 +159,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
-            checkBrokenTokens(_tokens);
+            checkBrokenTokens(_tokens, MAX_BROKEN_TIMES);
             updateTokens(_tokens);
             return false;
         }
@@ -486,7 +487,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
 
         if(!exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0)){
-            checkBrokenTokens(_tokensThisStep);
+            checkBrokenTokens(_tokensThisStep, 1);
         }
 
         if(i == _tokensToSell.length) {
@@ -535,15 +536,18 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
-    function checkBrokenTokens(ERC20Extended[] _tokens) internal {
+    // event LOGU(uint i);
+    function checkBrokenTokens(ERC20Extended[] _tokens, uint _maxTrials) internal {
         TokenBrokenInterface  tokenBrokenProvider = TokenBrokenInterface(getComponentByName(TOKENBROKEN));
         uint[] memory _failedTimes = new uint[](_tokens.length);
         _failedTimes = getExchangeInterface().getFailedTradesArray(_tokens);
 
         for(uint t = 0;t < _tokens.length; t++) {
+            // emit LOGU(_failedTimes[t]);
+
              // Is successfull or already broken
-            if((_failedTimes[t]) <= 0 || isBrokenToken[_tokens[t]]) {
-                continue;
+            if((_failedTimes[t]) <= _maxTrials || isBrokenToken[_tokens[t]]) {
+                continue; //skip token
             }
             isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
             // I broken, check if has balance to distribute
