@@ -71,7 +71,7 @@ const delay = async sec => {
   });
 };
 
-const availabpleStatus = async (index, current) => {
+const availableStatus = async (index, current) => {
   const status = await index.productStatus();
   return status.toNumber() === 0 || status.toNumber() === current;
 };
