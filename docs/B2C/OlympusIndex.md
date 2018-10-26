@@ -1,8 +1,6 @@
 Index
 =====
 
-[TOC]
-
 ### Introduction
 
 A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. This document walks you through the functions of the customized index (created by the Olympus team) that are targeted at investors.

@@ -1,8 +1,6 @@
 Basic Fund
 ==========
 
-[TOC]
-
 ### Introduction
 
 A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. The Olympus Basic Fund contains the basic interfaces that a fund needs. This document walks you through the functions of the basic fund (created by the Olympus team) that are targeted at investors.

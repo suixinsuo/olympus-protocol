@@ -1,8 +1,6 @@
 Using Olympus components
 ========================
 
-[TOC]
-
 [This is the second part of the GetStarted tutorial. We use the same files as in the first part of the tutorial to demonstrate how to use Olympus components]
 
 Olympus offers a great variety of components that allows us to increase the capability of any fund/index with only a few lines of code. In this scenario, we want to give some guarantee to our investors that their money is not going to be wasted in buy/sell transactions by the owner. We will allow the owner to only make transactions on a specific token once per week.

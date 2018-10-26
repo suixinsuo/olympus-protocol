@@ -1,8 +1,6 @@
 Getting Started
 ===============
 
-[TOC]
-
 Welcome to the Olympus Labs Open API, powering your application with cryptocurrency financial protocols and tokenized financial products. In this document, we are going to introduce the Olympus protocol and walk you through the basic steps to get started on working with the Olympus Protocol.
 
 Olympus Derivative Protocols
