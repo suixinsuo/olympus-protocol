@@ -37,7 +37,7 @@ const getPath = (name, version) => {
 };
 
 const getVersion = (name) => {
-  if(name !== "OlympusBasicFund"&&"OlympusBasicIndex"&&"OlympusFund"&&"OlympusIndex"){
+  if(!(names.slice(0,4).includes(name))){
     const version = "latest";
     return version;
   }else{
