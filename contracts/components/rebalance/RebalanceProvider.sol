@@ -132,9 +132,12 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
                     .mul(10**ERC20Extended(indexTokenAddresses[i]).decimals())
                     .div(ETHTokenPrice)));
             }
-            //TODO Does this run out of gas for 100 tokens?
         }
         rebalanceStatus[msg.sender] = RebalanceStatus.Calculated;
+        // Prevent contracts getting stuck because one of the arrays is empty
+        if(tokensToSell[msg.sender].length == 0 || tokensToBuy[msg.sender].length == 0){
+            revert("Either no tokens to sell or to buy. Possible cause is a too small change");
+        }
         return (
             tokensToSell[msg.sender],
             amountsToSell[msg.sender],
