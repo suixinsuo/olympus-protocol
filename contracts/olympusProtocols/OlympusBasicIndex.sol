@@ -298,7 +298,9 @@ contract OlympusBasicIndex is IndexInterface, BaseDerivative, StandardToken, ERC
         uint ETHBalanceBefore = address(this).balance;
 
         (tokensToSell, amountsToSell, tokensToBuy, amountsToBuy,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
-
+        if(tokensToSell.length == 0) {
+            return true;
+        }
         // Sell Tokens
         for (i = 0; i < tokensToSell.length; i++) {
             ERC20NoReturn(tokensToSell[i]).approve(address(exchangeProvider), 0);
