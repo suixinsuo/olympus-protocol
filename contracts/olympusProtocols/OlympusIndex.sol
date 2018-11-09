@@ -471,7 +471,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         startGasCalculation();
 
         require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING);
-        productStatus = Status.REBALANCING;
 
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -492,12 +491,11 @@ contract OlympusIndex is IndexInterface, Derivative {
         (_tokensToSell, _amounts, _tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
         if(_tokensToSell.length == 0) {
             finalizeStep(REBALANCE);
-            rebalanceProvider.finalize();
-            rebalanceReceivedETHAmountFromSale = 0;
-            productStatus = Status.AVAILABLE;
-            reimburse();   // Completed case
+            reimburse(); // Completed case
             return true;
         }
+        productStatus = Status.REBALANCING;
+
         // Sell Tokens
         if ( stepStatus == uint(RebalancePhases.SellTokens)) {
             for (i = currentStep; i < _tokensToSell.length && goNextStep(REBALANCE) ; i++) {
