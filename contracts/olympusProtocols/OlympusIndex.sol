@@ -482,18 +482,19 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint[] memory _amounts;
         address[] memory _tokensToBuy;
         uint i;
+
+        (_tokensToSell, _amounts, _tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
+        if(_tokensToSell.length == 0) {
+            reimburse(); // Completed case
+            return true;
+        }
         // solhint-disable-next-line
         uint ETHBalanceBefore = getETHBalance();
 
         uint currentStep = initializeOrContinueStep(REBALANCE);
         uint stepStatus = getStatusStep(REBALANCE);
         // solhint-disable-next-line
-        (_tokensToSell, _amounts, _tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
-        if(_tokensToSell.length == 0) {
-            finalizeStep(REBALANCE);
-            reimburse(); // Completed case
-            return true;
-        }
+
         productStatus = Status.REBALANCING;
 
         // Sell Tokens
