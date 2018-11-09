@@ -213,6 +213,21 @@ contract("Basic Index", accounts => {
     assert.equal((await index.balanceOf(investorB)).toNumber(), toTokenWei(1));
   });
 
+  it("Rebalance works with no tokens", async () => {
+    let tx;
+    let rebalanceFinished = false;
+    while (rebalanceFinished == false) {
+      rebalanceFinished = await index.rebalance.call();
+      tx = await index.rebalance();
+      assert.ok(tx);
+    }
+
+    assert.equal((await index.totalSupply()).toNumber(), web3.toWei(2, "ether"), "Supply is updated");
+    assert.equal((await index.getPrice()).toNumber(), web3.toWei(1, "ether"));
+    const tokenAmounts = await index.getTokensAndAmounts();
+    tokenAmounts[1].forEach(amount => assert.equal(amount, 0, "Amount is 0"));
+  });
+
   it("Shall be able to request and withdraw", async () => {
     let tx;
     let tokenInWei = toTokenWei(1);

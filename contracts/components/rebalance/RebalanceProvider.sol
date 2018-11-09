@@ -136,7 +136,8 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         rebalanceStatus[msg.sender] = RebalanceStatus.Calculated;
         // Prevent contracts getting stuck because one of the arrays is empty
         if(tokensToSell[msg.sender].length == 0 || tokensToBuy[msg.sender].length == 0){
-            revert("Either no tokens to sell or to buy. Possible cause is a too small change");
+            // revert("Either no tokens to sell or to buy. Possible cause is a too small change");
+            finalize();
         }
         return (
             tokensToSell[msg.sender],
@@ -203,7 +204,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         return rebalanceStatus[msg.sender] != RebalanceStatus.Initial;
     }
 
-    function finalize() external returns (bool success) {
+    function finalize() public returns (bool success) {
         rebalanceStatus[msg.sender] = RebalanceStatus.Initial;
         delete tokensToSell[msg.sender];
         delete amountsToSell[msg.sender];
