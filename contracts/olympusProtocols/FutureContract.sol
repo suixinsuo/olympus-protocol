@@ -32,7 +32,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     // Basic information that is override on creation
     string public name = "Olympus Future";
     string public description = "Olympus Future";
-    string public version = "v0.1";
+    string public version = "1.1-20181113";
     string public symbol;
     // Config on  Creation
     uint public target;
