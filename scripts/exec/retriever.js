@@ -26,7 +26,7 @@ const names = ["OlympusBasicFund",
 ];
 
 
-const includeInTemplate = ["OlympusBasicFund",
+const olympusProtocols = ["OlympusBasicFund",
   "OlympusBasicIndex",
   "OlympusFund",
   "OlympusIndex",
@@ -46,14 +46,15 @@ const getPath = (name, version) => {
 };
 
 const getVersion = (name) => {
-  if (!(names.slice(0, 4).includes(name))) {
+  if (!olympusProtocols.find((includeName) => includeName === name)) {
     const version = "latest";
     return version;
-  } else {
-    var contract = fs.readFileSync(path.resolve("./contracts/olympusProtocols", name + ".sol"));
-    const version = versionRegEx.exec(contract)[1] || "default";
-    return version;
   }
+  var contract = fs.readFileSync(path.resolve("./contracts/olympusProtocols", name + ".sol"));
+  const parsed = versionRegEx.exec(contract);
+  const version = parsed ? parsed[1] : "default";
+  return version;
+
 }
 
 names.forEach((name) => {
@@ -70,7 +71,7 @@ names.forEach((name) => {
 
 
   const jsonData = JSON.stringify(data, null, 2);
-  if (includeInTemplate.find((includeName) => includeName === name)) { templateListJson.push(data) };
+  if (olympusProtocols.find((includeName) => includeName === name)) { templateListJson.push(data) };
 
 
   fs.writeFile(getPath(name, version), jsonData, err => {
