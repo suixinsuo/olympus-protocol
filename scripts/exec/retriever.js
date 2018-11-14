@@ -58,8 +58,8 @@ const getVersion = (name) => {
 }
 
 const getType = (name) => {
-  if (name.indexOf("Index") !== -1) { return 'Index'; }
-  if (name.indexOf("Future") !== -1) { return 'Future'; }
+  if (name.includes("Index")) { return 'Index'; }
+  if (name.includes("Future")) { return 'Future'; }
   return 'Fund';
 }
 names.forEach((name) => {
