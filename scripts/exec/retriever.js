@@ -57,13 +57,18 @@ const getVersion = (name) => {
 
 }
 
+const getType = (name) => {
+  if (name.indexOf("Index") !== -1) { return 'Index'; }
+  if (name.indexOf("Future") !== -1) { return 'Future'; }
+  return 'Fund';
+}
 names.forEach((name) => {
 
   const json = require(path.resolve("./build/contracts", name + ".json"));
   const version = getVersion(name);
   const data = {
     contractName: json.contractName,
-    type: name.indexOf("Index") === -1 ? "Fund" : "Index",
+    type: getType(name),
     abi: json.abi,
     bytecode: json.bytecode,
     version
