@@ -13,17 +13,26 @@ if (!fs.existsSync("./.temp")) {
   fs.mkdirSync("./.temp");
 }
 
-const names = ["OlympusBasicFund", 
+const names = ["OlympusBasicFund",
   "OlympusBasicIndex",
-  "OlympusFund", 
+  "OlympusFund",
   "OlympusIndex",
+  "FutureContract",
   "WhitelistProvider",
   "RebalanceProvider",
   "AsyncWithdraw",
   "Marketplace",
   "Locker",
+];
+
+
+const olympusProtocols = ["OlympusBasicFund",
+  "OlympusBasicIndex",
+  "OlympusFund",
+  "OlympusIndex",
   "FutureContract"
-  ];
+];
+
 const versionRegEx = /version = \"(.*)\"/gi;
 const templateListJson = [];
 
@@ -37,17 +46,18 @@ const getPath = (name, version) => {
 };
 
 const getVersion = (name) => {
-  if(!(names.slice(0,4).includes(name))){
+  if (!olympusProtocols.find((includeName) => includeName === name)) {
     const version = "latest";
     return version;
-  }else{
-    var contract = fs.readFileSync(path.resolve("./contracts/olympusProtocols", name + ".sol"));
-    const version = versionRegEx.exec(contract)[1] || "default";
-    return version;
   }
+  var contract = fs.readFileSync(path.resolve("./contracts/olympusProtocols", name + ".sol"));
+  const parsed = versionRegEx.exec(contract);
+  const version = parsed ? parsed[1] : "default";
+  return version;
+
 }
 
-names.forEach((name, _index) => {
+names.forEach((name) => {
 
   const json = require(path.resolve("./build/contracts", name + ".json"));
   const version = getVersion(name);
@@ -61,8 +71,8 @@ names.forEach((name, _index) => {
 
 
   const jsonData = JSON.stringify(data, null, 2);
-  if( _index <= 3 ){ templateListJson.push(data) };
-  
+  if (olympusProtocols.find((includeName) => includeName === name)) { templateListJson.push(data) };
+
 
   fs.writeFile(getPath(name, version), jsonData, err => {
     if (err) {
