@@ -1,33 +1,31 @@
-Basic Index
-===========
+Basic Fund
+==========
+
+[TOC]
 
 ### Introduction
 
-A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the basic template for an index.
+A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. The Olympus Basic Fund contains basic interfaces that a fund needs. This document walks you through the basic template for a fund.
 
 ### Constructor
 
 ``` {.sourceCode .javascript}
-constructor (
+constructor(
   string _name,
   string _symbol,
   string _description,
   string _category,
-  uint _decimals,
-  address[] _tokens,
-  uint[] _weights)
-  public checkLength(_tokens, _weights) checkWeights(_weights);
+  uint _decimals
+) public;
 ```
 
 #### Parameters
 
-> 1.  \_name: Index name
-> 2.  \_symbol: Index symbol (The index is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
-> 3.  \_description: Index description
-> 4.  \_category: Index category
-> 5.  \_decimals: Index decimals (normally it should be 18)
-> 6.  \_tokens: The token addresses that the index will buy, sell and rebalance
-> 7.  \_weights: The weights of the tokens
+> 1.  \_name: Fund name
+> 2.  \_symbol: Fund symbol (The fund is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
+> 3.  \_description: Fund description
+> 4.  \_category: Fund category
+> 5.  \_decimals: Fund decimals (normally it should be 18)
 
 #### Example code
 
@@ -38,19 +36,17 @@ const web3 = new Web3
 
 const name = "YH";
 const symbol = "YH";
-const description = "YH's Basic Index";
+const description = "YH's Basic Fund";
 const category = "YH";
 const decimals = 18;
-const tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
-  "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"]
-const weights = [50,50];
 
 // Get gas price
 const gasPrice
-web3.eth.getGasPrice((err, price)=>{
-  if (err) {
-    return console.error(err);
-  }
+web3.eth.getGasPrice
+  ((err, price)=>{
+    if (err) {
+      return console.error(err);
+    }
   gasPrice = price;
 })
 
@@ -62,8 +58,6 @@ const data = web3.eth.contract(abi).new.getData({
     description,
     category,
     decimals,
-    tokens,
-    weights,
     {
       data: new Buffer(bytecode, 'utf8'),
     }
@@ -75,72 +69,69 @@ web3.eth.estimateGas(data,(err,gas)=>{
   gasLimit = gas;
 })
 
-// Deploy and get index address
+// Deploy and get fund contract address
 web3.eth.contract(abi).new(
-      name,
-      symbol,
-      description,
-      category,
-      decimals,
-      tokens,
-      weights,
-      {
-        from: web3.eth.accounts[0],
-        data: new Buffer(INDEX_PRODUCT_BINARY, 'utf8'),
-        gas: gasLimit,
-        gasPrice: gasPrice,
-      },
-      (err: Error, newIndex: any) => {
-        if (err) {
-          return console.error(err);
-        }
-  if (newIndex && newIndex.address) {
-    // Index deployed, you can get the deployed index address.
-    console.log(newIndex.address)
-  }
+  name,
+  symbol,
+  description,
+  category,
+  decimals,
+  {
+    from: web3.eth.accounts[0],
+    data: new Buffer(bytecode, 'utf8'),
+    gas: gasLimit,
+    gasPrice: gasPrice,
+  },
+  (err: Error, newFund: any) => {
+    if (err) {
+      return console.error(err);
+    }
+    if (newFund && newFund.address) {
+      // Now the fund is deployed, you can get the fund contract address.
+      console.log(newFund.address)
+    }
 }));
 ```
 
 ### Basic info
 
-The code below shows how to get an index's basic information, including index's name, symbol, description, category and decimals.
+The code below shows how to get a fund's basic information, including the fund's name, symbol, description, category and decimals.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-// address: deployed index contract address
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 // Name
-indexContract.name((err,name)=>{
+fundContract.name((err,name)=>{
   if (err) {
     return console.error(err);
   }
   console.log(name)
 })
 // Symbol
-indexContract.symbol((err,symbol)=>{
+fundContract.symbol((err,symbol)=>{
   if (err) {
     return console.error(err);
   }
   console.log(symbol)
 })
 // Description
-indexContract.description((err,description)=>{
+fundContract.description((err,description)=>{
   if (err) {
     return console.error(err);
   }
   console.log(description)
 })
 // Category
-indexContract.category((err,category)=>{
+fundContract.category((err,category)=>{
   if (err) {
     return console.error(err);
   }
   console.log(category)
 })
 // Decimals
-indexContract.decimals((err,decimals)=>{
+fundContract.decimals((err,decimals)=>{
   if (err) {
     return console.error(err);
   }
@@ -154,23 +145,17 @@ indexContract.decimals((err,decimals)=>{
 -------------
 
 ``` {.sourceCode .javascript}
-function initialize(address _componentList,
-  uint _rebalanceDeltaPercentage) external onlyOwner;
+function initialize(address _componentList) external onlyOwner;
 ```
 
 #### Description
 
-Initialize the Index, after which it is listed in the Olympus Product List and opened up for investment.
+Initialize the fund contract that was created before, with the specified configurations. It will also be registered to the Olympus Product List and users can start investing into the fund after calling this function.
 
 #### Parameters
 
-> 1.  \_componentList: address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
-> 2.  \_rebalanceDeltaPercentage: the percentage of change that will trigger the auto rebalance process. This is being calculated with a denominator, so the lowest value is 1 for 0.01%, and the highest value is 10000 for 100%. The following example values correspond to the following percentages:
->     -   1 = 0.01%
->     -   100 = 1%
->     -   1000 = 10%
->     -   10000 = 100%
->
+> \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
+
 #### Example code
 
 The code below shows how to call this function with Web3.
@@ -179,12 +164,12 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-const _componentList = '0x...';
-const _rebalanceDeltaPercentage = 1000;
-indexContract.initialize(_componentList, _rebalanceDeltaPercentage,
-  {from: web3.eth.accounts[0]}, (err) => {
-    if (err) {
+
+const fundContract = web3.eth.contract(abi).at(address);
+const _componentList = "0x...";
+fundContract.initialize(_componentList, {from: web3.eth.accounts[0]},
+ err => {
+  if (err) {
     return console.error(err);
   }
 });
@@ -194,48 +179,25 @@ indexContract.initialize(_componentList, _rebalanceDeltaPercentage,
 ------------
 
 ``` {.sourceCode .javascript}
-function buyTokens() external onlyOwner returns(bool);
+function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
+  uint[] _amounts, uint[] _rates)
+    public onlyOwner returns(bool);
 ```
 
 #### Description
 
-Index manager executes the function to allocate the Ether, accumulated through investment, to the tokens defined in the index.
+Call the function to buy any combination of tokens.
 
 #### Returns
 
 > Whether the function executed successfully or not.
 
-#### Example code
+#### Parameters
 
-The code below shows how to call this function with Web3.
-
-``` {.sourceCode .javascript}
-const Web3 = require("web3");
-const web3 = new Web3
-  (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-
-indexContract.buyTokens((err, result) => {
-  if (err) {
-    return console.log(err)
-  }
-});
-```
-
-3. rebalance
-------------
-
-``` {.sourceCode .javascript}
-function rebalance() public onlyOwner returns (bool success);
-```
-
-#### Description
-
-Traditionally, an index fund holds a certain percentage of tokens. Over time the value of these tokens might change, and thus their percentage of the total asset value in the fund might decrease or increase. To solve this issue there is a rebalance function. This function will sell some tokens for which the percentage of the total value increased, and buy some tokens for which the percentage of the total value decreased.
-
-#### Returns
-
-> Whether the function executed successfully or not.
+> 1.  \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  \_tokens: ERC20 addresses of the tokens to buy.
+> 3.  \_amounts: The corresponding amount of tokens to buy.
+> 4.  \_rates: The minimum return amount of tokens per ETH in wei.
 
 #### Example code
 
@@ -245,74 +207,126 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
+const _exchangeId = 0x0;
+const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
+  "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _amounts = [10**17,10**17];
+const _rates = [0,0];
 
-function rebalance(callback){
-  indexContract.rebalance((err, result) => {
-    if (err) {
-      return callback(err)
-    }
-    if(result == false){
-    // Note: Instead of checking the result directly,
-    // you might need to set up a system to wait for the transaction
-    // to be mined to check the result
-      rebalance(callback)
-    }else (result == true){
-      callback(null,result)
-    }
-}
-
-  rebalance((err,result)=>{
-    if (err) {
-      return console.log(err)
-    }
-  })
-});
-```
-
-4. getTokens
-------------
-
-``` {.sourceCode .javascript}
-function getTokens() public view
-  returns (address[] _tokens, uint[] _weights);
-```
-
-#### Description
-
-Call the function to get all the tokens with their weights.
-
-#### Returns
-
-> Two Arrays {[Tokens],[Weights]} of the same length, where the token at the position 0 have the weight at the position 0.
-
-#### Example code
-
-The code below shows how to call this function with Web3.
-
-``` {.sourceCode .javascript}
-const Web3 = require("web3");
-const web3 = new Web3
-  (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-
-indexContract.getTokens((err, result) => {
+fundContract.buyTokens(_exchangeId, _tokens, _amounts, _rates,
+  (err, result) => {
     if (err) {
       return console.log(err)
     }
 });
 ```
 
-5. getTokensAndAmounts
-----------------------
+3. sellTokens
+-------------
 
 ``` {.sourceCode .javascript}
-function getTokensAndAmounts() external view returns(address[], uint[]);
+function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
+  uint[] _amounts, uint[] _rates)
+    public onlyOwner returns (bool);
 ```
 
 #### Description
 
-Call the function to get the underlying tokens with amounts.
+Call the function to sell any combination of tokens that are available in the fund.
+
+#### Returns
+
+> Whether the function executed successfully or not.
+
+#### Parameters
+
+> 1.  \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  \_tokens: ERC20 addresses of the tokens to sell.
+> 3.  \_amounts: The corresponding amount of tokens to sell.
+> 4.  \_rates: The minimum return amount of ETH per token in wei.
+
+#### Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const _exchangeId = 0x0;
+const _tokens = ["0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a",
+  "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _amounts = [10**17,10**17];
+const _rates = [0,0];
+
+fundContract.sellTokens(_exchangeId, _tokens, _amounts, _rates,
+  (err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+4. tokenSwap
+------------
+
+``` {.sourceCode .javascript}
+function tokenSwap(bytes32 _exchangeId, ERC20Extended _src,
+    ERC20Extended _dest, uint _amount, uint _rate)
+        public onlyOwner returns (bool);
+```
+
+#### Description
+
+Call the function to swap between two tokens that are available in the fund.
+
+#### Returns
+
+> Whether the function executed successfully or not.
+
+#### Parameters
+
+> 1.  \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
+> 2.  \_src: ERC20 addresses of the token to swap, the src token cannot be ETH.
+> 3.  \_dest: ERC20 addresses of the token you want to get, the dest token cannot be ETH.
+> 4.  \_amount: The amount of src token to swap.
+> 5.  \_rate: The exchange rate from src token to dest token in wei.
+
+#### Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const _exchangeId = 0x0;
+const _src = "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a";
+const _dest = "0xd7cbe7bfc7d2de0b35b93712f113cae4deff426b"];
+const _amount = 10**17;
+const _rate = 0;
+
+fundContract.tokenSwap(_exchangeId, _src, _dest, _amount, _rate,
+  (err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+5. getTokens
+------------
+
+``` {.sourceCode .javascript}
+function getTokens() external view returns(address[], uint[]);
+```
+
+#### Description
+
+Call the function to get all the underlying tokens with their amounts.
 
 #### Returns
 
@@ -326,9 +340,9 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.getTokensAndAmounts((err, result) => {
+fundContract.getTokens((err, result) => {
     if (err) {
       return console.log(err)
     }
@@ -340,7 +354,7 @@ indexContract.getTokensAndAmounts((err, result) => {
 
 ``` {.sourceCode .javascript}
 function tokensWithAmount() public view
-  returns(ERC20Extended[] memory);
+    returns( ERC20Extended[] memory);
 ```
 
 #### Description
@@ -359,9 +373,9 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.tokensWithAmount((err, result) => {
+fundContract.tokensWithAmount((err, result) => {
     if (err) {
       return console.log(err)
     }
@@ -378,7 +392,7 @@ function changeStatus(DerivativeStatus _status)
 
 #### Description
 
-Call the function to change status in the case when the index is not New or Closed.
+Call the function to change status in the case when the fund is not New or Closed.
 
 #### Returns
 
@@ -400,10 +414,10 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
-const status = 2; //The status cannot be 0 or 3
+const fundContract = web3.eth.contract(abi).at(address);
+const status = 2; // The status cannot be 0 or 3
 
-indexContract.changeStatus(status,
+fundContract.changeStatus(status,
   (err, result) => {
     if (err) {
       return console.log(err)
@@ -420,11 +434,11 @@ function getPrice() public view returns(uint);
 
 #### Description
 
-Call the function to get the unit price of the index.
+Call the function to get the unit price of the fund.
 
 #### Returns
 
-> The unit price of the index.
+> The unit price of the fund.
 
 #### Example code
 
@@ -434,9 +448,9 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.getPrice((err, result) => {
+fundContract.getPrice((err, result) => {
     if (err) {
       return console.log(err)
     }
@@ -452,11 +466,11 @@ function getAssetsValue() public view returns (uint);
 
 #### Description
 
-Call the function to get the total value calculated based on the value of the index's underlying assets.
+Call the function to get the total value calculated based on the value of the fund's underlying assets.
 
 #### Returns
 
-> The total value calculated based on the value of the index's underlying assets.
+> The total value calculated based on the value of the fund's underlying assets.
 
 #### Example code
 
@@ -466,9 +480,9 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.getAssetsValue((err, result) => {
+fundContract.getAssetsValue((err, result) => {
     if (err) {
       return console.log(err)
     }
@@ -484,11 +498,11 @@ function getETHBalance() public view returns(uint);
 
 #### Description
 
-Call the function to get the remaining ETH balance of the index.
+Call the function to get the remaining ETH balance of the fund.
 
 #### Returns
 
-> The remaining ETH balance of the index.
+> The remaining ETH balance of the fund.
 
 #### Example code
 
@@ -498,9 +512,9 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.getETHBalance((err, result) => {
+fundContract.getETHBalance((err, result) => {
     if (err) {
       return console.log(err)
     }
@@ -516,7 +530,7 @@ function withdraw() external returns(bool);
 
 #### Description
 
-This function is for investors to withdraw their investment.
+This function is for investors to withdraw their investment in Ether.
 
 #### Returns
 
@@ -530,9 +544,9 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.withdraw((err, result) => {
+fundContract.withdraw((err, result) => {
   if (err) {
     return console.log(err)
   }
@@ -548,7 +562,7 @@ function close() public onlyOwner returns(bool success);
 
 #### Description
 
-Close the index to stop investors from investing on the index. This function also sells all of the tokens for ETH. (Note: After closing the index, investors can still withdraw their investment)
+Close the fund to stop investors from investing into the fund. this function also sells all of the tokens for ETH. (Note: After closing the fund, investors can still withdraw their investment.)
 
 #### Returns
 
@@ -562,9 +576,9 @@ The code below shows how to call this function with Web3.
 const Web3 = require("web3");
 const web3 = new Web3
   (new Web3.providers.HttpProvider("http://localhost:8545"));
-const indexContract = web3.eth.contract(abi).at(address);
+const fundContract = web3.eth.contract(abi).at(address);
 
-indexContract.close((err, result) => {
+fundContract.close((err, result) => {
   if (err) {
     return console.log(err)
   }

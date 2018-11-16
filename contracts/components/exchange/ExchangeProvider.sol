@@ -25,6 +25,8 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     uint public sellMultipleTokenFee = 0; // Used in sellTokens, put as a storage variable because the stack got too deep
     bool public functionCompleteSuccess = true;
 
+    event doNotFindExchange(address _tokenOne, address _tokenTwo);
+
     // exchangeId > sourceAddress > destAddress
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceExpected;
     mapping(bytes32 => mapping(address => mapping(address => uint))) public currentPriceSlippage;
@@ -53,7 +55,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     function exitTrade(address _sourceAddress, address _destAddress, uint _amount, address _adapter, bool _needToRefund) private {
 
         // Updating lastTradeFailure
-        if (lastTradeFailure[msg.sender][_sourceAddress][_destAddress].add(registerTradeFailureInterval) < now) {
+        if (lastTradeFailure[msg.sender][_sourceAddress][_destAddress].add(registerTradeFailureInterval) <= now) {
             if (amountOfTradeFailures[msg.sender][_sourceAddress][_destAddress] == 0) {
                 firstTradeFailure[msg.sender][_sourceAddress][_destAddress] = now;
             }
@@ -92,6 +94,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         // solhint-disable-next-line
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(ETH, _token, _amount, _minimumRate) : _exchangeId;
         if(exchangeId == 0){
+            emit doNotFindExchange(address(ETH), address(_token));
             exitTrade(address(ETH), address(_token), msg.value, address(adapter), true);
             return false;
         }
@@ -126,6 +129,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         OlympusExchangeAdapterInterface adapter;
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_token,ETH , _amount, _minimumRate) : _exchangeId;
         if(exchangeId == 0) {
+            emit doNotFindExchange(address(_token), address(ETH));
             // Tokens are not transferred yet, so we don't need to refund.
             exitTrade(address(_token), address(ETH), _amount, address(adapter), false);
             return false;
@@ -162,6 +166,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
         OlympusExchangeAdapterInterface adapter;
         bytes32 exchangeId = _exchangeId == "" ? exchangeAdapterManager.pickExchange(_src, _dest , _amount, _minimumRate) : _exchangeId;
         if(exchangeId == 0) {
+            emit doNotFindExchange(address(_src), address(_dest));
             // Tokens are not transferred yet, so we don't need to refund.
             exitTrade(address(_src), address(_dest), _amount, address(adapter), false);
             return false;

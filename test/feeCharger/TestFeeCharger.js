@@ -34,7 +34,7 @@ contract("FeeCharger", accounts => {
       await riskControl.setMotAddress(mot.address);
       await exchangeProvider.setMotAddress(mot.address);
 
-      tokens = (await mockKyberNetwork.supportedTokens()).slice(0,2);
+      tokens = (await mockKyberNetwork.supportedTokens()).slice(0, 2);
       mockMOT = mot;
       risk = riskControl;
       exchange = exchangeProvider;

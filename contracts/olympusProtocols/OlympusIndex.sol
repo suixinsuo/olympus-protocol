@@ -133,6 +133,8 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function close() OnlyOwnerOrPausedTimeout public returns(bool success) {
         require(status != DerivativeStatus.New);
+        require(productStatus == Status.AVAILABLE);
+
         status = DerivativeStatus.Closed;
         return true;
     }
@@ -469,7 +471,6 @@ contract OlympusIndex is IndexInterface, Derivative {
         startGasCalculation();
 
         require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING);
-        productStatus = Status.REBALANCING;
 
         RebalanceInterface rebalanceProvider = RebalanceInterface(getComponentByName(REBALANCE));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -481,13 +482,21 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint[] memory _amounts;
         address[] memory _tokensToBuy;
         uint i;
+
+        (_tokensToSell, _amounts, _tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
+        if(_tokensToSell.length == 0) {
+            reimburse(); // Completed case
+            return true;
+        }
         // solhint-disable-next-line
         uint ETHBalanceBefore = getETHBalance();
 
         uint currentStep = initializeOrContinueStep(REBALANCE);
         uint stepStatus = getStatusStep(REBALANCE);
         // solhint-disable-next-line
-        (_tokensToSell, _amounts, _tokensToBuy,,) = rebalanceProvider.rebalanceGetTokensToSellAndBuy(rebalanceDeltaPercentage);
+
+        productStatus = Status.REBALANCING;
+
         // Sell Tokens
         if ( stepStatus == uint(RebalancePhases.SellTokens)) {
             for (i = currentStep; i < _tokensToSell.length && goNextStep(REBALANCE) ; i++) {

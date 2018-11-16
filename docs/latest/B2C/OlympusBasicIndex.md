@@ -1,9 +1,11 @@
-Index
-=====
+Basic Index
+===========
+
+[TOC]
 
 ### Introduction
 
-A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. This document walks you through the functions of the customized index (created by the Olympus team) that are targeted at investors.
+A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. The Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the functions of the basic index (created by the Olympus team) that are targeted at investors.
 
 ### Basic info
 
@@ -11,44 +13,44 @@ The code below shows how to get an index's basic information, including the inde
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider
-  ("http://localhost:8545"));
-// address: deployed index address
+const web3 = new Web3
+(new Web3.providers.HttpProvider("http://localhost:8545"));
+// address: deployed index contract address
 const indexContract = web3.eth.contract(abi).at(address);
 // Name
 indexContract.name((err,name)=>{
 if (err) {
   return console.error(err);
 }
-console.log(name)
+console.log(name);
 })
 // Symbol
 indexContract.symbol((err,symbol)=>{
 if (err) {
   return console.error(err);
 }
-console.log(symbol)
+console.log(symbol);
 })
 // Description
 indexContract.description((err,description)=>{
 if (err) {
   return console.error(err);
 }
-console.log(description)
+console.log(description);
 })
 // Category
 indexContract.category((err,category)=>{
 if (err) {
   return console.error(err);
 }
-console.log(category)
+console.log(category);
 })
 // Decimals
 indexContract.decimals((err,decimals)=>{
 if (err) {
   return console.error(err);
 }
-console.log(decimals)
+console.log(decimals);
 })
 ```
 
@@ -58,16 +60,12 @@ console.log(decimals)
 ---------
 
 ``` {.sourceCode .javascript}
-function invest() public payable
-    whenNotPaused
-    whitelisted(WhitelistKeys.Investment)
-    withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
-    returns(bool);
+function invest() public payable returns(bool);
 ```
 
 #### Description
 
-Invest in the index by calling the invest function while sending Ether to the index fund. If the whitelist is enabled, it will check if the investor's address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
+Invest in the index by calling the invest function while sending Ether to the index.
 
 #### Returns
 
@@ -79,8 +77,8 @@ The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider
-  ("http://localhost:8545"));
+const web3 = new Web3
+(new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
 const investAmount = 1 ** 17;
 indexContract.invest({value: investAmount}, (err, result) => {
@@ -123,12 +121,43 @@ indexContract.getTokens((err, result) => {
 });
 ```
 
-3. tokensWithAmount
+3. getTokensAndAmounts
+----------------------
+
+``` {.sourceCode .javascript}
+function getTokensAndAmounts() external view returns(address[], uint[]);
+```
+
+#### Description
+
+Call the function to get the underlying tokens with amounts.
+
+#### Returns
+
+> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
+
+#### Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
+const indexContract = web3.eth.contract(abi).at(address);
+
+indexContract.getTokensAndAmounts((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+4. tokensWithAmount
 -------------------
 
 ``` {.sourceCode .javascript}
-function tokensWithAmount() public view
-  returns(ERC20Extended[] memory);
+function tokensWithAmount() public view returns( ERC20Extended[] memory);
 ```
 
 #### Description
@@ -156,7 +185,7 @@ indexContract.tokensWithAmount((err, result) => {
 });
 ```
 
-4. getPrice
+5. getPrice
 -----------
 
 ``` {.sourceCode .javascript}
@@ -188,7 +217,7 @@ indexContract.getPrice((err, result) => {
 });
 ```
 
-5. getAssetsValue
+6. getAssetsValue
 -----------------
 
 ``` {.sourceCode .javascript}
@@ -220,7 +249,7 @@ indexContract.getAssetsValue((err, result) => {
 });
 ```
 
-6. getETHBalance
+7. getETHBalance
 ----------------
 
 ``` {.sourceCode .javascript}
@@ -252,23 +281,20 @@ indexContract.getETHBalance((err, result) => {
 });
 ```
 
-7. requestWithdraw
-------------------
+8. withdraw
+-----------
 
 ``` {.sourceCode .javascript}
-function requestWithdraw(uint amount) external
-    whenNotPaused
-    withoutRisk(msg.sender, address(this),
-  address(this), amount, getPrice());
+function withdraw() external returns(bool);
 ```
 
 #### Description
 
-Investors can use this function to request withdrawal of a certain amount of his investment. (Note: The investment will be withdrawn after the index manager or a bot system executes the withdraw function.)
+This function is for investors to withdraw all of their investment.
 
-#### Parameters
+#### Returns
 
-> amount: Amount of ETH the investor would like to withdraw.
+> Whether the function executed successfully or not.
 
 #### Example code
 
@@ -279,8 +305,8 @@ const Web3 = require("web3");
 const web3 = new Web3
 (new Web3.providers.HttpProvider("http://localhost:8545"));
 const indexContract = web3.eth.contract(abi).at(address);
-const amount = 10 ** 17;
-indexContract.requestWithdraw(amount, (err, result) => {
+
+indexContract.withdraw((err, result) => {
 if (err) {
   return console.log(err)
 }

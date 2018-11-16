@@ -1,9 +1,11 @@
-Basic Fund
-==========
+Fund
+====
+
+[TOC]
 
 ### Introduction
 
-A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. The Olympus Basic Fund contains the basic interfaces that a fund needs. This document walks you through the functions of the basic fund (created by the Olympus team) that are targeted at investors.
+A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. This document walks you through the basic functions of the customized fund (created by the Olympus team) that are targeted at investors.
 
 ### Basic info
 
@@ -13,6 +15,7 @@ The code below shows how to get fund's basic information, including fund's name,
 const Web3 = require("web3");
 const web3 = new Web3
 (new Web3.providers.HttpProvider("http://localhost:8545"));
+// address: deployed fund contract address
 const fundContract = web3.eth.contract(abi).at(address);
 // Name
 fundContract.name((err,name)=>{
@@ -57,14 +60,16 @@ console.log(decimals);
 ---------
 
 ``` {.sourceCode .javascript}
-function invest() public
-      payable
-    returns(bool)
+function invest() public payable
+    whenNotPaused
+    whitelisted(WhitelistKeys.Investment)
+    withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
+    returns(bool);
 ```
 
 #### Description
 
-Invest in the fund by calling the invest function while sending Ether to the fund.
+Invest in the fund by calling the invest function while sending Ether to the fund. If the whitelist is enabled, it will check if the investor's address is in the investment whitelist. Furthermore, the parameters will also be sent to the risk provider for assessment.
 
 #### Returns
 
@@ -82,7 +87,7 @@ const fundContract = web3.eth.contract(abi).at(address);
 const investAmount = 1 ** 17;
 fundContract.invest({value: investAmount}, (err, result) => {
 if (err) {
-  return console.log(err)
+  return console.log(err);
 }
 });
 ```
@@ -96,11 +101,11 @@ function getTokens() external view returns(address[], uint[]);
 
 #### Description
 
-Call the function to get the underlying tokens with their amounts.
+Call the function to get all the underlying tokens with their amounts.
 
-### Returns
+#### Returns
 
-Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
+> Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
 #### Example code
 
@@ -129,11 +134,11 @@ function tokensWithAmount() public view
 
 #### Description
 
-Call the function to get the actual active tokens with amounts.
+Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
 
 #### Returns
 
-> Array the actual active tokens with amounts.
+> Array of the actual active tokens with amounts.
 
 #### Example code
 
@@ -225,7 +230,7 @@ function getETHBalance() public view returns(uint);
 
 #### Description
 
-Call the function to get the remaining ETH balance of the fund.
+Call the function to get the remaining ETH balance of the fund, the accumulated fee has been deducted.
 
 #### Returns
 
@@ -248,20 +253,20 @@ fundContract.getETHBalance((err, result) => {
 });
 ```
 
-7. withdraw
------------
+7. getActiveInvestors
+---------------------
 
 ``` {.sourceCode .javascript}
-function withdraw() external returns(bool);
+function getActiveInvestors() external view returns(address[]);
 ```
 
 #### Description
 
-This function is for investors to withdraw all of their investment.
+Call the function to get all the active investors.
 
 #### Returns
 
-> Whether the function executed successfully or not.
+> Array of all the active investors' addresses.
 
 #### Example code
 
@@ -270,12 +275,47 @@ The code below shows how to call this function with Web3.
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
 const web3 = new Web3
-(new Web3.providers.HttpProvider("http://localhost:8545"));
+  (new Web3.providers.HttpProvider("http://localhost:8545"));
 const fundContract = web3.eth.contract(abi).at(address);
 
-fundContract.withdraw((err, result) => {
+fundContract.getActiveInvestors((err, result) => {
+    if (err) {
+      return console.log(err)
+    }
+});
+```
+
+8. requestWithdraw
+------------------
+
+``` {.sourceCode .javascript}
+function requestWithdraw(uint amount) external
+    whenNotPaused
+    withoutRisk(msg.sender, address(this), address(this), amount,
+    getPrice());
+```
+
+#### Description
+
+Investor can use this function to request withdraw of a certain amount of his investment.(Note: The investment will be withdrawn after the fund manager or bot system executes the withdraw function.)
+
+#### Parameters
+
+> amount: Amount of fund tokens the investor would like to withdraw.
+
+#### Example code
+
+The code below shows how to call this function with Web3.
+
+``` {.sourceCode .javascript}
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider
+  ("http://localhost:8545"));
+const fundContract = web3.eth.contract(abi).at(address);
+const amount = 10 ** 17;
+fundContract.requestWithdraw(amount, (err, result) => {
 if (err) {
-  return console.log(err)
+  return console.log(err);
 }
 });
 ```

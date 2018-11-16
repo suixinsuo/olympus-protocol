@@ -1,15 +1,13 @@
 Basic Index
 ===========
 
-[TOC]
-
 ### Introduction
 
 A cryptocurrency index is a vehicle that allows investors to mimic the investment returns of a basket of underlying tokens. The Olympus Basic Index contains the basic interfaces that an index needs. This document walks you through the functions of the basic index (created by the Olympus team) that are targeted at investors.
 
 ### Basic info
 
-> The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
+The code below shows how to get an index's basic information, including the index's name, symbol, description, category and decimals.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -63,17 +61,17 @@ console.log(decimals);
 function invest() public payable returns(bool);
 ```
 
-####  Description
+#### Description
 
-> Invest in the index by calling the invest function while sending Ether to the index.
+Invest in the index by calling the invest function while sending Ether to the index.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -96,15 +94,15 @@ function getTokens() public view
   returns (address[] _tokens, uint[] _weights);
 ```
 
-####  Description
+#### Description
 
 Call the function to get all the tokens with their weights.
 
-####  Returns
+#### Returns
 
 > Two Arrays {[Tokens],[Weights]} of the same length, where the token at the position 0 have the weight at the position 0.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -128,15 +126,15 @@ indexContract.getTokens((err, result) => {
 function getTokensAndAmounts() external view returns(address[], uint[]);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the underlying tokens with amounts.
 
-####  Returns
+#### Returns
 
 > Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -160,15 +158,15 @@ indexContract.getTokensAndAmounts((err, result) => {
 function tokensWithAmount() public view returns( ERC20Extended[] memory);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
 
-####  Returns
+#### Returns
 
 > Array of the actual active tokens with amounts.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -192,15 +190,15 @@ indexContract.tokensWithAmount((err, result) => {
 function getPrice() public view returns(uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the unit price of the index.
 
-####  Returns
+#### Returns
 
 > The unit price of the index.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -224,15 +222,15 @@ indexContract.getPrice((err, result) => {
 function getAssetsValue() public view returns (uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the total value calculated based on the value of the index's underlying assets.
 
-####  Returns
+#### Returns
 
 > The total value calculated based on the value of the index's underlying assets.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -256,15 +254,15 @@ indexContract.getAssetsValue((err, result) => {
 function getETHBalance() public view returns(uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the remaining ETH balance of the index.
 
-####  Returns
+#### Returns
 
 > The remaining ETH balance of the index.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -288,17 +286,17 @@ indexContract.getETHBalance((err, result) => {
 function withdraw() external returns(bool);
 ```
 
-####  Description
+#### Description
 
-> This function is for investors to withdraw all of their investment.
+This function is for investors to withdraw all of their investment.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
-> The code below shows how to call this function with Web3.
+The code below shows how to call this function with Web3.
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");

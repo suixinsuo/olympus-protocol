@@ -62,11 +62,16 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
                 ETH_TOKEN, ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(_targetAddress);
             uint shouldHaveAmountOfTokensInETH = (totalIndexValue.mul(indexTokenWeights[i])).div(100);
+            // The price we get from Kyber is always 18 decimals. So we need to divide by 18 decimals and multiply by the amount of decimals of the token
+            // After this calculation, we have the amount of tokenwei we should have of this token
+            // Should never overflow, if the decimals are 18, the maximum value in the calculation ends up being at e58
+            uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH.
+                mul(ETHTokenPrice)).mul(10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(10**36);
             uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
-            if ((shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18) <
+            if (shouldHaveAmountOfTokens <
                 currentTokenBalance.sub(multipliedTokenBalance.div((10 ** ERC20Extended(_targetAddress).decimals())))) {
                 itemsToSell = true;
-            } else if ((shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18) > currentTokenBalance.add(multipliedTokenBalance.div((10 ** ERC20Extended(_targetAddress).decimals())))){
+            } else if (shouldHaveAmountOfTokens > currentTokenBalance.add(multipliedTokenBalance.div((10 ** ERC20Extended(_targetAddress).decimals())))){
                 itemsToBuy = true;
             }
         }
@@ -107,7 +112,12 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
             }
             uint currentTokenBalance = ERC20Extended(indexTokenAddresses[i]).balanceOf(address(msg.sender)); //
             uint shouldHaveAmountOfTokensInETH = (totalIndexValue.mul(indexTokenWeights[i])).div(100);
-            uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH.mul(ETHTokenPrice)).div(10**18);
+
+            // The price we get from Kyber is always 18 decimals. So we need to divide by 18 decimals and multiply by the amount of decimals of the token
+            // After this calculation, we have the amount of tokenwei we should have of this token
+            // Should never overflow, if the decimals are 18, the maximum value in the calculation ends up being at e58
+            uint shouldHaveAmountOfTokens = (shouldHaveAmountOfTokensInETH.
+                mul(ETHTokenPrice)).mul(10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(10**36);
             uint multipliedTokenBalance = currentTokenBalance.mul(_rebalanceDeltaPercentage);
             // minus delta
             if (shouldHaveAmountOfTokens < currentTokenBalance.sub(multipliedTokenBalance.div((10 ** ERC20Extended(msg.sender).decimals())))) {
@@ -122,9 +132,12 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
                     .mul(10**ERC20Extended(indexTokenAddresses[i]).decimals())
                     .div(ETHTokenPrice)));
             }
-            //TODO Does this run out of gas for 100 tokens?
         }
         rebalanceStatus[msg.sender] = RebalanceStatus.Calculated;
+        // Prevent contracts getting stuck because one of the arrays is empty
+        if(tokensToSell[msg.sender].length == 0 || tokensToBuy[msg.sender].length == 0){
+            finalize();
+        }
         return (
             tokensToSell[msg.sender],
             amountsToSell[msg.sender],
@@ -190,7 +203,7 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         return rebalanceStatus[msg.sender] != RebalanceStatus.Initial;
     }
 
-    function finalize() external returns (bool success) {
+    function finalize() public returns (bool success) {
         rebalanceStatus[msg.sender] = RebalanceStatus.Initial;
         delete tokensToSell[msg.sender];
         delete amountsToSell[msg.sender];
@@ -212,7 +225,9 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
             indexToken = ERC20Extended(indexTokenAddresses[i]);
             decimals = indexToken.decimals();
             amount = indexToken.balanceOf(msg.sender);
-            totalValue = totalValue.add(amount.mul(10**decimals).div(prices[i]));
+            // 18 - token decimals to account for the returned rate in Kyber, which is always 18 decimals
+            // Even if the token is, for example, only 4 decimals
+            totalValue = totalValue.add(amount.mul(10**(18+18-decimals)).div(prices[i]));
         }
     }
 
@@ -224,8 +239,9 @@ contract RebalanceProvider is FeeCharger, RebalanceInterface {
         for(uint i = 0; i < indexTokenAddresses.length; i++) {
             (price,) = priceProvider.getPrice(
                 ETH_TOKEN, ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
-            totalValue = totalValue.add(ERC20Extended(indexTokenAddresses[i]).balanceOf(address(_indexAddress)).mul(
-            10**ERC20Extended(indexTokenAddresses[i]).decimals()).div(price));
+            totalValue = totalValue.add(
+                ERC20Extended(indexTokenAddresses[i]).balanceOf(address(_indexAddress))
+                .mul(10**(18+(18-ERC20Extended(indexTokenAddresses[i]).decimals()))).div(price));
         }
     }
 

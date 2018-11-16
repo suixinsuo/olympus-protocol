@@ -122,7 +122,7 @@ contract("Test Future MVP", accounts => {
     assert.equal(await future.description(), futureData.description);
     assert.equal(await future.symbol(), futureData.symbol);
     assert.equal(calc.bytes32ToString(await future.category()), futureData.category);
-    assert.equal(await future.version(), "v0.1");
+    assert(await future.version() !== '');
     assert.equal(await future.getTarget(), futureData.target);
     assert.equal(await future.getTargetAddress(), providers.mockMOT.address);
     assert.equal(await future.getDepositPercentage(), futureData.depositPercentage);

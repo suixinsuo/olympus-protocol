@@ -22,6 +22,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     // Does not fit in derivative, index out of gas
     bytes32 public constant TOKENBROKEN = "TokenBroken";
     uint public constant TOKEN_DENOMINATOR = 10**18; // Apply % to a denominator, 18 is the minimum highetst precision required
+    uint public constant MAX_BROKEN_TIMES = 5; // 0 Means never mark the token as broken
 
     enum Status { AVAILABLE, WITHDRAWING, SELLINGTOKENS }
     Status public productStatus = Status.AVAILABLE;
@@ -56,7 +57,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "x";
+        version = "1.1-20181023";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -129,7 +130,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
         if (!getExchangeInterface()
             .buyTokens.value(totalEthRequired)(_tokens, _amounts, _minimumRates, address(this), _exchangeId)) {
-            checkBrokenTokens(_tokens);
+            checkBrokenTokens(_tokens, MAX_BROKEN_TIMES);
             updateTokens(_tokens);
             return false;
         }
@@ -158,7 +159,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
-            checkBrokenTokens(_tokens);
+            checkBrokenTokens(_tokens, MAX_BROKEN_TIMES);
             updateTokens(_tokens);
             return false;
         }
@@ -201,6 +202,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     function close() OnlyOwnerOrPausedTimeout public returns(bool success) {
         require(status != DerivativeStatus.New);
+        require(productStatus == Status.AVAILABLE);
         status = DerivativeStatus.Closed;
         return true;
     }
@@ -480,12 +482,12 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             _tokensThisStep[sellIndex] = _tokensToSell[i];
             _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div(TOKEN_DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
-            require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
+            // require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
         }
 
         if(!exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0)){
-            checkBrokenTokens(_tokensThisStep);
+            checkBrokenTokens(_tokensThisStep, 1);
         }
 
         if(i == _tokensToSell.length) {
@@ -534,15 +536,16 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         return true;
     }
 
-    function checkBrokenTokens(ERC20Extended[] _tokens) internal {
+    function checkBrokenTokens(ERC20Extended[] _tokens, uint _maxTrials) internal {
         TokenBrokenInterface  tokenBrokenProvider = TokenBrokenInterface(getComponentByName(TOKENBROKEN));
         uint[] memory _failedTimes = new uint[](_tokens.length);
         _failedTimes = getExchangeInterface().getFailedTradesArray(_tokens);
 
         for(uint t = 0;t < _tokens.length; t++) {
-             // Is successfull or already broken
-            if((_failedTimes[t]) <= 0 || isBrokenToken[_tokens[t]]) {
-                continue;
+
+             // Never fail, fail less than the max attemps, or is broken, skip
+            if(_failedTimes[t] == 0 || _failedTimes[t] < _maxTrials || isBrokenToken[_tokens[t]]) {
+                continue; //skip token
             }
             isBrokenToken[_tokens[t]] = true; // When a token becomes broken, it cant recover
             // I broken, check if has balance to distribute

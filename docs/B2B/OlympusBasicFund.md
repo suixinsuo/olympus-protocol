@@ -1,8 +1,6 @@
 Basic Fund
 ==========
 
-[TOC]
-
 ### Introduction
 
 A cryptocurrency fund is a vehicle that allows an investment manager to pool together ETH from investors for the purpose of investing while having the investors retain control of their ETH. The Olympus Basic Fund contains basic interfaces that a fund needs. This document walks you through the basic template for a fund.
@@ -19,7 +17,7 @@ constructor(
 ) public;
 ```
 
-####  Parameters
+#### Parameters
 
 > 1.  \_name: Fund name
 > 2.  \_symbol: Fund symbol (The fund is ERC20 compatible, so it follows the rules of the ERC20 standard. For example: the symbol length can be any, but it's recommended to keep it between two to five characters for convenience when displaying)
@@ -27,7 +25,7 @@ constructor(
 > 4.  \_category: Fund category
 > 5.  \_decimals: Fund decimals (normally it should be 18)
 
-####  Example code
+#### Example code
 
 ``` {.sourceCode .javascript}
 const Web3 = require("web3");
@@ -148,15 +146,15 @@ fundContract.decimals((err,decimals)=>{
 function initialize(address _componentList) external onlyOwner;
 ```
 
-####  Description
+#### Description
 
 Initialize the fund contract that was created before, with the specified configurations. It will also be registered to the Olympus Product List and users can start investing into the fund after calling this function.
 
-####  Parameters
+#### Parameters
 
 > \_componentList: Address of the Olympus component list (The deployed component list address can be retrieved by clicking on the link at the end of the doc)
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -184,22 +182,22 @@ function buyTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
     public onlyOwner returns(bool);
 ```
 
-####  Description
+#### Description
 
 Call the function to buy any combination of tokens.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Parameters
+#### Parameters
 
 > 1.  \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
 > 2.  \_tokens: ERC20 addresses of the tokens to buy.
 > 3.  \_amounts: The corresponding amount of tokens to buy.
 > 4.  \_rates: The minimum return amount of tokens per ETH in wei.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -231,22 +229,22 @@ function sellTokens(bytes32 _exchangeId, ERC20Extended[] _tokens,
     public onlyOwner returns (bool);
 ```
 
-####  Description
+#### Description
 
 Call the function to sell any combination of tokens that are available in the fund.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Parameters
+#### Parameters
 
 > 1.  \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
 > 2.  \_tokens: ERC20 addresses of the tokens to sell.
 > 3.  \_amounts: The corresponding amount of tokens to sell.
 > 4.  \_rates: The minimum return amount of ETH per token in wei.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -278,15 +276,15 @@ function tokenSwap(bytes32 _exchangeId, ERC20Extended _src,
         public onlyOwner returns (bool);
 ```
 
-####  Description
+#### Description
 
 Call the function to swap between two tokens that are available in the fund.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Parameters
+#### Parameters
 
 > 1.  \_exchangeId: You can choose which exchange will be used to trade. If an empty string is passed, it will automatically choose the exchange with the best rates.
 > 2.  \_src: ERC20 addresses of the token to swap, the src token cannot be ETH.
@@ -294,7 +292,7 @@ Call the function to swap between two tokens that are available in the fund.
 > 4.  \_amount: The amount of src token to swap.
 > 5.  \_rate: The exchange rate from src token to dest token in wei.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -324,15 +322,15 @@ fundContract.tokenSwap(_exchangeId, _src, _dest, _amount, _rate,
 function getTokens() external view returns(address[], uint[]);
 ```
 
-####  Description
+#### Description
 
 Call the function to get all the underlying tokens with their amounts.
 
-####  Returns
+#### Returns
 
 > Two Arrays {[Tokens],[Amounts]} of the same length, where the token at the position 0 have the amount at the position 0.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -357,15 +355,15 @@ function tokensWithAmount() public view
     returns( ERC20Extended[] memory);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the actual active tokens with amounts, tokens that have been all sold will not be returned.
 
-####  Returns
+#### Returns
 
 > Array of the actual active tokens with amounts.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -390,15 +388,15 @@ function changeStatus(DerivativeStatus _status)
     public onlyOwner returns(bool);
 ```
 
-####  Description
+#### Description
 
 Call the function to change status in the case when the fund is not New or Closed.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Parameters
+#### Parameters
 
 > 1.  \_status: new status of the fund. The following status corresponds to a number value:
 >     -   New: 0
@@ -406,7 +404,7 @@ Call the function to change status in the case when the fund is not New or Close
 >     -   Paused: 2
 >     -   Closed: 3 0 and 3 cannot be passed as parameter.
 >
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -432,15 +430,15 @@ fundContract.changeStatus(status,
 function getPrice() public view returns(uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the unit price of the fund.
 
-####  Returns
+#### Returns
 
 > The unit price of the fund.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -464,15 +462,15 @@ fundContract.getPrice((err, result) => {
 function getAssetsValue() public view returns (uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the total value calculated based on the value of the fund's underlying assets.
 
-####  Returns
+#### Returns
 
 > The total value calculated based on the value of the fund's underlying assets.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -496,15 +494,15 @@ fundContract.getAssetsValue((err, result) => {
 function getETHBalance() public view returns(uint);
 ```
 
-####  Description
+#### Description
 
 Call the function to get the remaining ETH balance of the fund.
 
-####  Returns
+#### Returns
 
 > The remaining ETH balance of the fund.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -528,15 +526,15 @@ fundContract.getETHBalance((err, result) => {
 function withdraw() external returns(bool);
 ```
 
-####  Description
+#### Description
 
 This function is for investors to withdraw their investment in Ether.
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -560,15 +558,15 @@ fundContract.withdraw((err, result) => {
 function close() public onlyOwner returns(bool success);
 ```
 
-####  Description
+#### Description
 
 Close the fund to stop investors from investing into the fund. this function also sells all of the tokens for ETH. (Note: After closing the fund, investors can still withdraw their investment.)
 
-####  Returns
+#### Returns
 
 > Whether the function executed successfully or not.
 
-####  Example code
+#### Example code
 
 The code below shows how to call this function with Web3.
 
@@ -587,4 +585,4 @@ fundContract.close((err, result) => {
 
 ### abi & bytecode
 
-> You can get the [abi & bytecode](../contracts/templateList.json) from our API.
+> You can get the [abi & bytecode](../api.html) from our API.
