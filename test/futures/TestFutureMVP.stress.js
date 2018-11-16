@@ -256,7 +256,6 @@ contract("Test Future MVP Stress", accounts => {
 
   });
 
-
   //  Bot test case 6:
   //  Investors invest in long with a random price between 0.99 and 1.01 ETH. Long and Short buy 4 tokens each
   //  Change change position for each 1.5 second. Change step provider to execute 3 by 3 times.
@@ -276,11 +275,25 @@ contract("Test Future MVP Stress", accounts => {
       amountOfTargetPerShare: 1,
     });
 
+    const maxTime = 1000 * 60;
+
+    const handle1 = setInterval(async () => {
+      const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+      await future.setTargetPrice(targetPrice);
+    }, 500);
+
+    const handle2 = setInterval(async () => {
+      await futureUtils.safeCheckPosition(future);
+    }, 500);
+
+    setTimeout(() => {
+      clearInterval(handle1);
+      clearInterval(handle2);
+    }, maxTime);
+
     await Promise.all(
       groupAll.map(
         async (account, index) => {
-          const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
-          await future.setTargetPrice(targetPrice);
           const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 1.01,
             account);
           assert.ok(txLong, 'invest should not be revert');
@@ -290,10 +303,6 @@ contract("Test Future MVP Stress", accounts => {
         }
       )
     );
-
-    let targetPrice = futureData.defaultTargetPrice * (0.97 + (0.06 * Math.random()));
-    await future.setTargetPrice(targetPrice);
-    await futureUtils.safeCheckPosition(future);
 
     const txClear = await futureUtils.safeClear(future);
     assert.ok(txClear, 'clear should be success');
