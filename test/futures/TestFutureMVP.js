@@ -8,6 +8,7 @@ const {
   DerivativeType,
   CheckPositionPhases,
   ClearPositionPhases,
+  MutexStatus,
 } = require("../utils/constants");
 const futureUtils = require("./futureUtils");
 const futureData = futureUtils.futureData;
@@ -435,6 +436,11 @@ contract("Test Future MVP", accounts => {
     // 4 tokens, 4 calls
     await future.checkPosition();
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 1, 'Is started');
+    /// MUTEX
+    assert.equal((await future.productStatus()).toNumber(), MutexStatus.CHECK_POSITION);
+    await calc.assertReverts(async () => await future.clear(), 'Mutex: Cant clear after check started');
+    /// END MUTEX
+
     // Check that is frozen
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 1, 'Is started');
 
@@ -458,6 +464,8 @@ contract("Test Future MVP", accounts => {
     // No redline cross, nothing is deactivated
     assert.notEqual((await longToken.getValidTokens()).length, 0, 'No token invalidated');
     assert.notEqual((await shortToken.getValidTokens()).length, 0, 'No token invalidated');
+    assert.equal((await future.productStatus()).toNumber(), MutexStatus.AVAILABLE);
+
     // Reset
     await future.setTargetPrice(new BigNumber(1).mul(1 ** 18));
   });
@@ -642,6 +650,11 @@ contract("Test Future MVP", accounts => {
     let depositEvents = calc.getEvent(tx, 'DepositReturned');
     assert.equal(depositEvents.length, 0, 'The first two tokens of Long are winners ');
 
+    //// MUTEX
+    assert.equal((await future.productStatus()).toNumber(), MutexStatus.CLEAR);
+    await calc.assertReverts(async () => await future.checkPosition(), 'Mutex: Cant check after clear started');
+    /// END MUTEX
+
     // Frozen variables In the first cal
     assert.equal((await future.status()).toNumber(), DerivativeStatus.Closed, 'Future is closed');
     assert.equal((await future.frozenPrice()).toNumber(), futureData.defaultTargetPrice, 'Price is frozen');
@@ -725,6 +738,7 @@ contract("Test Future MVP", accounts => {
     assert.notOk(await future.clear.call(), 'Function will in progress');
     tx = await future.clear();
 
+
     let benefitsEvents = calc.getEvent(tx, 'Benefits');
     assert.equal(benefitsEvents.length, 1, 'There are 2 tokens, but 1 holder');
     assert.equal(benefitsEvents[0].args.amount.toNumber(), benefitsA, 'A receive correct deposits + benefits');
@@ -752,6 +766,7 @@ contract("Test Future MVP", accounts => {
 
     assert.equal((await longToken.getValidTokens()).length, 0, 'All LONG tokens invalid');
     assert.equal((await shortToken.getValidTokens()).length, 0, 'All SHORT tokens invalid');
+    assert.equal((await future.productStatus()).toNumber(), MutexStatus.AVAILABLE);
 
     // No ETH holded
     assert.equal(

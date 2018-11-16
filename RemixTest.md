@@ -10,9 +10,16 @@
 1. Create
 // Direction address is MOT, must be change later on
 `
-  "Test Future", "For testing purposes", "TFT","0x696e646578", 1, 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a,  2, 100, 800
+"FutureTest", "Test Future" , "FTT", "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a", "2", "1000","8000"
+"Test Future","For testing purposes","TFT","0x696e646578","0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","2","2","100"
+2. Initialize (1h)
 
-"Test Future","For testing purposes","TFT","0x696e646578", "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","2","1000","8000"
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","3600"
+2. Initialize (1 week)
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","604800"
+
+3. Set price (stub)
+1000000000000000000
 # Index
 
 1.  Create
