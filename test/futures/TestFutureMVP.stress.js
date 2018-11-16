@@ -181,12 +181,13 @@ contract("Test Future MVP Stress", accounts => {
       depositPercentage: 0.1,
       amountOfTargetPerShare: 2,
     });
+    console.log('future created');
 
     const investA = groupAll[0];
     const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 100, investA);
     const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 100, investA);
 
-    console.log('future created');
+    console.log('future safe invest');
     // await Promise.all(
     //   groupAll.map(
     //     async (account, index) => {

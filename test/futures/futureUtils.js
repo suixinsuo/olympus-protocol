@@ -84,7 +84,7 @@ module.exports = {
           futureData.name,
           futureData.description,
           futureData.symbol,
-
+          futureData.category,
           futureData.target,
           targetAddress,
           futureData.amountOfTargetPerShare,
