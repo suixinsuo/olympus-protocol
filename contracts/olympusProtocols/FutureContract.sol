@@ -25,6 +25,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     int public constant SHORT = 1;
     enum CheckPositionPhases { Initial, LongTokens, ShortTokens }
     enum ClearPositionPhases { Initial, CalculateLoses, CalculateBenefits }
+    enum MutexStatus { AVAILABLE, CHECK_POSITION, CLEAR }
+
+    MutexStatus public productStatus = MutexStatus.AVAILABLE;
 
     // Action of the Future
     bytes32 public constant CLEAR = "Clear";
@@ -306,6 +309,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function checkPosition() external returns (bool) {
         startGasCalculation();
         require(status != DerivativeStatus.Closed, "7");
+        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CHECK_POSITION);
 
          // INITIALIZE
         CheckPositionPhases _stepStatus = CheckPositionPhases(getStatusStep(CHECK_POSITION));
@@ -318,11 +322,13 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
                 return true;
             }
             frozenPrice = getTargetPrice();
+            productStatus = MutexStatus.CHECK_POSITION;
         }
 
         bool completed = checkTokens(checkTokenValidity);
         if(completed) {
             frozenPrice = 0;
+            productStatus = MutexStatus.AVAILABLE;
         }
 
         reimburse();
@@ -361,13 +367,15 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function clear() external returns (bool) {
 
         require(getStatusStep(CHECK_POSITION) == 0, "8");
+        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CLEAR);
+
         startGasCalculation();
         ClearPositionPhases _stepStatus = ClearPositionPhases(getStatusStep(CLEAR));
+        productStatus = MutexStatus.CLEAR;
 
          // INITIALIZE
         if (_stepStatus == ClearPositionPhases.Initial) {
             require(status != DerivativeStatus.Closed);
-
             checkLocker(CLEAR);
             status = DerivativeStatus.Closed;
 
@@ -384,7 +392,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             frozenPrice = getTargetPrice();
             require(frozenPrice > 0);
             _stepStatus = ClearPositionPhases(updateStatusStep(CLEAR));
-
         }
 
         // CHECK LOSERS
@@ -421,6 +428,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     function unfreezeClear() internal {
+        productStatus = MutexStatus.AVAILABLE;
         frozenTotalWinnersSupply = 0;
         winnersBalance = 0;
         frozenPrice = 0;

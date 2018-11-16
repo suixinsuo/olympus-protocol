@@ -33,8 +33,10 @@ contract("Test Future MVP Stress", accounts => {
     providers = await futureUtils.setUpComponentList();
   });
 
-  // ----------------------------- REQUIRED FOR CREATION ----------------------
-  it("Create a future", async () => {
+  /**
+   * Create Future
+   */
+  it("1. Created Future", async () => {
     const {
       future,
       longToken,
@@ -57,7 +59,7 @@ contract("Test Future MVP Stress", accounts => {
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-  it("Stress test case 1 ", async () => {
+  it("2. Stress for 10 investor invest ", async () => {
     const {
       future,
       longToken,
@@ -108,7 +110,7 @@ contract("Test Future MVP Stress", accounts => {
     const accumulatedFee = (await future.accumulatedFee()).toNumber();
     const txGetManagerFee = await future.getManagerFee(accumulatedFee);
     assert.ok(txGetManagerFee);
-    assert.equal((await web3.eth.getBalance(future.address)).toString(), 0, 'Future should be empty');  // sometimes balance remain (800)
+    assert.equal((await web3.eth.getBalance(future.address)).toString(), 0, 'Future should be empty'); // sometimes balance remain (800)
     assert.equal((await future.accumulatedFee()).toNumber(), 0, 'Accumulated fee should be withdrawn');
 
   });
@@ -119,7 +121,7 @@ contract("Test Future MVP Stress", accounts => {
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-  it("Stress test case 2 ", async () => {
+  it("3. Investors invest in long with a random price", async () => {
 
     const {
       future,
@@ -170,14 +172,14 @@ contract("Test Future MVP Stress", accounts => {
   //  Nothing reverts, when withdraw all management fee ETH balance is 0,
   //  investor LONG gets all winner balance.
 
-  it.only("Stress test case 3", async () => {
+  it.only("4. Investors invest in long with 1 ETH", async () => {
     const {
       future,
       longToken,
       shortToken
     } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address, {
       depositPercentage: 0.1,
-      amountOfTargetPerShare: 2,  
+      amountOfTargetPerShare: 2,
     });
 
     const investA = groupAll[0];
@@ -229,7 +231,7 @@ contract("Test Future MVP Stress", accounts => {
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
 
-  it.skip("Stress test case 4", async () => {
+  it.skip("5. Investors invest in long and short from 0.99 to 1.01 ", async () => {
     const {
       future,
       longToken,
@@ -267,7 +269,7 @@ contract("Test Future MVP Stress", accounts => {
   //  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
 
 
-  it.skip("Stress test case 5", async () => {
+  it.skip("6. Investors invest in long", async () => {
     const {
       future,
       longToken,
@@ -304,8 +306,7 @@ contract("Test Future MVP Stress", accounts => {
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
 
   // check position then change price.
-
-  it.skip("Bot test case 1", async () => {
+  it.skip("7. Investors invest in long with a random price", async () => {
     const {
       future,
       longToken,
