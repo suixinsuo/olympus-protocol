@@ -117,7 +117,7 @@ contract("Test Future MVP Stress", accounts => {
 
   //  Stress test case 2:
   //  Investors invest in long with a random price between 0.9 and 1.1 ETH
-  //  The same 20 investors invest long, and also short
+  //  The same 20 investors invest long, and also short 2 ETH.
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
@@ -135,7 +135,7 @@ contract("Test Future MVP Stress", accounts => {
           const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
           await future.setTargetPrice(targetPrice);
 
-          const txLong = await futureUtils.safeInvest(future, FutureDirection.Short, 2,
+          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 2,
             account);
           assert.ok(txLong, 'invest should not be revert');
           const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 2,
@@ -150,12 +150,10 @@ contract("Test Future MVP Stress", accounts => {
       await future.setTargetPrice(targetPrice);
       await futureUtils.safeCheckPosition(future);
     }
-    console.log('safeClear ...');
 
     const txClear = await futureUtils.safeClear(future); // sometime can't not clear.
     assert.ok(txClear, 'clear should be success');
 
-    console.log('safeClear done');
     assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
     const accumulatedFee = (await future.accumulatedFee()).toNumber();
     const txGetManagerFee = await future.getManagerFee(accumulatedFee);
@@ -165,74 +163,69 @@ contract("Test Future MVP Stress", accounts => {
 
   //  Stress test case 3:
   //  Investors invest in long with 1 ETH. deposit percentage is 1% amounts per share is 1.
-  //  1 investor invest Long but buy 100 tokens, same does investor short
+  //  1 investor invest Long but buy 10 tokens, same does investor short
   //  Price at 0.95 ETH, and check position til is finished
   //  Price at 1.05 ETH, and check position til is finished
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0,
   //  investor LONG gets all winner balance.
 
-  it.only("4. Investors invest in long with 1 ETH", async () => {
+  it("4. Investors invest in long with 1 ETH", async () => {
+
     const {
       future,
       longToken,
       shortToken
     } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address, {
-      depositPercentage: 0.1,
+      depositPercentage: futureUtils.DENOMINATOR * 0.01,
       amountOfTargetPerShare: 2,
     });
-    console.log('future created');
+    assert.equal((await future.status()).toNumber(), 1);
 
     const investA = groupAll[0];
-    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 100, investA);
-    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 100, investA);
+    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 10, investA);
+    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 10, investA);
 
-    console.log('future safe invest');
-    // await Promise.all(
-    //   groupAll.map(
-    //     async (account, index) => {
-    //       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
-    //       await future.setTargetPrice(targetPrice);
+    await Promise.all(
+      groupAll.map(
+        async (account, index) => {
+          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 1,
+            account);
+          assert.ok(txLong, 'invest should not be revert');
+          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 1,
+            account);
+          assert.ok(txShort, 'invest should not be revert');
+        }
+      )
+    );
 
-    //       const txLong = await futureUtils.safeInvest(future, FutureDirection.Short, 100,
-    //         account);
-    //       assert.ok(txLong, 'invest should not be revert');
-    //       const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 100,
-    //         account);
-    //       assert.ok(txShort, 'invest should not be revert');
-    //     }
-    //   )
-    // );
+    let targetPrice = futureData.defaultTargetPrice * 0.95;
+    await future.setTargetPrice(targetPrice);
+    await futureUtils.safeCheckPosition(future);
+    targetPrice = futureData.defaultTargetPrice * 1.05;
+    await future.setTargetPrice(targetPrice);
+    await futureUtils.safeCheckPosition(future);
 
-    // console.log('invested');
+    const txClear = await futureUtils.safeClear(future);
+    assert.ok(txClear, 'clear should be success');
 
-    // let targetPrice = futureData.defaultTargetPrice * 0.95;
-    // await future.setTargetPrice(targetPrice);
-    // await futureUtils.safeCheckPosition(future);
-    // targetPrice = futureData.defaultTargetPrice * 1.05;
-    // await future.setTargetPrice(targetPrice);
-    // await futureUtils.safeCheckPosition(future);
-
-    // const txClear = await futureUtils.safeClear(future);
-    // assert.ok(txClear, 'clear should be success');
-
-    // assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
-    // const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    // const txGetManagerFee = await future.getManagerFee(accumulatedFee);
-    // assert.ok(txGetManagerFee);
+    assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
+    const accumulatedFee = (await future.accumulatedFee()).toNumber();
+    const txGetManagerFee = await future.getManagerFee(accumulatedFee);
+    assert.ok(txGetManagerFee);
 
   });
 
 
   //  Stress test case 4:
-  //  Investors invest in long and short from 0.99 to 1.01  ETH with a lot of decimals. deposit %  is 1% amounts per share is 1.
+  //  Investors invest in long and short from 0.99 to 1.01  ETH with a lot of decimals. deposit is 1% amounts per share is 1.
   //  1 investor invest Long but buy 10 tokens, same does investor short
   //  Price at really random decimal number between 0.92 and 0.96, and check position til is finished
   //  Price at really random decimal number between 1.02 and 1.06, and check position til is finished
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
 
-  it.skip("5. Investors invest in long and short from 0.99 to 1.01 ", async () => {
+  it("5. Investors invest in long and short from 0.99 to 1.01 ", async () => {
     const {
       future,
       longToken,
@@ -242,6 +235,9 @@ contract("Test Future MVP Stress", accounts => {
       amountOfTargetPerShare: 1,
     });
 
+    const investA = groupAll[0];
+    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 10, investA);
+    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 10, investA);
 
     let targetPrice = futureData.defaultTargetPrice * (0.92 + (0.04 * Math.random()));
     await future.setTargetPrice(targetPrice);
@@ -261,53 +257,16 @@ contract("Test Future MVP Stress", accounts => {
   });
 
 
-  //  Stress test case 5:
-  //  Investors invest in long with a 1 ETH. deposit %  is 1% amounts per share is 1.
-  //  1 investor invest Long but buy 10 tokens, same does investor short
-  //  Price at really random decimal number between 0.92 and 0.96, and check position til is finished
-  //  Price at really random decimal number between 1.02 and 1.06, and check position til is finished
-  //  Then we call clear until is finish.
-  //  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
-
-
-  it.skip("6. Investors invest in long", async () => {
-    const {
-      future,
-      longToken,
-      shortToken
-    } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address, {
-      depositPercentage: futureUtils.DENOMINATOR * 0.01,
-      amountOfTargetPerShare: 1,
-    });
-
-
-    let targetPrice = futureData.defaultTargetPrice * (0.92 + (0.04 * Math.random()));
-    await future.setTargetPrice(targetPrice);
-    await futureUtils.safeCheckPosition(future);
-    targetPrice = futureData.defaultTargetPrice * (1.02 + (0.04 * Math.random()));
-    await future.setTargetPrice(targetPrice);
-    await futureUtils.safeCheckPosition(future);
-
-    const txClear = await futureUtils.safeClear(future);
-    assert.ok(txClear, 'clear should be success');
-
-    assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
-    const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    const txGetManagerFee = await future.getManagerFee(accumulatedFee);
-    assert.ok(txGetManagerFee);
-
-  });
-
-  //  Bot test case 1:
+  //  Bot test case 6:
   //  Investors invest in long with a random price between 0.99 and 1.01 ETH. Long and Short buy 4 tokens each
   //  Change change position for each 1.5 second. Change step provider to execute 3 by 3 times.
   //  Set a timer to call check position like the bot.
   //  Set a timer to change the price randomly between 0.97 and and 1.03 with some more decimals
   //  Once 3 times check position is finish, execute clear position until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-
   // check position then change price.
-  it.skip("7. Investors invest in long with a random price", async () => {
+  it.only("6. Investors invest in long with a random price", async () => {
+
     const {
       future,
       longToken,
@@ -317,11 +276,22 @@ contract("Test Future MVP Stress", accounts => {
       amountOfTargetPerShare: 1,
     });
 
+    await Promise.all(
+      groupAll.map(
+        async (account, index) => {
+          const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+          await future.setTargetPrice(targetPrice);
+          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 1.01,
+            account);
+          assert.ok(txLong, 'invest should not be revert');
+          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 4,
+            account);
+          assert.ok(txShort, 'invest should not be revert');
+        }
+      )
+    );
 
-    let targetPrice = futureData.defaultTargetPrice * (0.92 + (0.04 * Math.random()));
-    await future.setTargetPrice(targetPrice);
-    await futureUtils.safeCheckPosition(future);
-    targetPrice = futureData.defaultTargetPrice * (1.02 + (0.04 * Math.random()));
+    let targetPrice = futureData.defaultTargetPrice * (0.97 + (0.06 * Math.random()));
     await future.setTargetPrice(targetPrice);
     await futureUtils.safeCheckPosition(future);
 

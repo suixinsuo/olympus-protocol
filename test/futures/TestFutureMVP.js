@@ -29,13 +29,10 @@ const LONG_WIN_ALL = 1.1;  // For this default price this multiplier will make l
  *    2. Reset all global settings at the end of each test or section.
  */
 
-
-
 contract("Test Future MVP", accounts => {
 
   let future;
   let providers;
-
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -444,8 +441,6 @@ contract("Test Future MVP", accounts => {
     // Check that is frozen
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 1, 'Is started');
 
-    // While check position has started clear cant executed
-    await assert.reverts( async() => await future.clear(), 'Clear cant revert, mutex');
     await future.checkPosition();
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 2, 'Finish LONG');
     await future.checkPosition();
