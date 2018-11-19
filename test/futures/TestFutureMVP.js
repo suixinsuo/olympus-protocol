@@ -574,7 +574,10 @@ contract("Test Future MVP", accounts => {
     assert.equal(winnersBalance, expectedWinnerBalance, '');
     // 0.8 with manager fee, but we spend some fee on reimbursable
     const balance = (await web3.eth.getBalance(future.address));
-    assert.isAbove(new BigNumber(balance), new BigNumber(web3.toWei(0.8, 'ether')), '0.8 of 4 tokens ');
+    assert.isAbove(
+      new BigNumber(balance).toNumber(),
+      new BigNumber(web3.toWei(0.8, 'ether')).toNumber(),
+      '0.8 of 4 tokens ');
 
   });
 
@@ -615,8 +618,9 @@ contract("Test Future MVP", accounts => {
     assert.equal(winnersBalance, previousWinnerBalance + expectedWinnerBalance, '');
 
     // 0.8 with manager fee, but we spend some fee on reimbursable
-    assert.isAbove(new BigNumber((await web3.eth.getBalance(future.address))), new BigNumber(web3.toWei(0.8,
-        'ether')),
+    assert.isAbove(
+      new BigNumber((await web3.eth.getBalance(future.address))).toNumber(),
+      new BigNumber(web3.toWei(0.8, 'ether')).toNumber(),
       '0.8 of 4 tokens ');
 
   });

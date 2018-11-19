@@ -7,8 +7,8 @@
   },
   "scripts": {
     "build": "truffle compile  --network development",
-    "future-test": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.js'",
-    "future-stress": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.stress.js'",
+    "future-test": "run-with-testrpc -a 21 --port 8545 --gasLimit 8e6 'truffle test ./test/futures/TestFutureMVP.js'",
+    "future-stress": "run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.stress.js'",
     "index-min-bot": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.bot.min.js'",
     "index-bot": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.bot.js'",
     "fund-index": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.stress.js'",
