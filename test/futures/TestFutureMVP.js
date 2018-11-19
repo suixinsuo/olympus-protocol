@@ -17,9 +17,9 @@ const FutureContract = artifacts.require("FutureContractStub"); // FutureContrac
 const FutureToken = artifacts.require("FutureERC721Token");
 
 const SHORT_WIN = 0.95; // For this default price this multiplier will make short win , long doesn't lose all the posit
-const LONG_WIN = 1.05;  // For this default price this multiplier will make long win , short doesn't lose all the posit
-const SHORT_WIN_ALL = 0.9;  // For this default price this multiplier will make short win , long will lose all
-const LONG_WIN_ALL = 1.1;  // For this default price this multiplier will make long win , short will lose all
+const LONG_WIN = 1.05; // For this default price this multiplier will make long win , short doesn't lose all the posit
+const SHORT_WIN_ALL = 0.9; // For this default price this multiplier will make short win , long will lose all
+const LONG_WIN_ALL = 1.1; // For this default price this multiplier will make long win , short will lose all
 
 /**
  *   ================= BASIC FLOW =================
@@ -97,16 +97,19 @@ contract("Test Future MVP", accounts => {
 
   it("Can\'t clear because the time out ", async () => {
     // When it reaches the end of the test, the interval will expired
-    await calc.assertReverts(async () => await future.clear(), `Clear time out is ${futureData.clearInterval}s`);
+    await calc.assertReverts(async () => await future.clear(),
+      `Clear time out is ${futureData.clearInterval}s`);
   });
 
   it("Can\'t redeem all manager fee ", async () => {
     const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    await calc.assertReverts(async () => await future.getManagerFee(accumulatedFee), 'Cant withdraw all before closed');
+    await calc.assertReverts(async () => await future.getManagerFee(accumulatedFee),
+      'Cant withdraw all before closed');
     const tx = await future.getManagerFee(new BigNumber(accumulatedFee).sub(futureUtils.INITIAL_FEE));
     assert.ok(tx, 'Can withdraw fee until the minumum fee');
 
-    assert.equal((await future.accumulatedFee()).toNumber(), futureUtils.INITIAL_FEE, 'Now accumulated fee is exactly 1 ETH');
+    assert.equal((await future.accumulatedFee()).toNumber(), futureUtils.INITIAL_FEE,
+      'Now accumulated fee is exactly 1 ETH');
   });
 
   it("Cant call initialize twice ", async () => {
@@ -138,7 +141,10 @@ contract("Test Future MVP", accounts => {
     const depositValue = web3.toWei(1, 'ether');
 
     await calc.assertReverts(async () => {
-      await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue * 2 });
+      await future.invest(FutureDirection.Long, amountsOfShares, {
+        from: investorA,
+        value: depositValue * 2
+      });
     }, "Shall revert if target price is 0");
 
   });
@@ -164,7 +170,10 @@ contract("Test Future MVP", accounts => {
     await notActiveFuture.setTargetPrice(targetPrice);
 
     await calc.assertReverts(async () => {
-      await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue });
+      await future.invest(FutureDirection.Long, amountsOfShares, {
+        from: investorA,
+        value: depositValue
+      });
     }, "Shall revert if the future is not Active");
 
   });
@@ -192,7 +201,7 @@ contract("Test Future MVP", accounts => {
 
     await calc.assertReverts(
       async () => await future.calculateShareDeposit(2 ** 256 - 1, futureData.defaultTargetPrice),
-      'Safe math avoid overflow'
+        'Safe math avoid overflow'
     );
 
 
@@ -208,19 +217,26 @@ contract("Test Future MVP", accounts => {
     const extraDeposit = web3.toWei(0.72, 'ether'); // Shall be returned (random amount)
     let tx;
 
-    tx = await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValueBN.add(extraDeposit) });
+    tx = await future.invest(FutureDirection.Long, amountsOfShares, {
+      from: investorA,
+      value: depositValueBN.add(extraDeposit)
+    });
     assert.ok(tx);
     const balanceAfter = await calc.ethBalance(investorA);
-    assert(await calc.inRange(balanceAfter, balanceBefore - depositValueBN.div(10 ** 18).toNumber(), 0.01), ' Return exceed of deposit');
+    assert(await calc.inRange(balanceAfter, balanceBefore - depositValueBN.div(10 ** 18).toNumber(), 0.01),
+      ' Return exceed of deposit');
     const investorATokens = await longToken.getTokenIdsByOwner(investorA);
 
     assert.equal(investorATokens.length, amountsOfShares, 'Investor A got one token');
     assert.equal((await shortToken.getTokenIdsByOwner(investorA)).length, 0, 'Investor A got long');
 
-    assert.equal((await longToken.getBuyingPrice(investorATokens[0])).toNumber(), targetPrice, 'Target price is correct');
-    assert.equal((await longToken.getDeposit(investorATokens[0])).toNumber(), depositValueBN.div(amountsOfShares), 'Deposit is correct');
+    assert.equal((await longToken.getBuyingPrice(investorATokens[0])).toNumber(), targetPrice,
+      'Target price is correct');
+    assert.equal((await longToken.getDeposit(investorATokens[0])).toNumber(), depositValueBN.div(
+      amountsOfShares), 'Deposit is correct');
     assert.equal((await longToken.isTokenValid(investorATokens[0])), true, 'Token is valid');
-    assert.equal((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.5, 'ether'), '0.4 of 2 tokens + 0.1 of manager fee ');
+    assert.equal((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.5, 'ether'),
+      '0.2 of 2 tokens + 0.1 of manager fee ');
 
   });
 
@@ -233,19 +249,26 @@ contract("Test Future MVP", accounts => {
     const extraDeposit = web3.toWei(0.71, 'ether'); // Shall be returned (random amount)
 
     let tx;
-    tx = await future.invest(FutureDirection.Short, amountsOfShares, { from: investorB, value: new BigNumber(depositValue).add(extraDeposit) });
+    tx = await future.invest(FutureDirection.Short, amountsOfShares, {
+      from: investorB,
+      value: new BigNumber(depositValue).add(extraDeposit)
+    });
     assert.ok(tx);
     const balanceAfter = await calc.ethBalance(investorB);
-    assert(await calc.inRange(balanceAfter, balanceBefore - depositValue / 10 ** 18, 0.01), ' Return exceed of deposit');
+    assert(await calc.inRange(balanceAfter, balanceBefore - depositValue / 10 ** 18, 0.01),
+      ' Return exceed of deposit');
     const investorBTokens = await shortToken.getTokenIdsByOwner(investorB);
 
     assert.equal(investorBTokens.length, amountsOfShares, 'Investor B got one token');
     assert.equal((await longToken.getTokenIdsByOwner(investorB)).length, 0, 'Investor B got long');
 
-    assert.equal((await shortToken.getBuyingPrice(investorBTokens[0])).toNumber(), targetPrice, 'Target price is correct');
-    assert.equal((await shortToken.getDeposit(investorBTokens[0])).toNumber(), depositValue / amountsOfShares, 'Deposit is correct');
+    assert.equal((await shortToken.getBuyingPrice(investorBTokens[0])).toNumber(), targetPrice,
+      'Target price is correct');
+    assert.equal((await shortToken.getDeposit(investorBTokens[0])).toNumber(), depositValue / amountsOfShares,
+      'Deposit is correct');
     assert.equal((await shortToken.isTokenValid(investorBTokens[0])), true, 'Token is valid');
-    assert.equal((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.9, 'ether'), '0.4 of 4 tokens + 0.1 of manager fee ');
+    assert.equal((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.9, 'ether'),
+      '0.2 of 4 tokens + 0.1 of manager fee ');
 
   });
 
@@ -259,10 +282,12 @@ contract("Test Future MVP", accounts => {
     let redLine;
     // LONG
     redLine = (await future.getTokenBottomPosition(FutureDirection.Long, investorATokens[0])).toNumber();
-    assert.equal(redLine, tokenDeposit - (tokenDeposit * futureData.forceClosePositionDelta / futureUtils.DENOMINATOR), 'Red line for long tokens');
+    assert.equal(redLine, tokenDeposit - (tokenDeposit * futureData.forceClosePositionDelta / futureUtils.DENOMINATOR),
+      'Red line for long tokens');
     // SHORT
     redLine = (await future.getTokenBottomPosition(FutureDirection.Short, investorBTokens[0])).toNumber();
-    assert.equal(redLine, tokenDeposit - (tokenDeposit * futureData.forceClosePositionDelta / futureUtils.DENOMINATOR), 'Red line for short tokens');
+    assert.equal(redLine, tokenDeposit - (tokenDeposit * futureData.forceClosePositionDelta / futureUtils.DENOMINATOR),
+      'Red line for short tokens');
   });
 
   it("Investors actual value", async () => {
@@ -277,18 +302,23 @@ contract("Test Future MVP", accounts => {
     const targetPrice = futureData.defaultTargetPrice;
     tokenDeposit = futureUtils.calculateShareDeposit(1, targetPrice); // For 1 token
 
-    assert.equal(targetPrice, futureData.defaultTargetPrice, 'Target price is the same as set in the configuration');
-    assert.equal((await shortToken.getDeposit(investorATokens[0])).toNumber(), tokenDeposit, 'Deposit is 2 E17 LONG');
-    assert.equal((await shortToken.getDeposit(investorBTokens[0])).toNumber(), tokenDeposit, 'Deposit is 2 E17 SHORT');
+    assert.equal(targetPrice, futureData.defaultTargetPrice,
+      'Target price is the same as set in the configuration');
+    assert.equal((await shortToken.getDeposit(investorATokens[0])).toNumber(), tokenDeposit,
+      'Deposit is 2 E17 LONG');
+    assert.equal((await shortToken.getDeposit(investorBTokens[0])).toNumber(), tokenDeposit,
+      'Deposit is 2 E17 SHORT');
 
     // -------------------------- SAME PRICE -----------------------
     // LONG
     tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], targetPrice)).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, targetPrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      targetPrice);
     assert.equal(tokenValue, tokenTestValue, 'Actual value is the same when price no change LONG');
     // SHORT
     tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], targetPrice)).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, targetPrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      targetPrice);
     assert.equal(tokenValue, tokenTestValue, 'Actual value is the same when price no change SHORT');
 
     // -------------------------- PRICE LOW -----------------------
@@ -296,11 +326,13 @@ contract("Test Future MVP", accounts => {
 
     // LONG
     tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(tokenValue, tokenTestValue, 'Actual value is the reduced for LONG');
     // SHORT
     tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], updatePrice)).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(tokenValue, tokenTestValue, 'Actual value is increased for SHORT');
 
     // -------------------------- PRICE HIGH -----------------------
@@ -308,11 +340,13 @@ contract("Test Future MVP", accounts => {
 
     // LONG
     tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(tokenValue, tokenTestValue, 'Actual value is the increased for LONG');
     // SHORT
     tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], updatePrice)).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(tokenValue, tokenTestValue, 'Actual value is reduced for SHORT');
 
 
@@ -324,14 +358,16 @@ contract("Test Future MVP", accounts => {
     assert.equal(tokenValue, 0, 'Actual value is 0 for LONG');
     // SHORT
     tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], updatePrice)).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(tokenValue, tokenTestValue, 'Actual value is really increased for SHORT');
 
     // -------------------------- PRICE is TOO HIGH -----------------------
     updatePrice = new BigNumber(LONG_WIN_ALL).mul(futureData.defaultTargetPrice).toNumber(); // LONG win
     // LONG
     tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(tokenValue, tokenTestValue, 'Actual value really the increased for LONG');
     // SHORT
     tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], updatePrice)).toNumber();
@@ -353,13 +389,19 @@ contract("Test Future MVP", accounts => {
     // -------------------------- SAME PRICE -----------------------
     updatePrice = targetPrice;
     // LONG
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, {
+      from: investorA
+    })).toNumber();
 
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A normalPrice');
     // SHORT
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, {
+      from: investorB
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B normalPrice');
 
     // -------------------------- PRICE HIGH -----------------------
@@ -367,12 +409,18 @@ contract("Test Future MVP", accounts => {
     await future.setTargetPrice(updatePrice);
 
     // LONG
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, {
+      from: investorA
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A reduced');
     // SHORT
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, {
+      from: investorB
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B increased');
 
     // -------------------------- PRICE LOW -----------------------
@@ -380,24 +428,36 @@ contract("Test Future MVP", accounts => {
 
     await future.setTargetPrice(updatePrice);
     // LONG
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, {
+      from: investorA
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A increased');
     // SHORT
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, {
+      from: investorB
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B reduced');
 
     // -------------------------- PRICE is TOO LOW -----------------------
     updatePrice = SHORT_WIN_ALL * futureData.defaultTargetPrice; // SHORT win
     await future.setTargetPrice(updatePrice);
     // LONG
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, {
+      from: investorA
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A is 0');
     // SHORT
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, {
+      from: investorB
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B is too high');
 
 
@@ -406,12 +466,18 @@ contract("Test Future MVP", accounts => {
     await future.setTargetPrice(updatePrice);
 
     // LONG
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, {
+      from: investorA
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensACount, 'Assets A is too high');
     // SHORT
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
-    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice, updatePrice);
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, {
+      from: investorB
+    })).toNumber();
+    tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Short, tokenDeposit, targetPrice,
+      updatePrice);
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B is 0');
 
     // Reset
@@ -432,20 +498,24 @@ contract("Test Future MVP", accounts => {
 
     // 4 tokens, 4 calls
     await future.checkPosition();
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 1, 'Is started');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      1, 'Is started');
     /// MUTEX
     assert.equal((await future.productStatus()).toNumber(), MutexStatus.CHECK_POSITION);
     await calc.assertReverts(async () => await future.clear(), 'Mutex: Cant clear after check started');
     /// END MUTEX
 
     // Check that is frozen
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 1, 'Is started');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      1, 'Is started');
 
     await future.checkPosition();
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 2, 'Finish LONG');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      2, 'Finish LONG');
     await future.checkPosition();
     await future.checkPosition();
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Short');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      0, 'Finish Short');
 
     // No red line cross, nothing is deactivated
     assert.notEqual((await longToken.getValidTokens()).length, 0, 'No token invalidated');
@@ -456,7 +526,8 @@ contract("Test Future MVP", accounts => {
     await future.setTargetPrice(new BigNumber(LONG_WIN).mul(futureData.defaultTargetPrice));
     // Call at once
     await future.checkPosition();
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Check Position');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      0, 'Finish Check Position');
 
     // No redline cross, nothing is deactivated
     assert.notEqual((await longToken.getValidTokens()).length, 0, 'No token invalidated');
@@ -475,16 +546,19 @@ contract("Test Future MVP", accounts => {
 
     // We set step provider to 1
     await future.setTargetPrice(updatePrice);
-    const tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
+    const tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0],
+      updatePrice)).toNumber();
 
     assert(tokenValue > 0, 'Test scenario user is reimbursed part of his deposit while out');
     const tx = await future.checkPosition();
 
     let depositEvents = calc.getEvent(tx, 'DepositReturned');
     assert.equal(depositEvents.length, 2, 'Both tokens return deposit');
-    depositEvents.forEach((depositEvent) => assert.equal(depositEvent.args.amount.toNumber(), tokenValue, 'Remaining value is returned'));
+    depositEvents.forEach((depositEvent) => assert.equal(depositEvent.args.amount.toNumber(), tokenValue,
+      'Remaining value is returned'));
 
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Check Position');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      0, 'Finish Check Position');
 
     assert.equal((await longToken.getValidTokens()).length, 0, 'All long tokens invalidated');
     assert.notEqual((await shortToken.getValidTokens()).length, 0, 'All short tokens are still valid');
@@ -499,7 +573,9 @@ contract("Test Future MVP", accounts => {
     const expectedWinnerBalance = (tokenDeposit - tokenValue) * 2;
     assert.equal(winnersBalance, expectedWinnerBalance, '');
     // 0.8 with manager fee, but we spend some fee on reimbursable
-    assert.isAbove((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.8, 'ether'), '0.8 of 4 tokens ');
+    const balance = (await web3.eth.getBalance(future.address)).toNumber();
+    console.log('assert.isAbove:', web3.fromWei(balance, 'ether'));
+    assert.isAbove(balance, web3.toWei(0.8, 'ether'), '0.8 of 4 tokens ');
 
   });
 
@@ -512,16 +588,19 @@ contract("Test Future MVP", accounts => {
 
     // We set step provider to 1
     await future.setTargetPrice(updatePrice);
-    const tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], updatePrice)).toNumber();
+    const tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0],
+      updatePrice)).toNumber();
 
     assert(tokenValue > 0, 'Test scenario user is reimbursing part of his deposit while out');
     const tx = await future.checkPosition();
 
     let depositEvents = calc.getEvent(tx, 'DepositReturned');
     assert.equal(depositEvents.length, 2, 'Both tokens return deposit');
-    depositEvents.forEach((depositEvent) => assert.equal(depositEvent.args.amount.toNumber(), tokenValue, 'Remaining value is returned'));
+    depositEvents.forEach((depositEvent) => assert.equal(depositEvent.args.amount.toNumber(), tokenValue,
+      'Remaining value is returned'));
 
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Check Position');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      0, 'Finish Check Position');
 
     assert.equal((await shortToken.getValidTokens()).length, 0, 'All long tokens invalidated');
 
@@ -537,7 +616,8 @@ contract("Test Future MVP", accounts => {
     assert.equal(winnersBalance, previousWinnerBalance + expectedWinnerBalance, '');
 
     // 0.8 with manager fee, but we spend some fee on reimbursable
-    assert.isAbove((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.8, 'ether'), '0.8 of 4 tokens ');
+    assert.isAbove((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.8, 'ether'),
+      '0.8 of 4 tokens ');
 
   });
   it("ETH balance is the winnersBalance + managment Fee", async () => {
@@ -559,7 +639,8 @@ contract("Test Future MVP", accounts => {
     // This line also checks checkPosition when there are not valid tokens
     tx = await future.checkPosition();
     assert.ok(tx);
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Check Position');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      0, 'Finish Check Position');
 
     // The timer got enabled
     await calc.assertReverts(
@@ -582,10 +663,14 @@ contract("Test Future MVP", accounts => {
 
     // -------------------------- SAME PRICE -----------------------
     // LONG
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, {
+      from: investorA
+    })).toNumber();
     assert.equal(myAssetsValue, 0, 'Assets A are all invalid');
     // SHORT
-    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, { from: investorB })).toNumber();
+    myAssetsValue = (await future.getMyAssetValue(FutureDirection.Short, {
+      from: investorB
+    })).toNumber();
     assert.equal(myAssetsValue, 0, 'Assets B are all invalid');
   });
 
@@ -607,13 +692,25 @@ contract("Test Future MVP", accounts => {
     // -------------------------- PRICE is LOW  -----------------------
     updatePrice = SHORT_WIN * futureData.defaultTargetPrice; // SHORT win
     await future.setTargetPrice(updatePrice);
-    await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue * amountsOfShares });
-    await future.invest(FutureDirection.Short, amountsOfShares, { from: investorB, value: depositValue * amountsOfShares });
+    await future.invest(FutureDirection.Long, amountsOfShares, {
+      from: investorA,
+      value: depositValue * amountsOfShares
+    });
+    await future.invest(FutureDirection.Short, amountsOfShares, {
+      from: investorB,
+      value: depositValue * amountsOfShares
+    });
     // -------------------------- PRICE is HIGHT  -----------------------
     updatePrice = LONG_WIN * futureData.defaultTargetPrice; // LONG win
     await future.setTargetPrice(updatePrice);
-    await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue * amountsOfShares });
-    await future.invest(FutureDirection.Short, amountsOfShares, { from: investorB, value: depositValue * amountsOfShares });
+    await future.invest(FutureDirection.Long, amountsOfShares, {
+      from: investorA,
+      value: depositValue * amountsOfShares
+    });
+    await future.invest(FutureDirection.Short, amountsOfShares, {
+      from: investorB,
+      value: depositValue * amountsOfShares
+    });
 
     // -------------------------- CHECK PRECONDITIONS  -----------------------
 
@@ -641,15 +738,19 @@ contract("Test Future MVP", accounts => {
     // -> Call 1
     assert.notOk(await future.clear.call(), 'Function will in progress');
     tx = await future.clear();
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CLEAR), ClearPositionPhases.CalculateLoses, ' Loses started');
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), CheckPositionPhases.LongTokens, 'Long started');
-    assert.equal((await providers.stepProvider.currentFunctionStep(future.address, DerivativeProviders.CHECK_POSITION)).toNumber(), maxSteps, 'Long 2 steps');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CLEAR),
+      ClearPositionPhases.CalculateLoses, ' Loses started');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      CheckPositionPhases.LongTokens, 'Long started');
+    assert.equal((await providers.stepProvider.currentFunctionStep(future.address, DerivativeProviders.CHECK_POSITION))
+      .toNumber(), maxSteps, 'Long 2 steps');
     let depositEvents = calc.getEvent(tx, 'DepositReturned');
     assert.equal(depositEvents.length, 0, 'The first two tokens of Long are winners ');
 
     //// MUTEX
     assert.equal((await future.productStatus()).toNumber(), MutexStatus.CLEAR);
-    await calc.assertReverts(async () => await future.checkPosition(), 'Mutex: Cant check after clear started');
+    await calc.assertReverts(async () => await future.checkPosition(),
+      'Mutex: Cant check after clear started');
     /// END MUTEX
 
     // Frozen variables In the first cal
@@ -660,8 +761,10 @@ contract("Test Future MVP", accounts => {
     // -> Call 2
     assert.notOk(await future.clear.call(), 'Function will in progress');
     tx = await future.clear();
-    assert.equal((await providers.stepProvider.currentFunctionStep(future.address, DerivativeProviders.CHECK_POSITION)).toNumber(), 0, 'Long Finish');
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), CheckPositionPhases.ShortTokens, 'Short started');
+    assert.equal((await providers.stepProvider.currentFunctionStep(future.address, DerivativeProviders.CHECK_POSITION))
+      .toNumber(), 0, 'Long Finish');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      CheckPositionPhases.ShortTokens, 'Short started');
 
     depositEvents = calc.getEvent(tx, 'DepositReturned');
     assert.equal(depositEvents.length, 2, 'The first two tokens of Long are losers ');
@@ -674,14 +777,15 @@ contract("Test Future MVP", accounts => {
       futureData.defaultTargetPrice
     );
     depositEvents.forEach((depositEvent) => assert.equal(
-      depositEvent.args.amount.toNumber(), longLostTokenActualValue, 'Returned the remaining value of LONG lost token')
-    );
+      depositEvent.args.amount.toNumber(), longLostTokenActualValue,
+      'Returned the remaining value of LONG lost token'));
 
     /// Checking SHORT
     // -> Call 3
     assert.notOk(await future.clear.call(), 'Function will in progress');
     tx = await future.clear();
-    assert.equal((await providers.stepProvider.currentFunctionStep(future.address, DerivativeProviders.CHECK_POSITION)).toNumber(), maxSteps, '3nd step');
+    assert.equal((await providers.stepProvider.currentFunctionStep(future.address, DerivativeProviders.CHECK_POSITION))
+      .toNumber(), maxSteps, '3nd step');
     depositEvents = calc.getEvent(tx, 'DepositReturned');
     assert.equal(depositEvents.length, 2, 'The first two tokens of Short are losers ');
     // Short lost tokens bought when price was low (SHORT_WIN)
@@ -693,18 +797,20 @@ contract("Test Future MVP", accounts => {
     );
 
     depositEvents.forEach((depositEvent) => assert.equal(
-      depositEvent.args.amount.toNumber(), shortLostTokenActualValue, 'Returned the remaining value of SHORT lost token')
-    );
+      depositEvent.args.amount.toNumber(), shortLostTokenActualValue,
+      'Returned the remaining value of SHORT lost token'));
 
     // -> Call 4
     assert.notOk(await future.clear.call(), 'Function will in progress');
     tx = await future.clear();
     depositEvents = calc.getEvent(tx, 'DepositReturned');
     assert.equal(depositEvents.length, 0, 'The second two tokens of Short are winners ');
-    assert.equal((await providers.stepProvider.currentFunctionStep(future.address, DerivativeProviders.CHECK_POSITION)).toNumber(), 0, 'Finished Losers');
+    assert.equal((await providers.stepProvider.currentFunctionStep(future.address, DerivativeProviders.CHECK_POSITION))
+      .toNumber(), 0, 'Finished Losers');
 
     /// --------------------------- CHECKING WINNER TOKENS PRE CONDITIONS ---------------------------
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CLEAR), ClearPositionPhases.CalculateBenefits, ' Winners started');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CLEAR),
+      ClearPositionPhases.CalculateBenefits, ' Winners started');
     const winnersAfter = (await future.frozenTotalWinnersSupply()).toNumber();
     // TODO: Check the winnersAfter is winnerBalance + reamining of the losers
     assert.equal(winnersAfter, 4, '2 tokens from short and 2 from long are winners');
@@ -718,15 +824,16 @@ contract("Test Future MVP", accounts => {
     );
     const benefitsA =
       validTokensADeposit.reduce((total, deposit) => total + deposit.toNumber(), 0) // Sum all deposits
-      + previousWinnerBalance / 2;
+      +
+      previousWinnerBalance / 2;
     const validTokensBDeposit = await Promise.all(
       (await shortToken.getValidTokenIdsByOwner(investorB)).map(
         async (id) => await shortToken.getDeposit(id)
       )
     );
     const benefitsB =
-      validTokensBDeposit.reduce((total, deposit) => total + deposit.toNumber(), 0)
-      + previousWinnerBalance / 2;
+      validTokensBDeposit.reduce((total, deposit) => total + deposit.toNumber(), 0) +
+      previousWinnerBalance / 2;
 
     /// --------------------------- CHECKING WINNER TOKENS ---------------------------
 
@@ -740,7 +847,8 @@ contract("Test Future MVP", accounts => {
     assert.equal(benefitsEvents.length, 1, 'There are 2 tokens, but 1 holder');
     assert.equal(benefitsEvents[0].args.amount.toNumber(), benefitsA, 'A receive correct deposits + benefits');
 
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), CheckPositionPhases.ShortTokens, 'Short started');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      CheckPositionPhases.ShortTokens, 'Short started');
 
     /// Checking SHORT
     // -> Call 2
@@ -752,8 +860,10 @@ contract("Test Future MVP", accounts => {
     assert.equal(benefitsEvents[0].args.amount.toNumber(), benefitsB, 'B receive correct deposits + benefits');
 
     /// --------------------------- EVERYTHING RESETS ---------------------------
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), CheckPositionPhases.Initial, 'Check tokens finish');
-    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CLEAR), ClearPositionPhases.Initial, 'Clear finish');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION),
+      CheckPositionPhases.Initial, 'Check tokens finish');
+    assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CLEAR),
+      ClearPositionPhases.Initial, 'Clear finish');
 
     assert.equal((await future.frozenTotalWinnersSupply()).toNumber(), 0, 'Winners Supply reset');
     assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance reset');
@@ -778,8 +888,10 @@ contract("Test Future MVP", accounts => {
 
   it("Future can\'t execute after close", async () => {
     await calc.assertReverts(
-      async () => await await future.invest(FutureDirection.Long, 1, { from: investorA, value: web3.toWei(1, 'ether') })
-      , 'Can\' invest once is closed'
+      async () => await await future.invest(FutureDirection.Long, 1, {
+        from: investorA,
+        value: web3.toWei(1, 'ether')
+      }), 'Can\' invest once is closed'
     );
 
     await calc.assertReverts(async () => await future.checkPosition(), 'Can\' check position once is closed');

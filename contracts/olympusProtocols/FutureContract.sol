@@ -366,7 +366,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     // for bot.
     function clear() external returns (bool) {
 
-        // require(getStatusStep(CHECK_POSITION) == 0, "8");  // TODO it break raw test case of clear.
+        // require(getStatusStep(CHECK_POSITION) == 0, 0x8);
         require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CLEAR);
 
         startGasCalculation();
