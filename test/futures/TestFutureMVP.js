@@ -573,9 +573,8 @@ contract("Test Future MVP", accounts => {
     const expectedWinnerBalance = (tokenDeposit - tokenValue) * 2;
     assert.equal(winnersBalance, expectedWinnerBalance, '');
     // 0.8 with manager fee, but we spend some fee on reimbursable
-    const balance = (await web3.eth.getBalance(future.address)).toNumber();
-    console.log('assert.isAbove:', web3.fromWei(balance, 'ether'));
-    assert.isAbove(balance, web3.toWei(0.8, 'ether'), '0.8 of 4 tokens ');
+    const balance = (await web3.eth.getBalance(future.address));
+    assert.isAbove(new BigNumber(balance), new BigNumber(web3.toWei(0.8, 'ether')), '0.8 of 4 tokens ');
 
   });
 
@@ -616,11 +615,12 @@ contract("Test Future MVP", accounts => {
     assert.equal(winnersBalance, previousWinnerBalance + expectedWinnerBalance, '');
 
     // 0.8 with manager fee, but we spend some fee on reimbursable
-    assert.isAbove((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.8, 'ether'),
+    assert.isAbove(new BigNumber((await web3.eth.getBalance(future.address))), new BigNumber(web3.toWei(0.8,
+        'ether')),
       '0.8 of 4 tokens ');
 
   });
-  it("ETH balance is the winnersBalance + managment Fee", async () => {
+  it("ETH balance is the winnersBalance + management Fee", async () => {
 
     const accumulatedFee = (await future.accumulatedFee()); // We keep it in BigNumber
     const winnersBalance = (await future.winnersBalance()); // We keep it in BigNumber
