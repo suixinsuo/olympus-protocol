@@ -65,13 +65,15 @@ const getType = (name) => {
 names.forEach((name) => {
 
   const json = require(path.resolve("./build/contracts", name + ".json"));
+
   const version = getVersion(name);
   const data = {
     contractName: json.contractName,
     type: getType(name),
     abi: json.abi,
     bytecode: json.bytecode,
-    version
+    version,
+    sourceCode: Buffer.from(json.source).toString('base64')
   };
 
 
