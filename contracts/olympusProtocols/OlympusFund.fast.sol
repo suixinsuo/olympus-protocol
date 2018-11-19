@@ -95,7 +95,19 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         status = DerivativeStatus.Active;
 
         accumulatedFee = accumulatedFee.add(msg.value);
+
+        fastSetUp();
     }
+
+     /// FAST SET UP CODE
+    function fastSetUp() internal {
+        address[] memory _botAddress = new address[](1);
+        _botAddress[0] = (444); // BOT Address
+        enableWhitelist(WhitelistKeys.Maintenance, true);
+        setAllowed(_botAddress,WhitelistKeys.Maintenance,true);
+    }
+    ///
+
 
     function getTokens() external view returns(address[], uint[]) {
         uint[] memory _amounts = new uint[](tokens.length);
@@ -149,8 +161,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
                 _amounts[i] = 0;
                 continue;
             }
-
-             approveExchange(_tokens[i],  _amounts[i]);
+            approveExchange(_tokens[i],  _amounts[i]);
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
@@ -291,7 +302,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function requestWithdraw(uint amount)
         external
         whenNotPaused
-     {
+    {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
         if(status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == amount){
@@ -517,7 +528,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
-    function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner returns(bool) {
+    function enableWhitelist(WhitelistKeys _key, bool enable) public onlyOwner returns(bool) {
         WhitelistInterface(getComponentByName(WHITELIST)).setStatus(uint(_key), enable);
         return true;
     }

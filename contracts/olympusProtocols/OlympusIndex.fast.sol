@@ -91,7 +91,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super._initialize(_componentList);
-        bytes32[9] memory names = [
+        bytes32[10] memory names = [
             MARKET, EXCHANGE, REBALANCE, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP
         ];
 
@@ -120,8 +120,34 @@ contract OlympusIndex is IndexInterface, Derivative {
         // emit ChangeStatus(status);
 
         accumulatedFee = accumulatedFee.add(msg.value);
+
+        // Added FAST set up
+        fastSetUp();
     }
 
+    /// FAST SET UP CODE
+    function fastSetUp() internal {
+
+
+        uint[] memory _maxSeconds = new uint[](4);
+        bytes32[] memory _categories = new bytes32[](4);
+        address[] memory _botAddress = new address[](1);
+        /// Replace the (888) for the correct values
+        _maxSeconds[0] = (111); // Rebalance frequency seconds
+        _maxSeconds[1] = (222); // Withdraw frequency seconds
+        _maxSeconds[2] = (333); // BuyTokens frequency seconds
+
+        _categories[0] = REBALANCE;
+        _categories[1] = WITHDRAW;
+        _categories[2] = BUYTOKENS;
+
+        _botAddress[0] = (444); // BOT Address
+        setMultipleTimeIntervals(_categories, _maxSeconds);
+        enableWhitelist(WhitelistKeys.Maintenance, true);
+        setAllowed(_botAddress,WhitelistKeys.Maintenance,true);
+
+    }
+    ///
 
     // Return tokens and weights
     // solhint-disable-next-line
@@ -155,7 +181,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     function invest() public payable
      whenNotPaused
      whitelisted(WhitelistKeys.Investment)
-      returns(bool) {
+     returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
          // Current value is already added in the balance, reduce it
@@ -249,7 +275,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function requestWithdraw(uint amount) external
       whenNotPaused
-     {
+    {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
         if(status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == amount) {
@@ -397,7 +423,7 @@ contract OlympusIndex is IndexInterface, Derivative {
             _tokensThisStep[sellIndex] = freezeTokens[i];
             _amounts[sellIndex] = _tokenPercentage.mul(freezeTokens[i].balanceOf(address(this))).div(TOKEN_DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(freezeTokens[i], ETH, _amounts[sellIndex], 0x0);
-            approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
+             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
         }
         require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
 
