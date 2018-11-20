@@ -59,7 +59,7 @@ contract("Test Future MVP Stress", accounts => {
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-  it("2. Stress for 10 investor invest ", async () => {
+  it.only("2. Stress for 10 investor invest ", async () => {
     const {
       future,
       longToken,
@@ -264,7 +264,7 @@ contract("Test Future MVP Stress", accounts => {
   //  Once 3 times check position is finish, execute clear position until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
   // check position then change price.
-  it.only("6. Investors invest in long with a random price", async () => {
+  it("6. Investors invest in long with a random price", async () => {
 
     const {
       future,
@@ -285,37 +285,40 @@ contract("Test Future MVP Stress", accounts => {
 
     }, 500);
 
-    // const intervalCheckPosition = setInterval(async () => {
-    //   await futureUtils.safeCheckPosition(future);
-    // }, 500);
+    const intervalCheckPosition = setInterval(async () => {
+      await futureUtils.safeCheckPosition(future);
+    }, 500);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(intervalSetPrice);
-      // clearInterval(intervalCheckPosition);
+      clearInterval(intervalCheckPosition);
+      await futureUtils.safeCheckPosition(future);
+      const txClear = await futureUtils.safeClear(future);
+      assert.ok(txClear, 'clear should be success');
+
+      assert(false, 'pause');
+      assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
+      const accumulatedFee = (await future.accumulatedFee()).toNumber();
+      const txGetManagerFee = await future.getManagerFee(accumulatedFee);
+      assert.ok(txGetManagerFee);
     }, maxTime);
 
+    // We change the price randomly, so is possible between we calculate the amount of
+    // investment require, then the price will change higher and we have no enough cash 
+    // to purchase a token, so we add 25% more amount in that case
+    const investmentMargin = 1.25;
     await Promise.all(
       groupAll.map(
         async (account, index) => {
           const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 1.01,
-            account);
+            account, investmentMargin);
           assert.ok(txLong, 'invest should not be revert');
           const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 4,
-            account);
+            account, investmentMargin);
           assert.ok(txShort, 'invest should not be revert');
         }
       )
     );
-    console.log('done invest ...');
-
-    // const txClear = await futureUtils.safeClear(future);
-    // assert.ok(txClear, 'clear should be success');
-    assert(false, 'pause');
-    // assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
-    // const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    // const txGetManagerFee = await future.getManagerFee(accumulatedFee);
-    // assert.ok(txGetManagerFee);
-
   });
 
 });

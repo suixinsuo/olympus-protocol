@@ -129,12 +129,12 @@ module.exports = {
   getStepStatus: async (future, stepProvider, category) => {
     return (await stepProvider.status(future.address, category)).toNumber();
   },
-  safeInvest: async (future, direction, amountsOfShares, investor) => {
+  safeInvest: async (future, direction, amountsOfShares, investor, margin = 1) => {
     const targetPrice = await future.getTargetPrice(); // Big Number
     const depositValue = (await future.calculateShareDeposit(amountsOfShares, targetPrice)); // Big Number
     tx = await future.invest(direction, amountsOfShares, {
       from: investor,
-      value: depositValue
+      value: depositValue * margin
     });
     return tx;
   },
