@@ -72,10 +72,7 @@ contract("Test Future MVP Stress", accounts => {
     while (index < groupA.length) {
       const account = groupA[index];
       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
-      console.log('set target price', targetPrice)
       await future.setTargetPrice(targetPrice);
-
-      console.log('safe Invest targetPrice ', targetPrice)
       const tx = await futureUtils.safeInvest(future, FutureDirection.Long, amountsOfShares, account,
         investmentMargin);
       assert.ok(tx, 'invest A should not be revert');
@@ -136,21 +133,19 @@ contract("Test Future MVP Stress", accounts => {
       shortToken
     } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address);
 
-    await Promise.all(
-      groupAll.map(
-        async (account, index) => {
-          const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
-          await future.setTargetPrice(targetPrice);
-
-          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 2,
-            account);
-          assert.ok(txLong, 'invest should not be revert');
-          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 2,
-            account);
-          assert.ok(txShort, 'invest should not be revert');
-        }
-      )
-    );
+    let index = 0;
+    while (index < groupA.length) {
+      const account = groupA[index];
+      const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+      await future.setTargetPrice(targetPrice);
+      const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 2,
+        account);
+      assert.ok(txLong, 'invest should not be reverted');
+      const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 2,
+        account);
+      assert.ok(txShort, 'invest should not be reverted');
+      index++;
+    }
 
     for (let i = 0; i < 5; i++) {
       const targetPrice = futureData.defaultTargetPrice * (0.85 + (0.3 * Math.random()));
@@ -293,10 +288,7 @@ contract("Test Future MVP Stress", accounts => {
 
     const intervalSetPrice = setInterval(async () => {
       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
-      console.log('set target price', targetPrice);
       await future.setTargetPrice(targetPrice);
-      console.log('done.', targetPrice);
-
     }, 500);
 
     const intervalCheckPosition = setInterval(async () => {
@@ -324,10 +316,12 @@ contract("Test Future MVP Stress", accounts => {
     await Promise.all(
       groupAll.map(
         async (account, index) => {
-          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 1.01,
+          const investLongShares = 1;
+          const investShortShares = 4;
+          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, investLongShares,
             account, investmentMargin);
           assert.ok(txLong, 'invest should not be reverted');
-          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 4,
+          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, investShortShares,
             account, investmentMargin);
           assert.ok(txShort, 'invest should not be reverted');
         }
