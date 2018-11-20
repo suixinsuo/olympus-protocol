@@ -76,10 +76,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
       uint _depositPercentage,
       uint _forceClosePositionDelta
     ) public {
-        require( _amountOfTargetPerShare > 0);
-        require( _depositPercentage > 0 && _depositPercentage <= DENOMINATOR);
-        require( _forceClosePositionDelta > 0 && _forceClosePositionDelta <= DENOMINATOR);
-
         name = _name;
         description = _description;
         symbol = _symbol;
@@ -266,9 +262,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     /// ---------------------------------  END TOKENS ---------------------------------
-
-    // event LogStatus(DerivativeStatus _status, bool value, bool price, bool total, bool cond);
-
+    // event I(address invest, uint price, uint value, uint totalRequired);
     /// --------------------------------- INVEST ---------------------------------
     function invest(
         int _direction, // long or short
@@ -276,26 +270,16 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         ) external payable returns (bool) {
 
         uint _targetPrice = getTargetPrice();
+        require(status == DerivativeStatus.Active, "3");
+        require(_targetPrice > 0, "4");
         uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
-        bool _investable = getToken(_direction).mintMultiple(
+        require(msg.value >= _totalEthDeposit, "5");  // Enough ETH to buy the share
+        require(
+            getToken(_direction).mintMultiple(
             msg.sender,
             _totalEthDeposit.div(_shares),
             _targetPrice,
-            _shares
-        );
-
-        // emit LogStatus(
-        //     status,
-        //     status == DerivativeStatus.Active,
-        //     _targetPrice > 0,
-        //     msg.value >= _totalEthDeposit,
-        //     _investable
-        //     );
-
-        require(status == DerivativeStatus.Active, "3");
-        require(_targetPrice > 0, "4"); 
-        require(msg.value >= _totalEthDeposit, "5"); // Enough ETH to buy the share
-        require(_investable, "6");
+            _shares), "6");
 
         // Return maining ETH to the token
         msg.sender.transfer(msg.value.sub(_totalEthDeposit));
@@ -371,11 +355,11 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     /// --------------------------------- CLEAR ---------------------------------
 
-    // for bot.
+     // for bot.
     function clear() external returns (bool) {
 
-        // require(getStatusStep(CHECK_POSITION) == 0, "8");
-        // require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CLEAR);
+        // require(getStatusStep(CHECK_POSITION) == 0, "8"); // TODO Can Abel to fix this required?
+        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CLEAR);
 
         startGasCalculation();
         ClearPositionPhases _stepStatus = ClearPositionPhases(getStatusStep(CLEAR));

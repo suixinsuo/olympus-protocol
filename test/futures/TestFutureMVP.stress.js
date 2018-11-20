@@ -59,59 +59,66 @@ contract("Test Future MVP Stress", accounts => {
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-  it.only("2. Stress for 10 investor invest ", async () => {
+  it("2. Stress for 10 investor invest ", async () => {
     const {
       future,
       longToken,
       shortToken
     } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address);
     const amountsOfShares = 2;
+    const investmentMargin = 1;
 
-    await Promise.all(
-      groupA.map(
-        async account => {
-          const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
-          await future.setTargetPrice(targetPrice);
-          const tx = await futureUtils.safeInvest(future, FutureDirection.Long, amountsOfShares, account);
-          assert.ok(tx, 'invest should not be revert');
-        }
-      )
-    );
+    let index = 0;
+    while (index < groupA.length) {
+      const account = groupA[index];
+      const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+      console.log('set target price', targetPrice)
+      await future.setTargetPrice(targetPrice);
 
-    await Promise.all(
-      groupB.map(
-        async (account, index) => {
-          const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
-          await future.setTargetPrice(targetPrice);
-          const tx = await futureUtils.safeInvest(future, FutureDirection.Short, amountsOfShares, account);
-          assert.ok(tx, 'invest should not be revert');
-        }
-      )
-    );
+      console.log('safe Invest targetPrice ', targetPrice)
+      const tx = await futureUtils.safeInvest(future, FutureDirection.Long, amountsOfShares, account,
+        investmentMargin);
+      assert.ok(tx, 'invest A should not be revert');
+      index++;
+    }
 
-    for (let i = 0; i < groupB.length; i++) {
-      const account = groupB[i];
+    index = 0;
+    while (index < groupA.length) {
+      const account = groupA[index];
       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
       await future.setTargetPrice(targetPrice);
       const tx = await futureUtils.safeInvest(future, FutureDirection.Short, amountsOfShares, account);
-      assert.ok(tx, 'invest should not be revert');
+      assert.ok(tx, 'invest A should not be revert');
+      index++;
     }
 
-    for (let i = 0; i < 5; i++) {
+    index = 0;
+    while (index < groupB.length) {
+      const account = groupB[0];
+      const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+      await future.setTargetPrice(targetPrice);
+      const tx = await futureUtils.safeInvest(future, FutureDirection.Short, amountsOfShares, account);
+      assert.ok(tx, 'invest B should not be revert');
+      index++;
+    }
+
+    index = 0;
+    while (index < 5) {
       const targetPrice = futureData.defaultTargetPrice * (0.85 + (0.3 * Math.random()));
       await future.setTargetPrice(targetPrice);
       await futureUtils.safeCheckPosition(future);
+      index++;
     }
 
     const txClear = await futureUtils.safeClear(future);
     assert.ok(txClear, 'clear should be success');
 
-    // assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be zero');
-    // const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    // const txGetManagerFee = await future.getManagerFee(accumulatedFee);
-    // assert.ok(txGetManagerFee);
-    // assert.equal((await web3.eth.getBalance(future.address)).toString(), 0, 'Future should be empty'); // sometimes balance remain (800)
-    // assert.equal((await future.accumulatedFee()).toNumber(), 0, 'Accumulated fee should be withdrawn');
+    assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be zero');
+    const accumulatedFee = (await future.accumulatedFee()).toNumber();
+    const txGetManagerFee = await future.getManagerFee(accumulatedFee);
+    assert.ok(txGetManagerFee);
+    assert.equal((await web3.eth.getBalance(future.address)).toString(), 0, 'Future should be empty'); // sometimes balance remain (800)
+    assert.equal((await future.accumulatedFee()).toNumber(), 0, 'Accumulated fee should be withdrawn');
 
   });
 
@@ -172,29 +179,36 @@ contract("Test Future MVP Stress", accounts => {
 
   it("4. Investors invest in long with 1 ETH", async () => {
 
+    const amountOfTargetPerShare = 2;
+    const depositPercentage = 0.01;
+
     const {
       future,
       longToken,
       shortToken
     } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address, {
-      depositPercentage: futureUtils.DENOMINATOR * 0.01,
-      amountOfTargetPerShare: 2,
+      depositPercentage: futureUtils.DENOMINATOR * depositPercentage,
+      amountOfTargetPerShare: amountOfTargetPerShare,
     });
     assert.equal((await future.status()).toNumber(), 1);
 
     const investA = groupAll[0];
-    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 10, investA);
-    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 10, investA);
 
+    const investShares = 10;
+    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, investShares, investA);
+    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, investShares, investA);
+
+    const groupAllInvestShares = 1;
     await Promise.all(
       groupAll.map(
         async (account, index) => {
-          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 1,
+          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, groupAllInvestShares,
             account);
-          assert.ok(txLong, 'invest should not be revert');
-          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 1,
+          assert.ok(txLong, 'invest should not be reverted');
+          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short,
+            groupAllInvestShares,
             account);
-          assert.ok(txShort, 'invest should not be revert');
+          assert.ok(txShort, 'invest should not be reverted');
         }
       )
     );
@@ -312,10 +326,10 @@ contract("Test Future MVP Stress", accounts => {
         async (account, index) => {
           const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 1.01,
             account, investmentMargin);
-          assert.ok(txLong, 'invest should not be revert');
+          assert.ok(txLong, 'invest should not be reverted');
           const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 4,
             account, investmentMargin);
-          assert.ok(txShort, 'invest should not be revert');
+          assert.ok(txShort, 'invest should not be reverted');
         }
       )
     );

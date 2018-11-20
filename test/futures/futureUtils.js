@@ -134,27 +134,23 @@ module.exports = {
     const depositValue = (await future.calculateShareDeposit(amountsOfShares, targetPrice)); // Big Number
     tx = await future.invest(direction, amountsOfShares, {
       from: investor,
-      value: depositValue * margin
+      value: depositValue.times(margin).toString()
     });
     return tx;
   },
   safeCheckPosition: async (future) => {
     let tx;
     while (!(await future.checkPosition.call())) {
-      console.log('checkPosition false');
       tx = await future.checkPosition();
     }
-    console.log('checkPosition true');
     tx = await future.checkPosition();
     return tx;
   },
   safeClear: async (future) => {
     let tx;
     while (!(await future.clear.call())) {
-      console.log('clear false');
       tx = await future.clear();
     }
-    console.log('clear true');
     tx = await future.clear();
     return tx;
   },
