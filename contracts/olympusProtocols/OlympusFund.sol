@@ -56,7 +56,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20181023";
+        version = "1.1-20181120";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -64,7 +64,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) external onlyOwner payable {
+    function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) public onlyOwner payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable
@@ -517,7 +517,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
-    function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner returns(bool) {
+    function enableWhitelist(WhitelistKeys _key, bool enable) public onlyOwner returns(bool) {
         WhitelistInterface(getComponentByName(WHITELIST)).setStatus(uint(_key), enable);
         return true;
     }

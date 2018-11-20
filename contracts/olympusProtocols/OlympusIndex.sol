@@ -65,7 +65,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         decimals = _decimals;
         description = _description;
         category = _category;
-        version = "1.1-20181002";
+        version = "1.1-20181120";
         fundType = DerivativeType.Index;
         tokens = _tokens;
         weights = _weights;
@@ -81,7 +81,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint _initialFundFee,
         uint _rebalanceDeltaPercentage
    )
-   external onlyOwner payable {
+   public onlyOwner payable {
         require(status == DerivativeStatus.New);
         require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable. 0.1ETH
         require(_componentList != 0x0);
