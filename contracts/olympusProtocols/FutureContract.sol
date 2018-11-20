@@ -267,6 +267,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     /// ---------------------------------  END TOKENS ---------------------------------
 
+    event LogStatus(DerivativeStatus _status, bool value, bool price, bool total, bool cond);
+
+
     /// --------------------------------- INVEST ---------------------------------
     function invest(
         int _direction, // long or short
@@ -274,20 +277,25 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         ) external payable returns (bool) {
 
         uint _targetPrice = getTargetPrice();
-        require( status == DerivativeStatus.Active,"3");
-        require(_targetPrice > 0, "4");
-
         uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
-        
-        require(msg.value >= _totalEthDeposit ,"5"); // Enough ETH to buy the share
-
-        require(
-            getToken(_direction).mintMultiple(
+        bool _flag = getToken(_direction).mintMultiple(
             msg.sender,
             _totalEthDeposit.div(_shares),
             _targetPrice,
             _shares
-        ) == true, "6");
+        );
+        emit LogStatus(
+            status,
+            status == DerivativeStatus.Active,
+            _targetPrice > 0,
+            msg.value >= _totalEthDeposit,
+            _flag
+            );
+            
+        require(status == DerivativeStatus.Active, "3");
+        require(_targetPrice > 0, "4"); 
+        require(msg.value >= _totalEthDeposit, "5"); // Enough ETH to buy the share
+        require(_flag == true, "6");
 
         // Return maining ETH to the token
         msg.sender.transfer(msg.value.sub(_totalEthDeposit));

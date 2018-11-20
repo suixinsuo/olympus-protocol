@@ -275,20 +275,23 @@ contract("Test Future MVP Stress", accounts => {
       amountOfTargetPerShare: 1,
     });
 
-    const maxTime = 1000 * 60;
+    const maxTime = 1000 * 120;
 
-    const handle1 = setInterval(async () => {
+    const intervalSetPrice = setInterval(async () => {
       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+      console.log('set target price', targetPrice);
       await future.setTargetPrice(targetPrice);
+      console.log('done.', targetPrice);
+
     }, 500);
 
-    const handle2 = setInterval(async () => {
-      await futureUtils.safeCheckPosition(future);
-    }, 500);
+    // const intervalCheckPosition = setInterval(async () => {
+    //   await futureUtils.safeCheckPosition(future);
+    // }, 500);
 
     setTimeout(() => {
-      clearInterval(handle1);
-      clearInterval(handle2);
+      clearInterval(intervalSetPrice);
+      // clearInterval(intervalCheckPosition);
     }, maxTime);
 
     await Promise.all(
@@ -303,14 +306,15 @@ contract("Test Future MVP Stress", accounts => {
         }
       )
     );
+    console.log('done invest ...');
 
-    const txClear = await futureUtils.safeClear(future);
-    assert.ok(txClear, 'clear should be success');
-
-    assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
-    const accumulatedFee = (await future.accumulatedFee()).toNumber();
-    const txGetManagerFee = await future.getManagerFee(accumulatedFee);
-    assert.ok(txGetManagerFee);
+    // const txClear = await futureUtils.safeClear(future);
+    // assert.ok(txClear, 'clear should be success');
+    assert(false, 'pause');
+    // assert.equal((await future.winnersBalance()).toNumber(), 0, 'Winners Balance should be 0');
+    // const accumulatedFee = (await future.accumulatedFee()).toNumber();
+    // const txGetManagerFee = await future.getManagerFee(accumulatedFee);
+    // assert.ok(txGetManagerFee);
 
   });
 
