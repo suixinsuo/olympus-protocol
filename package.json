@@ -29,7 +29,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "ganache-cli": "^6.1.2",
+    "ganache-cli": "6.1.8",
     "run-with-testrpc": "^0.3.0",
     "sol-merger": "^0.1.2",
     "solhint": "^1.2.1",

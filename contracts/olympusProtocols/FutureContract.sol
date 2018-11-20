@@ -13,8 +13,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./tokens/FutureERC721Token.sol";
 
 
-// TODO: Check this branch pass teh pipeline, not to merge
-contract FutureContract is BaseDerivative, FutureInterfaceV1 {
+ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     using SafeMath for uint256;
 
