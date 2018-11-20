@@ -291,7 +291,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         //     msg.value >= _totalEthDeposit,
         //     _investable
         //     );
-        
+
         require(status == DerivativeStatus.Active, "3");
         require(_targetPrice > 0, "4"); 
         require(msg.value >= _totalEthDeposit, "5"); // Enough ETH to buy the share
@@ -375,7 +375,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function clear() external returns (bool) {
 
         // require(getStatusStep(CHECK_POSITION) == 0, "8");
-        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CLEAR);
+        // require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CLEAR);
 
         startGasCalculation();
         ClearPositionPhases _stepStatus = ClearPositionPhases(getStatusStep(CLEAR));
