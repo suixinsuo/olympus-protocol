@@ -75,7 +75,7 @@ contract("Test Future MVP Stress", accounts => {
       await future.setTargetPrice(targetPrice);
       const tx = await futureUtils.safeInvest(future, FutureDirection.Long, amountsOfShares, account,
         investmentMargin);
-      assert.ok(tx, 'invest A should not be revert');
+      assert.ok(tx, 'invest A should not be reverted');
       index++;
     }
 
@@ -85,7 +85,7 @@ contract("Test Future MVP Stress", accounts => {
       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
       await future.setTargetPrice(targetPrice);
       const tx = await futureUtils.safeInvest(future, FutureDirection.Short, amountsOfShares, account);
-      assert.ok(tx, 'invest A should not be revert');
+      assert.ok(tx, 'invest A should not be reverted');
       index++;
     }
 
@@ -95,7 +95,7 @@ contract("Test Future MVP Stress", accounts => {
       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
       await future.setTargetPrice(targetPrice);
       const tx = await futureUtils.safeInvest(future, FutureDirection.Short, amountsOfShares, account);
-      assert.ok(tx, 'invest B should not be revert');
+      assert.ok(tx, 'invest B should not be reverted');
       index++;
     }
 
@@ -136,19 +136,22 @@ contract("Test Future MVP Stress", accounts => {
     let index = 0;
     while (index < groupA.length) {
       const account = groupA[index];
-      const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+      const randomRate = (0.9 + (0.2 * Math.random())); // 0.9 ~ 1.1
+      const targetPrice = futureData.defaultTargetPrice * randomRate;
       await future.setTargetPrice(targetPrice);
-      const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 2,
+      const investShares = 2;
+      const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, investShares,
         account);
       assert.ok(txLong, 'invest should not be reverted');
-      const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 2,
+      const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, investShares,
         account);
       assert.ok(txShort, 'invest should not be reverted');
       index++;
     }
 
     for (let i = 0; i < 5; i++) {
-      const targetPrice = futureData.defaultTargetPrice * (0.85 + (0.3 * Math.random()));
+      const randomRate = (0.85 + (0.3 * Math.random())); // 0.8 ~ 1.15
+      const targetPrice = futureData.defaultTargetPrice * randomRate;
       await future.setTargetPrice(targetPrice);
       await futureUtils.safeCheckPosition(future);
     }
@@ -174,24 +177,20 @@ contract("Test Future MVP Stress", accounts => {
 
   it("4. Investors invest in long with 1 ETH", async () => {
 
-    const amountOfTargetPerShare = 2;
-    const depositPercentage = 0.01;
-
     const {
       future,
       longToken,
       shortToken
     } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address, {
-      depositPercentage: futureUtils.DENOMINATOR * depositPercentage,
-      amountOfTargetPerShare: amountOfTargetPerShare,
+      depositPercentage: futureUtils.DENOMINATOR * 0.01,
+      amountOfTargetPerShare: 2,
     });
     assert.equal((await future.status()).toNumber(), 1);
 
     const investA = groupAll[0];
-
     const investShares = 10;
-    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, investShares, investA);
-    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, investShares, investA);
+    await futureUtils.safeInvest(future, FutureDirection.Long, investShares, investA);
+    await futureUtils.safeInvest(future, FutureDirection.Short, investShares, investA);
 
     const groupAllInvestShares = 1;
     await Promise.all(
@@ -208,10 +207,13 @@ contract("Test Future MVP Stress", accounts => {
       )
     );
 
-    let targetPrice = futureData.defaultTargetPrice * 0.95;
+    let priceRate = 0.95;
+    let targetPrice = futureData.defaultTargetPrice * priceRate;
     await future.setTargetPrice(targetPrice);
     await futureUtils.safeCheckPosition(future);
-    targetPrice = futureData.defaultTargetPrice * 1.05;
+
+    priceRate = 1.05;
+    targetPrice = futureData.defaultTargetPrice * priceRate;
     await future.setTargetPrice(targetPrice);
     await futureUtils.safeCheckPosition(future);
 
@@ -245,13 +247,16 @@ contract("Test Future MVP Stress", accounts => {
     });
 
     const investA = groupAll[0];
-    const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, 10, investA);
-    const txShort = await futureUtils.safeInvest(future, FutureDirection.Short, 10, investA);
+    await futureUtils.safeInvest(future, FutureDirection.Long, 10, investA);
+    await futureUtils.safeInvest(future, FutureDirection.Short, 10, investA);
 
-    let targetPrice = futureData.defaultTargetPrice * (0.92 + (0.04 * Math.random()));
+    let randomRate = (0.92 + (0.04 * Math.random()));
+    let targetPrice = futureData.defaultTargetPrice * randomRate;
     await future.setTargetPrice(targetPrice);
     await futureUtils.safeCheckPosition(future);
-    targetPrice = futureData.defaultTargetPrice * (1.02 + (0.04 * Math.random()));
+
+    randomRate = (1.02 + (0.04 * Math.random()));
+    targetPrice = futureData.defaultTargetPrice * randomRate;
     await future.setTargetPrice(targetPrice);
     await futureUtils.safeCheckPosition(future);
 
@@ -284,10 +289,10 @@ contract("Test Future MVP Stress", accounts => {
       amountOfTargetPerShare: 1,
     });
 
-    const maxTime = 1000 * 120;
-
+    const maxTimerDuration = 1000 * 120;
     const intervalSetPrice = setInterval(async () => {
-      const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
+      const randomRate = (0.9 + (0.2 * Math.random()));
+      const targetPrice = futureData.defaultTargetPrice * randomRate;
       await future.setTargetPrice(targetPrice);
     }, 500);
 
@@ -307,7 +312,7 @@ contract("Test Future MVP Stress", accounts => {
       const accumulatedFee = (await future.accumulatedFee()).toNumber();
       const txGetManagerFee = await future.getManagerFee(accumulatedFee);
       assert.ok(txGetManagerFee);
-    }, maxTime);
+    }, maxTimerDuration);
 
     // We change the price randomly, so is possible between we calculate the amount of
     // investment require, then the price will change higher and we have no enough cash 
