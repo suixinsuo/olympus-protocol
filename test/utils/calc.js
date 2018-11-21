@@ -1,3 +1,4 @@
+const BigNumber = web3.BigNumber;
 module.exports = {
   bytes32ToString: bytes32 => {
     return web3.toAscii(bytes32).replace(/\u0000/g, "");
@@ -55,6 +56,11 @@ module.exports = {
 
   waitSeconds: async seconds => {
     return new Promise((resolve, reject) => setInterval(() => resolve(), seconds * 1000));
+  },
+
+  // Some versions of web3 return BigNumber, other versions return string
+  toWei(etherValue, unit = 'ether') {
+    return new BigNumber(web3.toWei(etherValue, unit));
   },
 
   ethToken: "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"

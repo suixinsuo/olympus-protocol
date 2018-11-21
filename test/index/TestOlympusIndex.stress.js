@@ -21,6 +21,7 @@ const ComponentList = artifacts.require("ComponentList");
 
 const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
+const BigNumber = web3.BigNumber;
 
 // Buy and sell tokens
 const ExchangeProvider = artifacts.require("../contracts/components/exchange/ExchangeProvider");
@@ -347,19 +348,19 @@ contract("Olympus Index Stress", accounts => {
 
     await index.buyTokens();
 
-    let price = (await index.getPrice()).toNumber();
-    assert.isAbove(price, web3.toWei(1, "ether"), "Price is >1 ETH");
+    let price = (await index.getPrice());
+    assert(price.gt(web3.toWei(1)), "Price is >1 ETH");
 
-    let balance = (await index.getETHBalance()).toNumber();
-    assert.equal(balance, 0, "Total ETH balance is 0");
+    let balance = (await index.getETHBalance());
+    assert(balance.equals(0), "Total ETH balance is 0");
 
-    let assetsValue = (await index.getAssetsValue()).toNumber();
-    assert.isAbove(assetsValue, web3.toWei(0.3, "ether"), "Total assets value should be > 0.3 ETH");
+    let assetsValue = (await index.getAssetsValue());
+    assert(assetsValue.gt(web3.toWei(0.3)), "Total assets value should be > 0.3 ETH");
 
     await Promise.all(
       investorsGroupA.map(async account => {
-        const value = (await index.balanceOf(account)).toNumber();
-        assert.equal(value, web3.toWei(0, "ether"), "Group A investors have the index balance of 0");
+        const value = (await index.balanceOf(account));
+        assert(value.eq(0), "Group A investors have the index balance of 0");
       })
     );
 
@@ -424,19 +425,19 @@ contract("Olympus Index Stress", accounts => {
 
     await index.withdraw();
 
-    let price = (await index.getPrice()).toNumber();
-    assert.isAbove(price, web3.toWei(1, "ether"), "Price is >1 ETH");
+    let price = (await index.getPrice());
+    assert(price.gt(web3.toWei(1, "ether")), "Price is >1 ETH");
 
-    let ethBalance = (await index.getETHBalance()).toNumber();
-    assert.equal(ethBalance, 0, "Total ETH balance is 0");
+    let ethBalance = (await index.getETHBalance());
+    assert(ethBalance.eq(0), "Total ETH balance is 0");
 
-    let assetsValue = (await index.getAssetsValue()).toNumber();
-    assert.isAbove(assetsValue, web3.toWei(0.2, "ether"), "Total assets value should be > 0.2 ETH");
+    let assetsValue = (await index.getAssetsValue());
+    assert(assetsValue.gt(calc.toWei(0.2)), "Total assets value should be > 0.2 ETH");
 
     await Promise.all(
       investorsGroupA.map(async account => {
-        const value = (await index.balanceOf(account)).toNumber();
-        assert.equal(value, web3.toWei(0, "ether"), "Group A investors have the index balance of 0");
+        const value = (await index.balanceOf(account));
+        assert(value.equals(web3.toWei(0, "ether")), "Group A investors have the index balance of 0");
       })
     );
 
@@ -450,6 +451,7 @@ contract("Olympus Index Stress", accounts => {
 
   it("Withdraw then close ", async () => {
     // Group B investors each request withdraw 0.01 of the index;
+    console.log(investorsGroupB.length);
     await Promise.all(
       investorsGroupB.map(async account => {
         await index.requestWithdraw(toTokenWei(0.005), {
@@ -457,24 +459,19 @@ contract("Olympus Index Stress", accounts => {
         });
       })
     );
-
     await index.close();
 
     // mock send some eth to kyber.
-    await web3.eth.sendTransaction({
-      from: accounts[0],
-      to: mockKyber.address,
-      value: "7000000000000000000"
-    });
+    mockKyber.sendTransaction({ value: calc.toWei(0.7) })
 
-    let price = (await index.getPrice()).toNumber();
-    assert.isAbove(price, web3.toWei(1, "ether"), "Price is >1 ETH");
+    let price = (await index.getPrice());
+    assert(price.gt(web3.toWei(1, "ether")), "Price is >1 ETH");
 
     let balance = (await index.getETHBalance()).toNumber();
     assert.equal(balance, 0, "Total ETH balance is 0");
 
-    let assetsValue = (await index.getAssetsValue()).toNumber();
-    assert.isAbove(assetsValue, web3.toWei(0.01, "ether"), "Total assets value should be > 0.01 ETH");
+    let assetsValue = (await index.getAssetsValue());
+    assert(assetsValue.gt(web3.toWei(0.01, "ether")), "Total assets value should be > 0.01 ETH");
 
     assert.equal((await index.status()).toNumber(), DerivativeStatus.Closed, "Status of the index is Closed");
   });

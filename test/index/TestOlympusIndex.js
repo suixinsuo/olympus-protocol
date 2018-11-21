@@ -7,6 +7,7 @@ const {
   WhitelistType,
   DerivativeType
 } = require("../utils/constants");
+const BigNumber = web3.BigNumber;
 
 const OlympusIndex = artifacts.require("OlympusIndex");
 const Rebalance = artifacts.require("RebalanceProvider");
@@ -229,7 +230,7 @@ contract("Olympus Index", accounts => {
 
     // Check we allowance
     const allowance = await mockMOT.allowance(index.address, newRisk.address);
-    assert.isAbove(allowance, 10 ** 32, 0, "MOT is approved for new component");
+    assert(allowance.gt(10 ** 32), "MOT is approved for new component");
   });
 
   it("Can register in the new marketplace ", async () => {
