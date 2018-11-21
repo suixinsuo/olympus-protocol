@@ -266,5 +266,7 @@ contract("Test Future MVP Clear special cases", accounts => {
       'All ETH has been returned (a exception of manager fee)'
     );
   });
-
+  // TODO: STRESS : How much tokens can we clears in one single tx
+  // TODO: STRESS : How much tokens can we check position in one single tx
+  // TODO: What happen with extra wei cant be shared?
 });
