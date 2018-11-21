@@ -100,10 +100,10 @@ contract Derivative is DerivativeInterface, ERC20Extended, ComponentContainer, P
     }
 
     function setMultipleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) public onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_timerNames,  _secondsList);
+        LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_timerNames, _secondsList);
     }
 
-    function setMaxSteps( bytes32 _category,uint _maxSteps) public onlyOwner {
-        StepInterface(getComponentByName(STEP)).setMaxCalls(_category,  _maxSteps);
+    function setMaxSteps(bytes32 _category, uint _maxSteps) public onlyOwner {
+        StepInterface(getComponentByName(STEP)).setMaxCalls(_category, _maxSteps);
     }
 }
