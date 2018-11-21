@@ -7,6 +7,8 @@ const {
   WhitelistType,
   DerivativeType
 } = require("../utils/constants");
+const BigNumber = web3.BigNumber;
+
 const Fund = artifacts.require("OlympusFund");
 const AsyncWithdraw = artifacts.require("components/widrwaw/AsyncWithdraw");
 const RiskControl = artifacts.require("components/RiskControl");
@@ -154,7 +156,7 @@ contract("Fund", accounts => {
 
     // Check we allowance
     const allowance = await mockMOT.allowance(fund.address, newWhitelist.address);
-    assert.isAbove(allowance, 10 ** 32, 0, "MOT is approved for new component");
+    assert(allowance.gt(10 ** 32), "MOT is approved for new component");
   });
 
   it("Fund shall be able to deploy", async () => {

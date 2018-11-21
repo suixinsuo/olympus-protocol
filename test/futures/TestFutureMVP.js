@@ -502,7 +502,8 @@ contract("Test Future MVP", accounts => {
     const expectedWinnerBalance = (tokenDeposit - tokenValue) * 2;
     assert.equal(winnersBalance, expectedWinnerBalance, '');
     // 0.8 with manager fee, but we spend some fee on reimbursable
-    assert.isAbove((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.8, 'ether'), '0.8 of 4 tokens ');
+    const ethBalance = (await web3.eth.getBalance(future.address));
+    assert(ethBalance.gt(web3.toWei(0.8, 'ether')), '0.8 of 4 tokens ');
 
   });
 
@@ -540,7 +541,8 @@ contract("Test Future MVP", accounts => {
     assert.equal(winnersBalance, previousWinnerBalance + expectedWinnerBalance, '');
 
     // 0.8 with manager fee, but we spend some fee on reimbursable
-    assert.isAbove((await web3.eth.getBalance(future.address)).toNumber(), web3.toWei(0.8, 'ether'), '0.8 of 4 tokens ');
+    const ethBalance = (await web3.eth.getBalance(future.address));
+    assert(ethBalance.gt(web3.toWei(0.8, 'ether')), '0.8 of 4 tokens ');
 
   });
   it("ETH balance is the winnersBalance + managment Fee", async () => {

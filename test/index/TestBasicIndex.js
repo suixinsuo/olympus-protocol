@@ -374,7 +374,7 @@ contract("Basic Index", accounts => {
   });
 
   it("Investor cant invest but can withdraw after close", async () => {
-    assert.isAbove((await index.balanceOf(investorC)).toString(), 0, "C starting balance");
+    assert((await index.balanceOf(investorC)).gt(0), "C starting balance");
 
     // Investor cant invest can withdraw
     await calc.assertReverts(

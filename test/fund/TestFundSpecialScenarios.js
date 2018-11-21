@@ -7,6 +7,8 @@ const {
   WhitelistType,
   DerivativeType
 } = require("../utils/constants");
+const BigNumber = web3.BigNumber;
+
 const Fund = artifacts.require("OlympusFund");
 const AsyncWithdraw = artifacts.require("components/withdraw/AsyncWithdraw");
 const RiskControl = artifacts.require("components/RiskControl");
@@ -526,13 +528,13 @@ contract("Fund Special Scenarios", accounts => {
     // Keep
     const ethBalance = (await web3.eth.getBalance(fund.address)).toNumber();
     const accFee = (await fund.accumulatedFee()).toNumber();
-    const assetsValue = (await fund.getAssetsValue()).toNumber();
-    const fundPrice = (await fund.getPrice()).toNumber();
+    const assetsValue = (await fund.getAssetsValue());
+    const fundPrice = (await fund.getPrice());
     const fundInvestETHBalance = (await fund.getETHBalance()).toNumber();
 
     assert.equal(fundInvestETHBalance, 0, " ETH Balance for buy tokens is 0");
-    assert.isAbove(assetsValue, 0, " Assets Value has value");
-    assert.isAbove(fundPrice, web3.toWei(0.95, "ether"), " Price reduce because slippage rate a little");
+    assert(assetsValue.gt(0), " Assets Value has value");
+    assert(fundPrice.gt(calc.toWei(0.95)), " Price reduce because slippage rate a little");
     assert.equal(ethBalance, accFee, " Eth Balance is the same of acc Fee (all ETH returned)");
     // Reset
     await mockKyber.setSlippageMockRate(100);
