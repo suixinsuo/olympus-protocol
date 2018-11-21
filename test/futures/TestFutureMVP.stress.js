@@ -34,25 +34,6 @@ contract("Test Future MVP Stress", accounts => {
     providers = await futureUtils.setUpComponentList();
   });
 
-  /**
-   * Create Future
-   */
-  it("1. Created Future", async () => {
-    const {
-      future,
-      longToken,
-      shortToken
-    } = await futureUtils.createDefaultFuture(providers.componentList, providers.mockMOT.address);
-
-    assert.equal((await future.status()).toNumber(), 1); // Active
-
-    assert.equal(await longToken.owner(), future.address);
-    assert.equal((await longToken.tokenPosition()).toNumber(), FutureDirection.Long, 'Long token is long');
-
-    assert.equal(await shortToken.owner(), future.address);
-    assert.equal((await shortToken.tokenPosition()).toNumber(), FutureDirection.Short, 'Short token is short');
-
-  });
 
   //  Stress test case 1:
   //  Investors invest in long with a random price between 0.9 and 1.1 ETH
@@ -60,7 +41,7 @@ contract("Test Future MVP Stress", accounts => {
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-  it("2. Stress for 10 investor invest ", async () => {
+  it("1. Stress for 10 investor invest ", async () => {
     const {
       future,
       longToken,
@@ -126,7 +107,7 @@ contract("Test Future MVP Stress", accounts => {
   //  With random price between 0.85 and 1.15 ETH we check positions 5 times.
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
-  it("3. Investors invest in long with a random price", async () => {
+  it("2. Investors invest in long with a random price", async () => {
 
     const {
       future,
@@ -176,7 +157,7 @@ contract("Test Future MVP Stress", accounts => {
   //  Nothing reverts, when withdraw all management fee ETH balance is 0,
   //  investor LONG gets all winner balance.
 
-  it("4. Investors invest in long with 1 ETH", async () => {
+  it("3. Investors invest in long with 1 ETH", async () => {
 
     const {
       future,
@@ -237,7 +218,7 @@ contract("Test Future MVP Stress", accounts => {
   //  Then we call clear until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0, investor LONG gets all winner balance.
 
-  it("5. Investors invest in long and short from 0.99 to 1.01 ", async () => {
+  it("4. Investors invest in long and short from 0.99 to 1.01 ", async () => {
     const {
       future,
       longToken,
@@ -271,7 +252,7 @@ contract("Test Future MVP Stress", accounts => {
 
   });
 
-  //  Bot test case 6:
+  //  Bot test case 5:
   //  Investors invest in long with a random price between 0.99 and 1.01 ETH. Long and Short buy 4 tokens each
   //  Change change position for each 1.5 second. Change step provider to execute 3 by 3 times.
   //  Set a timer to call check position like the bot.
@@ -279,7 +260,7 @@ contract("Test Future MVP Stress", accounts => {
   //  Once 3 times check position is finish, execute clear position until is finish.
   //  Nothing reverts, when withdraw all management fee ETH balance is 0.
   // check position then change price.
-  it("6. Investors invest in long with a random price", async () => {
+  it("5. Investors invest in long with a random price", async () => {
 
     const {
       future,
