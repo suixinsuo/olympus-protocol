@@ -217,7 +217,7 @@ contract("Olympus Index Special Scenarios", accounts => {
     await index.withdraw();
     // We expect sell part of the tokens, return ETH from (getETHBalance + token sold)
     // Keep
-    const ethBalance = (await web3.eth.getBalance(index.address)).toNumber();
+    const ethBalance = (await web3.eth.getBalance(index.address));
     const accFee = (await index.accumulatedFee()).toNumber();
     const assetsValue = (await index.getAssetsValue());
     const indexPrice = (await index.getPrice());
