@@ -18,6 +18,9 @@ const names = ["OlympusBasicFund",
   "OlympusFund",
   "OlympusIndex",
   "FutureContract",
+  "OlympusFund_Fast",
+  "OlympusIndex_Fast",
+
   "WhitelistProvider",
   "RebalanceProvider",
   "AsyncWithdraw",
@@ -30,8 +33,16 @@ const olympusProtocols = ["OlympusBasicFund",
   "OlympusBasicIndex",
   "OlympusFund",
   "OlympusIndex",
-  "FutureContract"
+  "FutureContract",
+  "OlympusFund_Fast",
+  "OlympusIndex_Fast",
+
 ];
+const specialVersionFiles = {
+  "OlympusFund_Fast": 'OlympusFund',
+  "OlympusIndex_Fast": 'OlympusIndex'
+
+};
 
 const versionRegEx = /version = \"(.*)\"/gi;
 const templateListJson = [];
@@ -50,9 +61,12 @@ const getVersion = (name) => {
     const version = "latest";
     return version;
   }
-  var contract = fs.readFileSync(path.resolve("./contracts/olympusProtocols", name + ".sol"));
+  const fileVersionName = specialVersionFiles[name] || name;
+  var contract = fs.readFileSync(path.resolve("./contracts/olympusProtocols", fileVersionName + ".sol"));
   const parsed = versionRegEx.exec(contract);
   const version = parsed ? parsed[1] : "default";
+
+
   return version;
 
 }
@@ -65,7 +79,7 @@ const getType = (name) => {
 names.forEach((name) => {
 
   const json = require(path.resolve("./build/contracts", name + ".json"));
-
+  const sourceCode = fs.readFileSync(path.resolve("./build/", name + ".sol"))
   const version = getVersion(name);
   const data = {
     contractName: json.contractName,
@@ -73,7 +87,7 @@ names.forEach((name) => {
     abi: json.abi,
     bytecode: json.bytecode,
     version,
-    sourceCode: Buffer.from(json.source).toString('base64')
+    sourceCode: Buffer.from(sourceCode).toString('base64')
   };
 
 
@@ -91,8 +105,6 @@ names.forEach((name) => {
     });
     console.log(`${name}-v${version} created.`);
   });
-
-
 });
 // Completed
 fs.writeFile(path.resolve("./.temp/templateList.json"), JSON.stringify(templateListJson, null, 2), () => {

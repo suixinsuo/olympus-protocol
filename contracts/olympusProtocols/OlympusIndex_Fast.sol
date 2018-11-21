@@ -15,7 +15,7 @@ contract OlympusIndex_Fast is OlympusIndex {
       address[] _tokens,
       uint[] _weights)
       public
-      OlympusIndex_Fast(_name, _symbol, _description, _category, _decimals, _tokens, _weights) {
+      OlympusIndex(_name, _symbol, _description, _category, _decimals, _tokens, _weights) {
     }
 
     // ----------------------------- CONFIG -----------------------------
