@@ -221,15 +221,15 @@ contract("Olympus Index", accounts => {
 
   it("Update component shall approve MOT ", async () => {
     // Set new market place
-    const newRisk = await RiskControl.new();
-    await newRisk.setMotAddress(mockMOT.address);
+    const newWhitelist = await Whitelist.new();
+    await newWhitelist.setMotAddress(mockMOT.address);
 
-    await componentList.setComponent(await index.RISK(), newRisk.address);
-    await index.updateComponent(await index.RISK());
-    assert.equal(await index.getComponentByName(await index.RISK()), newRisk.address);
+    await componentList.setComponent(await index.WHITELIST(), newWhitelist.address);
+    await index.updateComponent(await index.WHITELIST());
+    assert.equal(await index.getComponentByName(await index.WHITELIST()), newWhitelist.address);
 
     // Check we allowance
-    const allowance = await mockMOT.allowance(index.address, newRisk.address);
+    const allowance = await mockMOT.allowance(index.address, newWhitelist.address);
     assert(allowance.gt(10 ** 32), "MOT is approved for new component");
   });
 

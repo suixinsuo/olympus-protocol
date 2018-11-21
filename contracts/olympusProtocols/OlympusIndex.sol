@@ -14,7 +14,6 @@ import "../libs/ERC20Extended.sol";
 import "../libs/Converter.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/FeeChargerInterface.sol";
-import "../interfaces/RiskControlInterface.sol";
 import "../interfaces/LockerInterface.sol";
 import "../interfaces/StepInterface.sol";
 
@@ -66,7 +65,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         decimals = _decimals;
         description = _description;
         category = _category;
-        version = "1.1-20181002";
+        version = "1.1-20181120";
         fundType = DerivativeType.Index;
         tokens = _tokens;
         weights = _weights;
@@ -82,7 +81,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         uint _initialFundFee,
         uint _rebalanceDeltaPercentage
    )
-   external onlyOwner payable {
+   public onlyOwner payable {
         require(status == DerivativeStatus.New);
         require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable. 0.1ETH
         require(_componentList != 0x0);
@@ -92,8 +91,8 @@ contract OlympusIndex is IndexInterface, Derivative {
 
         rebalanceDeltaPercentage = _rebalanceDeltaPercentage;
         super._initialize(_componentList);
-        bytes32[10] memory names = [
-            MARKET, EXCHANGE, REBALANCE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP
+        bytes32[9] memory names = [
+            MARKET, EXCHANGE, REBALANCE, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP
         ];
 
         for (uint i = 0; i < names.length; i++) {
@@ -156,8 +155,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     function invest() public payable
      whenNotPaused
      whitelisted(WhitelistKeys.Investment)
-     withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
-     returns(bool) {
+      returns(bool) {
         require(status == DerivativeStatus.Active, "The Fund is not active");
         require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
          // Current value is already added in the balance, reduce it
@@ -251,8 +249,7 @@ contract OlympusIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function requestWithdraw(uint amount) external
       whenNotPaused
-      withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-    {
+     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
         if(status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == amount) {
@@ -400,7 +397,6 @@ contract OlympusIndex is IndexInterface, Derivative {
             _tokensThisStep[sellIndex] = freezeTokens[i];
             _amounts[sellIndex] = _tokenPercentage.mul(freezeTokens[i].balanceOf(address(this))).div(TOKEN_DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(freezeTokens[i], ETH, _amounts[sellIndex], 0x0);
-            // require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
         }
         require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
@@ -575,7 +571,7 @@ contract OlympusIndex is IndexInterface, Derivative {
 
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
-    function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner returns(bool) {
+    function enableWhitelist(WhitelistKeys _key, bool enable) public onlyOwner returns(bool) {
         WhitelistInterface(getComponentByName(WHITELIST)).setStatus(uint(_key), enable);
         return true;
     }

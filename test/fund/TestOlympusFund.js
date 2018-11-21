@@ -147,15 +147,15 @@ contract("Fund", accounts => {
 
   it("Update component shall approve MOT ", async () => {
     // Set new market place
-    const newRisk = await RiskControl.new();
-    await newRisk.setMotAddress(mockMOT.address);
+    const newWhitelist = await Whitelist.new();
+    await newWhitelist.setMotAddress(mockMOT.address);
 
-    await componentList.setComponent(await fund.RISK(), newRisk.address);
-    await fund.updateComponent(await fund.RISK());
-    assert.equal(await fund.getComponentByName(await fund.RISK()), newRisk.address);
+    await componentList.setComponent(await fund.WHITELIST(), newWhitelist.address);
+    await fund.updateComponent(await fund.WHITELIST());
+    assert.equal(await fund.getComponentByName(await fund.WHITELIST()), newWhitelist.address);
 
     // Check we allowance
-    const allowance = await mockMOT.allowance(fund.address, newRisk.address);
+    const allowance = await mockMOT.allowance(fund.address, newWhitelist.address);
     assert(allowance.gt(10 ** 32), "MOT is approved for new component");
   });
 

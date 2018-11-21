@@ -24,7 +24,6 @@ contract Derivative is DerivativeInterface, ERC20Extended, ComponentContainer, P
     bytes32 public constant PRICE = "PriceProvider";
     bytes32 public constant EXCHANGE = "ExchangeProvider";
     bytes32 public constant WITHDRAW = "WithdrawProvider";
-    bytes32 public constant RISK = "RiskProvider";
     bytes32 public constant WHITELIST = "WhitelistProvider";
     bytes32 public constant FEE = "FeeProvider";
     bytes32 public constant REIMBURSABLE = "Reimbursable";
@@ -67,11 +66,6 @@ contract Derivative is DerivativeInterface, ERC20Extended, ComponentContainer, P
         _;
     }
 
-    modifier withoutRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) {
-        require(!hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate));
-        _;
-    }
-
     function _initialize (address _componentList) internal {
         require(_componentList != 0x0);
         componentList = ComponentListInterface(_componentList);
@@ -105,17 +99,11 @@ contract Derivative is DerivativeInterface, ERC20Extended, ComponentContainer, P
 
     }
 
-    function hasRisk(address _sender, address _receiver, address _tokenAddress, uint _amount, uint _rate) public returns(bool) {
-        RiskControlInterface riskControl = RiskControlInterface(getComponentByName(RISK));
-        bool risk = riskControl.hasRisk(_sender, _receiver, _tokenAddress, _amount, _rate);
-        return risk;
+    function setMultipleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) public onlyOwner{
+        LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_timerNames, _secondsList);
     }
 
-    function setMultipleTimeIntervals(bytes32[] _timerNames, uint[] _secondsList) external onlyOwner{
-        LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_timerNames,  _secondsList);
-    }
-
-    function setMaxSteps( bytes32 _category,uint _maxSteps) external onlyOwner {
-        StepInterface(getComponentByName(STEP)).setMaxCalls(_category,  _maxSteps);
+    function setMaxSteps(bytes32 _category, uint _maxSteps) public onlyOwner {
+        StepInterface(getComponentByName(STEP)).setMaxCalls(_category, _maxSteps);
     }
 }

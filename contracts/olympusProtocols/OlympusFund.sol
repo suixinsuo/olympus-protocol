@@ -6,7 +6,6 @@ import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/WithdrawInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../interfaces/ChargeableInterface.sol";
-import "../interfaces/RiskControlInterface.sol";
 import "../interfaces/ReimbursableInterface.sol";
 import "../interfaces/WhitelistInterface.sol";
 import "../interfaces/StepInterface.sol";
@@ -57,7 +56,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         symbol = _symbol;
         category = _category;
         description = _description;
-        version = "1.1-20181023";
+        version = "1.1-20181120";
         decimals = _decimals;
         status = DerivativeStatus.New;
         fundType = DerivativeType.Fund;
@@ -65,7 +64,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // ----------------------------- CONFIG -----------------------------
     // One time call
-    function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) external onlyOwner payable {
+    function initialize(address _componentList, uint _initialFundFee, uint _withdrawFrequency ) public onlyOwner payable {
         require(_componentList != 0x0);
         require(status == DerivativeStatus.New);
         require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable
@@ -76,7 +75,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         super._initialize(_componentList);
         excludedComponents[TOKENBROKEN] = true;
 
-        bytes32[10] memory names = [MARKET, EXCHANGE, RISK, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP, TOKENBROKEN];
+        bytes32[9] memory names = [MARKET, EXCHANGE, WHITELIST, FEE, REIMBURSABLE, WITHDRAW, LOCKER, STEP, TOKENBROKEN];
 
         for (uint i = 0; i < names.length; i++) {
             updateComponent(names[i]);
@@ -120,9 +119,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
                 continue;
             }
             require(erc20Decimals(_tokens[i]) <=18);  // Cant buy tokens with more than 18
-            require(
-                !hasRisk(address(this), getComponentByName(EXCHANGE), ETH, _amounts[i], _minimumRates[i])
-            );
             totalEthRequired = totalEthRequired.add(_amounts[i]);
         }
 
@@ -154,8 +150,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
                 continue;
             }
 
-            require(!hasRisk(address(this), exchange, address(_tokens[i]), _amounts[i], _rates[i]));
-            approveExchange(_tokens[i],  _amounts[i]);
+             approveExchange(_tokens[i],  _amounts[i]);
         }
 
         if(!exchange.sellTokens(_tokens, _amounts, _rates, address(this), _exchangeId)){
@@ -173,7 +168,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function invest() public
         payable
         whitelisted(WhitelistKeys.Investment)
-        withoutRisk(msg.sender, address(this), ETH, msg.value, 1)
         whenNotPaused
       returns(bool) {
         require(status == DerivativeStatus.Active);
@@ -297,8 +291,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
     function requestWithdraw(uint amount)
         external
         whenNotPaused
-        withoutRisk(msg.sender, address(this), address(this), amount, getPrice())
-    {
+     {
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
         withdrawProvider.request(msg.sender, amount);
         if(status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == amount){
@@ -482,7 +475,6 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
             _tokensThisStep[sellIndex] = _tokensToSell[i];
             _amounts[sellIndex] = _tokenPercentage.mul(amounts[_tokensToSell[i]]).div(TOKEN_DENOMINATOR);
             (, _sellRates[sellIndex] ) = exchange.getPrice(_tokensToSell[i], ETH, _amounts[sellIndex], 0x0);
-            // require(!hasRisk(address(this), exchange, address(_tokensThisStep[sellIndex]), _amounts[sellIndex], 0));
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
         }
 
@@ -525,7 +517,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
 
     // ----------------------------- WHITELIST -----------------------------
     // solhint-disable-next-line
-    function enableWhitelist(WhitelistKeys _key, bool enable) external onlyOwner returns(bool) {
+    function enableWhitelist(WhitelistKeys _key, bool enable) public onlyOwner returns(bool) {
         WhitelistInterface(getComponentByName(WHITELIST)).setStatus(uint(_key), enable);
         return true;
     }
