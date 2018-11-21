@@ -227,7 +227,7 @@ contract("Olympus Index Special Scenarios", accounts => {
     assert.equal(indexInvestETHBalance, 0, ' All withdraw is sold');
     assert(assetsValue.gt(0), ' Assets Value has value');
     assert(indexPrice.gt(calc.toWei(0.95)), 'Price reduce because slippage rate a little');
-    assert(ethBalance.eq(accFee), ' Eth Balance is the same of acc Fee (all ETH returned)');
+    assert(ethBalance.equals(accFee), ' Eth Balance is the same of acc Fee (all ETH returned)');
     // Reset
     await mockKyber.setSlippageMockRate(100);
 

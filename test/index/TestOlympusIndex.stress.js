@@ -352,7 +352,7 @@ contract("Olympus Index Stress", accounts => {
     assert(price.gt(web3.toWei(1)), "Price is >1 ETH");
 
     let balance = (await index.getETHBalance());
-    assert(balance.gt(0), "Total ETH balance is 0");
+    assert(balance.equals(0), "Total ETH balance is 0");
 
     let assetsValue = (await index.getAssetsValue());
     assert(assetsValue.gt(web3.toWei(0.3)), "Total assets value should be > 0.3 ETH");
@@ -437,7 +437,7 @@ contract("Olympus Index Stress", accounts => {
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account));
-        assert.equal(value.eq(web3.toWei(0, "ether")), "Group A investors have the index balance of 0");
+        assert(value.equals(web3.toWei(0, "ether")), "Group A investors have the index balance of 0");
       })
     );
 
