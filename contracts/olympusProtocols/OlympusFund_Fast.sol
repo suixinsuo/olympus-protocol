@@ -11,7 +11,7 @@ contract OlympusFund_Fast is OlympusFund {
       string _description,
       bytes32 _category,
       uint _decimals
-      ) public  OlympusFund(_name, _symbol, _description, _category,  _decimals) {
+      ) public OlympusFund(_name, _symbol, _description, _category,  _decimals) {
     }
 
     // ----------------------------- CONFIG -----------------------------
