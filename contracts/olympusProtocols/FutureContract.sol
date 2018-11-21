@@ -263,7 +263,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     /// ---------------------------------  END TOKENS ---------------------------------
-    // event I(address invest, uint price, uint value, uint totalRequired);
+
     /// --------------------------------- INVEST ---------------------------------
     function invest(
         int _direction, // long or short
@@ -271,16 +271,20 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         ) external payable returns (bool) {
 
         uint _targetPrice = getTargetPrice();
-        require(status == DerivativeStatus.Active, "3");
+        require( status == DerivativeStatus.Active,"3");
         require(_targetPrice > 0, "4");
+
         uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
-        require(msg.value >= _totalEthDeposit, "5");  // Enough ETH to buy the share
+
+        require(msg.value >= _totalEthDeposit ,"5"); // Enough ETH to buy the share
+
         require(
             getToken(_direction).mintMultiple(
             msg.sender,
             _totalEthDeposit.div(_shares),
             _targetPrice,
-            _shares), "6");
+            _shares
+        ) == true, "6");
 
         // Return maining ETH to the token
         msg.sender.transfer(msg.value.sub(_totalEthDeposit));
@@ -356,10 +360,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     /// --------------------------------- CLEAR ---------------------------------
 
-     // for bot.
+    // for bot.
     function clear() external returns (bool) {
-
-        // require(getStatusStep(CHECK_POSITION) == 0, "8"); // TODO Can Abel to fix this required?
         require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CLEAR);
 
         startGasCalculation();
