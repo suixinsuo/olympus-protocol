@@ -219,15 +219,15 @@ contract("Olympus Index Special Scenarios", accounts => {
     // Keep
     const ethBalance = (await web3.eth.getBalance(index.address)).toNumber();
     const accFee = (await index.accumulatedFee()).toNumber();
-    const assetsValue = (await index.getAssetsValue()).toNumber();
-    const indexPrice = (await index.getPrice()).toNumber();
+    const assetsValue = (await index.getAssetsValue());
+    const indexPrice = (await index.getPrice());
     const indexInvestETHBalance = (await index.getETHBalance()).toNumber();
 
 
     assert.equal(indexInvestETHBalance, 0, ' All withdraw is sold');
-    assert.isAbove(assetsValue, 0, ' Assets Value has value');
-    assert.isAbove(indexPrice, web3.toWei(0.95, "ether"), 'Price reduce because slippage rate a little');
-    assert.equal(ethBalance, accFee, ' Eth Balance is the same of acc Fee (all ETH returned)');
+    assert(assetsValue.gt(0), ' Assets Value has value');
+    assert(indexPrice.gt(calc.toWei(0.95)), 'Price reduce because slippage rate a little');
+    assert(ethBalance.eq(accFee), ' Eth Balance is the same of acc Fee (all ETH returned)');
     // Reset
     await mockKyber.setSlippageMockRate(100);
 

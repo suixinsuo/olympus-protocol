@@ -348,19 +348,19 @@ contract("Olympus Index Stress", accounts => {
 
     await index.buyTokens();
 
-    let price = (await index.getPrice()).toNumber();
-    assert.isAbove(price, web3.toWei(1, "ether"), "Price is >1 ETH");
+    let price = (await index.getPrice());
+    assert(price.gt(web3.toWei(1)), "Price is >1 ETH");
 
-    let balance = (await index.getETHBalance()).toNumber();
-    assert.equal(balance, 0, "Total ETH balance is 0");
+    let balance = (await index.getETHBalance());
+    assert(balance.gt(0), "Total ETH balance is 0");
 
-    let assetsValue = (await index.getAssetsValue()).toNumber();
-    assert.isAbove(assetsValue, web3.toWei(0.3, "ether"), "Total assets value should be > 0.3 ETH");
+    let assetsValue = (await index.getAssetsValue());
+    assert(assetsValue.gt(web3.toWei(0.3)), "Total assets value should be > 0.3 ETH");
 
     await Promise.all(
       investorsGroupA.map(async account => {
-        const value = (await index.balanceOf(account)).toNumber();
-        assert.equal(value, web3.toWei(0, "ether"), "Group A investors have the index balance of 0");
+        const value = (await index.balanceOf(account));
+        assert(value.eq(0), "Group A investors have the index balance of 0");
       })
     );
 
@@ -428,16 +428,16 @@ contract("Olympus Index Stress", accounts => {
     let price = (await index.getPrice());
     assert(price.gt(web3.toWei(1, "ether")), "Price is >1 ETH");
 
-    let ethBalance = (await index.getETHBalance()).toNumber();
-    assert.equal(ethBalance, 0, "Total ETH balance is 0");
+    let ethBalance = (await index.getETHBalance());
+    assert(ethBalance.eq(0), "Total ETH balance is 0");
 
-    let assetsValue = (await index.getAssetsValue()).toNumber();
-    assert.isAbove(assetsValue, web3.toWei(0.2, "ether"), "Total assets value should be > 0.2 ETH");
+    let assetsValue = (await index.getAssetsValue());
+    assert(assetsValue.gt(calc.toWei(0.2)), "Total assets value should be > 0.2 ETH");
 
     await Promise.all(
       investorsGroupA.map(async account => {
-        const value = (await index.balanceOf(account)).toNumber();
-        assert.equal(value, web3.toWei(0, "ether"), "Group A investors have the index balance of 0");
+        const value = (await index.balanceOf(account));
+        assert.equal(value.eq(web3.toWei(0, "ether")), "Group A investors have the index balance of 0");
       })
     );
 
