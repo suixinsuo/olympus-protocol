@@ -88,7 +88,6 @@ const availableRebalance = async (index, rebalanceProvider) => {
     const needs = await rebalanceProvider.needsRebalance.call(1, index.address);
     return available && needs;
   } catch (err) {
-    console.log("err", err);
     return false;
   }
 };
@@ -114,16 +113,11 @@ const safeRebalance = async (index, rebalanceProvider) => {
     await index.rebalance();
     processingRebalance = false;
     if (!result) {
-      console.log("safeRebalance:", result);
       await safeRebalance(index, rebalanceProvider);
-    } else {
-      console.log("rebalance done");
-    }
+    } else {}
   } catch (e) {
     if (e.message.includes("revert")) {
-      console.log("safeRebalance revert");
       status = await index.productStatus();
-      console.log("index status:", status.toNumber());
       await delay(1000);
       processingRebalance = false;
       await safeRebalance(index, rebalanceProvider);
@@ -144,15 +138,11 @@ const safeWithdraw = async (index, asyncWithdraw) => {
     await index.withdraw();
     processingWithdraw = false;
     if (!result) {
-      console.log("safeWithdraw:", result);
       await safeWithdraw(index, asyncWithdraw);
-    } else {
-      console.log("withdraw done");
-    }
+    } else {}
   } catch (e) {
     if (e.message.includes("revert")) {
       const status = await index.productStatus();
-      console.log("safeWithdraw revert", status.toNumber());
       await delay(1000);
       processingWithdraw = false;
       await safeWithdraw(index, asyncWithdraw);
@@ -168,23 +158,17 @@ const safeBuyTokens = async index => {
   }
 
   processingBuyToken = true;
-  console.log("start buy token .......");
   try {
     const result = await index.buyTokens.call();
-    console.log("buy tokens result", result);
     await index.buyTokens();
 
     processingBuyToken = false;
     if (!result) {
-      console.log("buy token not finish", result);
       await safeBuyTokens(index);
-    } else {
-      console.log("buy tokens done");
-    }
+    } else {}
   } catch (e) {
     if (e.message.includes("revert")) {
       const status = await index.productStatus();
-      console.log("safeBuyTokens revert", status.toNumber());
       await delay(1000);
       processingBuyToken = false;
       await safeBuyTokens(index);
@@ -263,8 +247,7 @@ contract.skip("Olympus Index Bot", accounts => {
       indexData.category,
       indexData.decimals,
       tokens,
-      indexData.weights,
-      {
+      indexData.weights, {
         gas: 8e6
       }
     );
@@ -318,7 +301,6 @@ contract.skip("Olympus Index Bot", accounts => {
     );
 
     let assetsValue = (await index.getAssetsValue()).toNumber();
-    console.log("invested assetsValue:", assetsValue);
 
     await delay(30000);
 
@@ -328,15 +310,13 @@ contract.skip("Olympus Index Bot", accounts => {
     assert.equal(assetsValue, web3.toWei(1, "ether"), "step 3. Total assets value is 1 ETH");
 
     const ethBalance = (await index.getETHBalance()).toNumber();
-    console.log("ethBalance", ethBalance);
     // 4. Each investor should have the index token balance of 0.1;
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
         assert.equal(value, web3.toWei(0.1, "ether"), "should have the index token balance of 0.1");
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        console.log("account balance:", calc.fromWei(balance));
-        console.log("Group A investors balance", calc.fromWei(value));
+
       })
     );
 
@@ -388,8 +368,6 @@ contract.skip("Olympus Index Bot", accounts => {
         const value = (await index.balanceOf(account)).toNumber();
         const balance = (await web3.eth.getBalance(account)).toNumber();
         assert.equal(value, web3.toWei(0.15, "ether"), "should have the index token balance of 0.15");
-        console.log("account balance:", calc.fromWei(balance)); // 99.899840754 - 99.848889022 = 0.05 OK.
-        console.log("Group A investors balance", calc.fromWei(value));
       })
     );
   });
@@ -420,16 +398,14 @@ contract.skip("Olympus Index Bot", accounts => {
     assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
 
     const assetsValue = (await index.getAssetsValue()).toNumber();
-    console.log("assetsValue:", calc.fromWei(assetsValue));
 
     // Each investor should have the index token balance of 0.2
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        assert(calc.inRange(calc.fromWei(value), 0.2, 0.00001), "should have the index token balance of 0.15");
-        console.log("account balance:", calc.fromWei(balance));
-        console.log("Group A investors balance", calc.fromWei(value));
+        assert(calc.inRange(calc.fromWei(value), 0.2, 0.00001),
+          "should have the index token balance of 0.15");
       })
     );
   });
@@ -463,7 +439,6 @@ contract.skip("Olympus Index Bot", accounts => {
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
-        console.log("Group A investors balance", calc.fromWei(value));
       })
     );
 
@@ -522,7 +497,6 @@ contract.skip("Olympus Index Bot", accounts => {
 
     const totalSupply = await index.totalSupply();
 
-    console.log("total , price:", totalSupply.toNumber(), price);
 
     let balance = (await index.getETHBalance()).toNumber();
     // assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
@@ -535,15 +509,8 @@ contract.skip("Olympus Index Bot", accounts => {
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
-        console.log("Group A investors balance", calc.fromWei(value));
       })
     );
-
-    // const rates = await Promise.all(
-    //   tokens.map(async token => await mockKyber.getExpectedRate(ethToken, token, web3.toWei(0.5, "ether")))
-    // );
-
-    // console.log('rate:', rates);
 
     // 5. Percentage of each tokens in the index should be the same as the percentage we set while deploying the index contract.
     tokenAmounts = await getTokensAndAmounts(index);
@@ -553,14 +520,12 @@ contract.skip("Olympus Index Bot", accounts => {
     });
 
     const amounts = tokenAmounts[1].map(amount => amount.toNumber());
-    console.log("amounts:", amounts);
   });
 
   it("withdraw and close", async () => {
     await Promise.all(
       investorsGroupA.map(async account => {
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        console.log("account before balance:", calc.fromWei(balance));
       })
     );
 
@@ -585,7 +550,6 @@ contract.skip("Olympus Index Bot", accounts => {
     await Promise.all(
       investorsGroupA.map(async account => {
         const amountInRequest = (await asyncWithdraw.getUserWithdrawBalance(index.address, account)).toNumber();
-        // console.log('amountInRequest:', amountInRequest);
         const amount = (await index.balanceOf(account)).toNumber();
         await index.requestWithdraw(amount - amountInRequest, {
           from: account
@@ -599,16 +563,13 @@ contract.skip("Olympus Index Bot", accounts => {
     safeWithdraw(index, asyncWithdraw);
 
     let balance = (await index.getETHBalance()).toNumber();
-    console.log("balance:", balance);
     // assert.equal(balance, web3.toWei(0, "ether"), "Total ETH balance now is 0");
     assert(calc.inRange(calc.fromWei(balance), 0, 0.00001), "Total ETH balance now is 0");
 
     const assetsValue = (await index.getAssetsValue()).toNumber();
     assert.isAbove(assetsValue, web3.toWei(0, "ether"), "Total assets value should be 0");
-    console.log("assetsValue:", assetsValue);
 
     const totalSupply = await index.totalSupply();
-    console.log("last totalSupply", totalSupply.toNumber());
 
     let price = (await index.getPrice()).toNumber();
     assert.equal(price, web3.toWei(1, "ether"), "Price is 1");
@@ -618,8 +579,8 @@ contract.skip("Olympus Index Bot", accounts => {
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        assert(calc.inRange(calc.fromWei(value), 0, 0.00001), "should have the index token balance of 0");
-        console.log("account final balance:", calc.fromWei(balance)); //
+        assert(calc.inRange(calc.fromWei(value), 0, 0.00001),
+          "should have the index token balance of 0");
       })
     );
     // 5. Status of the index is still “Closed”
