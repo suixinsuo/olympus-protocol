@@ -7,8 +7,6 @@
   },
   "scripts": {
     "build": "truffle compile  --network development",
-    "future-test": "run-with-testrpc -a 21 --port 8545 --gasLimit 8e6 'truffle test ./test/futures/TestFutureMVP.js'",
-    "future-stress": "run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.stress.js'",
     "index-min-bot": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.bot.min.js'",
     "index-bot": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.bot.js'",
     "fund-index": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.stress.js'",
@@ -20,6 +18,7 @@
     "deploytestnet": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle migrate --reset --network kovan' ",
     "linting": "#solhint 'contracts/**/*.sol'",
     "fund-test": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/fund/TestOlympusFund.stress.js'",
+    "future-test": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.js'",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "version": "truffle version",
     "build-contracts": "./node_modules/.bin/sol-merger \"./contracts/**/*.sol\" ./build"
