@@ -95,7 +95,7 @@ contract("Test Future MVP Clear special cases", accounts => {
     // All winnersBalance went to the owner
     // Shall winners balance + whatever is left from manager fee after clear.
 
-    assert.isAbove(managerFeeAfter.toString(), winnersBalance.toString(), 'Winner balance went to manager Fee')
+    assert(managerFeeAfter.gt(winnersBalance), 'Winner balance went to manager Fee')
     // No ETH holded
     assert.equal(
       (await web3.eth.getBalance(future.address)).toString(),
