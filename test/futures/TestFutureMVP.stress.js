@@ -30,6 +30,7 @@ contract("Test Future MVP Stress", accounts => {
   let shortToken; // FutureERC721Token
 
   before("Initialize ComponentList", async () => {
+    assert(accounts.length >= 21, "Require at least 11 investors for this test case");
     providers = await futureUtils.setUpComponentList();
   });
 
