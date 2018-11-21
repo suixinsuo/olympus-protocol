@@ -31,12 +31,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "ganache-cli": "^6.1.2",
-    "run-with-testrpc": "^0.3.0",
+    "ganache-cli": "6.1.2",
+    "run-with-testrpc": "0.3.0",
     "sol-merger": "^0.1.2",
-    "solhint": "^1.2.1",
+    "solhint": "1.4.0",
     "solidity-coverage": "^0.5.4",
-    "truffle": "^4.1.11"
+    "truffle": "4.1.14"
   },
   "dependencies": {
     "aws-sdk": "^2.255.1",
