@@ -41,6 +41,7 @@ build:
   tags: [aireach]
   script:
     - npm run build
+    - npm run build-contracts
   artifacts:
     paths:
       - build

@@ -26,6 +26,7 @@ const names = ["OlympusBasicFund",
   "AsyncWithdraw",
   "Marketplace",
   "Locker",
+  "ExchangeProvider",
 ];
 
 
