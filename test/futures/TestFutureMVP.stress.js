@@ -62,16 +62,6 @@ contract("Test Future MVP Stress", accounts => {
     }
 
     index = 0;
-    while (index < groupA.length) {
-      const account = groupA[index];
-      const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
-      await future.setTargetPrice(targetPrice);
-      const tx = await futureUtils.safeInvest(future, FutureDirection.Short, amountsOfShares, account);
-      assert.ok(tx, 'invest A should not be reverted');
-      index++;
-    }
-
-    index = 0;
     while (index < groupB.length) {
       const account = groupB[0];
       const targetPrice = futureData.defaultTargetPrice * (0.9 + (0.2 * Math.random()));
