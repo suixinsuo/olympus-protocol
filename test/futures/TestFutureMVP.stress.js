@@ -174,21 +174,6 @@ contract("Test Future MVP Stress", accounts => {
     await futureUtils.safeInvest(future, FutureDirection.Long, investShares, investA);
     await futureUtils.safeInvest(future, FutureDirection.Short, investShares, investA);
 
-    const groupAllInvestShares = 1;
-    await Promise.all(
-      groupAll.map(
-        async (account, index) => {
-          const txLong = await futureUtils.safeInvest(future, FutureDirection.Long, groupAllInvestShares,
-            account);
-          assert.ok(txLong, 'invest should not be reverted');
-          const txShort = await futureUtils.safeInvest(future, FutureDirection.Short,
-            groupAllInvestShares,
-            account);
-          assert.ok(txShort, 'invest should not be reverted');
-        }
-      )
-    );
-
     let priceRate = 0.95;
     let targetPrice = futureData.defaultTargetPrice * priceRate;
     await future.setTargetPrice(targetPrice);
