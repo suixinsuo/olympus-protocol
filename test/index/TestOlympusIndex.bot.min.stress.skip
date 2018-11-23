@@ -90,7 +90,6 @@ const availableRebalance = async (index, rebalanceProvider) => {
     const needs = await rebalanceProvider.needsRebalance.call(1, index.address);
     return available && needs;
   } catch (err) {
-    console.log("err", err);
     return false;
   }
 };
@@ -116,16 +115,12 @@ const safeRebalance = async (index, rebalanceProvider) => {
     await index.rebalance();
     processingRebalance = false;
     if (!result) {
-      console.log("safeRebalance:", result);
       await safeRebalance(index, rebalanceProvider);
     } else {
-      console.log("rebalance done");
     }
   } catch (e) {
     if (e.message.includes("revert")) {
-      console.log("safeRebalance revert");
       status = await index.productStatus();
-      console.log("index status:", status.toNumber());
       await delay(1000);
       processingRebalance = false;
       await safeRebalance(index, rebalanceProvider);
@@ -146,15 +141,12 @@ const safeWithdraw = async (index, asyncWithdraw, force = false) => {
     await index.withdraw();
     processingWithdraw = false;
     if (!result) {
-      console.log("safeWithdraw:", result);
       await safeWithdraw(index, asyncWithdraw);
     } else {
-      console.log("withdraw done");
     }
   } catch (e) {
     if (e.message.includes("revert")) {
       const status = await index.productStatus();
-      console.log("safeWithdraw revert", status.toNumber());
       await delay(1000);
       processingWithdraw = false;
       await safeWithdraw(index, asyncWithdraw);
@@ -173,23 +165,18 @@ const safeBuyTokens = async index => {
   }
 
   processingBuyToken = true;
-  console.log("start buy token .......");
   try {
     const result = await index.buyTokens.call();
-    console.log("buy tokens result", result);
     await index.buyTokens();
 
     processingBuyToken = false;
     if (!result) {
-      console.log("buy token not finish", result);
       await safeBuyTokens(index);
     } else {
-      console.log("buy tokens done");
     }
   } catch (e) {
     if (e.message.includes("revert")) {
       const status = await index.productStatus();
-      console.log("safeBuyTokens revert", status.toNumber());
       await delay(1000);
       processingBuyToken = false;
       await safeBuyTokens(index);

@@ -67,7 +67,6 @@ const safeRebalance = async index => {
   const result = await index.rebalance.call();
   await index.rebalance();
   if (!result) {
-    console.log("safeRebalance:", result);
     await safeRebalance(index);
   }
 };
@@ -76,7 +75,6 @@ const safeWithdraw = async index => {
   const result = await index.withdraw.call();
   await index.withdraw();
   if (!result) {
-    console.log("safeWithdraw:", result);
     await safeWithdraw(index);
   }
 };
@@ -152,8 +150,7 @@ contract("Olympus Index Stress", accounts => {
       indexData.category,
       indexData.decimals,
       tokens.slice(0, indexData.weights.length),
-      indexData.weights,
-      {
+      indexData.weights, {
         gas: 8e6
       }
     );
@@ -196,7 +193,8 @@ contract("Olympus Index Stress", accounts => {
     await Promise.all(
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
-        assert.equal(value, web3.toWei(0.01, "ether"), "Each investor should have the index token balance of 0.01");
+        assert.equal(value, web3.toWei(0.01, "ether"),
+          "Each investor should have the index token balance of 0.01");
       })
     );
 
@@ -210,8 +208,6 @@ contract("Olympus Index Stress", accounts => {
   });
 
   it("Buy tokens and withdraw", async () => {
-    // console.log('ba:', investorsGroupB[0]);
-    // const ba = (await web3.eth.getBalance(investorsGroupB[0])).toNumber();
 
     await Promise.all(
       investorsGroupB.map(
@@ -248,15 +244,18 @@ contract("Olympus Index Stress", accounts => {
       investorsGroupA.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
         const balance = (await web3.eth.getBalance(account)).toNumber();
-        assert.equal(value, web3.toWei(0.005, "ether"), "Group B investors have the index balance of 0.005");
-        assert.isAbove(balance, balances[account], "each investor has more than 99.98 ETH (they got eth back)");
+        assert.equal(value, web3.toWei(0.005, "ether"),
+          "Group B investors have the index balance of 0.005");
+        assert.isAbove(balance, balances[account],
+          "each investor has more than 99.98 ETH (they got eth back)");
       })
     );
 
     await Promise.all(
       investorsGroupB.map(async account => {
         const value = (await index.balanceOf(account)).toNumber();
-        assert.equal(value, web3.toWei(0.01, "ether"), "Group B investors have the index balance of 0.01");
+        assert.equal(value, web3.toWei(0.01, "ether"),
+          "Group B investors have the index balance of 0.01");
       })
     );
   });
@@ -376,13 +375,12 @@ contract("Olympus Index Stress", accounts => {
       tokensWeights[0].map(async token => {
         let erc20 = await ERC20.at(token);
         const amount = (await erc20.balanceOf(index.address)).toNumber();
-        const price = await exchange.getPrice("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", token, amount, 0);
-        // console.log('price:', amount);
+        const price = await exchange.getPrice("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", token,
+          amount, 0);
         return amount;
       })
     );
 
-    console.log("amounts:", finalAmounts); // TODO
     // The balance of MOT, EOS, OMG, KNC is rebalanced to be equal to 30%, 20%, 40%, 10%.
   });
 
@@ -451,7 +449,6 @@ contract("Olympus Index Stress", accounts => {
 
   it("Withdraw then close ", async () => {
     // Group B investors each request withdraw 0.01 of the index;
-    console.log(investorsGroupB.length);
     await Promise.all(
       investorsGroupB.map(async account => {
         await index.requestWithdraw(toTokenWei(0.005), {
@@ -462,7 +459,9 @@ contract("Olympus Index Stress", accounts => {
     await index.close();
 
     // mock send some eth to kyber.
-    mockKyber.sendTransaction({ value: calc.toWei(0.7) })
+    mockKyber.sendTransaction({
+      value: calc.toWei(0.7)
+    })
 
     let price = (await index.getPrice());
     assert(price.gt(web3.toWei(1, "ether")), "Price is >1 ETH");
@@ -480,7 +479,6 @@ contract("Olympus Index Stress", accounts => {
     await Promise.all(
       investorsGroupB.map(async account => {
         const amountInRequest = (await asyncWithdraw.getUserWithdrawBalance(index.address, account)).toNumber();
-        // console.log('amountInRequest:', amountInRequest);
         const amount = (await index.balanceOf(account)).toNumber();
         await index.requestWithdraw(amount - amountInRequest - 100, {
           from: account
@@ -497,7 +495,6 @@ contract("Olympus Index Stress", accounts => {
 
     await Promise.all(
       investorsGroupB.map(async account => {
-        // console.log('amountInRequest:', amountInRequest);
         const amount = await index.balanceOf(account);
         await index.requestWithdraw(amount, {
           // 100 wei
@@ -524,7 +521,6 @@ contract("Olympus Index Stress", accounts => {
     fee = await index.accumulatedFee();
 
     let totalBalance = await web3.eth.getBalance(index.address).toNumber();
-    console.log("fee:", calc.fromWei(totalBalance), calc.fromWei(fee));
 
     let balance = (await index.getETHBalance()).toNumber();
     // assert.equal(balance, 0, 'Total ETH balance is 0');
