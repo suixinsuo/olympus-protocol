@@ -10,12 +10,8 @@ interface FutureInterfaceV2 {
   function getTarget() external view returns (uint); // an internal Id
   function getTargetAddress() external view returns (address); // if it’s ERC20, give it an address, otherwise 0x0
   function getTimeInterval() external view returns (uint,uint); // Time interval start,end.
-  function getDeliveryDate() external view returns (uint); // timestamp
-  function getDepositPercentage() external view returns (uint); // 100 of 10000
-  function getAmountOfTargetPerShare() external view returns (uint);
 
-  function getLongToken() external view returns (ERC721);
-  function getShortToken() external view returns (ERC721);
+  function getToken() external view returns (ERC721);
 
   function invest(
       int _direction, // long = -1 or short = 1
@@ -23,7 +19,6 @@ interface FutureInterfaceV2 {
   ) external payable returns (bool);
 
   // bot system
-  function checkPosition() external returns (bool); // for bot.
   function clear() external returns (bool);
   // function updateTargetPrice(uint _rateToEther) external returns(bool); TODO when bot
 
