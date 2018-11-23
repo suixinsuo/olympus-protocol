@@ -55,7 +55,6 @@
 , ["86400","86400","86400"]
 # Fund
 
-Mainnet fund 0xcc6402e1fbc7fb3f5e5543ecdd3d7978904f617a
 1.  Create
     "Sample Fund","SFP","Testing fund","0x66756e6473","18"
 
