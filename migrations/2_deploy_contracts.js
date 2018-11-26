@@ -132,6 +132,11 @@ async function deployFuture(deployer, network) {
   await deployExchange(deployer, network);
 }
 
+async function deployBinaryFuture(deployer, network) {
+  deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, ComponentList]);
+  await deployExchange(deployer, network);
+}
+
 async function deployMockfund(deployer, network) {
   deployer.deploy([
     SimpleWithdraw // Exchannge Provider
