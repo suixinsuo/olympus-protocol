@@ -45,6 +45,7 @@ const binaryFutureData = {
   ethDeposit: 0.1, // 'ETHER'
   maxSteps: 10, // hardcoded in the derivative
   defaultTargetPrice: 10 ** 18 * 1000,
+  investingPeriod: 3, // seconds
 };
 
 module.exports = {

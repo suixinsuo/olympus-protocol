@@ -38,10 +38,13 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     uint public depositPercentage;
     address public targetAddress;
     uint public amountOfTargetPerShare;
+    uint public investingPeriod; // In seconds
     // Information of the token, mapped by hour
     BinaryFutureERC721Token public longToken;
     BinaryFutureERC721Token public shortToken;
     mapping( uint => uint ) public winnersBalances;
+    // Time period to price
+    mapping( uint => uint ) public prices;
 
     // TODO: Change this event for real transfer to user holder OL-1369
     event DepositReturned(int _direction, uint _tokenId, uint amount);
@@ -55,7 +58,8 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
       bytes32 _category,
       address _targetAddress,
       uint _amountOfTargetPerShare,
-      uint _depositPercentage
+      uint _depositPercentage,
+      uint _investingPeriod
      ) public {
         name = _name;
         description = _description;
@@ -64,6 +68,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         targetAddress = _targetAddress;
         amountOfTargetPerShare = _amountOfTargetPerShare;
         depositPercentage = _depositPercentage;
+        investingPeriod = _investingPeriod;
          //
         status = DerivativeStatus.New;
         fundType = DerivativeType.Future;
@@ -110,8 +115,20 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     /// --------------------------------- END GETTERS   ---------------------------------
 
+    /// --------------------------------- PERIOD ---------------------------------
+    function getPeriod(uint _seconds) public view returns(uint) {
+        return _seconds % investingPeriod;
+    }
+
+    function getCurrentPeriod() public view returns(uint) {
+        return getPeriod(now);
+    }
+    /// --------------------------------- END PERIOD ---------------------------------
+
     /// --------------------------------- PRICE ---------------------------------
+
     function getTargetPrice() public view returns(uint) {
+
         uint _decimals = ERC20NoReturn(targetAddress).decimals();
         uint _expectedRate;
         // TODO: Ask which rate we need to return
@@ -119,15 +136,40 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
             .getPrice(ETH, ERC20Extended(targetAddress), 10 ** _decimals, 0x0);
         return _expectedRate;
     }
-    /// --------------------------------- END INVEST ---------------------------------
+    /// --------------------------------- END PRICE ---------------------------------
 
     /// --------------------------------- INVEST ---------------------------------
     function invest(
-        int  /*_direction*/, // long or short
-        uint  /*_shares*/ // shares of the target.
+        int  _direction, // long or short
+        uint _shares, // shares of the target.
+        uint _period
         ) external payable returns (bool) {
 
-        require( status == DerivativeStatus.Active,"3");
+        require(status == DerivativeStatus.Active,"3");
+        require(_period == getCurrentPeriod(), "7");
+
+        if(prices[_period] == 0) {
+            prices[_period] = getTargetPrice(); // Initialize price
+        }
+
+        uint  _targetPrice = prices[_period];
+        require(_targetPrice > 0, "4");
+
+        uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
+
+        require(msg.value >= _totalEthDeposit ,"5"); // Enough ETH to buy the share
+
+        require(
+            getToken(_direction).mintMultiple(
+            msg.sender,
+            _totalEthDeposit.div(_shares),
+            _targetPrice,
+            _period,
+            _shares
+        ) == true, "6");
+
+        // Return maining ETH to the token
+        msg.sender.transfer(msg.value.sub(_totalEthDeposit));
 
         return true;
     }
@@ -197,5 +239,40 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         return 0;
     }
     /// --------------------------------- END ASSETS VALUE  ---------------------------------
+    // --------------------------------- TOKENS ---------------------------------
+    function getToken(int _direction) public view returns(BinaryFutureERC721Token) {
+        if(_direction == LONG) {return longToken; }
+        if(_direction == SHORT) {return shortToken; }
+        revert();
+    }
+
+    function isTokenValid(int _direction, uint _id) public view returns(bool) {
+        return getToken(_direction).isTokenValid(_id);
+    }
+
+    function ownerOf(int _direction, uint _id) public view returns(address) {
+        return getToken(_direction).ownerOf(_id);
+    }
+
+    function getTokenDeposit(int _direction, uint _id) public view returns(uint) {
+        return getToken(_direction).getDeposit(_id);
+    }
+
+    function getValidTokens(int _direction) public view returns(uint[] memory) {
+        return getToken(_direction).getValidTokens();
+    }
+
+    function getTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
+        return getToken(_direction).getTokenIdsByOwner(_owner);
+    }
+
+    function invalidateTokens(int _direction, uint[] memory _tokens) internal  {
+        return getToken(_direction).invalidateTokens(_tokens);
+    }
+
+    function getValidTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
+        return getToken(_direction).getValidTokenIdsByOwner(_owner);
+    }
+    // --------------------------------- END TOKENS ---------------------------------
 
 }

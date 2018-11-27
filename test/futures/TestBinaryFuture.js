@@ -52,6 +52,7 @@ contract("Test Binary Future", accounts => {
       providers.tokens[0], // A token from Kyber
       futureData.amountOfTargetPerShare,
       futureData.depositPercentage,
+      futureData.investingPeriod,
     );
 
     assert.equal((await future.status()).toNumber(), 0); // new
@@ -116,13 +117,16 @@ contract("Test Binary Future", accounts => {
       providers.tokens[0], // A token from Kyber
       futureData.amountOfTargetPerShare,
       futureData.depositPercentage,
+      futureData.investingPeriod,
+
     );
 
     const amountsOfShares = 2;
     const depositValue = web3.toWei(1, 'ether');
-
+    const period = future.getCurrentPeriod();
     await calc.assertReverts(async () => {
-      await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue });
+      await future.invest(FutureDirection.Long, amountsOfShares, period,
+        { from: investorA, value: depositValue });
     }, "Shall revert if the future is not Active");
 
   });

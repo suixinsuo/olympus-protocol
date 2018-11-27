@@ -11,7 +11,8 @@ interface BinaryFutureInterface {
 
   function invest(
       int _direction, // long = -1 or short = 1
-      uint _shares // shares of the target.
+      uint _shares, // shares of the target.
+      uint _period
   ) external payable returns (bool);
 
   // bot system
