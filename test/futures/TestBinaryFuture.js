@@ -50,8 +50,7 @@ contract("Test Binary Future", accounts => {
       futureData.category,
 
       providers.tokens[0], // A token from Kyber
-      futureData.amountOfTargetPerShare,
-      futureData.depositPercentage,
+
     );
 
     assert.equal((await future.status()).toNumber(), 0); // new
@@ -98,8 +97,6 @@ contract("Test Binary Future", accounts => {
     assert.equal(calc.bytes32ToString(await future.category()), futureData.category);
     assert(await future.version() !== '');
     assert.equal(await future.getTargetAddress(), providers.tokens[0]);
-    assert.equal(await future.getDepositPercentage(), futureData.depositPercentage);
-    assert.equal((await future.getAmountOfTargetPerShare()).toNumber(), futureData.amountOfTargetPerShare);
     assert.equal(await future.fundType(), DerivativeType.Future);
   });
 
@@ -114,15 +111,14 @@ contract("Test Binary Future", accounts => {
       futureData.category,
 
       providers.tokens[0], // A token from Kyber
-      futureData.amountOfTargetPerShare,
-      futureData.depositPercentage,
+
     );
 
     const amountsOfShares = 2;
     const depositValue = web3.toWei(1, 'ether');
 
     await calc.assertReverts(async () => {
-      await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue });
+      await notActiveFuture.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue });
     }, "Shall revert if the future is not Active");
 
   });
@@ -132,23 +128,5 @@ contract("Test Binary Future", accounts => {
   });
 
 
-  it("It shall calculate share deposit correctly", async () => {
-    let protocolDeposit = (await future.calculateShareDeposit(2, futureData.defaultTargetPrice)).toNumber();
-    let testCalculation = futureUtils.calculateShareDeposit(2, futureData.defaultTargetPrice);
-    assert.equal(protocolDeposit, testCalculation);
-
-    protocolDeposit = (await future.calculateShareDeposit(0, futureData.defaultTargetPrice)).toNumber();
-    testCalculation = futureUtils.calculateShareDeposit(0, futureData.defaultTargetPrice);
-    assert.equal(protocolDeposit, testCalculation);
-
-    protocolDeposit = (await future.calculateShareDeposit(2, 0)).toNumber();
-    testCalculation = futureUtils.calculateShareDeposit(2, 0);
-    assert.equal(protocolDeposit, testCalculation);
-
-    await calc.assertReverts(
-      async () => await future.calculateShareDeposit(2 ** 256 - 1, futureData.defaultTargetPrice),
-      'Safe math avoid overflow'
-    );
-  });
 
 });

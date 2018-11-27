@@ -18,7 +18,4 @@ interface BinaryFutureInterface {
   function clear() external returns (bool);
   // function updateTargetPrice(uint _rateToEther) external returns(bool); TODO when bot
 
-  // helpers
-  function getTotalAssetValue(int _direction) external view returns (uint);
-  function getMyAssetValue(int _direction) external view returns (uint); // in ETH
 }

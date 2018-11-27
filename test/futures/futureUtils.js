@@ -39,10 +39,6 @@ const binaryFutureData = {
   description: "Sample of future mvp",
   symbol: 'BFT',
   category: 'General',
-  amountOfTargetPerShare: 2,
-  depositPercentage: 0.1 * DENOMINATOR, // 1000 DENOMINATOR, 10%
-  forceClosePositionDelta: 0.8 * DENOMINATOR,
-  ethDeposit: 0.1, // 'ETHER'
   maxSteps: 10, // hardcoded in the derivative
   defaultTargetPrice: 10 ** 18 * 1000,
 };
