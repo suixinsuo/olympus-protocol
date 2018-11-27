@@ -6,18 +6,22 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
 contract BinaryFutureERC721Token is FutureERC721Token {
     using SafeMath for uint256;
 
-    // (tokenId > future data)
-    mapping(uint => uint) public tokenBuyingTime; // The price when they buy the token
+    // (tokenId > period)
+    mapping(uint => uint) public tokenPeriod; // The price when they buy the token
+    // Owner -> time -> tokenId
+    mapping(address => mapping( uint => uint)) public ownerPeriodToken; // The price when they buy the token
 
     constructor(string _name, string _symbol, int _tokenPosition)
      FutureERC721Token(_name, _symbol, _tokenPosition) public {
+        ownerPeriodToken[0x0][0] = 0; // Initalized by default
     }
 
 
     function _mint( address _to, uint _deposit, uint _buyingPrice,uint _period) internal {
         uint tokenId = tokenIdCounter; // Will increase after mint
         super._mint(_to, _deposit, _buyingPrice);
-        tokenBuyingTime[tokenId] = _period;
+        tokenPeriod[tokenId] = _period;
+        ownerPeriodToken[_to][_period] = tokenId;
     }
 
     function mint(address _to, uint _deposit, uint _buyingPrice, uint _period) external onlyOwner returns (bool) {
@@ -38,4 +42,7 @@ contract BinaryFutureERC721Token is FutureERC721Token {
         return true;
     }
 
+    function increaseDeposit(uint _tokenId, uint _amount) external {
+        tokenDeposit[_tokenId] = tokenDeposit[_tokenId].add(_amount);
+    }
 }

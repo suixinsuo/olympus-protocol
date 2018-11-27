@@ -11,7 +11,6 @@ interface BinaryFutureInterface {
 
   function invest(
       int _direction, // long = -1 or short = 1
-      uint _shares, // shares of the target.
       uint _period
   ) external payable returns (bool);
 
@@ -19,7 +18,4 @@ interface BinaryFutureInterface {
   function clear() external returns (bool);
   // function updateTargetPrice(uint _rateToEther) external returns(bool); TODO when bot
 
-  // helpers
-  function getTotalAssetValue(int _direction) external view returns (uint);
-  function getMyAssetValue(int _direction) external view returns (uint); // in ETH
 }

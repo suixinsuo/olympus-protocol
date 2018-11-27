@@ -6,8 +6,6 @@ import "../interfaces/PriceProviderInterface.sol";
 import "../libs/ERC20Extended.sol";
 import "../libs/ERC20NoReturn.sol";
 import "../interfaces/ComponentListInterface.sol";
-import "../interfaces/ReimbursableInterface.sol";
-import "../interfaces/StepInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../BaseDerivative.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -24,7 +22,6 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     // Enum and constants
     int public constant LONG = -1;
     int public constant SHORT = 1;
-    enum CheckPositionPhases { Initial, LongTokens, ShortTokens }
     enum ClearPositionPhases { Initial, CalculateLoses, CalculateBenefits }
 
     // Action of the Future
@@ -35,10 +32,9 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     string public version = "0.0-20181126";
     string public symbol;
     // Config on creation
-    uint public depositPercentage;
     address public targetAddress;
-    uint public amountOfTargetPerShare;
     uint public investingPeriod; // In seconds
+
     // Information of the token, mapped by hour
     BinaryFutureERC721Token public longToken;
     BinaryFutureERC721Token public shortToken;
@@ -57,8 +53,6 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
       string _symbol,
       bytes32 _category,
       address _targetAddress,
-      uint _amountOfTargetPerShare,
-      uint _depositPercentage,
       uint _investingPeriod
      ) public {
         name = _name;
@@ -66,9 +60,8 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         symbol = _symbol;
         category = _category;
         targetAddress = _targetAddress;
-        amountOfTargetPerShare = _amountOfTargetPerShare;
-        depositPercentage = _depositPercentage;
         investingPeriod = _investingPeriod;
+
          //
         status = DerivativeStatus.New;
         fundType = DerivativeType.Future;
@@ -80,14 +73,13 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         require(status == DerivativeStatus.New, "1");
 
         _initialize(_componentList);
-        bytes32[4] memory _names = [MARKET, REIMBURSABLE, STEP, EXCHANGE];
+        bytes32[2] memory _names = [MARKET, EXCHANGE];
 
         for (uint i = 0; i < _names.length; i++) {
             updateComponent(_names[i]);
         }
 
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
-        setMaxSteps(CHECK_POSITION, 10);
 
         initializeTokens();
         status = DerivativeStatus.Active;
@@ -107,8 +99,6 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     function getName() external view returns (string) { return name; }
     function getDescription() external view returns (string) { return description; }
     function getTargetAddress() external view returns (address) { return targetAddress; } // if it’s ERC20, give it an address, otherwise 0x0
-    function getDepositPercentage() external view returns (uint) {return depositPercentage; }// 100 of 10000
-    function getAmountOfTargetPerShare() external view returns (uint) { return amountOfTargetPerShare;}
     function getLongToken() external view returns (ERC721) {return longToken; }
     function getShortToken() external view returns (ERC721) {return shortToken; }
 
@@ -141,7 +131,6 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     /// --------------------------------- INVEST ---------------------------------
     function invest(
         int  _direction, // long or short
-        uint _shares, // shares of the target.
         uint _period
         ) external payable returns (bool) {
 
@@ -154,92 +143,38 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
         uint  _targetPrice = prices[_period];
         require(_targetPrice > 0, "4");
-
-        uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
-
-        require(msg.value >= _totalEthDeposit ,"5"); // Enough ETH to buy the share
-
+        // Check if token exits to increase the amount
+        uint _tokenId = ownerPeriodToken(_direction, msg.sender, _period);
+        if( _tokenId > 0) {
+            increaseTokenDeposit(_direction,_tokenId, msg.value );
+            return true;
+        }
+        // Create new tken
         require(
-            getToken(_direction).mintMultiple(
+          getToken(_direction).mintMultiple(
             msg.sender,
-            _totalEthDeposit.div(_shares),
+            msg.value,
             _targetPrice,
             _period,
-            _shares
+            1 // shares
         ) == true, "6");
 
-        // Return maining ETH to the token
-        msg.sender.transfer(msg.value.sub(_totalEthDeposit));
+
 
         return true;
     }
 
-    // Return the value required to buy a share to a current price
-    function calculateShareDeposit(uint _amountOfShares, uint _targetPrice) public view returns(uint) {
-        return _amountOfShares
-            .mul(amountOfTargetPerShare)
-            .mul(_targetPrice)
-            .mul(depositPercentage)
-            .div(DENOMINATOR); // Based on the deposit
-    }
+
     /// --------------------------------- END INVEST ---------------------------------
     /// --------------------------------- CLEAR ---------------------------------
 
-    // for bot.
+    // TODO
     function clear() external returns (bool) {
         return true;
     }
     /// --------------------------------- END CLEAR ---------------------------------
 
-    /// --------------------------------- CONTRACTS CALLS   ---------------------------------
-    // Rebalance
-    function startGasCalculation() internal {
-        ReimbursableInterface(getComponentByName(REIMBURSABLE)).startGasCalculation();
-    }
-
-    function reimburse() private {
-        uint reimbursedAmount = ReimbursableInterface(getComponentByName(REIMBURSABLE)).reimburse();
-        msg.sender.transfer(reimbursedAmount);
-    }
-
-    // Step
-
-    function initializeOrContinueStep(bytes32 category) internal returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).initializeOrContinue(category);
-    }
-
-    function getStatusStep(bytes32 category) internal view returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).getStatus(category);
-    }
-
-    function finalizeStep(bytes32 category) internal returns(bool) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).finalize(category);
-    }
-
-    function goNextStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).goNextStep(category);
-    }
-
-    function updateStatusStep(bytes32 category) internal returns(uint) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).updateStatus(category);
-    }
-
-    function setMaxSteps( bytes32 _category,uint _maxSteps) public onlyOwner {
-        StepInterface(getComponentByName(STEP)).setMaxCalls(_category,  _maxSteps);
-    }
-
-    /// --------------------------------- END CONTRACTS CALLS   ---------------------------------
-    /// --------------------------------- ASSETS VALUE  ---------------------------------
-    function getTotalAssetValue(int /*_direction*/) external view returns (uint) {
-        return 0;
-    }
-
-    // in ETH
-    function getMyAssetValue(int /*_direction*/) external view returns (uint){
-        return 0;
-    }
-    /// --------------------------------- END ASSETS VALUE  ---------------------------------
-    // --------------------------------- TOKENS ---------------------------------
+       // --------------------------------- TOKENS ---------------------------------
     function getToken(int _direction) public view returns(BinaryFutureERC721Token) {
         if(_direction == LONG) {return longToken; }
         if(_direction == SHORT) {return shortToken; }
@@ -270,8 +205,17 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         return getToken(_direction).invalidateTokens(_tokens);
     }
 
+    function increaseTokenDeposit(int _direction,uint _tokenId, uint _amount) internal  {
+        return getToken(_direction).increaseDeposit(_tokenId, _amount);
+    }
+
+
     function getValidTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
         return getToken(_direction).getValidTokenIdsByOwner(_owner);
+    }
+
+    function ownerPeriodToken(int _direction, address _owner, uint _period) internal view returns (uint) {
+        return getToken(_direction).ownerPeriodToken(_owner, _period);
     }
     // --------------------------------- END TOKENS ---------------------------------
 
