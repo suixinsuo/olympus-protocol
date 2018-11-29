@@ -87,7 +87,7 @@ contract OlympusFund is FundInterface, Derivative, MappeableDerivative {
         uint[] memory _maxSteps = new uint[](2);
         bytes32[] memory _categories = new bytes32[](2);
         _maxSteps[0] = 10;
-        _maxSteps[1] = 5;
+        _maxSteps[1] = 3;
         _categories[0] = WITHDRAW;
         _categories[1] = GETETH;
         StepInterface(getComponentByName(STEP)).setMultipleMaxCalls(_categories, _maxSteps);
