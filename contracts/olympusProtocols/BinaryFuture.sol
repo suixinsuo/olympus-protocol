@@ -107,7 +107,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     /// --------------------------------- PERIOD ---------------------------------
     function getPeriod(uint _seconds) public view returns(uint) {
-        return _seconds % investingPeriod;
+        return _seconds / investingPeriod;
     }
 
     function getCurrentPeriod() public view returns(uint) {
@@ -121,51 +121,50 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
         uint _decimals = ERC20NoReturn(targetAddress).decimals();
         uint _expectedRate;
-        // TODO: Ask which rate we need to return
-        (_expectedRate, ) = PriceProviderInterface(getComponentByName(EXCHANGE))
+         (_expectedRate, ) = PriceProviderInterface(getComponentByName(EXCHANGE))
             .getPrice(ETH, ERC20Extended(targetAddress), 10 ** _decimals, 0x0);
         return _expectedRate;
     }
     /// --------------------------------- END PRICE ---------------------------------
 
     /// --------------------------------- INVEST ---------------------------------
-    function invest(
+    function invest(int  _direction, uint _period) external payable returns (bool) {
+        _invest(_direction, _period,getCurrentPeriod(), getTargetPrice());
+    }
+
+    function _invest(
         int  _direction, // long or short
-        uint _period
-        ) external payable returns (bool) {
+        uint _period,
+        uint _currentPeriod,
+        uint _targetPrice
+        ) internal returns (bool) {
 
         require(status == DerivativeStatus.Active,"3");
-        require(_period == getCurrentPeriod(), "7");
+        require(_period == _currentPeriod, "7");
 
-        if(prices[_period] == 0) {
-            prices[_period] = getTargetPrice(); // Initialize price
-        }
+        // Last investment price will be use to calculate the price
 
-        uint  _targetPrice = prices[_period];
+        prices[_period] = _targetPrice;
         require(_targetPrice > 0, "4");
-        // Check if token exits to increase the amount
+        // Check if token exists to increase the amount
         uint _tokenId = ownerPeriodToken(_direction, msg.sender, _period);
         if( _tokenId > 0) {
             increaseTokenDeposit(_direction,_tokenId, msg.value );
             return true;
         }
-        // Create new tken
+        // Create new token
         require(
-          getToken(_direction).mintMultiple(
+          getToken(_direction).mint(
             msg.sender,
             msg.value,
-            _targetPrice,
-            _period,
-            1 // shares
-        ) == true, "6");
-
-
+            1,  // We dont store the buying price as is capture after period finishes
+            _period
+         ) == true, "6");
 
         return true;
     }
-
-
     /// --------------------------------- END INVEST ---------------------------------
+
     /// --------------------------------- CLEAR ---------------------------------
 
     // TODO

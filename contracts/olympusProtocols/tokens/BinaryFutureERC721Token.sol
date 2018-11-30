@@ -18,8 +18,9 @@ contract BinaryFutureERC721Token is FutureERC721Token {
 
 
     function _mint( address _to, uint _deposit, uint _buyingPrice,uint _period) internal {
-        uint tokenId = tokenIdCounter; // Will increase after mint
         super._mint(_to, _deposit, _buyingPrice);
+        uint tokenId = tokenIdCounter.sub(1); // Latest one is -1
+
         tokenPeriod[tokenId] = _period;
         ownerPeriodToken[_to][_period] = tokenId;
     }
@@ -42,7 +43,11 @@ contract BinaryFutureERC721Token is FutureERC721Token {
         return true;
     }
 
-    function increaseDeposit(uint _tokenId, uint _amount) external {
+    function increaseDeposit(uint _tokenId, uint _amount) onlyOwner external  {
         tokenDeposit[_tokenId] = tokenDeposit[_tokenId].add(_amount);
+    }
+
+    function getTokenPeriod(uint _tokenId) public view returns(uint) {
+        return tokenPeriod[_tokenId];
     }
 }

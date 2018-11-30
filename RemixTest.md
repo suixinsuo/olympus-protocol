@@ -1,5 +1,9 @@
 # RemixTest
 
+# For local testing
+Open to terminals
+> node node_modules/.bin/testrpc-sc -a 21 -l 8e6
+> truffle test test/ ... select folder
 # Kovan Tokens
 
 - MOT 0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a

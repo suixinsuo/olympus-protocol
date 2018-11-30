@@ -42,6 +42,7 @@ const binaryFutureData = {
   maxSteps: 10, // hardcoded in the derivative
   defaultTargetPrice: 10 ** 18 * 1000,
   investingPeriod: 3, // seconds
+  disabledValue: 1, // Hardcode on the stub, so we can check 0 values scenarioss
 };
 
 module.exports = {
