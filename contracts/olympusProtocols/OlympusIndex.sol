@@ -107,7 +107,7 @@ contract OlympusIndex is IndexInterface, Derivative {
         _maxSteps[0] = 3;
         _maxSteps[1] = 10;
         _maxSteps[2] = 5;
-        _maxSteps[3] = 5;
+        _maxSteps[3] = 3;
 
         _categories[0] = REBALANCE;
         _categories[1] = WITHDRAW;

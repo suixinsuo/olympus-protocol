@@ -1,4 +1,3 @@
-
 const {
   DerivativeProviders,
 } = require("../utils/constants");
@@ -31,7 +30,7 @@ const futureData = {
   depositPercentage: 0.1 * DENOMINATOR, // 1000 DENOMINATOR, 10%
   forceClosePositionDelta: 0.8 * DENOMINATOR,
   ethDeposit: 0.1, // 'ETHER'
-  maxSteps: 10, // hardcoded in the derivative
+  maxSteps: 10, // hard coded in the derivative
   defaultTargetPrice: 10 ** 18,
 };
 const binaryFutureData = {
@@ -72,17 +71,33 @@ module.exports = {
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchangeProvider.address);
 
     const tokens = (await mockKyber.supportedTokens())
-    return { componentList, exchangeProvider, market, mockMOT, locker, reimbursable, stepProvider, tokens };
+    return {
+      componentList,
+      exchangeProvider,
+      market,
+      mockMOT,
+      locker,
+      reimbursable,
+      stepProvider,
+      tokens
+    };
   },
-
-
   /**
    * Creates a future which default data
    * @param {*} componentList
    * @param {*} targetAddress
    * @returns {future, longToken, shortToken}
    */
-  createDefaultFuture: async (componentList, targetAddress, { clearInterval, depositPercentage } = { clearInterval: null, depositPercentage: 0 }) => {
+  createDefaultFuture: async (componentList, targetAddress, {
+    clearInterval,
+    depositPercentage,
+    amountOfTargetPerShare,
+  } = {
+      clearInterval: undefined,
+      depositPercentage: 0,
+      amountOfTargetPerShare: 0
+    }) => {
+
     const future = await FutureContract.new(
       futureData.name,
       futureData.description,
@@ -90,13 +105,15 @@ module.exports = {
       futureData.category,
       futureData.target,
       targetAddress,
-      futureData.amountOfTargetPerShare,
-
+      amountOfTargetPerShare || futureData.amountOfTargetPerShare,
       depositPercentage || futureData.depositPercentage,
       futureData.forceClosePositionDelta
     );
 
-    await future.initialize(componentList.address, clearInterval === null ? futureData.clearInterval : clearInterval, {
+    const interval = (clearInterval === undefined) ? futureData.clearInterval :
+      clearInterval;
+
+    await future.initialize(componentList.address, interval, {
       value: web3.toWei(futureData.ethDeposit, "ether")
     });
 
@@ -110,30 +127,49 @@ module.exports = {
     await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, 0);
     await future.setTargetPrice(futureData.defaultTargetPrice);
 
-    return { future, longToken, shortToken };
+    return {
+      future,
+      longToken,
+      shortToken
+    };
   },
-
-
   calculateShareDeposit: (_amountOfShares, price) => {
 
-    return new BigNumber(_amountOfShares).mul(futureData.amountOfTargetPerShare).mul(price).mul(futureData.depositPercentage).div(DENOMINATOR).toNumber();
+    return new BigNumber(_amountOfShares).mul(futureData.amountOfTargetPerShare).mul(price).mul(futureData.depositPercentage)
+      .div(DENOMINATOR).toNumber();
   },
-
   // Actual Value
   getTokenActualValue: (direction, deposit, startPrice, currentPrice) => {
-    const pricePercentage = new BigNumber(startPrice).minus(currentPrice).div(startPrice).mul(new BigNumber(DENOMINATOR).div(futureData.depositPercentage));
+    const pricePercentage = new BigNumber(startPrice).minus(currentPrice).div(startPrice).mul(new BigNumber(
+      DENOMINATOR).div(futureData.depositPercentage));
     return new BigNumber(direction).mul(deposit).mul(pricePercentage).add(deposit).toNumber();
   },
-
   getStepStatus: async (future, stepProvider, category) => {
     return (await stepProvider.status(future.address, category)).toNumber();
   },
-
-
-  safeInvest: async (future, direction, amountsOfShares, investor) => {
+  safeInvest: async (future, direction, amountsOfShares, investor, margin = 1) => {
     const targetPrice = await future.getTargetPrice(); // Big Number
     const depositValue = (await future.calculateShareDeposit(amountsOfShares, targetPrice)); // Big Number
-    tx = await future.invest(direction, amountsOfShares, { from: investor, value: depositValue });
+    tx = await future.invest(direction, amountsOfShares, {
+      from: investor,
+      value: depositValue.times(margin).toString()
+    });
+    return tx;
+  },
+  safeCheckPosition: async (future) => {
+    let tx;
+    while (!(await future.checkPosition.call())) {
+      tx = await future.checkPosition();
+    }
+    tx = await future.checkPosition();
+    return tx;
+  },
+  safeClear: async (future) => {
+    let tx;
+    while (!(await future.clear.call())) {
+      tx = await future.clear();
+    }
+    tx = await future.clear();
     return tx;
   },
   /**
@@ -146,7 +182,4 @@ module.exports = {
     }
     return (await token.getValidTokenIdsByOwner(investor)).map((id) => id.toNumber());
   }
-
-
-
 }
