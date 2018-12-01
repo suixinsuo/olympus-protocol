@@ -18,6 +18,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     uint public constant DENOMINATOR = 10000;
     uint public constant TOKEN_DENOMINATOR = 10**18;
+    uint public constant MAX_INVESTORS = 50;
 
     // Enum and constants
     int public constant LONG = -1;
@@ -38,13 +39,19 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     // Information of the token, mapped by hour
     BinaryFutureERC721Token public longToken;
     BinaryFutureERC721Token public shortToken;
+    uint public futureOwnBalance; // No winners, lost balance
+    // Period => value
     mapping( uint => uint ) public winnersBalances;
+    mapping( uint => uint ) public winnersBalancesRedeemed;
+    mapping( uint => uint ) public winnersInvestment; // Investment of the winner side, calculate winner ratio
+
+    // period => cleard true or false
+    mapping(uint => bool) public  tokensCleared;
     // Time period to price
     mapping( uint => uint ) public prices;
 
-    // TODO: Change this event for real transfer to user holder OL-1369
-    event DepositReturned(int _direction, uint _tokenId, uint amount);
-    event Benefits(int _direction, address _holder, uint amount);
+    event DepositReturned(int _direction, uint _period, address _holder, uint _amount);
+    event Benefits(int _direction, uint _period, address _holder, uint _amount);
 
 
     constructor(
@@ -66,7 +73,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         status = DerivativeStatus.New;
         fundType = DerivativeType.Future;
     }
- /// --------------------------------- INITIALIZE ---------------------------------
+    /// --------------------------------- INITIALIZE ---------------------------------
 
     function initialize(address _componentList) public {
 
@@ -121,7 +128,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
         uint _decimals = ERC20NoReturn(targetAddress).decimals();
         uint _expectedRate;
-         (_expectedRate, ) = PriceProviderInterface(getComponentByName(EXCHANGE))
+        (_expectedRate, ) = PriceProviderInterface(getComponentByName(EXCHANGE))
             .getPrice(ETH, ERC20Extended(targetAddress), 10 ** _decimals, 0x0);
         return _expectedRate;
     }
@@ -140,8 +147,11 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         ) internal returns (bool) {
 
         require(status == DerivativeStatus.Active,"3");
-        require(_period == _currentPeriod, "7");
-
+        require(_period == _currentPeriod, "5");
+        require(
+            getSupplyByPeriod(LONG, _period).add(getSupplyByPeriod(SHORT, _period)) < MAX_INVESTORS,
+            "11"
+        );
         // Last investment price will be use to calculate the price
 
         prices[_period] = _targetPrice;
@@ -154,26 +164,156 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         }
         // Create new token
         require(
-          getToken(_direction).mint(
-            msg.sender,
-            msg.value,
-            1,  // We dont store the buying price as is capture after period finishes
-            _period
-         ) == true, "6");
+            // We dont store the buying price as is capture after period finishes
+            getToken(_direction).mint(msg.sender, msg.value, 1, _period) == true,
+            "6"
+        );
 
         return true;
     }
     /// --------------------------------- END INVEST ---------------------------------
 
-    /// --------------------------------- CLEAR ---------------------------------
-
-    // TODO
-    function clear() external returns (bool) {
+    /// ---------------------------------  TOKENS ---------------------------------
+    // This will check all the tokens and execute the function passed as parametter
+    function checkTokens(
+        int _direction,
+        uint _period,
+        function (int, uint, uint) internal returns(bool) checkFunction
+    ) internal returns (bool) {
+        uint[] memory _tokens = getTokensByPeriod(_direction, _period);
+        for (uint i = 0; i < _tokens.length; i++) {
+            checkFunction(_direction, _period, _tokens[i]);
+        }
         return true;
+    }
+
+    /// ---------------------------------  END TOKENS ---------------------------------
+
+
+    /// --------------------------------- CLEAR ---------------------------------
+    function clear(uint _period) external returns (bool) {
+        return _clear(_period, getTargetPrice());
+    }
+
+
+    function _clear(uint _period, uint _currentPrice) internal returns (bool) {
+
+        // CHECKS
+        require(_period < getCurrentPeriod() - 1, "7"); // 3 to 4 pm cant withdraw after 5pm
+        require(tokensCleared[_period] == false, "8"); // Cant clear twice
+        // Clear has to hold a token. We also make sure period without tokens get cleared.
+        require(
+            ownerPeriodToken(LONG, msg.sender, _period) > 0
+            || ownerPeriodToken(SHORT, msg.sender, _period) > 0,
+            "10"
+        );
+
+        require(_currentPrice > 0, "9");
+
+        // Special scenario: no losers
+        if(_currentPrice == prices[_period]) {
+            checkTokens(LONG, _period, returnDeposit);
+            checkTokens(SHORT, _period, returnDeposit);
+            finishClear(_period);
+            return false;
+        }
+
+        // INITIALIZE
+        int _winnerDirection = _currentPrice > prices[_period] ? LONG : SHORT;
+        int _loserDirection = _currentPrice > prices[_period] ? SHORT : LONG;
+
+
+        // RUN
+        // Get losers balance that will be shared to the winners
+        checkTokens(_loserDirection, _period, checkLosersOnClear);
+        // Get winners total investment to calculate benefits ratio
+        checkTokens(_winnerDirection, _period, calculateWinnersRatio);
+        // Share the benefits to the winners
+        checkTokens(_winnerDirection, _period, checkWinnersOnClear);
+
+        // FINALIZE
+        // Special scenario, no winners. TODO: what to do with it?
+        if(winnersBalancesRedeemed[_period] == 0) {
+            futureOwnBalance = winnersBalances[_period];
+        }
+        finishClear(_period);
+        // TODO: reimburse to the executor
+        return true;
+    }
+
+    function checkLosersOnClear(int _direction, uint _period, uint _id)  internal returns(bool) {
+        if(!isTokenValid(_direction, _id)) {return false;} // Should not happen in binnary
+
+        uint _tokenDeposit = getTokenDeposit(_direction, _id);
+        invalidateToken(_direction, _id);
+        winnersBalances[_period] = winnersBalances[_period].add(_tokenDeposit);
+
+        return true;
+    }
+
+     // We check token by token, but in one go with process all tokens of the same holder
+    function returnDeposit(int _direction, uint _period, uint _id) internal returns(bool) {
+        if(!isTokenValid(_direction, _id)) {return false;}  // Should not happen in binnary
+
+        invalidateToken(_direction, _id);
+        address _holder = ownerOf(_direction, _id);
+        uint _tokenDeposit = getTokenDeposit(_direction, _id);
+        _holder.transfer(_tokenDeposit);
+        emit DepositReturned(_direction, _period, _holder, _tokenDeposit);
+
+        return false;
+    }
+
+
+    function calculateWinnersRatio(int _direction, uint _period, uint _id) internal returns(bool) {
+        winnersInvestment[_period] = winnersInvestment[_period].add(getTokenDeposit(_direction, _id));
+        return true;
+    }
+
+    // We check token by token, but in one go with process all tokens of the same holder
+    function checkWinnersOnClear(int _direction, uint _period, uint _id) internal returns(bool) {
+        if(!isTokenValid(_direction, _id)) {return false;}  // Should not happen in binnary
+
+
+        address _holder = ownerOf(_direction, _id);
+        invalidateToken(_direction, _id);
+        uint _benefits = calculateBenefits(_direction,_period,_id);
+        _holder.transfer(_benefits);
+
+        emit Benefits(_direction, _period, _holder, _benefits);
+
+        return false;
+    }
+
+    function finishClear(uint _period) internal {
+        tokensCleared[_period] = true;
+    }
+
+    function calculateBenefits( int _direction, uint _period, uint _id) internal  returns(uint) {
+
+         // Calculate benefits
+        uint _tokenDeposit = getTokenDeposit(_direction, _id);
+        uint _totalWinners = getSupplyByPeriod(_direction, _period);
+
+        // I invest 20% of winner side, get 20% of benefits
+        uint _benefits = winnersBalances[_period]
+            .mul(_tokenDeposit)
+            .div(winnersInvestment[_period]);
+
+        winnersBalancesRedeemed[_period] = winnersBalancesRedeemed[_period]
+            .add(_benefits); // Keep track
+
+        // Special cases decimals
+        uint _pendingBalance = winnersBalances[_period].sub(winnersBalancesRedeemed[_period]);
+        if(_pendingBalance > 0 && _pendingBalance < _totalWinners) {
+            _benefits = _benefits.add(_pendingBalance);
+        }
+
+        return _tokenDeposit.add(_benefits);
     }
     /// --------------------------------- END CLEAR ---------------------------------
 
-       // --------------------------------- TOKENS ---------------------------------
+    // --------------------------------- TOKENS ---------------------------------
     function getToken(int _direction) public view returns(BinaryFutureERC721Token) {
         if(_direction == LONG) {return longToken; }
         if(_direction == SHORT) {return shortToken; }
@@ -184,34 +324,31 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         return getToken(_direction).isTokenValid(_id);
     }
 
-    function ownerOf(int _direction, uint _id) public view returns(address) {
-        return getToken(_direction).ownerOf(_id);
-    }
-
     function getTokenDeposit(int _direction, uint _id) public view returns(uint) {
         return getToken(_direction).getDeposit(_id);
     }
 
-    function getValidTokens(int _direction) public view returns(uint[] memory) {
-        return getToken(_direction).getValidTokens();
+    function ownerOf(int _direction, uint _id) public view returns(address) {
+        return getToken(_direction).ownerOf(_id);
     }
 
-    function getTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
-        return getToken(_direction).getTokenIdsByOwner(_owner);
+    function getTokensByPeriod(int _direction, uint _period) public view returns(uint[] memory) {
+        return getToken(_direction).getTokensByPeriod(_period);
     }
 
-    function invalidateTokens(int _direction, uint[] memory _tokens) internal  {
-        return getToken(_direction).invalidateTokens(_tokens);
+
+    function getSupplyByPeriod(int _direction, uint _period) public view returns(uint) {
+        return getToken(_direction).getSupplyByPeriod(_period);
+    }
+
+    function invalidateToken(int _direction, uint _id) internal  {
+        return getToken(_direction).invalidateToken(_id);
     }
 
     function increaseTokenDeposit(int _direction,uint _tokenId, uint _amount) internal  {
         return getToken(_direction).increaseDeposit(_tokenId, _amount);
     }
 
-
-    function getValidTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
-        return getToken(_direction).getValidTokenIdsByOwner(_owner);
-    }
 
     function ownerPeriodToken(int _direction, address _owner, uint _period) internal view returns (uint) {
         return getToken(_direction).ownerPeriodToken(_owner, _period);

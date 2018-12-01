@@ -100,18 +100,31 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
     }
 
     function getValidTokensList(uint[] _tokens) internal view returns(uint[] memory _validTokens ) {
+        return filterTokens(_tokens, filterValid);
+    }
+
+    // TODO: this and isTokenValid is the same code, one is internal
+    // for the filter parametter, other is public as interface. Can we refactor?
+    function filterValid(uint _tokenId) internal view returns(bool) {
+        return tokenValid[_tokenId];
+    }
+
+    function filterTokens(
+        uint[] _tokens,
+        function (uint) internal view returns(bool) filter)
+       internal view returns(uint[] memory _validTokens ) {
         uint _length = 0;
         uint i;
 
         for(i = 0; i < _tokens.length; i++) {
-            if(tokenValid[_tokens[i]]) { _length++; }
+            if(filter(_tokens[i])) { _length++; }
         }
 
         _validTokens = new uint[](_length);
         uint _counter = 0;
 
         for(i = 0; i < _tokens.length; i++) {
-            if(tokenValid[_tokens[i]]) {
+            if(filter(_tokens[i])) {
                 _validTokens[_counter] = _tokens[i];
                 _counter++;
             }

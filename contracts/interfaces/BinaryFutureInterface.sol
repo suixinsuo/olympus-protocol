@@ -14,8 +14,6 @@ interface BinaryFutureInterface {
       uint _period
   ) external payable returns (bool);
 
-  // bot system
-  function clear() external returns (bool);
-  // function updateTargetPrice(uint _rateToEther) external returns(bool); TODO when bot
+  function clear(uint _period) external returns (bool);
 
 }
