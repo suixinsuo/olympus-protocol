@@ -8,7 +8,7 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
 contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
     using SafeMath for uint256;
 
-    uint tokenIdCounter = 0;
+    uint tokenIdCounter = 1;
     int tokenPosition_;
     // (tokenId > future data)
     mapping(uint => uint) public tokenBuyingPrice; // The price when they buy the token

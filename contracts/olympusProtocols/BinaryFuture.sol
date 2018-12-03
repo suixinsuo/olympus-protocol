@@ -33,10 +33,14 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     string public symbol;
     // Config on creation
     address public targetAddress;
+    uint public investingPeriod; // In seconds
+
     // Information of the token, mapped by hour
     BinaryFutureERC721Token public longToken;
     BinaryFutureERC721Token public shortToken;
     mapping( uint => uint ) public winnersBalances;
+    // Time period to price
+    mapping( uint => uint ) public prices;
 
     // TODO: Change this event for real transfer to user holder OL-1369
     event DepositReturned(int _direction, uint _tokenId, uint amount);
@@ -48,13 +52,16 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
       string _description,
       string _symbol,
       bytes32 _category,
-      address _targetAddress
+      address _targetAddress,
+      uint _investingPeriod
      ) public {
         name = _name;
         description = _description;
         symbol = _symbol;
         category = _category;
         targetAddress = _targetAddress;
+        investingPeriod = _investingPeriod;
+
          //
         status = DerivativeStatus.New;
         fundType = DerivativeType.Future;
@@ -98,30 +105,66 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     /// --------------------------------- END GETTERS   ---------------------------------
 
+    /// --------------------------------- PERIOD ---------------------------------
+    function getPeriod(uint _seconds) public view returns(uint) {
+        return _seconds / investingPeriod;
+    }
+
+    function getCurrentPeriod() public view returns(uint) {
+        return getPeriod(now);
+    }
+    /// --------------------------------- END PERIOD ---------------------------------
+
     /// --------------------------------- PRICE ---------------------------------
+
     function getTargetPrice() public view returns(uint) {
+
         uint _decimals = ERC20NoReturn(targetAddress).decimals();
         uint _expectedRate;
-        // TODO: Ask which rate we need to return
-        (_expectedRate, ) = PriceProviderInterface(getComponentByName(EXCHANGE))
+         (_expectedRate, ) = PriceProviderInterface(getComponentByName(EXCHANGE))
             .getPrice(ETH, ERC20Extended(targetAddress), 10 ** _decimals, 0x0);
         return _expectedRate;
     }
-    /// --------------------------------- END INVEST ---------------------------------
+    /// --------------------------------- END PRICE ---------------------------------
 
     /// --------------------------------- INVEST ---------------------------------
-    function invest(
-        int  /*_direction*/, // long or short
-        uint  /*_shares*/ // shares of the target.
-        ) external payable returns (bool) {
+    function invest(int  _direction, uint _period) external payable returns (bool) {
+        _invest(_direction, _period,getCurrentPeriod(), getTargetPrice());
+    }
 
-        require( status == DerivativeStatus.Active,"3");
+    function _invest(
+        int  _direction, // long or short
+        uint _period,
+        uint _currentPeriod,
+        uint _targetPrice
+        ) internal returns (bool) {
+
+        require(status == DerivativeStatus.Active,"3");
+        require(_period == _currentPeriod, "7");
+
+        // Last investment price will be use to calculate the price
+
+        prices[_period] = _targetPrice;
+        require(_targetPrice > 0, "4");
+        // Check if token exists to increase the amount
+        uint _tokenId = ownerPeriodToken(_direction, msg.sender, _period);
+        if( _tokenId > 0) {
+            increaseTokenDeposit(_direction,_tokenId, msg.value );
+            return true;
+        }
+        // Create new token
+        require(
+          getToken(_direction).mint(
+            msg.sender,
+            msg.value,
+            1,  // We dont store the buying price as is capture after period finishes
+            _period
+         ) == true, "6");
 
         return true;
     }
-
-
     /// --------------------------------- END INVEST ---------------------------------
+
     /// --------------------------------- CLEAR ---------------------------------
 
     // TODO
@@ -130,5 +173,49 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     }
     /// --------------------------------- END CLEAR ---------------------------------
 
+       // --------------------------------- TOKENS ---------------------------------
+    function getToken(int _direction) public view returns(BinaryFutureERC721Token) {
+        if(_direction == LONG) {return longToken; }
+        if(_direction == SHORT) {return shortToken; }
+        revert();
+    }
+
+    function isTokenValid(int _direction, uint _id) public view returns(bool) {
+        return getToken(_direction).isTokenValid(_id);
+    }
+
+    function ownerOf(int _direction, uint _id) public view returns(address) {
+        return getToken(_direction).ownerOf(_id);
+    }
+
+    function getTokenDeposit(int _direction, uint _id) public view returns(uint) {
+        return getToken(_direction).getDeposit(_id);
+    }
+
+    function getValidTokens(int _direction) public view returns(uint[] memory) {
+        return getToken(_direction).getValidTokens();
+    }
+
+    function getTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
+        return getToken(_direction).getTokenIdsByOwner(_owner);
+    }
+
+    function invalidateTokens(int _direction, uint[] memory _tokens) internal  {
+        return getToken(_direction).invalidateTokens(_tokens);
+    }
+
+    function increaseTokenDeposit(int _direction,uint _tokenId, uint _amount) internal  {
+        return getToken(_direction).increaseDeposit(_tokenId, _amount);
+    }
+
+
+    function getValidTokenIdsByOwner(int _direction, address _owner) internal view returns (uint[] memory) {
+        return getToken(_direction).getValidTokenIdsByOwner(_owner);
+    }
+
+    function ownerPeriodToken(int _direction, address _owner, uint _period) internal view returns (uint) {
+        return getToken(_direction).ownerPeriodToken(_owner, _period);
+    }
+    // --------------------------------- END TOKENS ---------------------------------
 
 }

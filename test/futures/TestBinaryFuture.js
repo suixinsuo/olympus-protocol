@@ -2,19 +2,14 @@ const calc = require("../utils/calc");
 const BigNumber = web3.BigNumber;
 
 const {
-  DerivativeProviders,
-  DerivativeStatus,
   FutureDirection,
   DerivativeType,
-  CheckPositionPhases,
-  ClearPositionPhases,
-  MutexStatus,
 } = require("../utils/constants");
 const futureUtils = require("./futureUtils");
 const futureData = futureUtils.binaryFutureData;
 const BinaryFutureToken = artifacts.require("BinaryFutureERC721Token");
 
-const BinaryFuture = artifacts.require("BinaryFuture");
+const BinaryFuture = artifacts.require("BinaryFutureStub");
 
 /**
  *   ================= BASIC FLOW =================
@@ -50,7 +45,7 @@ contract("Test Binary Future", accounts => {
       futureData.category,
 
       providers.tokens[0], // A token from Kyber
-
+      futureData.investingPeriod,
     );
 
     assert.equal((await future.status()).toNumber(), 0); // new
@@ -82,8 +77,6 @@ contract("Test Binary Future", accounts => {
 
   // --------------------------------------------------------------------------
   // ----------------------------- CONFIG TEST  -------------------------------
-
-
   it("Cant call initialize twice ", async () => {
     await calc.assertReverts(async () => {
       await future.initialize(providers.componentList.address, futureData.clearInterval);
@@ -99,10 +92,9 @@ contract("Test Binary Future", accounts => {
     assert.equal(await future.getTargetAddress(), providers.tokens[0]);
     assert.equal(await future.fundType(), DerivativeType.Future);
   });
-
   // --------------------------------------------------------------------------
   // ----------------------------- Invest TEST  -------------------------------
-  it("Can't invest will is not active ", async () => {
+  it("Can't invest while is not active ", async () => {
     // future is already activate, create new future for this scenario
     const notActiveFuture = await BinaryFuture.new(
       futureData.name,
@@ -111,14 +103,15 @@ contract("Test Binary Future", accounts => {
       futureData.category,
 
       providers.tokens[0], // A token from Kyber
+      futureData.investingPeriod,
 
     );
 
-    const amountsOfShares = 2;
     const depositValue = web3.toWei(1, 'ether');
-
+    const period = await future.getCurrentPeriod();
     await calc.assertReverts(async () => {
-      await notActiveFuture.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue });
+      await notActiveFuture.invest(FutureDirection.Long, period,
+        { from: investorA, value: depositValue });
     }, "Shall revert if the future is not Active");
 
   });
@@ -127,6 +120,161 @@ contract("Test Binary Future", accounts => {
     assert((await future.getTargetPrice()).eq(futureData.defaultTargetPrice));
   });
 
+  it("Can invest if target price is broken", async () => {
 
+    // Broke the future
+    await future.setMockTargetPrice(0);
+    // Invest
+    const depositValue = web3.toWei(1, 'ether');
+    const period = await future.getCurrentPeriod();
+
+    await calc.assertReverts(async () => {
+      await future.invest(FutureDirection.Long, period,
+        { from: investorA, value: depositValue });
+    }, "Shall revert because target price is broken");
+    // Reset the future
+    await future.setMockTargetPrice(futureData.disabledValue);
+
+  });
+
+  it("Assert Period", async () => {
+    const time1 = 10;
+    const period1 = await future.getPeriod(time1);
+    assert.equal(period1, Math.floor(time1 / futureData.investingPeriod))
+
+    const time2 = 15;
+    const period2 = await future.getPeriod(time2);
+    assert.equal(period2, Math.floor(time2 / futureData.investingPeriod));
+
+
+    const time3 = 514522584;
+    const period3 = await future.getPeriod(time3);
+    assert.equal(period3, Math.floor(time3 / futureData.investingPeriod))
+  });
+
+  it("Invest long", async () => {
+    const depositValue = new BigNumber(web3.toWei(1, 'ether'));
+    const depositValue2 = new BigNumber(web3.toWei(1, 'ether'));
+    let tokensA;
+    const period = await future.getCurrentPeriod();
+    await future.setMockPeriod(period);
+
+    let tx;
+    tx = await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue });
+    assert.ok(tx);
+
+    // Invest first time
+    tokensA = await longToken.getTokenIdsByOwner(investorA);
+    assert.equal(tokensA.length, 1);
+    assert.equal((await longToken.isTokenValid(tokensA[0])), true, 'Token A is valid');
+
+    assert((await longToken.getDeposit(tokensA[0])).eq(depositValue), 'Token A deposit is correct');
+    assert((await longToken.getTokenPeriod(tokensA[0])).eq(period), 'Token A deposit is correct');
+    assert((await longToken.getBuyingPrice(tokensA[0])).eq(1), 'Binary dont store buying Price');
+
+    // Invest second time increase investment
+    tx = await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue2 });
+    assert.ok(tx);
+
+    tokensA = await longToken.getTokenIdsByOwner(investorA);
+    assert.equal(tokensA.length, 1, 'Investor A increase his own long token');
+    assert((await longToken.getDeposit(tokensA[0])).eq(depositValue.add(depositValue2)), 'Token A deposit is increased');
+
+    // Try to invest in the wrong period
+    await calc.assertReverts(async () => {
+      await future.invest(FutureDirection.Long, period + 10,
+        { from: investorA, value: depositValue });
+    }, "Shall revert if the period is wrong");
+    // Reset
+    await future.setMockPeriod(futureData.disabledValue)
+
+  });
+
+  it("Invest Short", async () => {
+    // Kind of duplicated of long token, but with short. Just for peace of mind, more or less test the same
+    const depositValue = new BigNumber(web3.toWei(1, 'ether'));
+    const depositValue2 = new BigNumber(web3.toWei(1, 'ether'));
+    let tokensA;
+    const period = await future.getCurrentPeriod();
+    console.log(period.toNumber());
+    await future.setMockPeriod(period);
+
+    let tx;
+    tx = await future.invest(FutureDirection.Short, period, { from: investorA, value: depositValue });
+    assert.ok(tx);
+
+    // Invest first time
+    tokensA = await shortToken.getTokenIdsByOwner(investorA);
+    assert.equal(tokensA.length, 1);
+    assert.equal((await shortToken.isTokenValid(tokensA[0])), true, 'Token A is valid');
+
+    assert((await shortToken.getDeposit(tokensA[0])).eq(depositValue), 'Token A deposit is correct');
+    assert((await shortToken.getTokenPeriod(tokensA[0])).eq(period), 'Token A deposit is correct');
+    assert((await shortToken.getBuyingPrice(tokensA[0])).eq(1), 'Binary dont store buying Price');
+
+    // Invest second time increase investment
+    tx = await future.invest(FutureDirection.Short, period, { from: investorA, value: depositValue2 });
+    assert.ok(tx);
+
+    tokensA = await shortToken.getTokenIdsByOwner(investorA);
+    assert.equal(tokensA.length, 1, 'Investor A increase his own long token');
+    assert((await shortToken.getDeposit(tokensA[0])).eq(depositValue.add(depositValue2)), 'Token A deposit is increased');
+
+    // Try to invest in the wrong period
+    await calc.assertReverts(async () => {
+      await future.invest(FutureDirection.Short, period + 10,
+        { from: investorA, value: depositValue });
+    }, "Shall revert if the period is wrong");
+
+    // Reset
+    await future.setMockPeriod(futureData.disabledValue)
+
+  });
+
+
+  it("Price remain from the last investment", async () => {
+    const defaultPrice = new BigNumber(futureData.defaultTargetPrice);
+    const manualIncrease = new BigNumber(0.10); // 10%
+    const investTimes = 3;
+    const period = await future.getCurrentPeriod();
+    await future.setMockPeriod(period); // Make sure is estable during the test
+
+    const depositValue = new BigNumber(web3.toWei(0.2, 'ether'));
+
+    for (let i = 0; i < investTimes; i++) {
+      // Increase 10, 20, 30%... each time
+      await future.setMockTargetPrice(defaultPrice.mul(manualIncrease.mul(i + 1)));
+      await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue });
+    }
+
+    const lastPrice = await future.prices(period);
+    assert(lastPrice.eq(defaultPrice.mul(manualIncrease.mul(investTimes))));
+    // Reset
+    await future.setMockPeriod(futureData.disabledValue)
+    await future.setMockTargetPrice(futureData.disabledValue)
+
+  });
+
+  it("Invest two different times in two differen tokens", async () => {
+    const depositValue = new BigNumber(web3.toWei(1, 'ether'));
+
+    const period = 10; // Just period id, no special meaning
+    await future.setMockPeriod(period)
+
+    // Invest in two periods
+    await future.invest(FutureDirection.Long, period, { from: investorB, value: depositValue });
+    await future.setMockPeriod(period + 1)
+    await future.invest(FutureDirection.Long, period + 1, { from: investorB, value: depositValue });
+
+    let tokensB = await longToken.getTokenIdsByOwner(investorB);
+
+    assert.equal(tokensB.length, 2, 'Investor A increase his own long token');
+
+    assert((await longToken.getTokenPeriod(tokensB[0])).eq(period), 'Token A deposit is correct');
+    assert((await longToken.getTokenPeriod(tokensB[1])).eq(period + 1), 'Token A deposit is correct');
+
+    await future.setMockPeriod(futureData.disabledValue)
+
+  });
 
 });

@@ -31,6 +31,7 @@ contract Marketplace is MarketplaceInterface {
         for (uint i = 0; i < productMappings[creator].length; i++) {
             require(productMappings[creator][i] != msg.sender);
         }
+
         productMappings[creator].push(msg.sender);
         products.push(msg.sender);
 
