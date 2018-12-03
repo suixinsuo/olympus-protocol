@@ -20,6 +20,12 @@
 
 3. Set price (stub)
 1000000000000000000
+
+# BinaryFuture
+1. "Future Binary Test", "Test Binary Future" , "BFT",
+"0x696e646578" , "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a"
+
+
 # Index
 
 1.  Create

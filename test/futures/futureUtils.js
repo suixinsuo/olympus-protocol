@@ -13,6 +13,9 @@ const Reimbursable = artifacts.require("Reimbursable");
 const ComponentList = artifacts.require("ComponentList");
 const FutureToken = artifacts.require("FutureERC721Token");
 const MockToken = artifacts.require("MockToken");
+const MockKyberNetwork = artifacts.require("MockKyberNetwork");
+const ExchangeProvider = artifacts.require("ExchangeProvider");
+
 
 const DENOMINATOR = 10000;
 const INITIAL_FEE = 10 ** 17;
@@ -21,7 +24,6 @@ const futureData = {
   description: "Sample of future mvp",
   symbol: 'FTK',
   category: 'General',
-  version: 'v0.2',
   target: 1,
   clearInterval: 2, // seconds
   amountOfTargetPerShare: 2,
@@ -31,10 +33,19 @@ const futureData = {
   maxSteps: 10, // hard coded in the derivative
   defaultTargetPrice: 10 ** 18,
 };
+const binaryFutureData = {
+  name: "Binary Future Test",
+  description: "Sample of future mvp",
+  symbol: 'BFT',
+  category: 'General',
+  maxSteps: 10, // hardcoded in the derivative
+  defaultTargetPrice: 10 ** 18 * 1000,
+};
 
 module.exports = {
 
   futureData,
+  binaryFutureData,
   DENOMINATOR,
   INITIAL_FEE,
 
@@ -45,23 +56,30 @@ module.exports = {
     const locker = await Locker.deployed();
     const reimbursable = await Reimbursable.deployed();
     const stepProvider = await StepProvider.deployed();
-
+    const mockKyber = await MockKyberNetwork.deployed();
+    const exchangeProvider = await ExchangeProvider.deployed();
     const componentList = await ComponentList.deployed();
 
     await reimbursable.setMotAddress(mockMOT.address);
+    await exchangeProvider.setMotAddress(mockMOT.address);
+
 
     componentList.setComponent(DerivativeProviders.MARKET, market.address);
     componentList.setComponent(DerivativeProviders.LOCKER, locker.address);
     componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
+    componentList.setComponent(DerivativeProviders.EXCHANGE, exchangeProvider.address);
 
+    const tokens = (await mockKyber.supportedTokens())
     return {
       componentList,
+      exchangeProvider,
       market,
       mockMOT,
       locker,
       reimbursable,
-      stepProvider
+      stepProvider,
+      tokens
     };
   },
   /**
@@ -75,10 +93,10 @@ module.exports = {
     depositPercentage,
     amountOfTargetPerShare,
   } = {
-    clearInterval: undefined,
-    depositPercentage: 0,
-    amountOfTargetPerShare: 0
-  }) => {
+      clearInterval: undefined,
+      depositPercentage: 0,
+      amountOfTargetPerShare: 0
+    }) => {
 
     const future = await FutureContract.new(
       futureData.name,
