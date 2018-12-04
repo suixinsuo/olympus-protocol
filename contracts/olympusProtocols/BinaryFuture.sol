@@ -20,16 +20,19 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     uint public constant TOKEN_DENOMINATOR = 10**18;
     uint public constant MAX_INVESTORS = 50;
 
+    uint public constant MIN_REWARDS = 10**16;
+    uint public constant MAX_REWARDS = 10**17;
+    uint public constant REWARDS_PERCENTAGE = 100; //1%
+
+
     // Enum and constants
     int public constant LONG = -1;
     int public constant SHORT = 1;
     enum ClearPositionPhases { Initial, CalculateLoses, CalculateBenefits }
 
-    // Action of the Future
-    bytes32 public constant CHECK_POSITION = "CheckPosition";
     // Basic information that is override on creation
-    string public name = "Olympus 2 Dimensions Future";
-    string public description = "2 Dimensions future";
+    string public name = "Olympus Binary Future";
+    string public description = "Binary future";
     string public version = "0.0-20181126";
     string public symbol;
     // Config on creation
@@ -52,6 +55,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     event DepositReturned(int _direction, uint _period, address _holder, uint _amount);
     event Benefits(int _direction, uint _period, address _holder, uint _amount);
+    event CallerRewarded(uint _amount, address _to);
 
 
     constructor(
@@ -211,7 +215,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         require(_currentPrice > 0, "9");
 
         // Special scenario: no losers
-        if(_currentPrice == prices[_period]) {
+        if (_currentPrice == prices[_period]) {
             checkTokens(LONG, _period, returnDeposit);
             checkTokens(SHORT, _period, returnDeposit);
             finishClear(_period);
@@ -226,6 +230,10 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         // RUN
         // Get losers balance that will be shared to the winners
         checkTokens(_loserDirection, _period, checkLosersOnClear);
+
+        // whoever calls to this the first time gets rewarded.
+        rewardCaller(_period);
+
         // Get winners total investment to calculate benefits ratio
         checkTokens(_winnerDirection, _period, calculateWinnersRatio);
         // Share the benefits to the winners
@@ -238,6 +246,17 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         }
         finishClear(_period);
         // TODO: reimburse to the executor
+        return true;
+    }
+
+    function rewardCaller(uint _period) internal returns(bool) {
+        if (winnersBalances[_period] == 0) { return false; }
+        uint rewards = winnersBalances[_period] * REWARDS_PERCENTAGE / DENOMINATOR;
+        if (rewards < MIN_REWARDS) { rewards = MIN_REWARDS;}
+        if (rewards > MAX_REWARDS) { rewards = MAX_REWARDS;}
+        winnersBalances[_period] = winnersBalances[_period].sub(rewards);
+        msg.sender.transfer(rewards);
+        // emit CallerRewarded(rewards, msg.sender);
         return true;
     }
 
