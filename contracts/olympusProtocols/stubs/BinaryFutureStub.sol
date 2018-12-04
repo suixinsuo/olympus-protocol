@@ -57,12 +57,16 @@ contract BinaryFutureStub is BinaryFuture {
 
 
     /// --------------------------------- STUBS ---------------------------------
-    event Invest(uint period, uint price);
-    // Override main functions
+    /// Override main functions
+
     function invest(int  _direction, uint _period) external payable returns (bool) {
-        emit Invest(getCurrentPeriod(),getTargetPrice() );
-        _invest(_direction, _period,getCurrentPeriod(), getTargetPrice());
+        _invest(_direction, _period, getCurrentPeriod(), getTargetPrice());
     }
+
+    function clear(uint _period) external returns (bool) {
+        return _clear(_period, getTargetPrice());
+    }
+
   /// --------------------------------- END STUBS ---------------------------------
 
 
