@@ -40,6 +40,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     BinaryFutureERC721Token public longToken;
     BinaryFutureERC721Token public shortToken;
     uint public futureOwnBalance; // No winners, lost balance
+    // Winners calculations
     // Period => value
     mapping( uint => uint ) public winnersBalances;
     mapping( uint => uint ) public winnersBalancesRedeemed;
@@ -48,7 +49,9 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     // period => cleard true or false
     mapping(uint => bool) public  tokensCleared;
     // Time period to price
-    mapping( uint => uint ) public prices;
+    mapping(uint => uint ) public prices;
+    // Redeem variable
+    mapping(address => uint) public userRedeemBalance;
 
     event DepositReturned(int _direction, uint _period, address _holder, uint _amount);
     event Benefits(int _direction, uint _period, address _holder, uint _amount);
@@ -258,7 +261,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         invalidateToken(_direction, _id);
         address _holder = ownerOf(_direction, _id);
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
-        _holder.transfer(_tokenDeposit);
+        userRedeemBalance[_holder] = userRedeemBalance[_holder].add(_tokenDeposit);
         emit DepositReturned(_direction, _period, _holder, _tokenDeposit);
 
         return false;
@@ -278,7 +281,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         address _holder = ownerOf(_direction, _id);
         invalidateToken(_direction, _id);
         uint _benefits = calculateBenefits(_direction,_period,_id);
-        _holder.transfer(_benefits);
+        userRedeemBalance[_holder] = userRedeemBalance[_holder].add(_benefits);
 
         emit Benefits(_direction, _period, _holder, _benefits);
 
@@ -312,6 +315,14 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         return _tokenDeposit.add(_benefits);
     }
     /// --------------------------------- END CLEAR ---------------------------------
+
+    /// --------------------------------- REDEEM ---------------------------------
+    function redeem() external {
+        require(userRedeemBalance[msg.sender] > 0);
+        msg.sender.transfer(userRedeemBalance[msg.sender]);
+        userRedeemBalance[msg.sender] = 0;
+    }
+    /// --------------------------------- REDEEM ---------------------------------
 
     // --------------------------------- TOKENS ---------------------------------
     function getToken(int _direction) public view returns(BinaryFutureERC721Token) {

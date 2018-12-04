@@ -86,10 +86,10 @@ module.exports = {
     depositPercentage,
     amountOfTargetPerShare,
   } = {
-    clearInterval: undefined,
-    depositPercentage: 0,
-    amountOfTargetPerShare: 0
-  }) => {
+      clearInterval: undefined,
+      depositPercentage: 0,
+      amountOfTargetPerShare: 0
+    }) => {
 
     const future = await FutureContract.new(
       futureData.name,
