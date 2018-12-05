@@ -256,7 +256,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         if (rewards > MAX_REWARDS) { rewards = MAX_REWARDS;}
         winnersBalances[_period] = winnersBalances[_period].sub(rewards);
         msg.sender.transfer(rewards);
-        // emit CallerRewarded(rewards, msg.sender);
+        emit CallerRewarded(rewards, msg.sender);
         return true;
     }
 
