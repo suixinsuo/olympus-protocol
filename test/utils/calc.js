@@ -63,15 +63,6 @@ module.exports = {
     return new BigNumber(web3.toWei(etherValue, unit));
   },
 
-  getRewardAmountForBinaryFuture: async (future, winnersBalance) => {
-    let reward = winnersBalance.mul(await future.REWARDS_PERCENTAGE()).div(await future.DENOMINATOR());
-    const min_reward = await future.MIN_REWARDS();
-    const max_reward = await future.MAX_REWARDS();
-    if (reward.lt(min_reward)) reward = min_reward;
-    if (reward.gt(max_reward)) reward = max_reward;
-
-    return reward;
-  },
 
   ethToken: '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
 };
