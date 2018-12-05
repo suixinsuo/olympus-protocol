@@ -470,6 +470,7 @@ contract('Test Binary Future', accounts => {
     assert(winnersBalanceRedeemed.eq(winnersBalance * 0.99), 'Winners redeem all benefits');
     const futurefee = await future.accumulatedFee();
     assert.equal(futurefee,winnersBalance * 0.01); //Check FEE 
+    accumulatedFee = accumulatedFee + futurefee;
     assert(clearFinish, 'Period mark as clear completed');
 
     // Check tokens id
@@ -535,6 +536,8 @@ contract('Test Binary Future', accounts => {
     assert(winnersBalance.add(reward).eq(totalLongInvestment), 'Winners balance is correct');
     assert(winnersInvestment.eq(totalShortInvestment), 'Winners investment is correct');
     assert(winnersBalanceRedeemed.eq(winnersBalance * 0.99), 'Winners redeem all benefits');
+    accumulatedFee = accumulatedFee + winnersBalance * 0.01;
+    
     assert(clearFinish, 'Period mark as clear completed');
 
     // Check tokens id
