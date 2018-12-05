@@ -1,7 +1,7 @@
 const BigNumber = web3.BigNumber;
 module.exports = {
   bytes32ToString: bytes32 => {
-    return web3.toAscii(bytes32).replace(/\u0000/g, "");
+    return web3.toAscii(bytes32).replace(/\u0000/g, '');
   },
 
   getRandomDecimals: () => {
@@ -14,11 +14,11 @@ module.exports = {
   },
 
   ethBalance: async address => {
-    return parseFloat(web3.fromWei((await web3.eth.getBalance(address)).toNumber(), "ether"), 10);
+    return parseFloat(web3.fromWei((await web3.eth.getBalance(address)).toNumber(), 'ether'), 10);
   },
 
   fromWei: number => {
-    return parseFloat(web3.fromWei(number, "ether"), 10);
+    return parseFloat(web3.fromWei(number, 'ether'), 10);
   },
 
   inRange: async (value, range, offset) => {
@@ -32,9 +32,9 @@ module.exports = {
   assertReverts: async (call, message) => {
     try {
       await call();
-      assert(false, "Failed to revert: " + message);
+      assert(false, 'Failed to revert: ' + message);
     } catch (e) {
-      if (!e.message.includes("revert")) {
+      if (!e.message.includes('revert')) {
         throw e; // Error is not caused by revert but for another reason
       }
       assert(true, message);
@@ -44,9 +44,9 @@ module.exports = {
   assertInvalidOpCode: async (call, message) => {
     try {
       await call();
-      assert(false, "Failed: " + message);
+      assert(false, 'Failed: ' + message);
     } catch (e) {
-      if (!e.message.includes("invalid opcode")) {
+      if (!e.message.includes('invalid opcode')) {
         assert(false, e);
         throw e; // Error is not caused by revert but for another reason
       }
@@ -63,5 +63,6 @@ module.exports = {
     return new BigNumber(web3.toWei(etherValue, unit));
   },
 
-  ethToken: "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+
+  ethToken: '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
 };

@@ -73,7 +73,16 @@ module.exports = {
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchangeProvider.address);
 
     const tokens = (await mockKyber.supportedTokens())
-    return { componentList, exchangeProvider, market, mockMOT, locker, reimbursable, stepProvider, tokens };
+    return {
+      componentList,
+      exchangeProvider,
+      market,
+      mockMOT,
+      locker,
+      reimbursable,
+      stepProvider,
+      tokens
+    };
   },
   /**
    * Creates a future which default data
@@ -174,5 +183,15 @@ module.exports = {
       return (await token.getValidTokens()).map((id) => id.toNumber());
     }
     return (await token.getValidTokenIdsByOwner(investor)).map((id) => id.toNumber());
-  }
+  },
+
+  getRewardAmountForBinaryFuture: async (future, winnersBalance) => {
+    let reward = winnersBalance.mul(await future.REWARDS_PERCENTAGE()).div(await future.DENOMINATOR());
+    const min_reward = await future.MIN_REWARDS();
+    const max_reward = await future.MAX_REWARDS();
+    if (reward.lt(min_reward)) reward = min_reward;
+    if (reward.gt(max_reward)) reward = max_reward;
+
+    return reward;
+  },
 }
