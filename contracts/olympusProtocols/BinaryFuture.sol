@@ -155,6 +155,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
         require(status == DerivativeStatus.Active,"3");
         require(_period == _currentPeriod, "5");
+        require(msg.value > 0, "13");
         require(
             getSupplyByPeriod(LONG, _period).add(getSupplyByPeriod(SHORT, _period)) < MAX_INVESTORS,
             "11"
