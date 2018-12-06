@@ -325,8 +325,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
             .div(winnersInvestment[_period]);
         
         //calculateFee
-        ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
-        uint _fee  = feeManager.calculateFee(msg.sender, _totalBenefits);
+        uint _fee = _calculateFee(_totalBenefits);
         accumulatedFee = accumulatedFee.add(_fee);
         uint _benefits = _totalBenefits.sub(_fee);
 
@@ -399,16 +398,25 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
     
+    
     function withdrawFee(uint _amount) external onlyOwner returns(bool) {
         require(_amount > 0);
         require(_amount <= accumulatedFee);
 
         accumulatedFee = accumulatedFee.sub(_amount);
 
-
+        
         //TODO NEED RETURN MOT 
+        //TODO COPY FROM FUND
+        
         msg.sender.transfer(_amount);
         return true;
+    }
+
+    function _calculateFee (uint _totalBenefits) internal  returns(uint){
+        ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
+        uint _fee = feeManager.calculateFee(msg.sender, _totalBenefits);
+        return _fee;
     }
     // --------------------------------- END Management ---------------------------------
 }
