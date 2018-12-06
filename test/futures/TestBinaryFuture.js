@@ -430,7 +430,7 @@ contract('Test Binary Future', accounts => {
     await future.setMockTargetPrice(futureData.disabledValue);
   });
 
-  it('Clear long win With Fee', async () => {
+  it('Clear long win With FEE', async () => {
     const testPeriod = 10002;
     await future.setMockPeriod(testPeriod); // Make sure is estable during the test
 
@@ -469,7 +469,7 @@ contract('Test Binary Future', accounts => {
     assert(winnersInvestment.eq(totalLongInvestment), 'Winners investment is correct');
     assert(winnersBalanceRedeemed.eq(winnersBalance * 0.99), 'Winners redeem all benefits');
     const futurefee = await future.accumulatedFee();
-    assert.equal(futurefee,winnersBalance * 0.01); //Check FEE 
+     
     accumulatedFee = accumulatedFee + futurefee;
     assert(clearFinish, 'Period mark as clear completed');
 
@@ -493,6 +493,7 @@ contract('Test Binary Future', accounts => {
     // Check Redeem Loosers
     await checkLosersRedeemBalance(future, investorsShort);
     // Reset
+    await future.withdrawFee(futurefee);
     await future.setMockPeriod(futureData.disabledValue);
     await future.setMockTargetPrice(futureData.disabledValue);
   });
@@ -536,8 +537,9 @@ contract('Test Binary Future', accounts => {
     assert(winnersBalance.add(reward).eq(totalLongInvestment), 'Winners balance is correct');
     assert(winnersInvestment.eq(totalShortInvestment), 'Winners investment is correct');
     assert(winnersBalanceRedeemed.eq(winnersBalance * 0.99), 'Winners redeem all benefits');
-    accumulatedFee = accumulatedFee + winnersBalance * 0.01;
-    
+
+    const futurefee = await future.accumulatedFee();
+    assert.equal(futurefee,winnersBalance * 0.01); //Check FEE
     assert(clearFinish, 'Period mark as clear completed');
 
     // Check tokens id
@@ -562,6 +564,7 @@ contract('Test Binary Future', accounts => {
     checkLosersRedeemBalance(future, investorsLong);
 
     // Reset
+    await future.withdrawFee(futurefee);
     await future.setMockPeriod(futureData.disabledValue);
     await future.setMockTargetPrice(futureData.disabledValue);
   });
