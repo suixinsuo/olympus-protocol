@@ -62,7 +62,7 @@ contract('Test Binary Future', accounts => {
 
   // ----------------------------- REQUIRED FOR CREATION ----------------------
   // Set the timer to 0
-  it.only('Create a future', async () => {
+  it('Create a future', async () => {
     future = await BinaryFuture.new(
       futureData.name,
       futureData.description,
@@ -724,7 +724,7 @@ contract('Test Binary Future', accounts => {
   // --------------------------------------------------------------------------
   // ----------------------------- EDGE CASES  --------------------------------
 
-  it.only('Minimum investment case', async () => {
+  it('Minimum investment case', async () => {
     const testPeriod = 10010;
     await future.setMockPeriod(testPeriod); // Make sure is estable during the test
 
