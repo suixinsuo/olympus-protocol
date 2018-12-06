@@ -62,16 +62,16 @@ contract('Test Binary Future', accounts => {
 
   // ----------------------------- REQUIRED FOR CREATION ----------------------
   // Set the timer to 0
-  it('Create a future', async () => {
+  it.only('Create a future', async () => {
     future = await BinaryFuture.new(
       futureData.name,
       futureData.description,
       futureData.symbol,
       futureData.category,
 
-      providers.tokens[0], // A token from Kyber
+      providers.tokens[0],
       futureData.investingPeriod,
-    );
+    ); // A token from Kyber
 
     assert.equal((await future.status()).toNumber(), 0); // new
 
@@ -120,16 +120,20 @@ contract('Test Binary Future', accounts => {
   // --------------------------------------------------------------------------
   // ----------------------------- Invest TEST  -------------------------------
 
-  it("can't invest 0", async () => {
+  it("can't invest less than 0.02", async () => {
     // Broke the future
     await future.setMockTargetPrice(0);
     // Invest
-    const depositValue = web3.toWei(0, 'ether');
+    const MIN_INVEST = (await future.MIN_REWARDS()).mul(2);
+    const depositValue = MIN_INVEST.sub(1);
     const period = await future.getCurrentPeriod();
     await future.setMockPeriod(period);
 
     await calc.assertReverts(async () => {
-      await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue });
+      await future.invest(FutureDirection.Long, period, {
+        from: investorA,
+        value: depositValue,
+      });
     }, 'Shall revert because investment is 0');
     // Reset the future
     await future.setMockTargetPrice(futureData.disabledValue);
@@ -143,14 +147,17 @@ contract('Test Binary Future', accounts => {
       futureData.symbol,
       futureData.category,
 
-      providers.tokens[0], // A token from Kyber
+      providers.tokens[0],
       futureData.investingPeriod,
-    );
+    ); // A token from Kyber
 
     const depositValue = web3.toWei(1, 'ether');
     const period = await future.getCurrentPeriod();
     await calc.assertReverts(async () => {
-      await notActiveFuture.invest(FutureDirection.Long, period, { from: investorA, value: depositValue });
+      await notActiveFuture.invest(FutureDirection.Long, period, {
+        from: investorA,
+        value: depositValue,
+      });
     }, 'Shall revert if the future is not Active');
   });
 
@@ -166,7 +173,10 @@ contract('Test Binary Future', accounts => {
     const period = await future.getCurrentPeriod();
 
     await calc.assertReverts(async () => {
-      await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue });
+      await future.invest(FutureDirection.Long, period, {
+        from: investorA,
+        value: depositValue,
+      });
     }, 'Shall revert because target price is broken');
     // Reset the future
     await future.setMockTargetPrice(futureData.disabledValue);
@@ -194,7 +204,10 @@ contract('Test Binary Future', accounts => {
     await future.setMockPeriod(period);
 
     let tx;
-    tx = await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue });
+    tx = await future.invest(FutureDirection.Long, period, {
+      from: investorA,
+      value: depositValue,
+    });
     assert.ok(tx);
 
     // Invest first time
@@ -207,7 +220,10 @@ contract('Test Binary Future', accounts => {
     assert((await longToken.getBuyingPrice(tokensA[0])).eq(1), 'Binary dont store buying Price');
 
     // Invest second time increase investment
-    tx = await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue2 });
+    tx = await future.invest(FutureDirection.Long, period, {
+      from: investorA,
+      value: depositValue2,
+    });
     assert.ok(tx);
 
     tokensA = await longToken.getTokenIdsByOwner(investorA);
@@ -219,7 +235,10 @@ contract('Test Binary Future', accounts => {
 
     // Try to invest in the wrong period
     await calc.assertReverts(async () => {
-      await future.invest(FutureDirection.Long, period + 10, { from: investorA, value: depositValue });
+      await future.invest(FutureDirection.Long, period + 10, {
+        from: investorA,
+        value: depositValue,
+      });
     }, 'Shall revert if the period is wrong');
     // Reset
     await future.setMockPeriod(futureData.disabledValue);
@@ -234,7 +253,10 @@ contract('Test Binary Future', accounts => {
     await future.setMockPeriod(period);
 
     let tx;
-    tx = await future.invest(FutureDirection.Short, period, { from: investorA, value: depositValue });
+    tx = await future.invest(FutureDirection.Short, period, {
+      from: investorA,
+      value: depositValue,
+    });
     assert.ok(tx);
 
     // Invest first time
@@ -247,7 +269,10 @@ contract('Test Binary Future', accounts => {
     assert((await shortToken.getBuyingPrice(tokensA[0])).eq(1), 'Binary dont store buying Price');
 
     // Invest second time increase investment
-    tx = await future.invest(FutureDirection.Short, period, { from: investorA, value: depositValue2 });
+    tx = await future.invest(FutureDirection.Short, period, {
+      from: investorA,
+      value: depositValue2,
+    });
     assert.ok(tx);
 
     tokensA = await shortToken.getTokenIdsByOwner(investorA);
@@ -259,7 +284,10 @@ contract('Test Binary Future', accounts => {
 
     // Try to invest in the wrong period
     await calc.assertReverts(async () => {
-      await future.invest(FutureDirection.Short, period + 10, { from: investorA, value: depositValue });
+      await future.invest(FutureDirection.Short, period + 10, {
+        from: investorA,
+        value: depositValue,
+      });
     }, 'Shall revert if the period is wrong');
 
     // Reset
@@ -278,7 +306,10 @@ contract('Test Binary Future', accounts => {
     for (let i = 0; i < investTimes; i++) {
       // Increase 10, 20, 30%... each time
       await future.setMockTargetPrice(defaultPrice.mul(manualIncrease.mul(i + 1)));
-      await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue });
+      await future.invest(FutureDirection.Long, period, {
+        from: investorA,
+        value: depositValue,
+      });
     }
 
     const lastPrice = await future.prices(period);
@@ -295,9 +326,15 @@ contract('Test Binary Future', accounts => {
     await future.setMockPeriod(period);
 
     // Invest in two periods
-    await future.invest(FutureDirection.Long, period, { from: investorB, value: depositValue });
+    await future.invest(FutureDirection.Long, period, {
+      from: investorB,
+      value: depositValue,
+    });
     await future.setMockPeriod(period + 1);
-    await future.invest(FutureDirection.Long, period + 1, { from: investorB, value: depositValue });
+    await future.invest(FutureDirection.Long, period + 1, {
+      from: investorB,
+      value: depositValue,
+    });
 
     let tokensB = await longToken.getTokenIdsByOwner(investorB);
 
@@ -325,7 +362,9 @@ contract('Test Binary Future', accounts => {
 
     // Period not ready to clear
     await calc.assertReverts(async () => {
-      await future.clear(testPeriod, { from: investorsLong[0] });
+      await future.clear(testPeriod, {
+        from: investorsLong[0],
+      });
     }, "Can't clear in the current period");
 
     // Prices is broken
@@ -333,7 +372,9 @@ contract('Test Binary Future', accounts => {
     await future.setMockTargetPrice(0);
 
     await calc.assertReverts(async () => {
-      await future.clear(testPeriod, { from: investorsLong[0] });
+      await future.clear(testPeriod, {
+        from: investorsLong[0],
+      });
     }, "Can't clear with broken price");
 
     // Is not owner of token
@@ -349,7 +390,9 @@ contract('Test Binary Future', accounts => {
 
     // Cant clear twice
     await calc.assertReverts(async () => {
-      await future.clear(testPeriod, { from: investorsLong[0] });
+      await future.clear(testPeriod, {
+        from: investorsLong[0],
+      });
     }, "Can't clear twice");
 
     // Check Redeem
@@ -357,7 +400,9 @@ contract('Test Binary Future', accounts => {
       const redeemBalance = await future.userRedeemBalance(investorsLong[i]);
       assert(redeemBalance.eq(totalLongInvestment.mul(weights[i])), `Investor long ${i} redeem balance is correct`);
 
-      await future.redeem({ from: investorsLong[i] });
+      await future.redeem({
+        from: investorsLong[i],
+      });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investorsLong[i]);
       assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed his balance`);
@@ -428,7 +473,9 @@ contract('Test Binary Future', accounts => {
 
       assert(redeemBalance.eq(initialInvestment.mul(weights[weightIndex])), `Investor ${i} redeem balance is correct`);
 
-      await future.redeem({ from: investors[i] });
+      await future.redeem({
+        from: investors[i],
+      });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investors[i]);
       assert(redeemBalanceAfter.eq(0), `Investor ${i} redeemed his balance`);
@@ -494,7 +541,9 @@ contract('Test Binary Future', accounts => {
 
       assert(redeemBalance.eq(benefits.add(deposit)), `Investor long ${i} redeem balance is correct`);
 
-      await future.redeem({ from: investorsLong[i] });
+      await future.redeem({
+        from: investorsLong[i],
+      });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investorsLong[i]);
       assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed his balance`);
@@ -561,7 +610,9 @@ contract('Test Binary Future', accounts => {
 
       assert(redeemBalance.eq(benefits.add(deposit)), `Investor short ${i} redeem balance is correct`);
 
-      await future.redeem({ from: investorsShort[i] });
+      await future.redeem({
+        from: investorsShort[i],
+      });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investorsShort[i]);
       assert(redeemBalanceAfter.eq(0), `Investor short ${i} redeemed his balance`);
@@ -651,7 +702,9 @@ contract('Test Binary Future', accounts => {
 
       assert(redeemBalance.eq(deposit), `Investor long ${i} redeem balance is correct`);
 
-      await future.redeem({ from: investorsLong[i] });
+      await future.redeem({
+        from: investorsLong[i],
+      });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investorsLong[i]);
       assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed all his balance`);
@@ -659,7 +712,9 @@ contract('Test Binary Future', accounts => {
 
     // Assert redeem with no balance will revert
     await calc.assertReverts(async () => {
-      await future.redeem({ from: investorsLong[0] });
+      await future.redeem({
+        from: investorsLong[0],
+      });
     }, 'Cant redeem with no pending balance');
 
     // Reset
@@ -667,4 +722,34 @@ contract('Test Binary Future', accounts => {
     await future.setMockTargetPrice(futureData.disabledValue);
   });
   // --------------------------------------------------------------------------
+  // ----------------------------- EDGE CASES  --------------------------------
+
+  it.only('Minimum investment case', async () => {
+    const testPeriod = 10010;
+    await future.setMockPeriod(testPeriod); // Make sure is estable during the test
+
+    // Only invest  1
+    const MIN_INVEST = (await future.MIN_REWARDS()).mul(2);
+    const totalLongInvestment = MIN_INVEST;
+    await investBinarySeveral(future, [investorA], testPeriod, FutureDirection.Long, totalLongInvestment, [1]);
+
+    // Mock price to make long investors win
+    await future.setMockPeriod(testPeriod + 2); // Increase the period so we can clear
+    await future.setMockTargetPrice(new BigNumber(futureData.defaultTargetPrice).mul(0.9));
+
+    // Clear
+    const tx = await future.clear(testPeriod, { from: investorA });
+    assert.ok(tx);
+
+    // Check
+    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(
+      future,
+      testPeriod,
+    );
+    const reward = await futureUtils.getRewardAmountForBinaryFuture(future, totalLongInvestment);
+
+    // Reset
+    await future.setMockPeriod(futureData.disabledValue);
+    await future.setMockTargetPrice(futureData.disabledValue);
+  });
 });
