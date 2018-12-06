@@ -8,15 +8,12 @@ const BinaryFutureToken = artifacts.require('BinaryFutureERC721Token');
 
 const BinaryFuture = artifacts.require('BinaryFutureStub');
 
-
 // FUNCTIONS: Refactor them when created new binary special scenarios
 const investBinarySeveral = async (future, investors, period, direction, totaInvestment, weights) => {
   for (let i = 0; i < investors.length; i++) {
-    await future.invest(direction, period,
-      { from: investors[i], value: totaInvestment.mul(weights[i]) }
-    );
+    await future.invest(direction, period, { from: investors[i], value: totaInvestment.mul(weights[i]) });
   }
-}
+};
 
 const getClearData = async (future, period) => {
   const winnersBalance = await future.winnersBalances(period);
@@ -24,22 +21,21 @@ const getClearData = async (future, period) => {
   const winnersBalanceRedeemed = await future.winnersBalancesRedeemed(period);
   const clearFinish = await future.tokensCleared(period);
   return { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish };
-
-}
+};
 
 const checkTokensInvalid = async (binaryToken, period) => {
   const longInvestedTokens = await binaryToken.getTokensByPeriod(period);
   for (let i = 0; i < longInvestedTokens.length; i++) {
-    assert.notOk(await binaryToken.isTokenValid(longInvestedTokens[i]))
+    assert.notOk(await binaryToken.isTokenValid(longInvestedTokens[i]));
   }
-}
+};
 
 const checkLosersRedeemBalance = async (future, losers) => {
   for (let i = 0; i < losers.length; i++) {
     const redeemBalance = await future.userRedeemBalance(losers[i]);
-    assert(redeemBalance.eq(0), `Investor ${i} has nothing to rebalance`)
+    assert(redeemBalance.eq(0), `Investor ${i} has nothing to rebalance`);
   }
-}
+};
 /**
  *   ================= BASIC FLOW =================
  *   This test is creating a single future with heavily dependency among the test.
@@ -123,6 +119,21 @@ contract('Test Binary Future', accounts => {
 
   // --------------------------------------------------------------------------
   // ----------------------------- Invest TEST  -------------------------------
+
+  it("can't invest 0", async () => {
+    // Broke the future
+    await future.setMockTargetPrice(0);
+    // Invest
+    const depositValue = web3.toWei(0, 'ether');
+    const period = await future.getCurrentPeriod();
+    await future.setMockPeriod(period);
+
+    await calc.assertReverts(async () => {
+      await future.invest(FutureDirection.Long, period, { from: investorA, value: depositValue });
+    }, 'Shall revert because investment is 0');
+    // Reset the future
+    await future.setMockTargetPrice(futureData.disabledValue);
+  });
 
   it("Can't invest while is not active ", async () => {
     // future is already activate, create new future for this scenario
@@ -332,7 +343,6 @@ contract('Test Binary Future', accounts => {
       await future.clear(testPeriod, { from: accounts[0] }); // The owner hasnt invest, cant clear
     }, "Can't clear if doesn't hold a token");
 
-
     // Normal clear - No winners, deposit is returned
     const tx = await future.clear(testPeriod, { from: investorsLong[0] });
     assert.ok(tx);
@@ -342,7 +352,6 @@ contract('Test Binary Future', accounts => {
       await future.clear(testPeriod, { from: investorsLong[0] });
     }, "Can't clear twice");
 
-
     // Check Redeem
     for (let i = 0; i < investorsLong.length; i++) {
       const redeemBalance = await future.userRedeemBalance(investorsLong[i]);
@@ -351,7 +360,7 @@ contract('Test Binary Future', accounts => {
       await future.redeem({ from: investorsLong[i] });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investorsLong[i]);
-      assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed his balance`)
+      assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed his balance`);
     }
 
     // Reset
@@ -388,7 +397,6 @@ contract('Test Binary Future', accounts => {
     const investors = investorsLong.concat(investorsShort);
     // ALL 6 investors get returned the deposit
     for (let i = 0; i < investors.length; i++) {
-
       const weightIndex = i < investorsLong.length ? i : i - investorsLong.length;
       const initialInvestment = i < investorsLong.length ? totalLongInvestment : totalShortInvestment;
       // All the investors
@@ -399,7 +407,10 @@ contract('Test Binary Future', accounts => {
       assert(depositReturned[i].args._amount.eq(deposit));
     }
     // Check
-    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(future, testPeriod);
+    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(
+      future,
+      testPeriod,
+    );
     assert(winnersBalance.eq(0), 'Winners balance is 0');
     assert(winnersInvestment.eq(0), 'Winners investment 0');
     assert(winnersBalanceRedeemed.eq(0), 'Winners redeem is 0');
@@ -409,10 +420,8 @@ contract('Test Binary Future', accounts => {
     await checkTokensInvalid(longToken, testPeriod);
     await checkTokensInvalid(shortToken, testPeriod);
 
-
     // ALL 6 investors get returned the deposit
     for (let i = 0; i < investors.length; i++) {
-
       const weightIndex = i < investorsLong.length ? i : i - investorsLong.length;
       const initialInvestment = i < investorsLong.length ? totalLongInvestment : totalShortInvestment;
       const redeemBalance = await future.userRedeemBalance(investors[i]);
@@ -422,7 +431,7 @@ contract('Test Binary Future', accounts => {
       await future.redeem({ from: investors[i] });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investors[i]);
-      assert(redeemBalanceAfter.eq(0), `Investor ${i} redeemed his balance`)
+      assert(redeemBalanceAfter.eq(0), `Investor ${i} redeemed his balance`);
     }
     // Reset
     await future.setMockPeriod(futureData.disabledValue);
@@ -461,7 +470,10 @@ contract('Test Binary Future', accounts => {
       assert(events[i].args._amount.eq(deposit.add(benefits)));
     }
     // Check
-    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(future, testPeriod);
+    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(
+      future,
+      testPeriod,
+    );
 
     const reward = await futureUtils.getRewardAmountForBinaryFuture(future, totalShortInvestment);
 
@@ -474,7 +486,6 @@ contract('Test Binary Future', accounts => {
     await checkTokensInvalid(longToken, testPeriod);
     await checkTokensInvalid(shortToken, testPeriod);
 
-
     // Check Redeem Winners
     for (let i = 0; i < investorsLong.length; i++) {
       const redeemBalance = await future.userRedeemBalance(investorsLong[i]);
@@ -486,7 +497,7 @@ contract('Test Binary Future', accounts => {
       await future.redeem({ from: investorsLong[i] });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investorsLong[i]);
-      assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed his balance`)
+      assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed his balance`);
     }
     // Check Redeem Loosers
     await checkLosersRedeemBalance(future, investorsShort);
@@ -506,7 +517,6 @@ contract('Test Binary Future', accounts => {
 
     await investBinarySeveral(future, investorsLong, testPeriod, FutureDirection.Long, totalLongInvestment, weights);
     await investBinarySeveral(future, investorsShort, testPeriod, FutureDirection.Short, totalShortInvestment, weights);
-
 
     // Mock price to make long investors win
     await future.setMockPeriod(testPeriod + 2); // Increase the period so we can clear
@@ -529,7 +539,10 @@ contract('Test Binary Future', accounts => {
       assert(events[i].args._amount.eq(deposit.add(benefits)));
     }
     // Check
-    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(future, testPeriod);
+    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(
+      future,
+      testPeriod,
+    );
 
     assert(winnersBalance.add(reward).eq(totalLongInvestment), 'Winners balance is correct');
     assert(winnersInvestment.eq(totalShortInvestment), 'Winners investment is correct');
@@ -539,7 +552,6 @@ contract('Test Binary Future', accounts => {
     // Check tokens id
     await checkTokensInvalid(longToken, testPeriod);
     await checkTokensInvalid(shortToken, testPeriod);
-
 
     // Check Redeem Winners
     for (let i = 0; i < investorsShort.length; i++) {
@@ -552,7 +564,7 @@ contract('Test Binary Future', accounts => {
       await future.redeem({ from: investorsShort[i] });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investorsShort[i]);
-      assert(redeemBalanceAfter.eq(0), `Investor short ${i} redeemed his balance`)
+      assert(redeemBalanceAfter.eq(0), `Investor short ${i} redeemed his balance`);
     }
     // Check Redeem Losers
     checkLosersRedeemBalance(future, investorsLong);
@@ -562,8 +574,7 @@ contract('Test Binary Future', accounts => {
     await future.setMockTargetPrice(futureData.disabledValue);
   });
 
-
-  it("Special scenarios, all losers", async () => {
+  it('Special scenarios, all losers', async () => {
     const testPeriod = 10004;
     await future.setMockPeriod(testPeriod); // Make sure is estable during the test
 
@@ -583,7 +594,10 @@ contract('Test Binary Future', accounts => {
     assert.equal(events.length, 0, 'no winners');
 
     // Check
-    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(future, testPeriod);
+    const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(
+      future,
+      testPeriod,
+    );
     const reward = await futureUtils.getRewardAmountForBinaryFuture(future, totalLongInvestment);
 
     assert(winnersBalance.eq(totalLongInvestment.sub(reward)), 'Winners balance is correct');
@@ -607,7 +621,7 @@ contract('Test Binary Future', accounts => {
   // --------------------------------------------------------------------------
   // ----------------------------- REDEEM TEST  -------------------------------
   // Some redeem logic not tested on the clear scenarios
-  it("Redeems accumulates between clears", async () => {
+  it('Redeems accumulates between clears', async () => {
     const testPeriodA = 10005;
     const testPeriodB = 10006;
 
@@ -630,7 +644,6 @@ contract('Test Binary Future', accounts => {
     await future.setMockPeriod(testPeriodB + 2); // Increase the period so we can clear
     await future.clear(testPeriodB, { from: investorsLong[0] });
 
-
     // Redeem accumulated fee
     for (let i = 0; i < investorsLong.length; i++) {
       const deposit = totalLongInvestment.mul(weights[i]).mul(2); // We have invested in two periods
@@ -641,19 +654,17 @@ contract('Test Binary Future', accounts => {
       await future.redeem({ from: investorsLong[i] });
 
       const redeemBalanceAfter = await future.userRedeemBalance(investorsLong[i]);
-      assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed all his balance`)
+      assert(redeemBalanceAfter.eq(0), `Investor long ${i} redeemed all his balance`);
     }
 
     // Assert redeem with no balance will revert
     await calc.assertReverts(async () => {
       await future.redeem({ from: investorsLong[0] });
-    }, "Cant redeem with no pending balance");
+    }, 'Cant redeem with no pending balance');
 
     // Reset
     await future.setMockPeriod(futureData.disabledValue);
     await future.setMockTargetPrice(futureData.disabledValue);
-
   });
   // --------------------------------------------------------------------------
-
 });
