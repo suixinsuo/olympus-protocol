@@ -133,7 +133,7 @@ async function deployFuture(deployer, network) {
 }
 
 async function deployBinaryFuture(deployer, network) {
-  deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, ComponentList]);
+  deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, PercentageFee,ComponentList]);
   await deployExchange(deployer, network);
 }
 

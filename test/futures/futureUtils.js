@@ -8,7 +8,7 @@ const FutureContract = artifacts.require("FutureContractStub"); // FutureContrac
 const Marketplace = artifacts.require("Marketplace");
 const Locker = artifacts.require("Locker");
 const StepProvider = artifacts.require("StepProvider");
-
+const PercentageFee = artifacts.require("PercentageFee");
 const Reimbursable = artifacts.require("Reimbursable");
 const ComponentList = artifacts.require("ComponentList");
 const FutureToken = artifacts.require("FutureERC721Token");
@@ -38,6 +38,7 @@ const binaryFutureData = {
   description: "Sample of future mvp",
   symbol: 'BFT',
   category: 'General',
+  feePercentage: 100,
   maxSteps: 10, // hardcoded in the derivative
   defaultTargetPrice: 10 ** 18 * 1000,
   investingPeriod: 3, // seconds
@@ -59,17 +60,19 @@ module.exports = {
     const reimbursable = await Reimbursable.deployed();
     const stepProvider = await StepProvider.deployed();
     const mockKyber = await MockKyberNetwork.deployed();
+    const percentageFee = await PercentageFee.deployed();
     const exchangeProvider = await ExchangeProvider.deployed();
     const componentList = await ComponentList.deployed();
 
     await reimbursable.setMotAddress(mockMOT.address);
     await exchangeProvider.setMotAddress(mockMOT.address);
-
+    await percentageFee.setMotAddress(mockMOT.address);
 
     componentList.setComponent(DerivativeProviders.MARKET, market.address);
     componentList.setComponent(DerivativeProviders.LOCKER, locker.address);
     componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
+    componentList.setComponent(DerivativeProviders.FEE, percentageFee.address);
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchangeProvider.address);
 
     const tokens = (await mockKyber.supportedTokens())
