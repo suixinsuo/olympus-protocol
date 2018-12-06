@@ -51,7 +51,6 @@ const checkLosersRedeemBalance = async (future, losers) => {
 contract('Test Binary Future', accounts => {
   let future;
   let providers;
-  let accumulatedFee = 0;
 
   const investorA = accounts[1];
   const investorB = accounts[2];
@@ -469,8 +468,7 @@ contract('Test Binary Future', accounts => {
     assert(winnersInvestment.eq(totalLongInvestment), 'Winners investment is correct');
     assert(winnersBalanceRedeemed.eq(winnersBalance * 0.99), 'Winners redeem all benefits');
     const futurefee = await future.accumulatedFee();
-     
-    accumulatedFee = accumulatedFee + futurefee;
+    
     assert(clearFinish, 'Period mark as clear completed');
 
     // Check tokens id
