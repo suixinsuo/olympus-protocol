@@ -121,8 +121,6 @@ contract('Test Binary Future', accounts => {
   // ----------------------------- Invest TEST  -------------------------------
 
   it("can't invest less than 0.02", async () => {
-    // Broke the future
-    await future.setMockTargetPrice(0);
     // Invest
     const MIN_INVEST = (await future.MIN_REWARDS()).mul(2);
     const depositValue = MIN_INVEST.sub(1);
@@ -136,6 +134,7 @@ contract('Test Binary Future', accounts => {
       });
     }, 'Shall revert because investment is 0');
     // Reset the future
+    await future.setMockPeriod(futureData.disabledValue);
     await future.setMockTargetPrice(futureData.disabledValue);
   });
 
