@@ -1,10 +1,12 @@
 pragma solidity 0.4.24;
 
 import "../interfaces/ComponentContainerInterface.sol";
+import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/BinaryFutureInterface.sol";
 import "../interfaces/PriceProviderInterface.sol";
 import "../libs/ERC20Extended.sol";
 import "../libs/ERC20NoReturn.sol";
+import "../interfaces/ChargeableInterface.sol";
 import "../interfaces/ComponentListInterface.sol";
 import "../interfaces/MarketplaceInterface.sol";
 import "../BaseDerivative.sol";
@@ -24,6 +26,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     uint public constant MAX_REWARDS = 10**17;
     uint public constant REWARDS_PERCENTAGE = 100; //1%
 
+    uint public accumulatedFee = 0;
 
     // Enum and constants
     int public constant LONG = -1;
@@ -82,17 +85,17 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     }
     /// --------------------------------- INITIALIZE ---------------------------------
 
-    function initialize(address _componentList) public {
+    function initialize(address _componentList,uint _fee) public {
 
         require(status == DerivativeStatus.New, "1");
 
         _initialize(_componentList);
-        bytes32[2] memory _names = [MARKET, EXCHANGE];
+        bytes32[3] memory _names = [MARKET, EXCHANGE, FEE];
 
         for (uint i = 0; i < _names.length; i++) {
             updateComponent(_names[i]);
         }
-
+        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
 
         initializeTokens();
@@ -319,9 +322,14 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         uint _totalWinners = getSupplyByPeriod(_direction, _period);
 
         // I invest 20% of winner side, get 20% of benefits
-        uint _benefits = winnersBalances[_period]
+        uint _totalBenefits = winnersBalances[_period]
             .mul(_tokenDeposit)
             .div(winnersInvestment[_period]);
+        
+        //calculateFee
+        uint _fee = _calculateFee(_totalBenefits);
+        accumulatedFee = accumulatedFee.add(_fee);
+        uint _benefits = _totalBenefits.sub(_fee);
 
         winnersBalancesRedeemed[_period] = winnersBalancesRedeemed[_period]
             .add(_benefits); // Keep track
@@ -386,4 +394,36 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     }
     // --------------------------------- END TOKENS ---------------------------------
 
+    // --------------------------------- Management ---------------------------------
+
+    function setManagementFee(uint _fee) external onlyOwner {
+        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
+    }
+    
+    
+    function withdrawFee(uint _amount) external onlyOwner returns(bool) {
+        require(_amount > 0);
+        require(_amount <= accumulatedFee);
+
+        accumulatedFee = accumulatedFee.sub(_amount);
+        // Exchange to MOT
+        OlympusExchangeInterface exchange = getExchangeInterface();
+        ERC20Extended MOT = ERC20Extended(FeeChargerInterface(address(exchange)).MOT());
+        uint _rate;
+        (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
+
+        // This is MOT, so we should require this to be true.
+        require(exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0));
+        msg.sender.transfer(_amount);
+        return true;
+    }
+    function getExchangeInterface() private view returns (OlympusExchangeInterface){
+        return OlympusExchangeInterface(getComponentByName(EXCHANGE));
+    }
+    function _calculateFee (uint _totalBenefits) internal  returns(uint){
+        ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
+        uint _fee = feeManager.calculateFee(msg.sender, _totalBenefits);
+        return _fee;
+    }
+    // --------------------------------- END Management ---------------------------------
 }

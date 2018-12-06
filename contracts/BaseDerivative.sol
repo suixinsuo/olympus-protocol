@@ -18,6 +18,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer {
     bytes32 public constant EXCHANGE = "ExchangeProvider";
     bytes32 public constant WITHDRAW = "WithdrawProvider";
     bytes32 public constant REBALANCE = "RebalanceProvider";
+    bytes32 public constant FEE = "FeeProvider";
     bytes32 public constant LOCKER = "LockerProvider";
     bytes32 public constant REIMBURSABLE = "Reimbursable";
     bytes32 public constant STEP = "StepProvider";
