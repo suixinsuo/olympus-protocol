@@ -430,7 +430,7 @@ contract('Test Binary Future', accounts => {
     await future.setMockTargetPrice(futureData.disabledValue);
   });
 
-  it('Clear long win', async () => {
+  it('Clear long win With Fee', async () => {
     const testPeriod = 10002;
     await future.setMockPeriod(testPeriod); // Make sure is estable during the test
 
@@ -497,7 +497,7 @@ contract('Test Binary Future', accounts => {
     await future.setMockTargetPrice(futureData.disabledValue);
   });
 
-  it('Clear short win', async () => {
+  it('Clear short win with FEE ', async () => {
     const testPeriod = 10003;
     await future.setMockPeriod(testPeriod); // Make sure is estable during the test
 
@@ -609,7 +609,7 @@ contract('Test Binary Future', accounts => {
   });
 
   // --------------------------------------------------------------------------
-  it('Clear long win with 0 fee', async () => {
+  it('Clear long win ', async () => {
     const testPeriod = 10005;
     await future.setMockPeriod(testPeriod);
     await future.setManagementFee(0);

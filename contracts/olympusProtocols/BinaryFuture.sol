@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import "../interfaces/ComponentContainerInterface.sol";
+import "../interfaces/implementations/OlympusExchangeInterface.sol";
 import "../interfaces/BinaryFutureInterface.sol";
 import "../interfaces/PriceProviderInterface.sol";
 import "../libs/ERC20Extended.sol";
@@ -404,15 +405,20 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         require(_amount <= accumulatedFee);
 
         accumulatedFee = accumulatedFee.sub(_amount);
+        // Exchange to MOT
+        OlympusExchangeInterface exchange = getExchangeInterface();
+        ERC20Extended MOT = ERC20Extended(FeeChargerInterface(address(exchange)).MOT());
+        uint _rate;
+        (, _rate ) = exchange.getPrice(ETH, MOT, _amount, 0x0);
 
-        
-        //TODO NEED RETURN MOT 
-        //TODO COPY FROM FUND
-        
+        // This is MOT, so we should require this to be true.
+        require(exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0));
         msg.sender.transfer(_amount);
         return true;
     }
-
+    function getExchangeInterface() private view returns (OlympusExchangeInterface){
+        return OlympusExchangeInterface(getComponentByName(EXCHANGE));
+    }
     function _calculateFee (uint _totalBenefits) internal  returns(uint){
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint _fee = feeManager.calculateFee(msg.sender, _totalBenefits);
