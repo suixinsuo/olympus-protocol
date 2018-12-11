@@ -11,6 +11,7 @@ import "../interfaces/MarketplaceInterface.sol";
 import "../BaseDerivative.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./tokens/FutureERC721Token.sol";
+import "../interfaces/ChainlinkInterface.sol";
 
 
 contract FutureContract is BaseDerivative, FutureInterfaceV1 {
@@ -20,6 +21,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     uint public constant DENOMINATOR = 10000;
     uint public constant TOKEN_DENOMINATOR = 10**18;
     uint public constant INITIAL_FEE = 10**17;
+    uint public constant MAX_TIMEOUT = 300;
 
     // Enum and constants
     int public constant LONG = -1;
@@ -101,7 +103,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         require(msg.value >= INITIAL_FEE, "2");
 
         _initialize(_componentList);
-        bytes32[4] memory _names = [MARKET, LOCKER, REIMBURSABLE, STEP];
+        bytes32[5] memory _names = [MARKET, LOCKER, REIMBURSABLE, STEP, ORACLE];
 
         for (uint i = 0; i < _names.length; i++) {
             updateComponent(_names[i]);
@@ -114,6 +116,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         _intervals[1] = 20 minutes;
         _intervalCategories[0] = CLEAR;
         _intervalCategories[1] = CHECK_POSITION;
+        
         LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_intervalCategories, _intervals);
         checkLocker(CLEAR); // Execute the timer so gets intialized
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
@@ -135,8 +138,15 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     /// --------------------------------- ORACLES ---------------------------------
 
-    function getTargetPrice() public view returns(uint) {
-        return targetPrice;
+    function getTargetPrice() public returns(uint256 _price) {
+        _price =  ChainlinkInterface(getComponentByName(ORACLE)).currentPrice;
+    }
+    function CheckOraclePriceTime() internal returns(bool){
+        if (now.sub(ChainlinkInterface(getComponentByName(ORACLE)).lastUpdateTime) > MAX_TIMEOUT){
+            return false;
+        }else{
+            return true;
+        }
     }
     /// --------------------------------- END ORACLES ---------------------------------
 
@@ -269,7 +279,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         int _direction, // long or short
         uint _shares // shares of the target.
         ) external payable returns (bool) {
-
+        require(CheckOraclePriceTime(),"99");
         uint _targetPrice = getTargetPrice();
         require( status == DerivativeStatus.Active,"3");
         require(_targetPrice > 0, "4");
@@ -318,6 +328,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
                 reimburse();
                 return true;
             }
+            require(CheckOraclePriceTime(),"99");
             frozenPrice = getTargetPrice();
             productStatus = MutexStatus.CHECK_POSITION;
         }
@@ -383,9 +394,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
                 reimburse();
                 return true;
             }
-
+            require(CheckOraclePriceTime(),"99");
             frozenPrice = getTargetPrice();
-            require(frozenPrice > 0);
+            
             _stepStatus = ClearPositionPhases(updateStatusStep(CLEAR));
         }
 
@@ -511,6 +522,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     // in ETH
     function getMyAssetValue(int _direction) external view returns (uint){
         uint[] memory tokens = getTokenIdsByOwner(_direction, msg.sender);
+        require(CheckOraclePriceTime(),"99");
         uint price = getTargetPrice();
         uint balance;
         for(uint i = 0; i < tokens.length; i++) {
