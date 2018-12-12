@@ -31,6 +31,9 @@ contract ChainlinkOracle is Chainlinked, Ownable {
     newChainlinkWithENS(ROPSTEN_ENS, ROPSTEN_CHAINLINK_ENS);
   }
 
+  function getCurrentPrice() public view returns(uint256){return currentPrice;}
+  function getLastUpdateTime() public view returns(uint256){return lastUpdateTime;}
+
   function requestEthereumPrice(string _jobId, string _currency) 
     public
     onlyOwner
