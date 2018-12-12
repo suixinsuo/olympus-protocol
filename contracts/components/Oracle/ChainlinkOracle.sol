@@ -15,8 +15,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     string public category = "ORACLE";
     string public version = "1.0";
 
-    address constant ROPSTEN_ENS = 0x112234455C3a32FD11230C42E7Bccd4A84e02010;
-    bytes32 constant ROPSTEN_CHAINLINK_ENS = 0xead9c0180f6d685e43522fcfe277c2f0465fe930fb32b5b415826eacf9803727;
+
 
     event RequestEthereumPriceFulfilled(
       bytes32 indexed requestId,
@@ -34,7 +33,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     );
 
     constructor() Ownable() public {
-        newChainlinkWithENS(ROPSTEN_ENS, ROPSTEN_CHAINLINK_ENS);
+       
     }
 
     function getCurrentPrice() public view returns(uint256){return currentPrice;}
@@ -110,9 +109,9 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         lastMarket = _market;
     }
 
-    function updateChainlinkAddresses() public onlyOwner {
-        newChainlinkWithENS(ROPSTEN_ENS, ROPSTEN_CHAINLINK_ENS);
-    }
+    // function updateChainlinkAddresses() public onlyOwner {
+    //     newChainlinkWithENS(ROPSTEN_ENS, ROPSTEN_CHAINLINK_ENS);
+    // }
 
     function getChainlinkToken() public view returns (address) {
         return chainlinkToken();

@@ -1,5 +1,7 @@
 const calc = require("../utils/calc");
 const BigNumber = web3.BigNumber;
+const MockOracle = artifacts.require("MockOracle");// FutureContract With functions for testing
+const ComponentList = artifacts.require("ComponentList");
 
 const {
   DerivativeProviders,
@@ -14,6 +16,8 @@ const futureUtils = require("./futureUtils");
 const futureData = futureUtils.futureData;
 
 const FutureContract = artifacts.require("FutureContractStub"); // FutureContract With functions for testing
+let componentlist;
+let mockoracle; // FutureContract With functions for testing
 const FutureToken = artifacts.require("FutureERC721Token");
 
 const SHORT_WIN = 0.95; // For this default price this multiplier will make short win , long doesn't lose all the posit
@@ -43,6 +47,11 @@ contract("Test Future MVP", accounts => {
   let shortToken; // FutureERC721Token
   before("Initialize ComponentList", async () => {
     providers = await futureUtils.setUpComponentList();
+    mockoracle = await MockOracle.deployed();
+    componentlist = await ComponentList.deployed();
+    let component = await componentlist.getLatestComponent("ChainlinkOracle");
+    await console.log("onratechange");
+    await console.log(component);
   });
 
   // ----------------------------- REQUIRED FOR CREATION ----------------------
@@ -175,6 +184,7 @@ contract("Test Future MVP", accounts => {
   it("Invest => Se the price", async () => {
     const targetPrice = futureData.defaultTargetPrice;
     await future.setTargetPrice(targetPrice);
+    await mockoracle.setMockTargetPrice(targetPrice);
     assert.equal((await future.getTargetPrice()).toNumber(), targetPrice);
   });
 

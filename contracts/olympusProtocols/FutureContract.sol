@@ -103,7 +103,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         require(msg.value >= INITIAL_FEE, "2");
 
         _initialize(_componentList);
-        bytes32[5] memory _names = [MARKET, LOCKER, REIMBURSABLE, STEP, ORACLE];
+        bytes32[4] memory _names = [MARKET, LOCKER, REIMBURSABLE, STEP];
 
         for (uint i = 0; i < _names.length; i++) {
             updateComponent(_names[i]);
