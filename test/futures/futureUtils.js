@@ -5,6 +5,7 @@ const BigNumber = web3.BigNumber;
 
 
 const FutureContract = artifacts.require("FutureContractStub"); // FutureContract With functions for testing
+const MockOracle = artifacts.require("MockOracle");// FutureContract With functions for testing
 const Marketplace = artifacts.require("Marketplace");
 const Locker = artifacts.require("Locker");
 const StepProvider = artifacts.require("StepProvider");
@@ -63,6 +64,7 @@ module.exports = {
     const percentageFee = await PercentageFee.deployed();
     const exchangeProvider = await ExchangeProvider.deployed();
     const componentList = await ComponentList.deployed();
+    const mockoracle = await MockOracle.deployed();
 
     await reimbursable.setMotAddress(mockMOT.address);
     await exchangeProvider.setMotAddress(mockMOT.address);
@@ -73,6 +75,7 @@ module.exports = {
     componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
     componentList.setComponent(DerivativeProviders.FEE, percentageFee.address);
+    componentList.setComponent(DerivativeProviders.ORACLE, mockoracle.address);
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchangeProvider.address);
 
     const tokens = (await mockKyber.supportedTokens())

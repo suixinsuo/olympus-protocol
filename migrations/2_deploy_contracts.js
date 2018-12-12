@@ -8,6 +8,7 @@ let KyberNetworkAdapter = artifacts.require("../contracts/components/exchange/ex
 let MockBrokenTokenKyberNetworkAdapter = artifacts.require(
   "../contracts/components/exchange/exchanges/MockBrokenTokenKyberNetworkAdapter.sol"
 );
+let MockOracle = artifacts.require("MockOracle");
 let MockKyberNetwork = artifacts.require("MockKyberNetwork");
 let MockDDEXAdapter = artifacts.require("MockDDEXAdapter");
 let MockDDEX = artifacts.require("MockDDEX");
@@ -128,7 +129,7 @@ function deployExchange(deployer, network) {
 }
 
 async function deployFuture(deployer, network) {
-  deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, ComponentList]);
+  deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, ComponentList, MockOracle]);
   await deployExchange(deployer, network);
 }
 
