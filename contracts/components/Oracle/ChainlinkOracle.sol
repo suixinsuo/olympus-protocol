@@ -1,8 +1,8 @@
 pragma solidity 0.4.24;
 
-import "chainlink/solidity/contracts/Chainlinked.sol";
+import "../Oracle/contracts/Chainlinked.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "contracts/interfaces/ComponentInterface.sol";
+import "../../interfaces/ComponentInterface.sol";
 
 contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     uint256 public currentPrice;
