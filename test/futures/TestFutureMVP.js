@@ -49,8 +49,6 @@ contract("Test Future MVP", accounts => {
     providers = await futureUtils.setUpComponentList();
     mockoracle = await MockOracle.deployed();
     componentlist = await ComponentList.deployed();
-    let component = await componentlist.getLatestComponent(DerivativeProviders.ORACLE);
-    await console.log(component);
   });
 
   // ----------------------------- REQUIRED FOR CREATION ----------------------
@@ -184,7 +182,6 @@ contract("Test Future MVP", accounts => {
     const targetPrice = futureData.defaultTargetPrice;
     await future.setTargetPrice(targetPrice);
     await mockoracle.setMockTargetPrice(targetPrice);
-    await console.log( await mockoracle.getCurrentPrice());
     assert.equal((await future.getTargetPrice()).toNumber(), targetPrice);
   });
 

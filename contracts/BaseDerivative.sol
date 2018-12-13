@@ -32,6 +32,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer {
         excludedComponents[MARKET] = true;
         excludedComponents[STEP] = true;
         excludedComponents[LOCKER] = true;
+        excludedComponents[ORACLE] = true;
     }
 
 
