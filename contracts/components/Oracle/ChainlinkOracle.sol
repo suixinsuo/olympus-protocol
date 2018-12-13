@@ -33,7 +33,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     );
 
     constructor() Ownable() public {
-       
+        addwhitelist(msg.sender);
     }
 
     function getCurrentPrice() public view returns(uint256){return currentPrice;}
@@ -47,7 +47,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     //"2216dd2bf5464687a05ded0b844e200c", "USD"
     function requestEthereumPrice(string _jobId, string _currency) 
       public
-      onlyOwner
+      onlywhitelist
     {
         ChainlinkLib.Run memory run = newRun(stringToBytes32(_jobId), this, this.fulfillEthereumPrice.selector);
         run.add("url", "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,EUR,JPY");
@@ -142,5 +142,22 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
           result := mload(add(source, 32))
         }
     }
+
+    //Management Function 
+    mapping(address => bool) whiteList;
+    function addwhitelist(address _controller) public onlyOwner returns(bool){
+        whiteList[_controller] = true;
+        return true;
+    }
+    function delwhitelist(address _controller) public onlyOwner returns(bool){
+        whiteList[_controller] = false;
+        return true;
+    }
+
+    modifier onlywhitelist() {
+        require(whiteList[msg.sender],"98");
+        _;
+    }
+
 
 }
