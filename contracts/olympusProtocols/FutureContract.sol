@@ -103,7 +103,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         require(msg.value >= INITIAL_FEE, "2");
 
         _initialize(_componentList);
-        bytes32[4] memory _names = [MARKET, LOCKER, REIMBURSABLE, STEP];
+        bytes32[5] memory _names = [MARKET, LOCKER, REIMBURSABLE, STEP,ORACLE];
 
         for (uint i = 0; i < _names.length; i++) {
             updateComponent(_names[i]);
@@ -139,7 +139,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     /// --------------------------------- ORACLES ---------------------------------
 
     function getTargetPrice() public view returns(uint256 _price) {
-        _price =  ChainlinkInterface(getComponentByName(ORACLE)).getCurrentPrice();
+        _price =  ChainlinkInterface(getComponentByName("ChainlinkOracle")).getCurrentPrice();
     }
     function CheckOraclePriceTime() internal view returns(bool){
         if (now.sub(ChainlinkInterface(getComponentByName(ORACLE)).getLastUpdateTime()) > MAX_TIMEOUT){
