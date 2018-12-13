@@ -64,7 +64,7 @@ contract BinaryFutureStub is BinaryFuture {
     }
 
     function clear(uint _period) external returns (bool) {
-        return _clear(_period, getTargetPrice());
+        return _clear(_period, getCurrentPeriod(), getTargetPrice());
     }
 
   /// --------------------------------- END STUBS ---------------------------------

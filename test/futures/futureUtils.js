@@ -33,21 +33,9 @@ const futureData = {
   maxSteps: 10, // hard coded in the derivative
   defaultTargetPrice: 10 ** 18,
 };
-const binaryFutureData = {
-  name: "Binary Future Test",
-  description: "Sample of future mvp",
-  symbol: 'BFT',
-  category: 'General',
-  maxSteps: 10, // hardcoded in the derivative
-  defaultTargetPrice: 10 ** 18 * 1000,
-  investingPeriod: 3, // seconds
-  disabledValue: 1, // Hardcode on the stub, so we can check 0 values scenarioss
-};
-
 module.exports = {
 
   futureData,
-  binaryFutureData,
   DENOMINATOR,
   INITIAL_FEE,
 
@@ -185,13 +173,4 @@ module.exports = {
     return (await token.getValidTokenIdsByOwner(investor)).map((id) => id.toNumber());
   },
 
-  getRewardAmountForBinaryFuture: async (future, winnersBalance) => {
-    let reward = winnersBalance.mul(await future.REWARDS_PERCENTAGE()).div(await future.DENOMINATOR());
-    const min_reward = await future.MIN_REWARDS();
-    const max_reward = await future.MAX_REWARDS();
-    if (reward.lt(min_reward)) reward = min_reward;
-    if (reward.gt(max_reward)) reward = max_reward;
-
-    return reward;
-  },
 }

@@ -15,7 +15,9 @@ Open to terminals
 // Direction address is MOT, must be change later on
 `
 "FutureTest", "Test Future" , "FTT", "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a", "2", "1000","8000"
-"Test Future","For testing purposes","TFT","0x696e646578","0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","2","2","100"
+"Test Future","For testing purposes","TFT","0x696e646578", "1", "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a","2","2","100"
+
+
 2. Initialize (1h)
 
 "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","3600"
@@ -24,6 +26,10 @@ Open to terminals
 
 3. Set price (stub)
 1000000000000000000
+
+4. set check position interval (20 s)
+
+"0x436865636b506f736974696f6e", 20
 
 # BinaryFuture
 1. "Future Binary Test", "Test Binary Future" , "BFT",

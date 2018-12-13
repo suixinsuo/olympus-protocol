@@ -199,14 +199,14 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     /// --------------------------------- CLEAR ---------------------------------
     function clear(uint _period) external returns (bool) {
-        return _clear(_period, getTargetPrice());
+        return _clear(_period, getCurrentPeriod(), getTargetPrice());
     }
 
 
-    function _clear(uint _period, uint _currentPrice) internal returns (bool) {
+    function _clear(uint _period, uint _currentPeriod, uint _currentPrice) internal returns (bool) {
 
         // CHECKS
-        require(_period < getCurrentPeriod() - 1, "7"); // 3 to 4 pm cant withdraw after 5pm
+        require(_period < _currentPeriod - 1, "7"); // 3 to 4 pm cant withdraw after 5pm
         require(tokensCleared[_period] == false, "8"); // Cant clear twice
         // Clear has to hold a token. We also make sure period without tokens get cleared.
         require(

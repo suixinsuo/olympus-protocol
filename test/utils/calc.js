@@ -63,6 +63,11 @@ module.exports = {
     return new BigNumber(web3.toWei(etherValue, unit));
   },
 
+  delay: async milliseconds => {
+    return new Promise(resolve => {
+      setTimeout(resolve, milliseconds);
+    });
+  },
 
   ethToken: '0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
 };
