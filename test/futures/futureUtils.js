@@ -117,6 +117,8 @@ module.exports = {
       depositPercentage || futureData.depositPercentage,
       futureData.forceClosePositionDelta
     );
+    
+    const mockoracle = await MockOracle.deployed();
 
     const interval = (clearInterval === undefined) ? futureData.clearInterval :
       clearInterval;
@@ -133,7 +135,7 @@ module.exports = {
 
     // Config for the stub
     await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, 0);
-    await future.setTargetPrice(futureData.defaultTargetPrice);
+    await mockoracle.setMockTargetPrice(futureData.defaultTargetPrice);
 
     return {
       future,
