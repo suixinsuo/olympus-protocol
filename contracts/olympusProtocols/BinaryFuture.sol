@@ -85,7 +85,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     }
     /// --------------------------------- INITIALIZE ---------------------------------
 
-    function initialize(address _componentList,uint _fee) public {
+    function initialize(address _componentList, uint _fee) public {
 
         require(status == DerivativeStatus.New, "1");
 
@@ -329,7 +329,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         uint _totalBenefits = winnersBalances[_period]
             .mul(_tokenDeposit)
             .div(winnersInvestment[_period]);
-        
+
         //calculateFee
         uint _fee = _calculateFee(_totalBenefits);
         accumulatedFee = accumulatedFee.add(_fee);
@@ -403,8 +403,8 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
     function setManagementFee(uint _fee) external onlyOwner {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
-    
-    
+
+
     function withdrawFee(uint _amount) external onlyOwner returns(bool) {
         require(_amount > 0);
         require(_amount <= accumulatedFee);

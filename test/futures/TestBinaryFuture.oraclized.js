@@ -49,7 +49,7 @@ contract('Test Binary Future', accounts => {
     );
 
 
-    await future.initialize(providers.componentList.address, futureUtils.maxAllowInterval);
+    await future.initialize(providers.componentList.address, futureUtils.fee, futureUtils.maxAllowInterval);
     assert.equal((await future.status()).toNumber(), 1); // Active
 
     const longAddress = await future.getLongToken();

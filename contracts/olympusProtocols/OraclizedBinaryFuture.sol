@@ -28,8 +28,8 @@ contract OraclizedBinaryFuture is BinaryFuture {
     }
 
     // Added extra parametter to initialize
-    function initialize(address _componentList, uint _allowedPriceInterval) public payable {
-        super.initialize(_componentList);
+    function initialize(address _componentList,uint _fee, uint _allowedPriceInterval) public payable {
+        super.initialize(_componentList, _fee);
         allowedPriceInterval = _allowedPriceInterval;
     }
     /// --------------------------------- END CONFIG ---------------------------------

@@ -32,6 +32,7 @@ const futureData = {
   ethDeposit: 0.1, // 'ETHER'
   maxSteps: 10, // hard coded in the derivative
   defaultTargetPrice: 10 ** 18,
+  fee: 0,
 };
 module.exports = {
 
