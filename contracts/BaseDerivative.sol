@@ -19,6 +19,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer {
     bytes32 public constant WITHDRAW = "WithdrawProvider";
     bytes32 public constant REBALANCE = "RebalanceProvider";
     bytes32 public constant FEE = "FeeProvider";
+    bytes32 public constant ORACLE = "ChainlinkOracle";
     bytes32 public constant LOCKER = "LockerProvider";
     bytes32 public constant REIMBURSABLE = "Reimbursable";
     bytes32 public constant STEP = "StepProvider";
@@ -31,6 +32,7 @@ contract BaseDerivative is DerivativeInterface, ComponentContainer {
         excludedComponents[MARKET] = true;
         excludedComponents[STEP] = true;
         excludedComponents[LOCKER] = true;
+        excludedComponents[ORACLE] = true;
     }
 
 

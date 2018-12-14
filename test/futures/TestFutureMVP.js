@@ -1,5 +1,7 @@
 const calc = require("../utils/calc");
 const BigNumber = web3.BigNumber;
+const MockOracle = artifacts.require("MockOracle");// FutureContract With functions for testing
+const ComponentList = artifacts.require("ComponentList");
 
 const {
   DerivativeProviders,
@@ -14,6 +16,8 @@ const futureUtils = require("./futureUtils");
 const futureData = futureUtils.futureData;
 
 const FutureContract = artifacts.require("FutureContractStub"); // FutureContract With functions for testing
+let componentlist;
+let mockoracle; // FutureContract With functions for testing
 const FutureToken = artifacts.require("FutureERC721Token");
 
 const SHORT_WIN = 0.95; // For this default price this multiplier will make short win , long doesn't lose all the posit
@@ -43,6 +47,8 @@ contract("Test Future MVP", accounts => {
   let shortToken; // FutureERC721Token
   before("Initialize ComponentList", async () => {
     providers = await futureUtils.setUpComponentList();
+    mockoracle = await MockOracle.deployed();
+    componentlist = await ComponentList.deployed();
   });
 
   // ----------------------------- REQUIRED FOR CREATION ----------------------
@@ -174,7 +180,7 @@ contract("Test Future MVP", accounts => {
 
   it("Invest => Se the price", async () => {
     const targetPrice = futureData.defaultTargetPrice;
-    await future.setTargetPrice(targetPrice);
+    await mockoracle.setMockTargetPrice(targetPrice);
     assert.equal((await future.getTargetPrice()).toNumber(), targetPrice);
   });
 
@@ -367,7 +373,7 @@ contract("Test Future MVP", accounts => {
 
     // -------------------------- PRICE HIGH -----------------------
     updatePrice = SHORT_WIN * futureData.defaultTargetPrice; // SHORT win
-    await future.setTargetPrice(updatePrice);
+    await mockoracle.setMockTargetPrice(updatePrice);
 
     // LONG
     myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
@@ -381,7 +387,7 @@ contract("Test Future MVP", accounts => {
     // -------------------------- PRICE LOW -----------------------
     updatePrice = LONG_WIN * futureData.defaultTargetPrice; // LONG win
 
-    await future.setTargetPrice(updatePrice);
+    await mockoracle.setMockTargetPrice(updatePrice);
     // LONG
     myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
     tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
@@ -393,7 +399,7 @@ contract("Test Future MVP", accounts => {
 
     // -------------------------- PRICE is TOO LOW -----------------------
     updatePrice = SHORT_WIN_ALL * futureData.defaultTargetPrice; // SHORT win
-    await future.setTargetPrice(updatePrice);
+    await mockoracle.setMockTargetPrice(updatePrice);
     // LONG
     myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
     tokenTestValue = futureUtils.getTokenActualValue(FutureDirection.Long, tokenDeposit, targetPrice, updatePrice);
@@ -406,7 +412,7 @@ contract("Test Future MVP", accounts => {
 
     // -------------------------- PRICE is TOO HIGH -----------------------
     updatePrice = new BigNumber(LONG_WIN_ALL).mul(futureData.defaultTargetPrice).toNumber(); // LONG win
-    await future.setTargetPrice(updatePrice);
+    await mockoracle.setMockTargetPrice(updatePrice);
 
     // LONG
     myAssetsValue = (await future.getMyAssetValue(FutureDirection.Long, { from: investorA })).toNumber();
@@ -418,7 +424,7 @@ contract("Test Future MVP", accounts => {
     assert.equal(myAssetsValue, tokenTestValue * tokensBCount, 'Assets B is 0');
 
     // Reset
-    await future.setTargetPrice(futureData.defaultTargetPrice);
+    await mockoracle.setMockTargetPrice(futureData.defaultTargetPrice);
 
   });
 
@@ -431,7 +437,8 @@ contract("Test Future MVP", accounts => {
     await future.setMaxSteps(DerivativeProviders.CHECK_POSITION, 1);
 
     // We set step provider to 1
-    await future.setTargetPrice(new BigNumber(SHORT_WIN).mul(futureData.defaultTargetPrice));
+    await mockoracle.setMockTargetPrice(new BigNumber(SHORT_WIN).mul(futureData.defaultTargetPrice));
+
 
     // 4 tokens, 4 calls
     await future.checkPosition();
@@ -456,7 +463,7 @@ contract("Test Future MVP", accounts => {
 
     // Reset
     await future.setMaxSteps(DerivativeProviders.CHECK_POSITION, futureData.maxSteps);
-    await future.setTargetPrice(new BigNumber(LONG_WIN).mul(futureData.defaultTargetPrice));
+    await mockoracle.setMockTargetPrice(new BigNumber(SHORT_WIN).mul(futureData.defaultTargetPrice));
     // Call at once
     await future.checkPosition();
     assert.equal(await futureUtils.getStepStatus(future, providers.stepProvider, DerivativeProviders.CHECK_POSITION), 0, 'Finish Check Position');
@@ -467,7 +474,8 @@ contract("Test Future MVP", accounts => {
     assert.equal((await future.productStatus()).toNumber(), MutexStatus.AVAILABLE);
 
     // Reset
-    await future.setTargetPrice(new BigNumber(1).mul(1 ** 18));
+    await mockoracle.setMockTargetPrice(new BigNumber(1).mul(1 ** 18));
+    
   });
 
   it("Check position Long go out", async () => {
@@ -477,7 +485,7 @@ contract("Test Future MVP", accounts => {
     const tokenDeposit = futureUtils.calculateShareDeposit(1, futureData.defaultTargetPrice); // Initial Deposit
 
     // We set step provider to 1
-    await future.setTargetPrice(updatePrice);
+    await mockoracle.setMockTargetPrice(updatePrice);
     const tokenValue = (await future.getTokenActualValue(FutureDirection.Long, investorATokens[0], updatePrice)).toNumber();
 
     assert(tokenValue > 0, 'Test scenario user is reimbursed part of his deposit while out');
@@ -515,7 +523,7 @@ contract("Test Future MVP", accounts => {
     const tokenDeposit = futureUtils.calculateShareDeposit(1, futureData.defaultTargetPrice); // Initial Deposit
 
     // We set step provider to 1
-    await future.setTargetPrice(updatePrice);
+    await mockoracle.setMockTargetPrice(updatePrice);
     const tokenValue = (await future.getTokenActualValue(FutureDirection.Short, investorBTokens[0], updatePrice)).toNumber();
 
     assert(tokenValue > 0, 'Test scenario user is reimbursing part of his deposit while out');
@@ -577,7 +585,7 @@ contract("Test Future MVP", accounts => {
     // Reset data
     await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, 0);
     await calc.waitSeconds(interval);
-    await future.setTargetPrice(futureData.defaultTargetPrice);
+    await mockoracle.setMockTargetPrice(futureData.defaultTargetPrice);
   });
 
   it("Investors my assets value with invalid tokens", async () => {
@@ -611,12 +619,12 @@ contract("Test Future MVP", accounts => {
     // in the other two tokens.
     // -------------------------- PRICE is LOW  -----------------------
     updatePrice = SHORT_WIN * futureData.defaultTargetPrice; // SHORT win
-    await future.setTargetPrice(updatePrice);
+    await mockoracle.setMockTargetPrice(updatePrice);
     await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue * amountsOfShares });
     await future.invest(FutureDirection.Short, amountsOfShares, { from: investorB, value: depositValue * amountsOfShares });
     // -------------------------- PRICE is HIGHT  -----------------------
     updatePrice = LONG_WIN * futureData.defaultTargetPrice; // LONG win
-    await future.setTargetPrice(updatePrice);
+    await mockoracle.setMockTargetPrice(updatePrice);
     await future.invest(FutureDirection.Long, amountsOfShares, { from: investorA, value: depositValue * amountsOfShares });
     await future.invest(FutureDirection.Short, amountsOfShares, { from: investorB, value: depositValue * amountsOfShares });
 
@@ -630,7 +638,7 @@ contract("Test Future MVP", accounts => {
     assert.equal(validTokensB.length, amountsOfShares * 2, 'A has 4 valid tokens');
 
     // Reset
-    await future.setTargetPrice(futureData.defaultTargetPrice);
+    await mockoracle.setMockTargetPrice(futureData.defaultTargetPrice);
   });
 
   it("Clear position  ", async () => {

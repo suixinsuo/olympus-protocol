@@ -8,6 +8,7 @@ let KyberNetworkAdapter = artifacts.require("../contracts/components/exchange/ex
 let MockBrokenTokenKyberNetworkAdapter = artifacts.require(
   "../contracts/components/exchange/exchanges/MockBrokenTokenKyberNetworkAdapter.sol"
 );
+let MockOracle = artifacts.require("../contracts/components/mocks/MockOracle.sol");
 let MockKyberNetwork = artifacts.require("MockKyberNetwork");
 let MockDDEXAdapter = artifacts.require("MockDDEXAdapter");
 let MockDDEX = artifacts.require("MockDDEX");
@@ -101,6 +102,7 @@ function deployExchange(deployer, network) {
     })
     .then(async () => {
       console.log("Deploying!!!");
+      await deployer.deploy(MockOracle);
       let mockNetwork = await MockKyberNetwork.deployed();
       devTokens = await mockNetwork.supportedTokens();
       return deployer.deploy(MockDDEX, devTokens);
@@ -135,6 +137,7 @@ async function deployFuture(deployer, network) {
 async function deployBinaryFuture(deployer, network) {
   deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, PercentageFee,ComponentList]);
   await deployExchange(deployer, network);
+  
 }
 
 async function deployMockfund(deployer, network) {
