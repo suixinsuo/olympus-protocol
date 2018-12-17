@@ -48,7 +48,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     //https://ropsten.chain.link/
 
     //string _jobId, string _currency
-    //"2216dd2bf5464687a05ded0b844e200c", "USD"
+    //"587948181f6248dbbb8599f949f977c6", "USD"
     function requestEthereumPrice(string _jobId, string _currency) 
       public
       onlywhitelist

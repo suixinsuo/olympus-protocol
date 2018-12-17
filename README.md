@@ -16,6 +16,20 @@
 The suit option will limit the number of deployment required for the concrete test file.
 
 
+## Ropsten (December 17, 2018)
+
+- DeployAddress: 0x1cd5fcc6d1d3a2ecdd71473d2fcfe49769643cf2
+- Mot: 0xAFf3Bd11F2851F1e299b0b901ba22C50b68Ddc31
+- ComponentList 0x550c164e95a1909f1571fd224243655813cc96a5
+- Locker 0x0e59555df877ac4e634d42f196906c16fe540beb Name: 0x4c6f636b657250726f7669646572
+- Market 0xd6a55a1de61d9043f1511643567dfff2d423de06 Name: 0x4d61726b657450726f7669646572
+- REIMBURSABLE 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8 Name:0x5265696d6275727361626c65
+- STEP 0xac0b69abd7c9bcc670441ee4e4faf00f9127f808 Name: 0x5374657050726f7669646572
+- ORACLE 0x080EeEC1Ea071f1477220955ed8397B3Eea6676a Name: 0x436861696e6c696e6b4f7261636c65
+    (200ChinkToken)(need add bot address to whitelist)
+
+
+
 ## Mainnet (September 4, 2018)
 Exchange subcomponent:
 - KyberNetworkAdapter: 0x27fe7372da5398ab0d524b27595dd33ffd0fa34c

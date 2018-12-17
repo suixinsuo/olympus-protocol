@@ -50,6 +50,7 @@
     "node-fetch": "^2.2.0",
     "prompt-sync": "^4.1.6",
     "solc": "^0.4.24",
+    "solidity-cborutils": "github:smartcontractkit/solidity-cborutils",
     "text-encoding": "^0.6.4",
     "truffle-hdwallet-provider": "0.0.3",
     "zeppelin-solidity": "^1.10.0"
