@@ -5,6 +5,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../interfaces/ComponentInterface.sol";
 
 contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
+    uint256 constant private ORACLE_PAYMENT = 1 * LINK;
     uint256 public currentPrice;
     uint public lastUpdateTime;
     int256 public changeDay;
