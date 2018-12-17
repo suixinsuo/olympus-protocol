@@ -9,6 +9,9 @@ const binaryFutureData = {
   maxSteps: 10, // hardcoded in the derivative
   defaultTargetPrice: 10 ** 18 * 1000,
   investingPeriod: 1, // seconds, enough for 1 test case
+  feePercentage: 0,
+  disabledValue: 1,
+
 };
 
 const oraclizedData = {

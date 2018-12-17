@@ -24,13 +24,7 @@ contract('Test Binary Future', accounts => {
   let providers;
 
   const investorA = accounts[1];
-  const investorB = accounts[2];
-  // Groups of investors
-  const investorsLong = accounts.slice(1, 4);
-  const investorsShort = accounts.slice(4, 7);
 
-  let longToken;
-  let shortToken;
   before('Initialize ComponentList', async () => {
     providers = await futureUtils.setUpComponentList();
   });
@@ -49,7 +43,7 @@ contract('Test Binary Future', accounts => {
     );
 
 
-    await future.initialize(providers.componentList.address, futureUtils.fee, futureUtils.maxAllowInterval);
+    await future.initialize(providers.componentList.address, futureData.feePercentage, futureData.maxAllowInterval);
     assert.equal((await future.status()).toNumber(), 1); // Active
 
     const longAddress = await future.getLongToken();

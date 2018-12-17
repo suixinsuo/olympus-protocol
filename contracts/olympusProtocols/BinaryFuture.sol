@@ -81,7 +81,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
          //
         status = DerivativeStatus.New;
-        fundType = DerivativeType.Future;
+        fundType = DerivativeType.BinaryFuture;
     }
     /// --------------------------------- INITIALIZE ---------------------------------
 
@@ -95,7 +95,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         for (uint i = 0; i < _names.length; i++) {
             updateComponent(_names[i]);
         }
-        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
+        setManagementFee(_fee);
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
 
         initializeTokens();
@@ -400,7 +400,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     // --------------------------------- Management ---------------------------------
 
-    function setManagementFee(uint _fee) external onlyOwner {
+    function setManagementFee(uint _fee) public onlyOwner {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
 
