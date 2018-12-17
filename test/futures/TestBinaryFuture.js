@@ -587,22 +587,41 @@ contract('Test Binary Future', accounts => {
     const events = calc.getEvent(tx, 'Benefits');
     assert.equal(events.length, 0, 'no winners');
 
+    const depositReturned = calc.getEvent(tx, 'DepositReturned');
+    assert.equal(depositReturned.length, 3, 'All losers get deposit');
+    // Long first, as per contract order
+    for (let i = 0; i < investorsLong.length; i++) {
+
+      // All the investors
+      const deposit = totalLongInvestment.mul(weights[i]);
+
+      assert.equal(depositReturned[i].args._holder, investorsLong[i]);
+      assert(depositReturned[i].args._period.eq(testPeriod));
+      assert(depositReturned[i].args._amount.eq(deposit));
+    }
+
+
     // Check
     const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await getClearData(future, testPeriod);
-    const reward = await futureUtils.getRewardAmountForBinaryFuture(future, totalLongInvestment);
 
-    assert(winnersBalance.eq(totalLongInvestment.sub(reward)), 'Winners balance is correct');
+    assert(winnersBalance.eq(0), 'Winners balance is 0, we returned deposit');
     assert(winnersInvestment.eq(0), 'No winners (invest)');
     assert(winnersBalanceRedeemed.eq(0), 'No winners (redeem)');
     assert(clearFinish, 'Period mark as clear completed');
 
     // Check tokens id
     await checkTokensInvalid(longToken, testPeriod);
-    await checkLosersRedeemBalance(future, investorsLong);
+    // Check Redeem has the deposit
+    for (let i = 0; i < investorsLong.length; i++) {
+      const redeemBalance = await future.userRedeemBalance(investorsLong[i]);
+      const deposit = totalLongInvestment.mul(weights[i]);
 
-    // Special case
-    const balanceLost = await future.futureOwnBalance();
-    assert(balanceLost.eq(winnersBalance), 'Winner balance is lost');
+      assert(redeemBalance.eq(deposit), `Investor all loser get deposit back ${i}`);
+
+      await future.redeem({ from: investorsLong[i] });
+      const redeemBalanceAfter = await future.userRedeemBalance(investorsLong[i]);
+      assert(redeemBalanceAfter.eq(0), `Investor loser ${i} redeemed his balance`)
+    }
 
     // Reset
     await future.setMockPeriod(futureData.disabledValue);
