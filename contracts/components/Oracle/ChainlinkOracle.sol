@@ -58,7 +58,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         path[0] = _currency;
         run.addStringArray("path", path);
         run.addInt("times", 100);
-        chainlinkRequest(run, LINK(1));
+        chainlinkRequest(run, ORACLE_PAYMENT);
     }
 
     function requestEthereumChange(string _jobId, string _currency)
@@ -74,7 +74,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         path[3] = "CHANGEPCTDAY";
         run.addStringArray("path", path);
         run.addInt("times", 1000000000);
-        chainlinkRequest(run, LINK(1));
+        chainlinkRequest(run, ORACLE_PAYMENT);
     }
 
     function requestEthereumLastMarket(string _jobId, string _currency)
@@ -89,7 +89,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         path[2] = _currency;
         path[3] = "LASTMARKET";
         run.addStringArray("path", path);
-        chainlinkRequest(run, LINK(1));
+        chainlinkRequest(run, ORACLE_PAYMENT);
     }
 
     function fulfillEthereumPrice(bytes32 _requestId, uint256 _price)
