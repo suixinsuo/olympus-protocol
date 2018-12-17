@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../Oracle/contracts/Chainlinked.sol";
+import "chainlink/solidity/contracts/Chainlinked.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../interfaces/ComponentInterface.sol";
 
