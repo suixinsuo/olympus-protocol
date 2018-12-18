@@ -10,7 +10,7 @@
     "index-min-bot": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.bot.min.js'",
     "index-bot": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.bot.js'",
     "fund-index": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.stress.js'",
-    "futuretest": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestBinaryFuture.js'",
+    "futuretest": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.clear.js'",
     "test": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545  --gasLimit 8e6  --network development 'truffle test'",
     "testKovan": "./node_modules/.bin/run-with-testrpc --port 8545  --network kovan 'truffle test'",
     "testCoverage": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test --network coverage' ",
@@ -40,6 +40,7 @@
   "dependencies": {
     "aws-sdk": "^2.255.1",
     "bluebird": "^3.5.1",
+    "chainlink": "github:smartcontractkit/chainlink",
     "cloudconvert": "^1.1.2",
     "crypto-js": "^3.1.9-1",
     "eth-gas-reporter": "^0.1.7",

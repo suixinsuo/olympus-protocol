@@ -223,9 +223,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
         // Special scenario: no losers
         if (_currentPrice == prices[_period]) {
-            checkTokens(LONG, _period, returnDeposit);
-            checkTokens(SHORT, _period, returnDeposit);
-            finishClear(_period);
+            returnDeposits(_period);
             return false;
         }
 
@@ -233,32 +231,39 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         int _winnerDirection = _currentPrice > prices[_period] ? LONG : SHORT;
         int _loserDirection = _currentPrice > prices[_period] ? SHORT : LONG;
 
-
         // RUN
+        // Get winners total investment to calculate benefits ratio
+        checkTokens(_winnerDirection, _period, calculateWinnersRatio);
+        // Special scenario, no winners. Return deposits
+        if(winnersInvestment[_period] == 0) {
+            returnDeposits(_period);
+            return false;
+        }
+
         // Get losers balance that will be shared to the winners
         checkTokens(_loserDirection, _period, checkLosersOnClear);
 
         // whoever calls to this the first time gets rewarded.
         rewardCaller(_period);
 
-        // Get winners total investment to calculate benefits ratio
-        checkTokens(_winnerDirection, _period, calculateWinnersRatio);
+
         // Share the benefits to the winners
         checkTokens(_winnerDirection, _period, checkWinnersOnClear);
 
         // FINALIZE
-        // Special scenario, no winners. TODO: what to do with it?
-        if(winnersBalancesRedeemed[_period] == 0) {
-            futureOwnBalance = winnersBalances[_period];
-        }
         finishClear(_period);
-        // TODO: reimburse to the executor
         return true;
+    }
+
+    function returnDeposits( uint _period) internal {
+        checkTokens(LONG, _period, returnDeposit);
+        checkTokens(SHORT, _period, returnDeposit);
+        finishClear(_period);
     }
 
     function rewardCaller(uint _period) internal returns(bool) {
         if (winnersBalances[_period] == 0) { return false; }
-        uint rewards = winnersBalances[_period] * REWARDS_PERCENTAGE / DENOMINATOR;
+        uint rewards = winnersBalances[_period].mul(REWARDS_PERCENTAGE).div(DENOMINATOR);
         if (rewards < MIN_REWARDS) { rewards = MIN_REWARDS;}
         if (rewards > MAX_REWARDS) { rewards = MAX_REWARDS;}
         winnersBalances[_period] = winnersBalances[_period].sub(rewards);
