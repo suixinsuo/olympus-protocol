@@ -1,10 +1,11 @@
 pragma solidity 0.4.24;
 
-import "../Oracle/contracts/Chainlinked.sol";
+import "chainlink/solidity/contracts/Chainlinked.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../interfaces/ComponentInterface.sol";
 
 contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
+    uint256 constant private ORACLE_PAYMENT = 1 * LINK;
     uint256 public currentPrice;
     uint public lastUpdateTime;
     int256 public changeDay;
@@ -47,7 +48,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     //https://ropsten.chain.link/
 
     //string _jobId, string _currency
-    //"2216dd2bf5464687a05ded0b844e200c", "USD"
+    //"587948181f6248dbbb8599f949f977c6", "USD"
     function requestEthereumPrice(string _jobId, string _currency) 
       public
       onlywhitelist
@@ -58,7 +59,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         path[0] = _currency;
         run.addStringArray("path", path);
         run.addInt("times", 100);
-        chainlinkRequest(run, LINK(1));
+        chainlinkRequest(run, ORACLE_PAYMENT);
     }
 
     function requestEthereumChange(string _jobId, string _currency)
@@ -74,7 +75,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         path[3] = "CHANGEPCTDAY";
         run.addStringArray("path", path);
         run.addInt("times", 1000000000);
-        chainlinkRequest(run, LINK(1));
+        chainlinkRequest(run, ORACLE_PAYMENT);
     }
 
     function requestEthereumLastMarket(string _jobId, string _currency)
@@ -89,7 +90,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         path[2] = _currency;
         path[3] = "LASTMARKET";
         run.addStringArray("path", path);
-        chainlinkRequest(run, LINK(1));
+        chainlinkRequest(run, ORACLE_PAYMENT);
     }
 
     function fulfillEthereumPrice(bytes32 _requestId, uint256 _price)

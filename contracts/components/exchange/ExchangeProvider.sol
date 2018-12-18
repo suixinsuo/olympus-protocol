@@ -12,7 +12,7 @@ contract ExchangeProvider is FeeCharger, OlympusExchangeInterface {
     using SafeMath for uint256;
     string public name = "OlympusExchangeProvider";
     string public description =
-    "Exchange provider of Olympus Labs, which additionally supports buy\and sellTokens for multiple tokens at the same time";
+    "Exchange provider of Olympus Labs, which additionally supports buy and sellTokens for multiple tokens at the same time";
     string public category = "exchange";
     string public version = "1.2-20180919";
     ERC20Extended private constant ETH  = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
