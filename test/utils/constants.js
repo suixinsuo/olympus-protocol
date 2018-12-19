@@ -27,5 +27,6 @@ module.exports = {
     BUYTOKENS: "BuyTokens",
     CHECK_POSITION: "CheckPosition",
     CLEAR: "Clear",
+    ORACLE: "ChainlinkOracle",
   }
 };

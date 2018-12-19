@@ -48,29 +48,29 @@ library itMaps {
         return ;
     }
 
-    function contains(itMapBytes32Uint storage self, bytes32 key) internal constant returns (bool exists) {
+    function contains(itMapBytes32Uint storage self, bytes32 key) internal view returns (bool exists) {
         return self.data[key].keyIndex > 0;
     }
 
-    function size(itMapBytes32Uint storage self) internal constant returns (uint) {
+    function size(itMapBytes32Uint storage self) internal view returns (uint) {
         return self.keys.length;
     }
 
-    function get(itMapBytes32Uint storage self, bytes32 key) internal constant returns (uint) {
+    function get(itMapBytes32Uint storage self, bytes32 key) internal view returns (uint) {
         return self.data[key].value;
     }
 
-    function getKey(itMapBytes32Uint storage self, uint idx) internal constant returns (bytes32) {
+    function getKey(itMapBytes32Uint storage self, uint idx) internal view returns (bytes32) {
       /* Decrepated, use getKeyByIndex. This kept for backward compatilibity */
         return self.keys[idx];
     }
 
-    function getKeyByIndex(itMapBytes32Uint storage self, uint idx) internal constant returns (bytes32) {
+    function getKeyByIndex(itMapBytes32Uint storage self, uint idx) internal view returns (bytes32) {
       /* Same as decrepated getKey. getKeyByIndex was introduced to be less ambiguous  */
         return self.keys[idx];
     }
 
-    function getValueByIndex(itMapBytes32Uint storage self, uint idx) internal constant returns (uint) {
+    function getValueByIndex(itMapBytes32Uint storage self, uint idx) internal view returns (uint) {
         return self.data[self.keys[idx]].value;
     }
 }

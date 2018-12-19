@@ -1,5 +1,6 @@
 const calc = require("../utils/calc");
 const BigNumber = web3.BigNumber;
+const MockOracle = artifacts.require("MockOracle");// FutureContract With functions for testing
 
 const {
   FutureDirection,
@@ -8,7 +9,7 @@ const {
 
 const futureUtils = require("./futureUtils");
 const futureData = futureUtils.futureData;
-
+let mockoracle;
 /**
  *   =================   SPECIAL SCENARIOS =================
  *   When adding scenarios to the test make sure.
@@ -31,6 +32,7 @@ contract("Test Future MVP Clear special cases", accounts => {
 
   before("Initialize ComponentList", async () => {
     providers = await futureUtils.setUpComponentList();
+    mockoracle = await MockOracle.deployed();
   });
 
   // ----------------------------- REQUIRED FOR CREATION ----------------------
@@ -64,12 +66,12 @@ contract("Test Future MVP Clear special cases", accounts => {
 
     // --- We Make SHORT be out
     updatedPrice = 0.85 * futureData.defaultTargetPrice;
-    await future.setTargetPrice(updatedPrice);
+    await mockoracle.setMockTargetPrice(updatedPrice);
     await future.checkPosition();
 
     // --- We Make LONG be out
     updatedPrice = 1.15 * futureData.defaultTargetPrice;
-    await future.setTargetPrice(updatedPrice);
+    await mockoracle.setMockTargetPrice(updatedPrice);
     await future.checkPosition();
 
     assert.equal((await futureUtils.validTokens(longToken)).length, 0, ' All long tokens are invalid');
@@ -79,7 +81,7 @@ contract("Test Future MVP Clear special cases", accounts => {
     const winnersBalance = (await future.winnersBalance()).toNumber();
 
     // Clear
-    await future.setTargetPrice(futureData.defaultTargetPrice);
+    await mockoracle.setMockTargetPrice(futureData.defaultTargetPrice);
     assert.ok(await future.clear.call(), 'Call returns true at once because there is no tokens');
 
     await future.clear();
@@ -158,7 +160,10 @@ contract("Test Future MVP Clear special cases", accounts => {
     // Both investor A and investor B has 1 long 1 short.
     tx = await futureUtils.safeInvest(future, FutureDirection.Long, 4, investorA);
 
-    await future.setTargetPrice(1.1 * futureData.defaultTargetPrice); // Long Wins
+    // Long Wins
+    await mockoracle.setMockTargetPrice(1.1 * futureData.defaultTargetPrice);
+    
+    
 
     // Clear 1 Losers
     assert.notOk(await future.clear.call(), 'First will clear LOSERS');
@@ -196,7 +201,8 @@ contract("Test Future MVP Clear special cases", accounts => {
     // Both investor A and investor B has 1 long 1 short.
     tx = await futureUtils.safeInvest(future, FutureDirection.Long, 4, investorA);
     const updatePrice = 0.85 * futureData.defaultTargetPrice; // Long lose all deposit (Valid only for this set of prices)
-    await future.setTargetPrice(updatePrice);
+
+    await mockoracle.setMockTargetPrice(updatePrice);
 
     // Clear 1 Losers
     assert.notOk(await future.clear.call(), 'First will clear LOSERS');
@@ -241,7 +247,8 @@ contract("Test Future MVP Clear special cases", accounts => {
     tx = await futureUtils.safeInvest(future, FutureDirection.Short, 5, investorB);
     // This number is being chosen to create a decimal issue
     const updatePrice = new BigNumber(1.05112212 * futureData.defaultTargetPrice).add(777); // Force decimals
-    await future.setTargetPrice(updatePrice); // Short lose  part
+    // Short lose  part
+    await mockoracle.setMockTargetPrice(updatePrice);
 
     assert.notOk(await future.clear.call(), 'First will clear LOSERS');
     tx = await future.clear();

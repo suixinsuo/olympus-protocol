@@ -10,7 +10,7 @@
     "index-min-bot": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.bot.min.js'",
     "index-bot": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.bot.js'",
     "fund-index": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.stress.js'",
-    "futuretest": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestBinaryFuture.js'",
+    "futuretest": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.clear.js'",
     "test": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545  --gasLimit 8e6  --network development 'truffle test'",
     "testKovan": "./node_modules/.bin/run-with-testrpc --port 8545  --network kovan 'truffle test'",
     "testCoverage": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test --network coverage' ",
@@ -32,14 +32,15 @@
   "devDependencies": {
     "ganache-cli": "6.1.2",
     "run-with-testrpc": "0.3.0",
-    "sol-merger": "^0.1.2",
+    "sol-merger": "^0.1.3",
     "solhint": "1.4.0",
     "solidity-coverage": "^0.5.4",
-    "truffle": "4.1.14"
+    "truffle": "^4.1.14"
   },
   "dependencies": {
     "aws-sdk": "^2.255.1",
     "bluebird": "^3.5.1",
+    "chainlink": "github:smartcontractkit/chainlink",
     "cloudconvert": "^1.1.2",
     "crypto-js": "^3.1.9-1",
     "eth-gas-reporter": "^0.1.7",
@@ -49,6 +50,7 @@
     "node-fetch": "^2.2.0",
     "prompt-sync": "^4.1.6",
     "solc": "^0.4.24",
+    "solidity-cborutils": "github:smartcontractkit/solidity-cborutils",
     "text-encoding": "^0.6.4",
     "truffle-hdwallet-provider": "0.0.3",
     "zeppelin-solidity": "^1.10.0"
