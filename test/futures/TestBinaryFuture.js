@@ -542,7 +542,12 @@ contract('Test Binary Future', accounts => {
     // Reset
     await future.setManagementFee(0);
 
+    // FEE
+    const beforeFee = await web3.eth.getBalance(future.address);
     await future.withdrawFee(futurefee);
+    const afterFee = await web3.eth.getBalance(future.address);
+    assert(afterFee.eq(beforeFee.minus(futurefee)), 'Fee redeem amount is correct');
+
     await future.setMockPeriod(futureData.disabledValue);
     await future.setMockTargetPrice(futureData.disabledValue);
   });
@@ -620,8 +625,13 @@ contract('Test Binary Future', accounts => {
     // Check Redeem Losers
     await binaryUtils.checkLosersRedeemBalance(future, investorsLong);
 
-    // Reset
+    // FEE
+    const beforeFee = await web3.eth.getBalance(future.address);
     await future.withdrawFee(futurefee);
+    const afterFee = await web3.eth.getBalance(future.address);
+    assert(afterFee.eq(beforeFee.minus(futurefee)), 'Fee redeem amount is correct');
+
+    // Reset
     await future.setManagementFee(0);
     await future.setMockPeriod(futureData.disabledValue);
     await future.setMockTargetPrice(futureData.disabledValue);
