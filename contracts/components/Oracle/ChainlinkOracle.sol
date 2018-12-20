@@ -11,6 +11,11 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     int256 public changeDay;
     bytes32 public lastMarket;
 
+
+    //Currency Uint
+    ETH_PRECISION = 10**18;
+    USD_PRECISION = 10**2;
+
     string public name = "ChainlinkOracle";
     string public description = "ChainlinkOracle";
     string public category = "ORACLE";
@@ -40,8 +45,12 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         addwhitelist(msg.sender);
     }
 
-    function getCurrentPrice() public view returns(uint256){return currentPrice;}
-    function getCurrentPriceInWei() public view returns(uint256){return 10**18/currentPrice;}
+    function getCurrentPrice(string _CurrencyUnit) public view returns(uint256){
+        if(_CurrencyUnit == "USD"){return currentPrice;}
+        else if(_CurrencyUnit == "WEI"){return currentPrice.mul(ETH_PRECISION).div(USD_PRECISION);}
+        else{return currentPrice;}
+
+    }
     function getLastUpdateTime() public view returns(uint256){return lastUpdateTime;}
 
 
