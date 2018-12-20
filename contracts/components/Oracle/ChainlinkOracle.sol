@@ -13,8 +13,8 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
 
 
     //Currency Uint
-    ETH_PRECISION = 10**18;
-    USD_PRECISION = 10**2;
+    uint ETH_PRECISION = 10**18;
+    uint USD_PRECISION = 10**2;
 
     string public name = "ChainlinkOracle";
     string public description = "ChainlinkOracle";
