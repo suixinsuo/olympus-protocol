@@ -116,7 +116,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         _intervals[1] = 20 minutes;
         _intervalCategories[0] = CLEAR;
         _intervalCategories[1] = CHECK_POSITION;
-        
+
         LockerInterface(getComponentByName(LOCKER)).setMultipleTimeIntervals(_intervalCategories, _intervals);
         checkLocker(CLEAR); // Execute the timer so gets intialized
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
@@ -396,7 +396,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             }
             require(CheckOraclePriceTime(),"99");
             frozenPrice = getTargetPrice();
-            
+
             _stepStatus = ClearPositionPhases(updateStatusStep(CLEAR));
         }
 

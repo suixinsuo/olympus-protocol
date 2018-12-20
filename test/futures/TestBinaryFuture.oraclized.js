@@ -83,7 +83,7 @@ contract('Test Binary Future', accounts => {
 
     let currentPeriod;
     let tx;
-    const depositValue = 10 ** 16; // 0.00 ETH
+    const depositValue = 10 ** 17; // 0.01 ETH
     // Investment OK
     await future.setOracleTargetPrice(futureData.defaultTargetPrice);
     currentPeriod = await future.getCurrentPeriod();
@@ -102,7 +102,7 @@ contract('Test Binary Future', accounts => {
   it('Cant clear with expired price', async () => {
 
     const currentPeriod = await future.getCurrentPeriod();
-    const depositValue = 10 ** 16; // 0.00 ETH
+    const depositValue = 10 ** 17; // 0.01 ETH
 
     // Price not expired
 
