@@ -41,6 +41,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     }
 
     function getCurrentPrice() public view returns(uint256){return currentPrice;}
+    function getCurrentPriceInWei() public view returns(uint256){return 10**18/currentPrice;}
     function getLastUpdateTime() public view returns(uint256){return lastUpdateTime;}
 
 
