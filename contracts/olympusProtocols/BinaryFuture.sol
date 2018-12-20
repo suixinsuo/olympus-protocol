@@ -81,11 +81,11 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
          //
         status = DerivativeStatus.New;
-        fundType = DerivativeType.Future;
+        fundType = DerivativeType.BinaryFuture;
     }
     /// --------------------------------- INITIALIZE ---------------------------------
 
-    function initialize(address _componentList,uint _fee) public {
+    function initialize(address _componentList, uint _fee) public {
 
         require(status == DerivativeStatus.New, "1");
 
@@ -95,7 +95,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         for (uint i = 0; i < _names.length; i++) {
             updateComponent(_names[i]);
         }
-        ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
+        setManagementFee(_fee);
         MarketplaceInterface(getComponentByName(MARKET)).registerProduct();
 
         initializeTokens();
@@ -203,14 +203,14 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     /// --------------------------------- CLEAR ---------------------------------
     function clear(uint _period) external returns (bool) {
-        return _clear(_period, getTargetPrice());
+        return _clear(_period, getCurrentPeriod(), getTargetPrice());
     }
 
 
-    function _clear(uint _period, uint _currentPrice) internal returns (bool) {
+    function _clear(uint _period, uint _currentPeriod, uint _currentPrice) internal returns (bool) {
 
         // CHECKS
-        require(_period < getCurrentPeriod() - 1, "7"); // 3 to 4 pm cant withdraw after 5pm
+        require(_period < _currentPeriod - 1, "7"); // 3 to 4 pm cant withdraw after 5pm
         require(tokensCleared[_period] == false, "8"); // Cant clear twice
         // Clear has to hold a token. We also make sure period without tokens get cleared.
         require(
@@ -330,7 +330,7 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
         uint _totalBenefits = winnersBalances[_period]
             .mul(_tokenDeposit)
             .div(winnersInvestment[_period]);
-        
+
         //calculateFee
         uint _fee = _calculateFee(_totalBenefits);
         accumulatedFee = accumulatedFee.add(_fee);
@@ -401,11 +401,11 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
     // --------------------------------- Management ---------------------------------
 
-    function setManagementFee(uint _fee) external onlyOwner {
+    function setManagementFee(uint _fee) public onlyOwner {
         ChargeableInterface(getComponentByName(FEE)).setFeePercentage(_fee);
     }
-    
-    
+
+
     function withdrawFee(uint _amount) external onlyOwner returns(bool) {
         require(_amount > 0);
         require(_amount <= accumulatedFee);

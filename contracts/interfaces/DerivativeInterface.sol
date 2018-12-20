@@ -6,11 +6,11 @@ import "./ComponentContainerInterface.sol";
 contract DerivativeInterface is  Ownable, ComponentContainerInterface {
 
     enum DerivativeStatus { New, Active, Paused, Closed }
-    enum DerivativeType { Index, Fund, Future }
+    enum DerivativeType { Index, Fund, Future, BinaryFuture }
 
     string public description;
     bytes32 public category;
-    
+
     bytes32 public version;
     DerivativeType public fundType;
     DerivativeStatus public status;

@@ -49,7 +49,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
 
     //string _jobId, string _currency
     //"587948181f6248dbbb8599f949f977c6", "USD"
-    function requestEthereumPrice(string _jobId, string _currency) 
+    function requestEthereumPrice(string _jobId, string _currency)
       public
       onlywhitelist
     {
@@ -130,7 +130,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     function getChainlinkToken() public view returns (address) {
         return chainlinkToken();
     }
-    
+
     function getOracle() public view returns (address) {
         return oracleAddress();
     }
@@ -151,7 +151,7 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
         }
     }
 
-    //Management Function 
+    //Management Function
     mapping(address => bool) whiteList;
     function addwhitelist(address _controller) public onlyOwner returns(bool){
         whiteList[_controller] = true;

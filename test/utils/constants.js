@@ -3,7 +3,7 @@ module.exports = {
   ethToken: "0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
 
   DerivativeStatus: { New: 0, Active: 1, Paused: 2, Closed: 3 },
-  DerivativeType: { Index: 0, Fund: 1, Future: 2 },
+  DerivativeType: { Index: 0, Fund: 1, Future: 2, BinaryFuture: 3 },
   WhitelistType: { Investment: 0, Maintenance: 1 },
   FutureDirection: { Long: -1, Short: 1 },
   MutexStatus: { AVAILABLE: 0, CHECK_POSITION: 1, CLEAR: 2 },
