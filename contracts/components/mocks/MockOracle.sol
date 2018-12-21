@@ -3,8 +3,11 @@ import "../Oracle/ChainlinkOracle.sol";
 
 contract MockOracle is ChainlinkOracle {
     function setMockTargetPrice(uint _targetPrice) public  {
-        currentPrice = (ETH_PRECISION).mul(USD_PRECISION).div(_targetPrice);
+        currentPrice = _targetPrice;
         lastUpdateTime = now;
+    }
+    function getCurrentPrice(uint _currencyUnitType) public view returns(uint256){
+        return currentPrice;
     }
     function setMockLastuUdateTime(uint _targetTime) public  {
         lastUpdateTime = _targetTime;
