@@ -1,8 +1,8 @@
 /*
-* This file is to retrieve meta information from contracts and complied json files.
-* And to push them to the server by the gitlab ci later on.
-* It generates content inside a folder called .temp by default/
-*/
+ * This file is to retrieve meta information from contracts and complied json files.
+ * And to push them to the server by the gitlab ci later on.
+ * It generates content inside a folder called .temp by default/
+ */
 
 const fs = require("fs");
 const path = require("path");
@@ -29,7 +29,8 @@ const names = ["OlympusBasicFund",
   "Locker",
   "ExchangeProvider",
   "StepProvider",
-  "TokenBroken"
+  "TokenBroken",
+  "ChainlinkInterface"
 ];
 
 
@@ -77,8 +78,12 @@ const getVersion = (name) => {
 }
 
 const getType = (name) => {
-  if (name.includes("Index")) { return 'Index'; }
-  if (name.includes("Future")) { return 'Future'; }
+  if (name.includes("Index")) {
+    return 'Index';
+  }
+  if (name.includes("Future")) {
+    return 'Future';
+  }
   return 'Fund';
 }
 names.forEach((name) => {
@@ -97,7 +102,9 @@ names.forEach((name) => {
 
 
   const jsonData = JSON.stringify(data, null, 2);
-  if (olympusProtocols.find((includeName) => includeName === name)) { templateListJson.push(data) };
+  if (olympusProtocols.find((includeName) => includeName === name)) {
+    templateListJson.push(data)
+  };
 
 
   fs.writeFile(getPath(name, version), jsonData, err => {
@@ -115,4 +122,3 @@ names.forEach((name) => {
 fs.writeFile(path.resolve("./.temp/templateList.json"), JSON.stringify(templateListJson, null, 2), () => {
   console.log("templateList.json created.");
 });
-

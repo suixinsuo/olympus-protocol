@@ -141,7 +141,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function getTargetPrice() public view returns(uint256 _price) {
         _price =  ChainlinkInterface(getComponentByName("ChainlinkOracle")).getCurrentPrice(1);
     }
-    function CheckOraclePriceTime() internal view returns(bool){
+    function CheckOraclePriceTime() public view returns(bool){
         if (now.sub(ChainlinkInterface(getComponentByName(ORACLE)).getLastUpdateTime()) > MAX_TIMEOUT){
             return false;
         }else{
