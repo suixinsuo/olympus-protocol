@@ -32,9 +32,12 @@ Open to terminals
 "0x436865636b506f736974696f6e", 20
 
 # BinaryFuture
+(2 mins. MOT)
 1. "Future Binary Test", "Test Binary Future" , "BFT",
-"0x696e646578" , "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a"
+"0x696e646578" , "0x41dee9f481a1d2aa74a3f1d0958c1db6107c686a", 120
 
+2. Initialize
+"0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e", 100
 
 # Index
 

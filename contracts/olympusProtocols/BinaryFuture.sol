@@ -419,12 +419,13 @@ contract BinaryFuture is BaseDerivative, BinaryFutureInterface {
 
         // This is MOT, so we should require this to be true.
         require(exchange.buyToken.value(_amount)(MOT, _amount, _rate, owner, 0x0));
-        msg.sender.transfer(_amount);
         return true;
     }
+
     function getExchangeInterface() private view returns (OlympusExchangeInterface){
         return OlympusExchangeInterface(getComponentByName(EXCHANGE));
     }
+
     function _calculateFee (uint _totalBenefits) internal  returns(uint){
         ChargeableInterface feeManager = ChargeableInterface(getComponentByName(FEE));
         uint _fee = feeManager.calculateFee(msg.sender, _totalBenefits);
