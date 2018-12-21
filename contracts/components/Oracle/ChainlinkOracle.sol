@@ -48,9 +48,8 @@ contract ChainlinkOracle is Chainlinked, Ownable ,ComponentInterface {
     //CurrencyUnitType
     //USD:1
     //WEI:2
-    function getCurrentPrice(uint _CurrencyUnitType) public view returns(uint256){
-        if(_CurrencyUnitType == 1){return currentPrice;}
-        else if(_CurrencyUnitType == 2){return currentPrice.mul(ETH_PRECISION).div(USD_PRECISION);}
+    function getCurrentPrice(uint _currencyUnitType) public view returns(uint256){
+        if(_currencyUnitType == 2){return currentPrice.mul(ETH_PRECISION).div(USD_PRECISION);}
         else{return currentPrice;}
 
     }
