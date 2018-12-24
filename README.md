@@ -25,7 +25,7 @@ The suit option will limit the number of deployment required for the concrete te
 - Market 0xd6a55a1de61d9043f1511643567dfff2d423de06 Name: 0x4d61726b657450726f7669646572
 - REIMBURSABLE 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8 Name:0x5265696d6275727361626c65
 - STEP 0xac0b69abd7c9bcc670441ee4e4faf00f9127f808 Name: 0x5374657050726f7669646572
-- ORACLE 0xA325BAb253AD1f2D96ACC613CD1EF01d8af2E5b4 Name: 0x436861696e6c696e6b4f7261636c65
+- ORACLE 0x9a555f092dd910ac6ddedac20307ab5bf8cc26b5 Name: 0x436861696e6c696e6b4f7261636c65
     (200ChinkToken)(need add bot address to whitelist)
 
 
