@@ -6,6 +6,9 @@ contract MockOracle is ChainlinkOracle {
         currentPrice = _targetPrice;
         lastUpdateTime = now;
     }
+    function getCurrentPrice(uint _currencyUnitType) public view returns(uint256){
+        return currentPrice;
+    }
     function setMockLastuUdateTime(uint _targetTime) public  {
         lastUpdateTime = _targetTime;
     }
