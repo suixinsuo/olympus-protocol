@@ -15,6 +15,17 @@
 `truffle test --suite=Mockfund ./test/fund/*` Will test a concrete suit, require `./node_modules/.bin/testrpc-sc` started in other terminal.
 The suit option will limit the number of deployment required for the concrete test file.
 
+## Rinkeby (December 24, 2018)
+
+- DeployAddress: 0x1cd5fcc6d1d3a2ecdd71473d2fcfe49769643cf2
+- Mot: 0x6d464d1bb0cff0cad9e56690f62360fed44f5fc5
+- ComponentList 0x550c164e95a1909f1571fd224243655813cc96a5
+- Locker 0x0e59555df877ac4e634d42f196906c16fe540beb Name: 0x4c6f636b657250726f7669646572
+- Market 0x2354c21ef292b330bc9a1141f84300a566a7950d Name: 0x4d61726b657450726f7669646572
+- REIMBURSABLE 0xd6a55a1de61d9043f1511643567dfff2d423de06 Name:0x5265696d6275727361626c65
+- STEP 0x94220988b7f4a20aa77fbf4872f1f0732ead5530 Name: 0x5374657050726f7669646572
+- ORACLE 0x7511461aec8cf83e2b9a2c573dbca1c0aa9410b8 Name: 0x436861696e6c696e6b4f7261636c65
+    (200ChinkToken)(need add bot address to whitelist)
 
 ## Ropsten (December 17, 2018)
 
