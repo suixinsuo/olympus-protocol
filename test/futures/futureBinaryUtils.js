@@ -14,13 +14,27 @@ const binaryFutureData = {
 
 };
 
+const binaryFutureStressData = {
+  name: "Binary Future Stress Test",
+  description: "A binary future stub contract to test stress cases",
+  symbol: 'BFST',
+  category: 'BinaryFutureStress',
+  maxSteps: 10, // hardcoded in the derivative
+  defaultTargetPrice: 10 ** 18 * 1000,
+  originTargetPrice:10 ** 18,
+  investingPeriod: 1, // seconds, enough for 1 test case
+  feePercentage: 0,
+  disabledValue: 1,
+
+};
+
 const oraclizedData = {
   ...binaryFutureData,
   maxAllowInterval: 1, // seconds, enough for 1 test case
 }
 
 module.exports = {
-
+  binaryFutureStressData,
   binaryFutureData,
   oraclizedData,
 
