@@ -162,8 +162,7 @@ contract('Test Binary Future Stress', accounts => {
 
       });
 
-      it('Clear stress winner verification', async () => {
-        
+      it('Clear stress winner verification', async () => {   
         for (let index = 0; index < investorsB.length; index++) {
           if(index!=0){
             let balancebefore = await (await web3.eth.getBalance(investorsB[index])).toNumber();
@@ -171,12 +170,23 @@ contract('Test Binary Future Stress', accounts => {
               from: investorsB[index],
             });
             let balanceafter = await (await web3.eth.getBalance(investorsB[index])).toNumber();
-
-            console.log(await(balanceafter - balancebefore + CLEAR_REWARD/5));
+            assert.ok( await(balanceafter - balancebefore + (CLEAR_REWARD/5))> weightsB[index]*2);
           }
         }
-
       });
+
+      it('Clear stress winner verification', async () => {
+        await future.setMockPeriod(5);
+        assert.equal(await future.getCurrentPeriod(),5);
+        // await future.invest(-1, 2,{ from: investorsB[0], value: 10**18 });
+        // await future.setMockPeriod(7);
+        // await future.clear(5,{from:investorsA[0]});
+      });
+      it('Clear stress winner verification', async () => {
+
+      })
+
+
 
 
 
