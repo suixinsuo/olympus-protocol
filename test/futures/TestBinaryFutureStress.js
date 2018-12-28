@@ -19,14 +19,23 @@ contract('Test Binary Future Stress', accounts => {
     let future;
     let providers;
   
-    const investorA = accounts[1];
-    const investorB = accounts[2];
     // Groups of investors
-    const investorsLong = accounts.slice(2, 7);
-    const investorsShort = accounts.slice(8, 13);
+    const investorsA = accounts.slice(2, 7);
+    const investorsB = accounts.slice(8, 13);
   
     let longToken;
     let shortToken;
+
+    let LOST_ETHER;
+    let CLEAR_PRE_ETH;
+    let NON_CLEAR_ACCOUNT_BALANCES;
+    let NON_CLEAR_ACCOUNT_BALANCES_NEW;
+    let CLEAR_REWARD;
+    let UserRedeemBalance;
+    const weightsA = [0.2, 0.05, 0.35,0.1,0.5]; 
+    const weightsB = [0.1, 0.025, 0.075,0.25,0.05]; 
+
+
     before('Initialize ComponentList', async () => {
       providers = await futureUtils.setUpComponentList();
     });
@@ -91,60 +100,83 @@ contract('Test Binary Future Stress', accounts => {
         await future.setMockPeriod(2);
 
         //Invest Short In Different Price
-        const weightsShort = [0.2, 0.05, 0.35,0.1,0.5]; 
-        await future.invest(1, 2,{ from: investorsShort[0], value: (weightsShort[0])*10**18 });
-        await future.invest(1, 2,{ from: investorsShort[1], value: (weightsShort[1])*10**18 });
-        await future.invest(1, 2,{ from: investorsShort[2], value: (weightsShort[2])*10**18 });
-        await future.invest(1, 2,{ from: investorsShort[3], value: (weightsShort[3])*10**18 });
+        await future.invest(1, 2,{ from: investorsA[0], value: (weightsA[0])*10**18 });
+        await future.invest(1, 2,{ from: investorsA[1], value: (weightsA[1])*10**18 });
+        await future.invest(1, 2,{ from: investorsA[2], value: (weightsA[2])*10**18 });
+        await future.invest(1, 2,{ from: investorsA[3], value: (weightsA[3])*10**18 });
         await future.setMockTargetPrice(new BigNumber(futureData.originTargetPrice*0.5));
-        await future.invest(1, 2,{ from: investorsShort[4], value: (weightsShort[4])*10**18 });
-        for (let index = 0; index < investorsShort.length; index++){
-           let tokensA = await shortToken.getTokenIdsByOwner(investorsShort[index]);
+        await future.invest(1, 2,{ from: investorsA[4], value: (weightsA[4])*10**18 });
+        for (let index = 0; index < investorsA.length; index++){
+           let tokensA = await shortToken.getTokenIdsByOwner(investorsA[index]);
            assert.equal(tokensA.length, 1);
            assert.equal(await shortToken.isTokenValid(tokensA[0]), true, 'Token A is valid');
-           assert((await shortToken.getDeposit(tokensA[0])).eq(new BigNumber((weightsShort[index]*10**18))), 'Token A deposit is correct');
+           assert((await shortToken.getDeposit(tokensA[0])).eq(new BigNumber((weightsA[index]*10**18))), 'Token A deposit is correct');
            assert((await shortToken.getTokenPeriod(tokensA[0])).eq(2), 'Token A deposit is correct');            
         };
 
         //Invest Short In Different Price
-        const weightsLong = [0.1, 0.025, 0.075,0.25,0.05]; 
-        await future.invest(-1, 2,{ from: investorsLong[0], value: (weightsLong[0])*10**18 });
-        await future.invest(-1, 2,{ from: investorsLong[1], value: (weightsLong[1])*10**18 });
-        await future.invest(-1, 2,{ from: investorsLong[2], value: (weightsLong[2])*10**18 });
-        await future.invest(-1, 2,{ from: investorsLong[3], value: (weightsLong[3])*10**18 });
+
+        await future.invest(-1, 2,{ from: investorsB[0], value: (weightsB[0])*10**18 });
+        await future.invest(-1, 2,{ from: investorsB[1], value: (weightsB[1])*10**18 });
+        await future.invest(-1, 2,{ from: investorsB[2], value: (weightsB[2])*10**18 });
+        await future.invest(-1, 2,{ from: investorsB[3], value: (weightsB[3])*10**18 });
         await future.setMockTargetPrice(new BigNumber(futureData.originTargetPrice*1.2));
-        await future.invest(-1, 2,{ from: investorsLong[4], value: (weightsLong[4])*10**18 });
-        for (let index = 0; index < investorsLong.length; index++){
-            let tokensB = await longToken.getTokenIdsByOwner(investorsLong[index]);
+        await future.invest(-1, 2,{ from: investorsB[4], value: (weightsB[4])*10**18 });
+        for (let index = 0; index < investorsB.length; index++){
+            let tokensB = await longToken.getTokenIdsByOwner(investorsB[index]);
             assert.equal(tokensB.length, 1);
-            assert((await longToken.getDeposit(tokensB[0])).eq(new BigNumber((weightsLong[index]*10**18))), 'Token B deposit is correct');
+            assert((await longToken.getDeposit(tokensB[0])).eq(new BigNumber((weightsB[index]*10**18))), 'Token B deposit is correct');
             assert((await longToken.getTokenPeriod(tokensB[0])).eq(2), 'Token B deposit is correct');            
          }; 
     });
 
       it('Clear stress', async () => {
-        await future.setMockTargetPrice(new BigNumber(futureData.originTargetPrice*0.5));
+        await future.setMockTargetPrice(new BigNumber(futureData.originTargetPrice*1.5));
         await future.setMockPeriod(4);
-        let LOST_ETHER;
-        let CLEAR_PRE_ETH;
-        let UserRedeemBalance;
-        for (let index = 0; index < investorsLong.length; index++) {
-            LOST_ETHER += web3.fromWei(await web3.eth.getBalance(investorsLong[index]).toNumber(),'ether');
+        assert.equal(await future.getCurrentPeriod(),4);
+        for (let index = 0; index < investorsA.length; index++) {
+          LOST_ETHER += await (await web3.eth.getBalance(investorsA[index])).toNumber();
+          if(index!=0){NON_CLEAR_ACCOUNT_BALANCES += await (await web3.eth.getBalance(investorsA[index])).toNumber() };
         }
 
-        CLEAR_PRE_ETH = web3.fromWei(await web3.eth.getBalance(investorsShort[0]).toNumber(),'ether');
+        CLEAR_PRE_ETH = (await web3.eth.getBalance(investorsA[0])).toNumber();
 
-        for (let index = 0; index < investorsShort.length; index++) {
-            UserRedeemBalance += web3.fromWei(await future.userRedeemBalance(investorsShort[index]),'ether');
+        for (let index = 0; index < investorsB.length; index++) {
+          NON_CLEAR_ACCOUNT_BALANCES += await (await web3.eth.getBalance(investorsB[index])).toNumber();
         }
-        await console.log(await future.userRedeemBalance(investorsShort[0]));
+        await future.clear(2,{from:investorsA[0]});
 
+        CLEAR_REWARD  = (await web3.eth.getBalance(investorsA[0])).toNumber() - CLEAR_PRE_ETH;
+        
 
+        for (let index = 0; index < investorsA.length; index++) {
+          if(index!=0){NON_CLEAR_ACCOUNT_BALANCES_NEW += (await web3.eth.getBalance(investorsA[index])).toNumber() };
+        }
 
+        for (let index = 0; index < investorsB.length; index++) {
+          NON_CLEAR_ACCOUNT_BALANCES_NEW += (await web3.eth.getBalance(investorsB[index])).toNumber();
+        }
 
+        //assert.ok(NON_CLEAR_ACCOUNT_BALANCES_NEW==NON_CLEAR_ACCOUNT_BALANCES,'Balances is no change.');
+        assert.ok(CLEAR_REWARD>0,'The balance of account[1] should be greater');
 
+      });
 
-    });
+      it('Clear stress winner verification', async () => {
+        
+        for (let index = 0; index < investorsB.length; index++) {
+          if(index!=0){
+            let balancebefore = await (await web3.eth.getBalance(investorsB[index])).toNumber();
+            await future.redeem({
+              from: investorsB[index],
+            });
+            let balanceafter = await (await web3.eth.getBalance(investorsB[index])).toNumber();
+
+            console.log(await(balanceafter - balancebefore + CLEAR_REWARD/5));
+          }
+        }
+
+      });
 
 
 
