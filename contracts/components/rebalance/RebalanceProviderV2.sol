@@ -12,6 +12,8 @@ contract RebalanceProvider is FeeCharger {
 
     PriceProviderInterface public priceProvider = PriceProviderInterface(0x0);
     uint public priceTimeout = 6 hours;
+    ERC20Extended constant private ETH_TOKEN = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+
 
 // Rates 100000000000000000, 500000000000000000, 1000000000000000000, 10000000000000000000
 // Balances 1000000000000000000, 2000000000000000000, 500000000000000000, 100000000000000000
@@ -77,6 +79,7 @@ contract RebalanceProvider is FeeCharger {
         uint[] memory prices;
         (prices, ,) = priceProvider.getMultiplePricesOrCacheFallback(castToERC20Extended(indexTokenAddresses), priceTimeout);
         for(i = 0; i < indexTokenBalances.length; i++){
+            (prices[i],,) = priceProvider.getPriceOrCacheFallback(ERC20Extended(indexTokenAddresses[i]),ETH_TOKEN, 10**18, 0x0, priceTimeout);
             ERC20Extended indexToken = ERC20Extended(indexTokenAddresses[i]);
             uint decimals = indexToken.decimals();
             uint amount = indexToken.balanceOf(msg.sender);
@@ -86,14 +89,26 @@ contract RebalanceProvider is FeeCharger {
             indexTokenBalances[i] = amount;
             indexTokenValues[i] = amount.mul(10**(18+18-decimals)).div(prices[i]);
         }
-        // uint totalValueEach = totalValue.div(indexTokenBalances.length);
+        uint totalValueEach = totalValue.div(indexTokenBalances.length);
+        uint[] memory valueToTrade = new uint[](indexTokenAddresses.length);
+        bool[] memory tooMuch = new bool[](indexTokenAddresses.length);
+        for(i = 0; i < indexTokenAddresses.length; i++){
+            if(indexTokenValues[i] > totalValueEach){
+                tooMuch[i] = false;
+                valueToTrade[i] = indexTokenValues[i] - totalValueEach;
+            } else {
+                tooMuch[i] = true;
+                valueToTrade[i] = totalValueEach - indexTokenValues[i];
+            }
+        }
         return true;
     }
 
     function getTotalIndexValue() public returns (uint totalValue) {
-        uint[] memory prices;
         address[] memory indexTokenAddresses;
         (indexTokenAddresses, ) = IndexInterface(msg.sender).getTokens();
+        uint[] memory prices = new uint[](indexTokenAddresses.length);
+
         uint amount;
         uint decimals;
         ERC20Extended indexToken;
