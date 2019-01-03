@@ -13,7 +13,9 @@ contract RebalanceProvider is FeeCharger {
     PriceProviderInterface public priceProvider = PriceProviderInterface(0x0);
     uint public priceTimeout = 6 hours;
     ERC20Extended constant private ETH_TOKEN = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
-
+    address[] public sourceTokens;
+    address[] public destTokens;
+    uint[] public srcAmount; // TODO convert tokenAmount
 
 // Rates 100000000000000000, 500000000000000000, 1000000000000000000, 10000000000000000000
 // Balances 1000000000000000000, 2000000000000000000, 500000000000000000, 100000000000000000
@@ -70,6 +72,7 @@ contract RebalanceProvider is FeeCharger {
         require(payFee(0), "Fee cannot be paid");
 
         uint i;
+        uint j;
         uint totalValue;
         address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
@@ -79,7 +82,6 @@ contract RebalanceProvider is FeeCharger {
         uint[] memory prices;
         (prices, ,) = priceProvider.getMultiplePricesOrCacheFallback(castToERC20Extended(indexTokenAddresses), priceTimeout);
         for(i = 0; i < indexTokenBalances.length; i++){
-            (prices[i],,) = priceProvider.getPriceOrCacheFallback(ERC20Extended(indexTokenAddresses[i]),ETH_TOKEN, 10**18, 0x0, priceTimeout);
             ERC20Extended indexToken = ERC20Extended(indexTokenAddresses[i]);
             uint decimals = indexToken.decimals();
             uint amount = indexToken.balanceOf(msg.sender);
@@ -90,15 +92,33 @@ contract RebalanceProvider is FeeCharger {
             indexTokenValues[i] = amount.mul(10**(18+18-decimals)).div(prices[i]);
         }
         uint totalValueEach = totalValue.div(indexTokenBalances.length);
-        uint[] memory valueToTrade = new uint[](indexTokenAddresses.length);
-        bool[] memory tooMuch = new bool[](indexTokenAddresses.length);
+        address[] storage tokensToSell;
+        uint[] storage valueOfTokensToSell;
+        address[] storage tokensToBuy;
+        uint[] storage valueOfTokensToBuy;
         for(i = 0; i < indexTokenAddresses.length; i++){
             if(indexTokenValues[i] > totalValueEach){
-                tooMuch[i] = false;
-                valueToTrade[i] = indexTokenValues[i] - totalValueEach;
+                tokensToSell.push(indexTokenAddresses[i]);
+                valueOfTokensToSell.push(indexTokenValues[i] - totalValueEach);
             } else {
-                tooMuch[i] = true;
-                valueToTrade[i] = totalValueEach - indexTokenValues[i];
+                tokensToBuy[i] = indexTokenAddresses[i];
+                valueOfTokensToBuy.push(indexTokenValues[i] - totalValueEach);
+            }
+        }
+        for(i = 0; i < tokensToSell.length; i++) {
+            for(j = 0; j < tokensToBuy.length; j++){
+                if(valueOfTokensToSell[i] == 0){
+                    break;
+                }
+                if(valueOfTokensToBuy[j] > 0){
+                    uint val = valueOfTokensToSell[i] > valueOfTokensToBuy[j] ? valueOfTokensToBuy[j] : valueOfTokensToSell[i];
+                    sourceTokens.push(tokensToSell[i]);
+                    destTokens.push(tokensToBuy[j]);
+                    // TODO GET CORRECT PRICES
+                    srcAmount.push(val.mul(prices[i]).div(10**(18+18-decimals)));
+                    valueOfTokensToBuy[j] = valueOfTokensToBuy[j].sub(val);
+                    valueOfTokensToSell[i] = valueOfTokensToSell[i].sub(val);
+                }
             }
         }
         return true;
