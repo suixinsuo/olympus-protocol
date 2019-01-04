@@ -7,55 +7,17 @@ import "../../interfaces/PriceProviderInterface.sol";
 import "../../components/base/FeeCharger.sol";
 
 
-contract RebalanceProvider is FeeCharger {
+contract RebalanceProviderV2 is FeeCharger {
     using SafeMath for uint256;
 
     PriceProviderInterface public priceProvider = PriceProviderInterface(0x0);
     uint public priceTimeout = 6 hours;
     ERC20Extended constant private ETH_TOKEN = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+    mapping(address => uint) public tempPriceStorage;
     address[] public sourceTokens;
     address[] public destTokens;
-    uint[] public srcAmount; // TODO convert tokenAmount
+    uint[] public srcAmount;
 
-// Rates 100000000000000000, 500000000000000000, 1000000000000000000, 10000000000000000000
-// Balances 1000000000000000000, 2000000000000000000, 500000000000000000, 100000000000000000
-// Values 100000000000000000, 1000000000000000000, 500000000000000000, 1000000000000000000
-
-// Total value 100000000000000000+1000000000000000000+500000000000000000,1000000000000000000 = 2600000000000000000
-// Total value each: 650000000000000000
-
-// Should haveBalance each:
-// 6500000000000000000
-// 1300000000000000000
-// 650000000000000000
-// 65000000000000000
-
-// Should buy:  [tokens 5500000000000000000] [value]
-// Should sell:  [tokens 700000000000000000] [value]
-// Should buy:  [tokens 150000000000000000] [value]
-// Should sell: [tokens 35000000000000000] [value]
-
-// Rates: 10**17, 5*10**17, 10**18, 10**19
-// Balances: 10**18, 2*10**18, 5*10**17, 10**17
-// Values 10**17, 10**18, 5*10**17, 10**18
-
-// Total value 10**17+10**18+5*10**17+10**18 = 2.6*10**18
-// Total value each: 6.5*10**17
-
-// Should haveBalance each:
-// 6.5*10**18
-// 1.3*10**18
-// 6.5*10**17
-// 6.5*10**16
-
-// Should buy [tokens 5.5*10**18] [value 5.5*10**17]
-// Should sell [tokens 7*10**17] [value 3.5*10**17]
-// Should buy [tokens 1.5*10**17] [value 1.5*10**17]
-// Should sell [tokens 3.5*10**16] [value 3.5*10**17]
-
-// 1. Use [7*10**17] tokens valued at [3.5*10**17] of (2) to buy [3.5*10**18] tokens valued at [3.5*10**17] of (1)
-// 2. Use [2*10**16] tokens valued at [2*10**17] of (4) to buy [2*10**18] tokens valued at [2*10**17] of (1)
-// 3. Use [1.5*10**16] tokens valued at [1.5*10**17] of (4) to buy [1.5*10**17] tokens valued at [1.5*10**17] of (3)
     enum RebalanceStatus { Initial, Calculated }
     mapping(address => RebalanceStatus) public rebalanceStatus;
 
@@ -63,26 +25,18 @@ contract RebalanceProvider is FeeCharger {
         priceProvider = _priceProvider;
     }
 
-    function rebalanceGetTokensToSellAndBuy(uint _rebalanceDeltaPercentage) external returns (bool) {
-        if(rebalanceStatus[msg.sender] == RebalanceStatus.Calculated) {
-            return (
-                true
-            );
-        }
-        require(payFee(0), "Fee cannot be paid");
-
+    function getValues() internal returns (address[] indexTokenAddresses,uint[] indexTokenValues,uint[] totalValueEach){
         uint i;
-        uint j;
         uint totalValue;
-        address[] memory indexTokenAddresses;
         uint[] memory indexTokenWeights;
         (indexTokenAddresses, indexTokenWeights) = IndexInterface(msg.sender).getTokens();
         uint[] memory indexTokenBalances = new uint[](indexTokenAddresses.length);
-        uint[] memory indexTokenValues = new uint[](indexTokenWeights.length);
+        indexTokenValues = new uint[](indexTokenWeights.length);
         uint[] memory prices;
         (prices, ,) = priceProvider.getMultiplePricesOrCacheFallback(castToERC20Extended(indexTokenAddresses), priceTimeout);
         for(i = 0; i < indexTokenBalances.length; i++){
             ERC20Extended indexToken = ERC20Extended(indexTokenAddresses[i]);
+            tempPriceStorage[indexTokenAddresses[i]] = prices[i];
             uint decimals = indexToken.decimals();
             uint amount = indexToken.balanceOf(msg.sender);
               // 18 - token decimals to account for the returned rate in Kyber, which is always 18 decimals
@@ -91,37 +45,49 @@ contract RebalanceProvider is FeeCharger {
             indexTokenBalances[i] = amount;
             indexTokenValues[i] = amount.mul(10**(18+18-decimals)).div(prices[i]);
         }
-        uint totalValueEach = totalValue.div(indexTokenBalances.length);
+        for(i = 0; i < indexTokenBalances.length; i++){
+            totalValueEach[i] = totalValue.mul(indexTokenWeights[i]).div(100);
+        }
+    }
+
+    function rebalanceGetTokensToTrade(uint _rebalanceDeltaPercentage) external returns (address[],address[],uint[]) {
+        require(payFee(0), "Fee cannot be paid");
+        uint[] memory counters = new uint[](2);
+        uint[] memory totalValueEach;
+        address[] memory indexTokenAddresses;
+        uint[] memory indexTokenValues;
+
+        (indexTokenAddresses, indexTokenValues, totalValueEach) = getValues();
+
         address[] storage tokensToSell;
         uint[] storage valueOfTokensToSell;
         address[] storage tokensToBuy;
         uint[] storage valueOfTokensToBuy;
-        for(i = 0; i < indexTokenAddresses.length; i++){
-            if(indexTokenValues[i] > totalValueEach){
-                tokensToSell.push(indexTokenAddresses[i]);
-                valueOfTokensToSell.push(indexTokenValues[i] - totalValueEach);
+        for(counters[0] = 0; counters[0] < indexTokenAddresses.length; counters[0]++){
+            if(indexTokenValues[counters[0]] > totalValueEach[counters[0]]){
+                tokensToSell.push(indexTokenAddresses[counters[0]]);
+                valueOfTokensToSell.push(indexTokenValues[counters[0]] - totalValueEach[counters[0]]);
             } else {
-                tokensToBuy[i] = indexTokenAddresses[i];
-                valueOfTokensToBuy.push(indexTokenValues[i] - totalValueEach);
+                tokensToBuy[counters[0]] = indexTokenAddresses[counters[0]];
+                valueOfTokensToBuy.push(indexTokenValues[counters[0]] - totalValueEach[counters[0]]);
             }
         }
-        for(i = 0; i < tokensToSell.length; i++) {
-            for(j = 0; j < tokensToBuy.length; j++){
-                if(valueOfTokensToSell[i] == 0){
+        for(counters[0] = 0; counters[0] < tokensToSell.length; counters[0]++) {
+            for(counters[1] = 0; counters[1] < tokensToBuy.length; counters[1]++){
+                if(valueOfTokensToSell[counters[0]] == 0){
                     break;
                 }
-                if(valueOfTokensToBuy[j] > 0){
-                    uint val = valueOfTokensToSell[i] > valueOfTokensToBuy[j] ? valueOfTokensToBuy[j] : valueOfTokensToSell[i];
-                    sourceTokens.push(tokensToSell[i]);
-                    destTokens.push(tokensToBuy[j]);
-                    // TODO GET CORRECT PRICES
-                    srcAmount.push(val.mul(prices[i]).div(10**(18+18-decimals)));
-                    valueOfTokensToBuy[j] = valueOfTokensToBuy[j].sub(val);
-                    valueOfTokensToSell[i] = valueOfTokensToSell[i].sub(val);
+                if(valueOfTokensToBuy[counters[1]] > 0){
+                    uint val = valueOfTokensToSell[counters[0]] > valueOfTokensToBuy[counters[1]] ? valueOfTokensToBuy[counters[1]] : valueOfTokensToSell[counters[0]];
+                    sourceTokens.push(tokensToSell[counters[0]]);
+                    destTokens.push(tokensToBuy[counters[1]]);
+                    srcAmount.push(val.mul(tempPriceStorage[tokensToSell[counters[0]]]).div(10**(18+18-ERC20Extended(tokensToSell[counters[0]]).decimals())));
+                    valueOfTokensToBuy[counters[1]] = valueOfTokensToBuy[counters[1]].sub(val);
+                    valueOfTokensToSell[counters[0]] = valueOfTokensToSell[counters[0]].sub(val);
                 }
             }
         }
-        return true;
+        return (sourceTokens,destTokens,srcAmount);
     }
 
     function getTotalIndexValue() public returns (uint totalValue) {
