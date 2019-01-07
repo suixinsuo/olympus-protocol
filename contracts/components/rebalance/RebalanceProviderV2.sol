@@ -14,9 +14,9 @@ contract RebalanceProviderV2 is FeeCharger {
     uint public priceTimeout = 6 hours;
     ERC20Extended constant private ETH_TOKEN = ERC20Extended(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
     mapping(address => uint) public tempPriceStorage;
-    address[] public sourceTokens;
-    address[] public destTokens;
-    uint[] public srcAmount;
+    mapping(address => address[]) public sourceTokens;
+    mapping(address => address[]) public destTokens;
+    mapping(address => uint[]) public srcAmount;
 
     enum RebalanceStatus { Initial, Calculated }
     mapping(address => RebalanceStatus) public rebalanceStatus;
@@ -52,6 +52,9 @@ contract RebalanceProviderV2 is FeeCharger {
 
     function rebalanceGetTokensToTrade(uint _rebalanceDeltaPercentage) external returns (address[],address[],uint[]) {
         require(payFee(0), "Fee cannot be paid");
+        delete sourceTokens[msg.sender];
+        delete destTokens[msg.sender];
+        delete srcAmount[msg.sender];
         uint[] memory counters = new uint[](2);
         uint[] memory totalValueEach;
         address[] memory indexTokenAddresses;
@@ -68,7 +71,7 @@ contract RebalanceProviderV2 is FeeCharger {
                 tokensToSell.push(indexTokenAddresses[counters[0]]);
                 valueOfTokensToSell.push(indexTokenValues[counters[0]] - totalValueEach[counters[0]]);
             } else {
-                tokensToBuy[counters[0]] = indexTokenAddresses[counters[0]];
+                tokensToBuy.push(indexTokenAddresses[counters[0]]);
                 valueOfTokensToBuy.push(indexTokenValues[counters[0]] - totalValueEach[counters[0]]);
             }
         }
@@ -79,15 +82,15 @@ contract RebalanceProviderV2 is FeeCharger {
                 }
                 if(valueOfTokensToBuy[counters[1]] > 0){
                     uint val = valueOfTokensToSell[counters[0]] > valueOfTokensToBuy[counters[1]] ? valueOfTokensToBuy[counters[1]] : valueOfTokensToSell[counters[0]];
-                    sourceTokens.push(tokensToSell[counters[0]]);
-                    destTokens.push(tokensToBuy[counters[1]]);
-                    srcAmount.push(val.mul(tempPriceStorage[tokensToSell[counters[0]]]).div(10**(18+18-ERC20Extended(tokensToSell[counters[0]]).decimals())));
+                    sourceTokens[msg.sender].push(tokensToSell[counters[0]]);
+                    destTokens[msg.sender].push(tokensToBuy[counters[1]]);
+                    srcAmount[msg.sender].push(val.mul(tempPriceStorage[tokensToSell[counters[0]]]).div(10**(18+18-ERC20Extended(tokensToSell[counters[0]]).decimals())));
                     valueOfTokensToBuy[counters[1]] = valueOfTokensToBuy[counters[1]].sub(val);
                     valueOfTokensToSell[counters[0]] = valueOfTokensToSell[counters[0]].sub(val);
                 }
             }
         }
-        return (sourceTokens,destTokens,srcAmount);
+        return (sourceTokens[msg.sender],destTokens[msg.sender],srcAmount[msg.sender]);
     }
 
     function getTotalIndexValue() public returns (uint totalValue) {
