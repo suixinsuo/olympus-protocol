@@ -50,6 +50,11 @@ contract RebalanceProviderV2 is FeeCharger {
         }
     }
 
+    function getDeltaValue(uint inputValue, uint _rebalanceDeltaPercentage, bool positive) internal view returns (uint){
+        uint extraValue = inputValue.mul(_rebalanceDeltaPercentage).div(10 ** ERC20Extended(msg.sender).decimals());
+        return positive ? inputValue.add(extraValue) : inputValue.sub(extraValue);
+    }
+
     function rebalanceGetTokensToTrade(uint _rebalanceDeltaPercentage) external returns (address[],address[],uint[]) {
         require(payFee(0), "Fee cannot be paid");
         delete sourceTokens[msg.sender];
@@ -67,12 +72,14 @@ contract RebalanceProviderV2 is FeeCharger {
         address[] storage tokensToBuy;
         uint[] storage valueOfTokensToBuy;
         for(counters[0] = 0; counters[0] < indexTokenAddresses.length; counters[0]++){
-            if(indexTokenValues[counters[0]] > totalValueEach[counters[0]]){
+            if(indexTokenValues[counters[0]] > getDeltaValue(totalValueEach[counters[0]], _rebalanceDeltaPercentage, true)){
                 tokensToSell.push(indexTokenAddresses[counters[0]]);
                 valueOfTokensToSell.push(indexTokenValues[counters[0]] - totalValueEach[counters[0]]);
-            } else {
+            } else if (indexTokenValues[counters[0]] < getDeltaValue(totalValueEach[counters[0]], _rebalanceDeltaPercentage, false)){
                 tokensToBuy.push(indexTokenAddresses[counters[0]]);
                 valueOfTokensToBuy.push(indexTokenValues[counters[0]] - totalValueEach[counters[0]]);
+            } else {
+                continue;
             }
         }
         for(counters[0] = 0; counters[0] < tokensToSell.length; counters[0]++) {
