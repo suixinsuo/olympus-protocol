@@ -12,6 +12,7 @@
     "fund-index": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/index/TestOlympusIndex.stress.js'",
     "futuretest": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.clear.js'",
     "test": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545  --gasLimit 8e6  --network development 'truffle test'",
+    "testX": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545  --gasLimit 8e6  --network development 'truffle test --suite=OlympusIndex'",
     "testKovan": "./node_modules/.bin/run-with-testrpc --port 8545  --network kovan 'truffle test'",
     "testCoverage": "./node_modules/.bin/run-with-testrpc --port 8545 'truffle test --network coverage' ",
     "deploy": "./node_modules/.bin/run-with-testrpc --port 8545  --network development 'truffle migrate --reset' ",

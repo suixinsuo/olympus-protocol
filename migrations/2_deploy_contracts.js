@@ -29,6 +29,7 @@ let WhitelistProvider = artifacts.require("WhitelistProvider");
 let MockToken = artifacts.require("MockToken");
 let mockTokenSupply = 10 ** 9 * 10 ** 18;
 let RebalanceProvider = artifacts.require("RebalanceProvider");
+let RebalanceProviderV2 = artifacts.require("RebalanceProviderV2");
 
 let StepProvider = artifacts.require("StepProvider");
 
@@ -135,9 +136,9 @@ async function deployFuture(deployer, network) {
 }
 
 async function deployBinaryFuture(deployer, network) {
-  deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, PercentageFee,ComponentList]);
+  deployer.deploy([Locker, MarketplaceProvider, Reimbursable, StepProvider, PercentageFee, ComponentList]);
   await deployExchange(deployer, network);
-  
+
 }
 
 async function deployMockfund(deployer, network) {
@@ -203,6 +204,7 @@ async function deployOlympusIndex(deployer, network) {
   ]);
   await deployExchange(deployer, network);
   await deployer.deploy(RebalanceProvider, ExchangeProvider.address);
+  await deployer.deploy(RebalanceProviderV2, ExchangeProvider.address);
 }
 
 // Running all the suits
@@ -225,7 +227,8 @@ function deployOnDev(deployer, num) {
       ])
     )
     .then(() => deployExchange(deployer, "development"))
-    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
+    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
+    .then(() => deployer.deploy(RebalanceProviderV2, ExchangeProvider.address));
 }
 
 function deployOnKovan(deployer, num) {
@@ -242,7 +245,9 @@ function deployOnKovan(deployer, num) {
     .then(() => deployer.deploy(ComponentList))
     .then(() => deployer.deploy(TokenBroken))
     .then(() => deployExchange(deployer, "kovan"))
-    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address));
+    .then(() => deployer.deploy(RebalanceProvider, ExchangeProvider.address))
+    .then(() => deployer.deploy(RebalanceProviderV2, ExchangeProvider.address));
+
 }
 
 function deployOnMainnet(deployer) {
