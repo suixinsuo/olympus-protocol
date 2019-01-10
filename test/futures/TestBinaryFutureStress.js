@@ -134,6 +134,8 @@ contract('Test Binary Future Stress', accounts => {
       assert.isAbove(exist, -1, 'should found the value invested');
     });
     assert.equal(longTokenIds.length, 5, 'should have 5 long tokens');
+
+
     //  1. Using account 0 , call setMockTargetPrice and set value to 1.5 ether (1.5*10**18)
     //   expect getTargetPrice should return 1.5*10**18
     //  2. Using account 0, call setMockPeriod and set the value to 4
@@ -162,12 +164,14 @@ contract('Test Binary Future Stress', accounts => {
     const totalOfUserRedeemBalance = userRedeemBalances.reduce((a, b) => a.plus(b));
     // const winnersBalance = await future.winnersBalances(period);
     // console.log('winnersBalance:', +winnersBalance, allShortValues);
+
+    // use event logs check the actually reward;
+    // verify clear reward
     const clearReward = await utils.estimateRewardAmountForBinaryFuture(future, allShortValues);
     assert.equal(+clearRewardValue, +clearReward, 'reward should be expected');
     assert(allShortValues.plus(allLongValues).minus(clearReward).eq(totalOfUserRedeemBalance),
       'totalOfUserRedeemBalance should be equal LOST_ETHER + allLongValue - CLEAR_REWARD ');
-    // use event logs check the actually reward;
-    // Clear stress winner verification
+
     let index = 7;
     while (index < 11) {
       const oldBalance = web3.eth.getBalance(accounts[index]);
@@ -359,7 +363,7 @@ contract('Test Binary Future Stress', accounts => {
 
   });
 
-  it("5. Invest both of long and short with new deploy binary future ", async () => {
+  it("5. Invest both of long and short with new deploy", async () => {
 
     const {
       name,
