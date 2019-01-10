@@ -14,16 +14,16 @@ const binaryFutureData = {
   disabledValue: 1,
 };
 
-    /** 
-      1. Create a Binary Future by deploying the BinaryFutureStub contract.
-      Deploy with the following parameters:
-      "Binary Future Stress Test Multi",
-      "A binary future stub contract to test stress cases with investments into multiple direction" ,
-      "BFSTM",
-      "0x42696e617279467574757265537472657373",
-      "TOKEN_ADDRESS",
-      60
-    */
+/** 
+  1. Create a Binary Future by deploying the BinaryFutureStub contract.
+  Deploy with the following parameters:
+  "Binary Future Stress Test Multi",
+  "A binary future stub contract to test stress cases with investments into multiple direction" ,
+  "BFSTM",
+  "0x42696e617279467574757265537472657373",
+  "TOKEN_ADDRESS",
+  60
+*/
 
 const binaryFutureStressData = {
   name: "Binary Future Stress Test",
@@ -120,8 +120,14 @@ module.exports = {
       assert(redeemBalance.eq(0), `Investor ${i} has nothing to rebalance`)
     }
   },
-
-  getRewardAmountForBinaryFuture: async (future, allLostValues) => {
+  getClearRewardFromLogEvent(clearTx) {
+    const event = clearTx.logs.find(log => log.event === 'CallerRewarded');
+    if (event === undefined) {
+      return 0;
+    }
+    return event.args._amount;
+  },
+  estimateRewardAmountForBinaryFuture: async (future, allLostValues) => {
     let reward = allLostValues.mul(await future.REWARDS_PERCENTAGE()).div(await future.DENOMINATOR());
     const min_reward = await future.MIN_REWARDS();
     const max_reward = await future.MAX_REWARDS();

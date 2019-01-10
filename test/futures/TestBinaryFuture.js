@@ -491,7 +491,7 @@ contract('Test Binary Future', accounts => {
     });
     assert.ok(tx);
 
-    const reward = await binaryUtils.getRewardAmountForBinaryFuture(future, totalShortInvestment);
+    const reward = await binaryUtils.estimateRewardAmountForBinaryFuture(future, totalShortInvestment);
     const events = calc.getEvent(tx, 'Benefits');
     assert.equal(events.length, investorsLong.length, 'One event per winner');
     // Check values are correct
@@ -580,7 +580,7 @@ contract('Test Binary Future', accounts => {
     assert.equal(events.length, investorsShort.length, 'One event per winner');
     // Check values are correct
 
-    const reward = await binaryUtils.getRewardAmountForBinaryFuture(future, totalLongInvestment);
+    const reward = await binaryUtils.estimateRewardAmountForBinaryFuture(future, totalLongInvestment);
     for (let i = 0; i < events.length; i++) {
       const deposit = totalShortInvestment.mul(weights[i]);
       const benefits = totalLongInvestment
@@ -727,7 +727,7 @@ contract('Test Binary Future', accounts => {
     for (let i = 0; i < events.length; i++) {
       const deposit = totalLongInvestment.mul(weights[i]);
       const benefits = totalShortInvestment
-        .sub(await binaryUtils.getRewardAmountForBinaryFuture(future, totalShortInvestment)).mul(1) // FEE is 0%
+        .sub(await binaryUtils.estimateRewardAmountForBinaryFuture(future, totalShortInvestment)).mul(1) // FEE is 0%
         .mul(weights[i]);
 
       assert.equal(events[i].args._holder, investorsLong[i]);
@@ -738,7 +738,7 @@ contract('Test Binary Future', accounts => {
     // Check
     const { winnersBalance, winnersInvestment, winnersBalanceRedeemed, clearFinish } = await binaryUtils.getClearData(future, testPeriod);
 
-    const reward = await binaryUtils.getRewardAmountForBinaryFuture(future, totalShortInvestment);
+    const reward = await binaryUtils.estimateRewardAmountForBinaryFuture(future, totalShortInvestment);
     assert(winnersBalance.eq((totalShortInvestment.sub(reward))), 'Winners balance is correct');
     assert(winnersInvestment.eq(totalLongInvestment), 'Winners investment is correct');
     assert(winnersBalanceRedeemed.eq(winnersBalance * 1), 'Winners redeem all benefits');

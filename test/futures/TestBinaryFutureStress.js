@@ -8,6 +8,7 @@ const {
 const futureUtils = require('./futureUtils');
 const utils = require('./futureBinaryUtils');
 const BinaryFuture = artifacts.require('BinaryFutureStub');
+const BinaryFutureToken = artifacts.require('BinaryFutureERC721Token');
 
 contract('Test Binary Future Stress', accounts => {
 
@@ -153,7 +154,7 @@ contract('Test Binary Future Stress', accounts => {
     //  3. Get the balance in the future of accounts 1-5 (their investment amount) and add this together. The resulting value is LOST_ETHER
     // expect LOST_ETHER(need calculate)
     const allShortValues = shortValues.reduce((a, b) => new BigNumber(a).plus(b));
-    const allLongValue = longValues.reduce((a, b) => new BigNumber(a).plus(b));
+    const allLongValues = longValues.reduce((a, b) => new BigNumber(a).plus(b));
     //  5. Get balances of accounts 2-10. The resulting value is NON_CLEAR_ACCOUNT_BALANCES
     //   expect NON_CLEAR_ACCOUNT_BALANCES is set
     //  6. Use account 1, call clear(2)
@@ -161,30 +162,32 @@ contract('Test Binary Future Stress', accounts => {
     //           2). add userRedeemBalance of accounts 6 through 10 together, this should be equal to LOST_ETHER - CLEAR_REWARD
     //           3). Check balances of account 2-10, compare with NON_CLEAR_ACCOUNT_BALANCES to verify that no balance changed(only check event to see)
     const account_1 = accounts[1];
-    await future.clear(period, {
+    const clearTx = await future.clear(period, {
       from: account_1
     });
 
+    const clearRewardValue = utils.getClearRewardFromLogEvent(clearTx);
     const account2_10 = accounts.slice(2, 11);
     const userRedeemBalances = await Promise.all(account2_10.map(
       async (account) => await future.userRedeemBalance(account)));
     const totalOfUserRedeemBalance = userRedeemBalances.reduce((a, b) => a.plus(b));
     // const winnersBalance = await future.winnersBalances(period);
     // console.log('winnersBalance:', +winnersBalance, allShortValues);
-    const clearReward = await utils.getRewardAmountForBinaryFuture(future, allShortValues);
-    assert(allShortValues.plus(allLongValue).minus(clearReward).eq(totalOfUserRedeemBalance),
+    const clearReward = await utils.estimateRewardAmountForBinaryFuture(future, allShortValues);
+    assert.equal(+clearRewardValue, +clearReward, 'reward should be expected');
+    assert(allShortValues.plus(allLongValues).minus(clearReward).eq(totalOfUserRedeemBalance),
       'totalOfUserRedeemBalance should be equal LOST_ETHER + allLongValue - CLEAR_REWARD ');
-
-
+    // use event logs check the actually reward;
     // Clear stress winner verification
-    let index = 6;
+    let index = 7;
     while (index < 11) {
       const oldBalance = web3.eth.getBalance(accounts[index]);
       const redeemBalance = await future.userRedeemBalance(accounts[index]);
       const investValue = longValues[index - 6];
       // console.log('investValue:', investValue);
-      const percentage = new BigNumber(investValue).div(allLongValue);
+      const percentage = new BigNumber(investValue).div(allLongValues);
       const shouldRedeem = allShortValues.minus(clearReward).times(percentage).plus(investValue);
+      // string value for big number will not equal should compare with number;
       // console.log('shouldRedeem', +percentage, shouldRedeem.toString(), redeemBalance.toString());
       assert.equal(+shouldRedeem, +redeemBalance, 'expected redeem balance');
       await future.redeem({
@@ -199,13 +202,15 @@ contract('Test Binary Future Stress', accounts => {
 
   });
 
-
-  it("Invest and clear again. ", async () => {
+  it("2. Invest clear but without price changed. ", async () => {
     const {
       future
     } = binaryFuture;
     // Using account 0, call setMockPeriod and set the value to 5
     await future.setMockPeriod(5);
+    let period = await future.getCurrentPeriod();
+    assert.equal(+period, 5, 'getCurrentPeriod should be 5');
+
     // Using account 6, invest in the long position invest(-1,5) with 1 Ether
     const value = 1 * 10 ** 18;
 
@@ -220,56 +225,79 @@ contract('Test Binary Future Stress', accounts => {
 
     // Using account 0 call setMockPeriod and set the value to 7
     await future.setMockPeriod(7);
+    period = await future.getCurrentPeriod();
+    assert.equal(+period, 7, 'getCurrentPeriod should be 7');
+
     const balance = await web3.eth.getBalance(accounts[1]);
-    await future.clear(5, {
+    const clearTx = await future.clear(5, {
       from: accounts[1]
     });
-
+    const rewardValue = utils.getClearRewardFromLogEvent(clearTx);
+    assert(rewardValue === 0, 'reward should be nothing');
     const clearedBalance = await web3.eth.getBalance(accounts[1]);
-    const clearReward = await utils.getRewardAmountForBinaryFuture(future, new BigNumber(value * 5));
-
+    const actualGetReward = clearedBalance.minus(balance);
+    assert.isBelow(+actualGetReward, 0, 'reward should be 0');
     index = 1;
     while (index <= 5) {
       const redeem = await future.userRedeemBalance(accounts[index]);
-      await future.redeem({
-        from: accounts[index]
-      });
-      // console.log('clearReward:', +redeem);
+      assert.equal(+redeem, value, 'userRedeemBalance equal they invested');
+      // const redeemTx = await future.redeem({
+      //   from: accounts[index]
+      // });
       index++;
     }
 
   });
 
-  it("Invest again and lose as only investor", async () => {
+  it("3. Invest long only, price changed but nobody win.", async () => {
     const {
       future
     } = binaryFuture;
 
     // Using account 0 , call setMockTargetPrice and set value to 1 ether (10**18)
     await future.setMockTargetPrice(1 * 10 ** 18);
+    let targetPrice = await future.getTargetPrice();
+    assert.equal(+targetPrice, 1 * 10 ** 18, 'call getTargetPrice, should return 10**18');
     // Using account 6, invest 1 ETH in period 7 (current period). invest(-1, 7)
+    const a6InvestValue = 10 ** 18;
     await future.invest(FutureDirection.Long, 7, {
       from: accounts[6],
-      value: 10 ** 18
+      value: a6InvestValue
     });
-
-    await future.invest(FutureDirection.Short, 7, {
+    const a1InvestValue = 0.02 * 10 ** 18;
+    await future.invest(FutureDirection.Long, 7, {
       from: accounts[1],
-      value: 2 * 10 ** 16
+      value: a1InvestValue
     });
 
     // Using account 0, call setMockPeriod and set to 9
     await future.setMockPeriod(9);
+    let period = await future.getCurrentPeriod();
+    assert.equal(+period, 9, 'getCurrentPeriod should be 9');
     // Using account 0 , call setMockTargetPrice and set value to 0.5 ether (0.5*10**18)
     await future.setMockTargetPrice(0.5 * 10 ** 18);
+    targetPrice = await future.getTargetPrice();
+    assert.equal(+targetPrice, 0.5 * 10 ** 18, 'call getTargetPrice, should return 0.5 * 10 ** 18');
+
+    const redeemOfA6 = await future.userRedeemBalance(accounts[6]);
+    const redeemOfA1 = await future.userRedeemBalance(accounts[1]);
     // Using account 1, call clear(7)
-    await future.clear(7, {
+    const clearTx = await future.clear(7, {
       from: accounts[1]
     });
 
+    const redeemOfA6AfterClear = await future.userRedeemBalance(accounts[6]);
+    const redeemOfA1AfterClear = await future.userRedeemBalance(accounts[1]);
+    const clearReward = utils.getClearRewardFromLogEvent(clearTx);
+    assert.equal(clearReward, 0, 'clearReward should be 0');
+    assert(redeemOfA6.plus(a6InvestValue).eq(redeemOfA6AfterClear),
+      'userRedeemBalance of account 6 should not be changed');
+    assert(redeemOfA1.plus(a1InvestValue).eq(redeemOfA1AfterClear),
+      'userRedeemBalance of account 1 should not be changed');
+
   });
 
-  it("Invest again and lose while having winners", async () => {
+  it("4. Invest again and lose while having winners", async () => {
     const {
       future
     } = binaryFuture;
@@ -288,7 +316,7 @@ contract('Test Binary Future Stress', accounts => {
 
     await future.invest(FutureDirection.Short, 9, {
       from: accounts[1],
-      value: 0.02 * 10 ** 18
+      value: 10 ** 18
     });
 
     // Using account 0, call setMockPeriod and set to 11
@@ -297,13 +325,55 @@ contract('Test Binary Future Stress', accounts => {
     await future.setMockTargetPrice(0.9 * 10 ** 18);
     // Using account 1, call clear(9)
 
-    await future.clear(9, {
+    const redeemOfA6Before = await future.userRedeemBalance(accounts[6]);
+
+    const clearTx = await future.clear(9, {
       from: accounts[1]
     });
 
+    // Using the same way as the last case, check that account 1 has been reimbursed and save this variable in CLEAR_REWARD_FOUR
+    const clearReward = utils.getClearRewardFromLogEvent(clearTx);
+    const estimateReward = await utils.estimateRewardAmountForBinaryFuture(future, new BigNumber(10 ** 18));
+    assert(clearReward.eq(estimateReward), 'clearReward should equal estimated');
+
+    // Check that userRedeemBalance of account 6 is still ((1 ETH - CLEAR_REWARD_THREE) + (1 ETH - CLEAR_REWARD_TWO) + (0.2 ETH - CLEAR_REWARD/5))
+    // Check that userRedeemBalance of account 7 is 1 ETH - CLEAR_REWARD_FOUR
+    const redeemOfA6 = await future.userRedeemBalance(accounts[6]);
+    const redeemOfA7 = await future.userRedeemBalance(accounts[7]);
+
+    assert(redeemOfA6.eq(redeemOfA6Before), 'userRedeemBalance of account 6 is not changed');
+    const expectedRedeemOfA7 = new BigNumber(10 ** 18).minus(clearReward).div(2).plus(10 ** 18);
+    assert(redeemOfA7.eq(expectedRedeemOfA7), 'userRedeemBalance of account 7 is 1 ETH - CLEAR_REWARD_FOUR');
+
+    const balanceOfBefore = [
+      await web3.eth.getBalance(accounts[6]),
+      await web3.eth.getBalance(accounts[7])
+    ];
+    // Using account 6 and 7, call the redeem function
+    const redeemA6Tx = await future.redeem({
+      from: accounts[6]
+    });
+
+    const redeemA7Tx = await future.redeem({
+      from: accounts[7]
+    });
+
+    const balanceOfAfter = [
+      await web3.eth.getBalance(accounts[6]),
+      await web3.eth.getBalance(accounts[7])
+    ];
+    const actuallyRedeemOfA6 = balanceOfAfter[0].minus(balanceOfBefore[0]);
+    const actuallyRedeemOfA7 = balanceOfAfter[1].minus(balanceOfBefore[1]);
+    const gasOfA6GasUsed = redeemA6Tx.receipt.gasUsed;
+    const gasOfA7GasUsed = redeemA7Tx.receipt.gasUsed;
+
+    // Verify that account 6 and 7 have received the userRedeemBalance as calculated in the last step.
+    assert(redeemOfA6.eq(actuallyRedeemOfA6.plus(gasOfA6GasUsed * 10 ** 9)));
+    assert(redeemOfA7.eq(actuallyRedeemOfA7.plus(gasOfA7GasUsed * 10 ** 9)));
+
   });
 
-  it("Binary Future 2 Deployment ", async () => {
+  it("5. Binary Future 2 Deployment ", async () => {
 
     const {
       name,
@@ -318,7 +388,7 @@ contract('Test Binary Future Stress', accounts => {
       symbol: 'BFSTM',
       category: '0x42696e617279467574757265537472657373',
       targetAddress: providers.mockMOT.address,
-      investingPeriod: 60,
+      investingPeriod: 60, // not important
     }
 
     const future = await BinaryFuture.new(
@@ -334,14 +404,19 @@ contract('Test Binary Future Stress', accounts => {
     //  'COMPONENT_LIST_ADDRESS' for the component list and
     //  '0' for the fee
     await future.initialize(providers.componentList.address, 0);
+
     const longAddress = await future.getLongToken();
     const shortAddress = await future.getShortToken();
+
+    const longToken = new BinaryFutureToken(longAddress);
+    const shortToken = new BinaryFutureToken(shortAddress);
 
     /******* investment, multiple directions ******/
     // Using account 0 , call setMockTargetPrice and set value to 1 ether (10**18)
     // Using account 0, call setMockPeriod and set the value to 2
     await future.setMockTargetPrice(1 * 10 ** 18);
-    await future.setMockPeriod(2);
+    let period = 2;
+    await future.setMockPeriod(period);
 
     // Save ETH balance of account 1-5 in a variable called ACCOUNT_ETH_BALANCES
     // Using accounts 1-5 invest into short position (5 transactions)
@@ -361,12 +436,20 @@ contract('Test Binary Future Stress', accounts => {
 
     let index = 1;
     while (index <= 5) {
-      await future.invest(FutureDirection.Short, 2, {
+      await future.invest(FutureDirection.Short, period, {
         from: accounts[index],
         value: shortValues[index - 1],
       })
       index++;
     }
+
+    // Check that all the valid tokens exist and have the correct balance
+    let shortTokenIds = await future.getTokensByPeriod(FutureDirection.Short, period);
+    await Promise.all(shortTokenIds.map(async (id) => {
+      const value = await shortToken.getDeposit(id);
+      const exist = shortValues.indexOf(+value);
+      assert.isAbove(exist, -1, 'should found the value invested');
+    }));
 
     // 5
     // Use the 5 accounts to invest in a different position.
@@ -386,32 +469,61 @@ contract('Test Binary Future Stress', accounts => {
 
     index = 1;
     while (index <= 5) {
-      await future.invest(FutureDirection.Long, 2, {
+      await future.invest(FutureDirection.Long, period, {
         from: accounts[index],
         value: longValues[index - 1],
       });
       index++;
     }
 
+    // Check that all the valid tokens have been updated and have the correct balance
+    let longTokenIds = await future.getTokensByPeriod(FutureDirection.Long, period);
+    await Promise.all(longTokenIds.map(async (id) => {
+      const value = await longToken.getDeposit(id);
+      const exist = longValues.indexOf(+value);
+      console.log('longToken', id, +value);
+      assert.isAbove(exist, -1, 'should found the value invested');
+    }));
+
     // 6
     // Invest again with some accounts: 
     // account 4: invest(-1,2) (with value of 0.051*10**18)
     // account 5: invest(-1,2) (with value of 10**18) 
-    await future.invest(FutureDirection.Long, 2, {
+    const invertOfA4 = 0.051 * 10 ** 18;
+    longValues[3] += invertOfA4;
+    await future.invest(FutureDirection.Long, period, {
       from: accounts[4],
-      value: 0.051 * 10 ** 18,
+      value: invertOfA4,
     });
-    await future.invest(FutureDirection.Long, 2, {
+
+    const invertOfA5 = 1 * 10 ** 18;
+    longValues[4] += invertOfA5;
+    await future.invest(FutureDirection.Long, period, {
       from: accounts[5],
-      value: 1 * 10 ** 18,
+      value: invertOfA5,
     });
+
+    // Check that all the valid tokens have been updated and have the correct balance
+    shortTokenIds = await future.getTokensByPeriod(FutureDirection.Short, period);
+    await Promise.all(shortTokenIds.map(async (id) => {
+      const value = await shortToken.getDeposit(id);
+      const exist = shortValues.indexOf(+value);
+      assert.isAbove(exist, -1, 'should found the value invested');
+    }));
+
+    longTokenIds = await future.getTokensByPeriod(FutureDirection.Long, period);
+    await Promise.all(longTokenIds.map(async (id) => {
+      const value = await longToken.getDeposit(id);
+      const exist = longValues.indexOf(+value);
+      assert.isAbove(exist, -1, 'should found the value invested');
+    }));
 
     /************** Binary Future 2, clear ***************** */
     // Using account 0 , call setMockTargetPrice and set value to 0.9 ether (0.9*10**18)
     // Using account 0, call setMockPeriod and set the value to 4
     await future.setMockTargetPrice(0.9 * 10 ** 18);
     await future.setMockPeriod(4);
-    // Using account 0, call clear(2)
+    // Using account 1, call clear(2)
 
     /** ************* redeem ***************** */
     // Using accounts 1 through 5, call redeem. Get all ETH Balances in variable array ACCOUNT_ETH_BALANCES_NOW
@@ -425,4 +537,5 @@ contract('Test Binary Future Stress', accounts => {
     // Account 5: ACCOUNT_ETH_BALANCE_NOW = ACCOUNT_ETH_BALANCE - 1 + 4 - (CALLER_REWARD_BFTWO/5)
 
   });
+
 })
