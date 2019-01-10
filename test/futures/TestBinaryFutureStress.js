@@ -359,7 +359,7 @@ contract('Test Binary Future Stress', accounts => {
 
   });
 
-  it("5. Binary Future 2 Deployment ", async () => {
+  it("5. Invest both of long and short with new deploy binary future ", async () => {
 
     const {
       name,
