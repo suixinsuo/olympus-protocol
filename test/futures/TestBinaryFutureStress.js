@@ -2,8 +2,7 @@ const calc = require('../utils/calc');
 const BigNumber = web3.BigNumber;
 
 const {
-  FutureDirection,
-  DerivativeType
+  FutureDirection
 } = require('../utils/constants');
 const futureUtils = require('./futureUtils');
 const utils = require('./futureBinaryUtils');
@@ -14,16 +13,6 @@ contract('Test Binary Future Stress', accounts => {
 
   let providers;
   let binaryFuture;
-  const groupA = accounts.slice(1, 11);
-  const groupB = accounts.slice(11, 21);
-  const groupAll = accounts.slice(1, 21);
-
-  const account1_5 = accounts.slice(1, 6);
-  const account6_10 = accounts.slice(6, 11);
-
-  const weightsA = [0.2, 0.05, 0.35, 0.1, 0.5];
-  const weightsB = [0.1, 0.025, 0.075, 0.25, 0.05];
-
 
   before('Initialize ComponentList', async () => {
     assert(accounts.length >= 21, "Require at least 11 investors for this test case");
@@ -241,9 +230,6 @@ contract('Test Binary Future Stress', accounts => {
     while (index <= 5) {
       const redeem = await future.userRedeemBalance(accounts[index]);
       assert.equal(+redeem, value, 'userRedeemBalance equal they invested');
-      // const redeemTx = await future.redeem({
-      //   from: accounts[index]
-      // });
       index++;
     }
 
