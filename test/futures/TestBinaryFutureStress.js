@@ -481,7 +481,6 @@ contract('Test Binary Future Stress', accounts => {
     await Promise.all(longTokenIds.map(async (id) => {
       const value = await longToken.getDeposit(id);
       const exist = longValues.indexOf(+value);
-      console.log('longToken', id, +value);
       assert.isAbove(exist, -1, 'should found the value invested');
     }));
 
@@ -524,17 +523,40 @@ contract('Test Binary Future Stress', accounts => {
     await future.setMockTargetPrice(0.9 * 10 ** 18);
     await future.setMockPeriod(4);
     // Using account 1, call clear(2)
+    const clearTx = await future.clear(period, {
+      from: accounts[1]
+    });
+
+    const clearReward = utils.getClearRewardFromLogEvent(clearTx);
+
+    const allLongValues = longValues.reduce((a, b) => new BigNumber(a).plus(b));
+    const allShortValues = shortValues.reduce((a, b) => new BigNumber(a).plus(b));
+
+    // short invest win. 
+    const estimatedReward = await utils.estimateRewardAmountForBinaryFuture(future, allLongValues);
+    assert.equal(+clearReward, +estimatedReward, 'clear reward should be equal estimated reward');
 
     /** ************* redeem ***************** */
     // Using accounts 1 through 5, call redeem. Get all ETH Balances in variable array ACCOUNT_ETH_BALANCES_NOW
+    // expect calculate each account 1-5 actually redeem are equal shouldRedeem.
+    index = 1;
+    while (index <= 5) {
+      const oldBalance = web3.eth.getBalance(accounts[index]);
+      const redeemBalance = await future.userRedeemBalance(accounts[index]);
+      const investValue = shortValues[index - 1];
 
-    // expect
-    // Compare with ACCOUNT_ETH_BALANCES
-    // Account 1: ACCOUNT_ETH_BALANCE_NOW = ACCOUNT_ETH_BALANCE - (CALLER_REWARD_BFTWO/5)
-    // Account 2: ACCOUNT_ETH_BALANCE_NOW = ACCOUNT_ETH_BALANCE - 0.5 +1 - (CALLER_REWARD_BFTWO/5)
-    // Account 3: ACCOUNT_ETH_BALANCE_NOW = ACCOUNT_ETH_BALANCE - (CALLER_REWARD_BFTWO/5)
-    // Account 4: ACCOUNT_ETH_BALANCE_NOW = ACCOUNT_ETH_BALANCE - 0.1 + 0.101 - (CALLER_REWARD_BFTWO/5)
-    // Account 5: ACCOUNT_ETH_BALANCE_NOW = ACCOUNT_ETH_BALANCE - 1 + 4 - (CALLER_REWARD_BFTWO/5)
+      const percentage = new BigNumber(investValue).div(allShortValues);
+      const shouldRedeem = allLongValues.minus(clearReward).times(percentage).plus(investValue);
+      // string value for big number will not equal should compare with number;
+      assert.equal(+shouldRedeem, +redeemBalance, 'expected redeem balance');
+      await future.redeem({
+        from: accounts[index]
+      });
+      const balance = web3.eth.getBalance(accounts[index]);
+      assert(calc.inRange(+balance.minus(oldBalance), +redeemBalance, 10 ** 15),
+        'expected redeemed balance near redeemBalance');
+      index++;
+    }
 
   });
 
