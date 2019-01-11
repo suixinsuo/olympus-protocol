@@ -5,7 +5,7 @@ const BigNumber = web3.BigNumber;
 
 
 const FutureContract = artifacts.require("FutureContractStub"); // FutureContract With functions for testing
-const MockOracle = artifacts.require("MockOracle");// FutureContract With functions for testing
+const MockOracle = artifacts.require("MockOracle"); // FutureContract With functions for testing
 const Marketplace = artifacts.require("Marketplace");
 const Locker = artifacts.require("Locker");
 const StepProvider = artifacts.require("StepProvider");
@@ -16,7 +16,6 @@ const FutureToken = artifacts.require("FutureERC721Token");
 const MockToken = artifacts.require("MockToken");
 const MockKyberNetwork = artifacts.require("MockKyberNetwork");
 const ExchangeProvider = artifacts.require("ExchangeProvider");
-
 
 const DENOMINATOR = 10000;
 const INITIAL_FEE = 10 ** 17;
@@ -52,7 +51,7 @@ module.exports = {
     const percentageFee = await PercentageFee.deployed();
     const exchangeProvider = await ExchangeProvider.deployed();
     const componentList = await ComponentList.deployed();
-    const mockoracle = await MockOracle.deployed();
+    const mockOracle = await MockOracle.deployed();
 
     await reimbursable.setMotAddress(mockMOT.address);
     await exchangeProvider.setMotAddress(mockMOT.address);
@@ -63,7 +62,7 @@ module.exports = {
     componentList.setComponent(DerivativeProviders.REIMBURSABLE, reimbursable.address);
     componentList.setComponent(DerivativeProviders.STEP, stepProvider.address);
     componentList.setComponent(DerivativeProviders.FEE, percentageFee.address);
-    componentList.setComponent(DerivativeProviders.ORACLE, mockoracle.address);
+    componentList.setComponent(DerivativeProviders.ORACLE, mockOracle.address);
     componentList.setComponent(DerivativeProviders.EXCHANGE, exchangeProvider.address);
 
     const tokens = (await mockKyber.supportedTokens())
@@ -89,10 +88,10 @@ module.exports = {
     depositPercentage,
     amountOfTargetPerShare,
   } = {
-      clearInterval: undefined,
-      depositPercentage: 0,
-      amountOfTargetPerShare: 0
-    }) => {
+    clearInterval: undefined,
+    depositPercentage: 0,
+    amountOfTargetPerShare: 0
+  }) => {
 
     const future = await FutureContract.new(
       futureData.name,
@@ -105,9 +104,8 @@ module.exports = {
       depositPercentage || futureData.depositPercentage,
       futureData.forceClosePositionDelta
     );
-    
-    const mockoracle = await MockOracle.deployed();
 
+    const mockOracle = await MockOracle.deployed();
     const interval = (clearInterval === undefined) ? futureData.clearInterval :
       clearInterval;
 
@@ -123,7 +121,7 @@ module.exports = {
 
     // Config for the stub
     await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, 0);
-    await mockoracle.setMockTargetPrice(futureData.defaultTargetPrice);
+    await mockOracle.setMockTargetPrice(futureData.defaultTargetPrice);
 
     return {
       future,
