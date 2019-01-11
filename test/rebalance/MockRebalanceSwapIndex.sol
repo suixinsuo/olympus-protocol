@@ -70,9 +70,6 @@ contract MockRebalanceSwapIndex is IndexInterface, MockDerivative {
         for (i = 0; i < srcTokens.length; i++) {
             ERC20Extended(srcTokens[i]).approve(address(exchangeProvider), 0);
             ERC20Extended(srcTokens[i]).approve(address(exchangeProvider), srcAmounts[i]);
-            emit LogA(srcTokens[i]);
-            emit LogA(destTokens[i]);
-            emit LogU(srcAmounts[i]);
             require(
                 exchangeProvider.tokenExchange(ERC20Extended(srcTokens[i]),ERC20Extended(destTokens[i]),srcAmounts[i],0,address(this),""),
                 "1"
@@ -80,8 +77,6 @@ contract MockRebalanceSwapIndex is IndexInterface, MockDerivative {
         }
         return true;
     }
-    event LogU(uint val);
-    event LogA(address val);
 
     function getTokens() public view returns (address[] _tokens, uint[] _weights) {
         return (tokens, weights);

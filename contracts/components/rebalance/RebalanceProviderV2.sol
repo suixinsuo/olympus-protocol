@@ -133,15 +133,15 @@ contract RebalanceProviderV2 is FeeCharger {
             // If the value of the index tokens is greater than the value the token should have plus the delta amount
             // Then we need to sell some of these tokens in favour of other tokens
             if(indexTokenValues[counters[0]] > getDeltaValue(totalValueEach[counters[0]], _rebalanceDeltaPercentage, true)){
+                tokensToSell[counters[2]] = (indexTokenAddresses[counters[0]]);
+                valueOfTokensToSell[counters[2]] = (indexTokenValues[counters[0]].sub(totalValueEach[counters[0]]));
                 counters[2]++;
-                tokensToSell[counters[0]] = (indexTokenAddresses[counters[0]]);
-                valueOfTokensToSell[counters[0]] = (indexTokenValues[counters[0]] - totalValueEach[counters[0]]);
             // If the value of the index tokens is smaller than the value the token should have minus the delta amount
             // Then we need to buy some of these tokens using the funds from selling the other tokens
             } else if (indexTokenValues[counters[0]] < getDeltaValue(totalValueEach[counters[0]], _rebalanceDeltaPercentage, false)){
+                tokensToBuy[counters[3]] = indexTokenAddresses[counters[0]];
+                valueOfTokensToBuy[counters[3]] = totalValueEach[counters[0]].sub(indexTokenValues[counters[0]]);
                 counters[3]++;
-                tokensToBuy[counters[0]] = indexTokenAddresses[counters[0]];
-                valueOfTokensToBuy[counters[0]] = indexTokenValues[counters[0]] - totalValueEach[counters[0]];
             } else {
                 continue;
             }
