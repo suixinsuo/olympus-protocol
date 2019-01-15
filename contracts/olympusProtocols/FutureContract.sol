@@ -185,45 +185,70 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return getToken(_direction).getValidTokenIdsByOwner(_owner);
     }
 
-    function getTokenActualValue(int _direction, uint _id, uint _price) public  view  returns(uint) {
+    function getTokenActualValue(int _direction, uint _id, uint _price) public view returns(uint) {
         if(!isTokenValid(_direction, _id)) {return 0;}
 
-        uint _startPrice = getToken(_direction).getBuyingPrice(_id);
+        uint _buyingPrice = getToken(_direction).getBuyingPrice(_id);
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
 
-        // We avoid the negative numbers
-        uint _priceDifference;
-        if(_startPrice > _price) {_priceDifference = _startPrice.sub(_price);}
-        else {_priceDifference = _price.sub(_startPrice);}
+        uint _absolutePriceDiff;
+        if(_buyingPrice > _price) 
+        {
+            _absolutePriceDiff = _buyingPrice.sub(_price);
+        } else { 
+            _absolutePriceDiff = _price.sub(_buyingPrice);
+        }
 
         /**
-         * TOKEN_DENOMINATOR. (We start multiplying for the precision, as we will finis dividing)
-         * .mul(_priceDifference.div(_startPrice))  We multiply per the percentage of price changed
-            (price changed 2% since we buy for example)
-         * .mul (DENOMINATOR.div(tokenDeposit)) We multuply per the % of the deposit.
-            So if the deposit represents 5%, reduce price of 2% means a 10% of deposit reduction.
-         *  .mul(tokenDeposit)  OurToken depoist multiplied 10% reduction, gets his real value (90% of the starting deposit)
-         * .div(TOKEN_DENOMINATOR) Eliminate the precision.
-         * All this simplify is the next formula
+         * each token needs depositRequired = buyingPrice x depositPercentage / DENOMINATOR
+         * then each token needs deposit as buyingPrice.mul(depositPercentage).div(DENOMINATOR)
+         * then formula: depositUpdate = (absolutePriceDiff x tokenDeposit) / depositRequired;
          */
-
-        uint _depositUpdate = TOKEN_DENOMINATOR
-            .mul(_priceDifference)
-            .mul(DENOMINATOR)
-            .mul(_tokenDeposit)
-            .div(_startPrice.mul(depositPercentage).mul(TOKEN_DENOMINATOR))
-        ;
+        uint _depositUpdate = _absolutePriceDiff.mul(_tokenDeposit).div(_buyingPrice.mul(depositPercentage).div(DENOMINATOR));
 
         // LONG and Positive OR short and Negative
-        if((_direction == LONG && _startPrice > _price) || (_direction == SHORT && _startPrice < _price)) {
+        if((_direction == LONG && _buyingPrice > _price) || (_direction == SHORT && _buyingPrice < _price)) {
             if(_tokenDeposit <= _depositUpdate) {return 0;}
             return _tokenDeposit.sub(_depositUpdate);
         }
         // Else
         return _tokenDeposit.add(_depositUpdate);
-
     }
 
+    function estimateValue(int _direction, uint _id, uint _price) public view returns(uint) {
+        uint _actualValue = getTokenActualValue(_direction, _id, _price); 
+        if(_actualValue == 0) {return 0;}
+        uint _tokenDeposit = getTokenDeposit(_direction, _id);
+        // not as winner direct return actulaValue;
+        if(_actualValue <= _tokenDeposit )
+        {
+            return _actualValue;
+        }
+        uint _total = getAllWinnerBenifits(LONG, _price);
+        _total = _total.add(getAllWinnerBenifits(SHORT, _price));
+        uint _benifit = winnersBalance.mul(_actualValue.sub(_tokenDeposit)).div(_total);
+        return _benifit.add(_tokenDeposit);
+    }
+
+    function getAllWinnerBenifits(int _direction, uint _price) internal view returns(uint) {
+        uint[] memory _validTokenIds = getValidTokens(_direction);
+        uint _total = 0;
+        for(uint i = 0; i < _validTokenIds.length; i++) {
+            if(isWinnerToken(_direction,_validTokenIds[i], _price)) {
+                _total = _total.add(getTokenDeposit(_direction, _validTokenIds[i]));
+            }
+        }
+        return _total;
+    }
+
+    function isWinnerToken(int _direction, uint _id, uint _price) internal view returns(bool) {
+        uint _buyingPrice = getToken(_direction).getBuyingPrice(_id);
+        if(_direction == LONG){
+            return _price > _buyingPrice;
+        } else {
+            return _price < _buyingPrice;
+        }
+    }
 
     function getTokenBottomPosition(int _direction, uint _id) public view returns(uint) {
         uint deposit = getTokenDeposit(_direction, _id);
@@ -316,7 +341,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function checkPosition() external returns (bool) {
         startGasCalculation();
         require(status != DerivativeStatus.Closed, "7");
-        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CHECK_POSITION);
+        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CHECK_POSITION, "77");
 
          // INITIALIZE
         CheckPositionPhases _stepStatus = CheckPositionPhases(getStatusStep(CHECK_POSITION));
@@ -343,8 +368,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return completed;
     }
 
-
-    function checkTokenValidity(int _direction, uint _id) internal  returns(bool){
+    function checkTokenValidity(int _direction, uint _id) internal returns(bool){
 
         if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
 
@@ -352,7 +376,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         uint _redLine = getTokenBottomPosition(_direction, _id);
 
         // Is valid
-        if(_tokenValue  >  _redLine) { return true;}
+        if(_tokenValue > _redLine) {return true;}
 
         // is Invalid
         // Deliver the lasting value to the user
@@ -472,7 +496,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
 
         // Is loser (in theory shall be already out)
-        if(_tokenValue  <=  _tokenDeposit) { return false;}
+        if(_tokenValue <= _tokenDeposit) {return false;}
 
         address _holder = ownerOf(_direction, _id);
         // TODO: maybe is good idea to reafctor invalidateTokensByOwner and get the valid num
@@ -487,7 +511,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return false;
     }
 
-    function calculateBenefits(int _direction, uint[] _winnerTokens) internal  returns(uint) {
+    function calculateBenefits(int _direction, uint[] _winnerTokens) internal returns(uint) {
 
         uint _total;
         uint _deposit;
@@ -622,8 +646,5 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
     /// --------------------------------- END MANAGER   ---------------------------------
-
-
-
 
 }

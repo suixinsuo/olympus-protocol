@@ -19,6 +19,7 @@
     "linting": "#solhint 'contracts/**/*.sol'",
     "fund-test": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/fund/TestOlympusFund.stress.js'",
     "bf-stress": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestBinaryFutureStress.js'",
+    "future-mvp": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.js'",
     "future-stress": "./node_modules/.bin/run-with-testrpc -a 21 --port 8545 --gasLimit 8e6  --network development 'truffle test ./test/futures/TestFutureMVP.stress.js'",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "version": "truffle version",
