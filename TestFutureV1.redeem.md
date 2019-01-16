@@ -22,7 +22,7 @@ prepare condition
    "FutureTest","FutureV1","FV1","0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","1","0x4BFBa4a8F28755Cb2061c413459EE562c6B9c51b","2","1000","8000"
    deposit with 10%;
 steps
-1. estimateValue(1,1,100000000000000000) , should be return 0, estimateValue(-1,1,100000000000000000) , should be return 0;
+1. estimateValue(-1,1,100000000000000000) , should be revert;
 2. initial contract, should be success;
    "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","60"  value:0.11 ETH
 3. estimateValue(1,1,100000000000000000) , should be return 0, estimateValue(-1, 1, 100000000000000000) , should be return 0;
@@ -35,7 +35,8 @@ expect
 3. set price as 0.91 (Long will be out).
 expect
 - estimateValue(1, 1, 100000000000000000), should be return 0.2ETH;
-- estimateValue(1, 1, 91000000000000000), should be return 0.4ETH;
+- estimateValue(1, 1, 91000000000000000), should be return 0.38ETH;
+- estimateValue(1, 1, 90000000000000000), should be return 0.4ETH;
 - estimateValue(-1, 1, 100000000000000000), should be return 0 (long is out, token invalid);
 
 ## redeem before clear.

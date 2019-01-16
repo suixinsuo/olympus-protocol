@@ -139,7 +139,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     /// --------------------------------- ORACLES ---------------------------------
 
     function getTargetPrice() public view returns(uint256 _price) {
-        _price =  ChainlinkInterface(getComponentByName("ChainlinkOracle")).getCurrentPrice(2);
+        _price = ChainlinkInterface(getComponentByName("ChainlinkOracle")).getCurrentPrice(2);
     }
     function CheckOraclePriceTime() public view returns(bool){
         if (now.sub(ChainlinkInterface(getComponentByName(ORACLE)).getLastUpdateTime()) > MAX_TIMEOUT){
@@ -152,8 +152,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     /// --------------------------------- TOKENS ---------------------------------
     function getToken(int _direction) public view returns(FutureERC721Token) {
-        if(_direction == LONG) {return longToken; }
-        if(_direction == SHORT) {return shortToken; }
+        if(_direction == LONG) {return longToken;}
+        if(_direction == SHORT) {return shortToken;}
         revert();
     }
 
@@ -190,15 +190,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         uint _buyingPrice = getToken(_direction).getBuyingPrice(_id);
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
-
-        uint _absolutePriceDiff;
-        if(_buyingPrice > _price) 
-        {
-            _absolutePriceDiff = _buyingPrice.sub(_price);
-        } else { 
-            _absolutePriceDiff = _price.sub(_buyingPrice);
-        }
-
+        uint _absolutePriceDiff = absolutePriceDiff(_buyingPrice, _price);
         /**
          * each token needs depositRequired = buyingPrice x depositPercentage / DENOMINATOR
          * then each token needs deposit as buyingPrice.mul(depositPercentage).div(DENOMINATOR)
@@ -215,41 +207,17 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return _tokenDeposit.add(_depositUpdate);
     }
 
-    function estimateValue(int _direction, uint _id, uint _price) public view returns(uint) {
-        uint _actualValue = getTokenActualValue(_direction, _id, _price); 
-        if(_actualValue == 0) {return 0;}
-        uint _tokenDeposit = getTokenDeposit(_direction, _id);
-        // not as winner direct return actulaValue;
-        if(_actualValue <= _tokenDeposit )
+    function absolutePriceDiff(uint _buyingPrice,  uint _price) internal pure returns(uint) {
+        uint _absolutePriceDiff;
+        if(_buyingPrice > _price) 
         {
-            return _actualValue;
-        }
-        uint _total = getAllWinnerBenifits(LONG, _price);
-        _total = _total.add(getAllWinnerBenifits(SHORT, _price));
-        uint _benifit = winnersBalance.mul(_actualValue.sub(_tokenDeposit)).div(_total);
-        return _benifit.add(_tokenDeposit);
+            _absolutePriceDiff = _buyingPrice.sub(_price);
+        } else { 
+            _absolutePriceDiff = _price.sub(_buyingPrice);
+        }  
+        return _absolutePriceDiff;
     }
-
-    function getAllWinnerBenifits(int _direction, uint _price) internal view returns(uint) {
-        uint[] memory _validTokenIds = getValidTokens(_direction);
-        uint _total = 0;
-        for(uint i = 0; i < _validTokenIds.length; i++) {
-            if(isWinnerToken(_direction,_validTokenIds[i], _price)) {
-                _total = _total.add(getTokenDeposit(_direction, _validTokenIds[i]));
-            }
-        }
-        return _total;
-    }
-
-    function isWinnerToken(int _direction, uint _id, uint _price) internal view returns(bool) {
-        uint _buyingPrice = getToken(_direction).getBuyingPrice(_id);
-        if(_direction == LONG){
-            return _price > _buyingPrice;
-        } else {
-            return _price < _buyingPrice;
-        }
-    }
-
+ 
     function getTokenBottomPosition(int _direction, uint _id) public view returns(uint) {
         uint deposit = getTokenDeposit(_direction, _id);
         return deposit.sub(deposit.mul(forceClosePositionDelta).div(DENOMINATOR)); // This DENOMINATOR is based on the deposit
@@ -304,22 +272,21 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         int _direction, // long or short
         uint _shares // shares of the target.
         ) external payable returns (bool) {
-        require(CheckOraclePriceTime(),"99");
+        require(CheckOraclePriceTime(), "99");
         uint _targetPrice = getTargetPrice();
-        require( status == DerivativeStatus.Active,"3");
+        require(status == DerivativeStatus.Active, "3");
         require(_targetPrice > 0, "4");
 
         uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
 
-        require(msg.value >= _totalEthDeposit ,"5"); // Enough ETH to buy the share
+        require(msg.value >= _totalEthDeposit, "5"); // Enough ETH to buy the share
 
         require(
             getToken(_direction).mintMultiple(
             msg.sender,
             _totalEthDeposit.div(_shares),
             _targetPrice,
-            _shares
-        ) == true, "6");
+            _shares) == true, "6");
 
         // Return maining ETH to the token
         msg.sender.transfer(msg.value.sub(_totalEthDeposit));
@@ -472,7 +439,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
 
         // Is winner
-        if(_tokenValue > _tokenDeposit) { return false;}
+        if(_tokenValue > _tokenDeposit) {return false;}
 
         // Is loser
         // Deliver the lasting value to the user
@@ -572,8 +539,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     // Only help to check interal algorithm value, but is not for use of the final user.
     // Client side could just fech them one buy one in a loop.
     function getFrozenTokens(int _direction) external view returns(uint[]) {
-        if(_direction == LONG) { return frozenLongTokens;}
-        if(_direction == SHORT) { return frozenShortTokens;}
+        if(_direction == LONG) {return frozenLongTokens;}
+        if(_direction == SHORT) {return frozenShortTokens;}
         revert("8");
     }
     /// --------------------------------- END GETTERS   ---------------------------------
@@ -629,9 +596,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     function getManagerFee(uint _amount) external returns(bool) {
-        require(_amount > 0, "9" );
+        require(_amount > 0, "9");
         require(
-            status == DerivativeStatus.Closed ? // everything is done, take all.
+            status == DerivativeStatus.Closed ?  // everything is done, take all.
             (_amount <= accumulatedFee)
             :
             (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
