@@ -117,7 +117,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         uint i;
 
         for(i = 0; i < _tokens.length; i++) {
-            if(filter(_tokens[i])) { _length++; }
+            if(filter(_tokens[i])) {_length++;}
         }
 
         _validTokens = new uint[](_length);

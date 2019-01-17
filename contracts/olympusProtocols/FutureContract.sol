@@ -13,7 +13,6 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./tokens/FutureERC721Token.sol";
 import "../interfaces/ChainlinkInterface.sol";
 
-
 contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     using SafeMath for uint256;
@@ -67,6 +66,13 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     event DepositReturned(int _direction, uint _tokenId, uint amount);
     event Benefits(int _direction, address _holder, uint amount);
 
+    struct RedeemPending {
+        int direction;
+        uint id;
+    }
+
+    RedeemPending[] public redeemPending;
+    mapping(int => mapping(uint => bool)) internal redeemLock;
 
     constructor(
       string _name,
@@ -92,7 +98,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         status = DerivativeStatus.New;
         fundType = DerivativeType.Future;
     }
-
 
     /// --------------------------------- INITIALIZE ---------------------------------
 
@@ -304,13 +309,26 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
     /// --------------------------------- END INVEST ---------------------------------
 
+    function redeem(int _direction, uint _id) external returns (bool) {
+        // only owner of token can redeem;
+        require(ownerOf(_direction, _id) == msg.sender, "88");
+        // only token is not redeemPending;
+        require(!redeemLock[_direction][_id], "88");  // TODO 
+        if(!isTokenValid(_direction, _id)) {return false;}
+        redeemPending.push(RedeemPending({
+            direction:_direction,
+            id: _id}));
+        redeemLock[_direction][_id] = true;
+        return true;
+    }
+
     /// --------------------------------- CHECK POSITION ---------------------------------
     function checkPosition() external returns (bool) {
         startGasCalculation();
         require(status != DerivativeStatus.Closed, "7");
         require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CHECK_POSITION, "77");
 
-         // INITIALIZE
+        // INITIALIZE
         CheckPositionPhases _stepStatus = CheckPositionPhases(getStatusStep(CHECK_POSITION));
         if (_stepStatus == CheckPositionPhases.Initial) {
             checkLocker(CHECK_POSITION);
@@ -331,33 +349,17 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             productStatus = MutexStatus.AVAILABLE;
         }
 
+        for(uint i; i < redeemPending.length; i++ ){
+            if(isTokenValid(redeemPending[i].direction, redeemPending[i].id)) {
+                uint _tokenValue = getTokenActualValue(redeemPending[i].direction, redeemPending[i].id, frozenPrice);
+                releaseToken(redeemPending[i].direction, redeemPending[i].id, _tokenValue, _tokenValue); // force release token
+            }
+            delete redeemPending[i];
+        }
         reimburse();
         return completed;
     }
 
-    function checkTokenValidity(int _direction, uint _id) internal returns(bool){
-
-        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
-
-        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
-        uint _redLine = getTokenBottomPosition(_direction, _id);
-
-        // Is valid
-        if(_tokenValue > _redLine) {return true;}
-
-        // is Invalid
-        // Deliver the lasting value to the user
-        if(_tokenValue > 0){
-            ownerOf(_direction, _id).transfer(_tokenValue); // TODO when token get holder OL-1369
-            emit DepositReturned(_direction, _id, _tokenValue);
-        }
-
-        getToken(_direction).invalidateToken(_id);
-        // Keep the lost investment into the winner balance
-        winnersBalance = winnersBalance.add(getTokenDeposit(_direction, _id).sub(_tokenValue));
-
-        return false;
-    }
     /// --------------------------------- END CHECK POSITION ---------------------------------
 
     /// --------------------------------- CLEAR ---------------------------------
@@ -432,16 +434,10 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         winnersBalanceRedeemed = 0;
     }
 
-    function checkLosersOnClear(int _direction, uint _id)  internal returns(bool) {
-        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
+    function releaseToken(int _direction, uint _id, uint _tokenValue, uint _compare) internal returns(bool) {
+        if( _tokenValue > _compare) {return true;}
 
-        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
-        uint _tokenDeposit = getTokenDeposit(_direction, _id);
-
-        // Is winner
-        if(_tokenValue > _tokenDeposit) {return false;}
-
-        // Is loser
+        // is Invalid
         // Deliver the lasting value to the user
         if(_tokenValue > 0){
             ownerOf(_direction, _id).transfer(_tokenValue); // TODO when token get holder OL-1369
@@ -449,10 +445,24 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         }
 
         getToken(_direction).invalidateToken(_id);
-         // Keep the lost investment into the winner balance
-        winnersBalance = winnersBalance.add(_tokenDeposit.sub(_tokenValue));
+        // Keep the lost investment into the winner balance
+        winnersBalance = winnersBalance.add(getTokenDeposit(_direction, _id).sub(_tokenValue));
+        return false;
+    }
 
-        return true;
+    function checkTokenValidity(int _direction, uint _id) internal returns(bool){
+        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
+        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
+        uint _redLine = getTokenBottomPosition(_direction, _id);
+        return releaseToken(_direction, _id, _tokenValue, _redLine);
+    }
+
+    function checkLosersOnClear(int _direction, uint _id)  internal returns(bool) {
+        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
+
+        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
+        uint _tokenDeposit = getTokenDeposit(_direction, _id);
+        return releaseToken(_direction, _id, _tokenValue, _tokenDeposit);
     }
 
     // We check token by token, but in one go with process all tokens of the same holder
