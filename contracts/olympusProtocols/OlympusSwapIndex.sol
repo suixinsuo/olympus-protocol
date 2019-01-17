@@ -465,12 +465,15 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
 
+        
         startGasCalculation();
 
         require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING);
 
         RebalanceSwapInterface rebalanceSwapProvider = RebalanceSwapInterface(getComponentByName(REBALANCESWAP));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
+
+        require(rebalanceSwapProvider.needsRebalance(rebalanceDeltaPercentage,address(this)));
 
         address[] memory _tokensToSell;
         uint[] memory _amounts;
@@ -489,13 +492,12 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
         //TOKENＥ　EXCHANGE
 
         //TODO NEED ADD STEP SUPPORT
-        
-        for (i = currentStep; i < _tokensToSell.length; i++) {
+
+        for (i = 0; i < _tokensToSell.length; i++) {
             approveExchange(_tokensToSell[i], _amounts[i]);
             require(exchangeProvider.tokenExchange(ERC20Extended(_tokensToSell[i]),ERC20Extended(_tokensToBuy[i]), _amounts[i], 0, address(this), 0x0));
         }
         finalizeStep(REBALANCE);
-        rebalanceSwapProvider.finalize();
         productStatus = Status.AVAILABLE;
         reimburse();   // Completed case
         return true;
