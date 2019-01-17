@@ -28,6 +28,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     enum CheckPositionPhases { Initial, LongTokens, ShortTokens }
     enum ClearPositionPhases { Initial, CalculateLoses, CalculateBenefits }
     enum MutexStatus { AVAILABLE, CHECK_POSITION, CLEAR }
+    enum TokenCheckType { Valid, Lose, Win, Redeem }
 
     MutexStatus public productStatus = MutexStatus.AVAILABLE;
 
@@ -231,7 +232,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     // This will check all the tokens and execute the function passed as parametter
     // Require to freezeLong and freezeShort tokens before and will delete them on finish
     function checkTokens(
-        function (int, uint) internal returns(bool) checkFunction
+        TokenCheckType checkType,
+        function (int, uint, TokenCheckType) internal returns(bool) checkFunction
     ) internal returns (bool) {
 
         uint i;
@@ -242,7 +244,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         if(_stepStatus == CheckPositionPhases.LongTokens) {
 
             for (i = _transfers; i < frozenLongTokens.length && goNextStep(CHECK_POSITION); i++) {
-                checkFunction(LONG, frozenLongTokens[i]);
+                checkFunction(LONG, frozenLongTokens[i], checkType);
             }
 
             if(i == frozenLongTokens.length) {
@@ -255,7 +257,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         if(_stepStatus == CheckPositionPhases.ShortTokens) {
 
             for (i = _transfers; i < frozenShortTokens.length && goNextStep(CHECK_POSITION); i++) {
-                checkFunction(SHORT, frozenShortTokens[i]);
+                checkFunction(SHORT, frozenShortTokens[i], checkType);
             }
 
             // FINISH
@@ -343,19 +345,17 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             productStatus = MutexStatus.CHECK_POSITION;
         }
 
-        bool completed = checkTokens(checkTokenValidity);
+        bool completed = checkTokens(TokenCheckType.Valid, releaseTokenCheck);
         if(completed) {
             frozenPrice = 0;
             productStatus = MutexStatus.AVAILABLE;
         }
 
-        for(uint i; i < redeemPending.length; i++ ){
-            if(isTokenValid(redeemPending[i].direction, redeemPending[i].id)) {
-                uint _tokenValue = getTokenActualValue(redeemPending[i].direction, redeemPending[i].id, frozenPrice);
-                releaseToken(redeemPending[i].direction, redeemPending[i].id, _tokenValue, _tokenValue); // force release token
-            }
+        for(uint i; i < redeemPending.length; i++ ){ 
+            releaseTokenCheck(redeemPending[i].direction, redeemPending[i].id, TokenCheckType.Redeem);
             delete redeemPending[i];
         }
+
         reimburse();
         return completed;
     }
@@ -395,7 +395,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         // CHECK LOSERS
         if(_stepStatus == ClearPositionPhases.CalculateLoses) {
-            if(checkTokens(checkLosersOnClear)) {
+            if(checkTokens(TokenCheckType.Lose, releaseTokenCheck)) {
                 _stepStatus = ClearPositionPhases(updateStatusStep(CLEAR));
                 // Get the valid tokens, withouth the losers
                 frozenLongTokens = getValidTokens(LONG);
@@ -409,7 +409,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         // CHECK WINNERS
         if(_stepStatus == ClearPositionPhases.CalculateBenefits) {
-            if(checkTokens(checkWinnersOnClear)) {
+            if(checkTokens(TokenCheckType.Win, releaseTokenCheck)) {
                 finalizeStep(CLEAR);
                 if(winnersBalanceRedeemed == 0) {
                     // TODO: no winners (give to the manager?)
@@ -434,9 +434,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         winnersBalanceRedeemed = 0;
     }
 
-    function releaseToken(int _direction, uint _id, uint _tokenValue, uint _compare) internal returns(bool) {
-        if( _tokenValue > _compare) {return true;}
-
+    function releaseToken(int _direction, uint _id, uint _tokenValue, uint _deposit) internal returns(bool) {
         // is Invalid
         // Deliver the lasting value to the user
         if(_tokenValue > 0){
@@ -446,46 +444,45 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         getToken(_direction).invalidateToken(_id);
         // Keep the lost investment into the winner balance
-        winnersBalance = winnersBalance.add(getTokenDeposit(_direction, _id).sub(_tokenValue));
+        if(_deposit > _tokenValue){
+            winnersBalance = winnersBalance.add(_deposit.sub(_tokenValue));
+        }
         return false;
     }
 
-    function checkTokenValidity(int _direction, uint _id) internal returns(bool){
+    function releaseTokenCheck(int _direction, uint _id, TokenCheckType checkType) internal returns(bool){
         if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
-        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
-        uint _redLine = getTokenBottomPosition(_direction, _id);
-        return releaseToken(_direction, _id, _tokenValue, _redLine);
-    }
-
-    function checkLosersOnClear(int _direction, uint _id)  internal returns(bool) {
-        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
-
         uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
+
+        if(checkType == TokenCheckType.Valid){
+            // should hold the token not to release;
+            if( _tokenValue > getTokenBottomPosition(_direction, _id)){return true;}
+        } else if(checkType == TokenCheckType.Lose){
+            // should hold the token not to release;
+            if(_tokenValue > _tokenDeposit ){return true;}
+        } else if(checkType == TokenCheckType.Win) {
+            // should hold the token not to release;
+            if(_tokenValue <= _tokenDeposit ){return false;}
+            return releaseWinnerToken(_direction, _id);
+        } else if(checkType == TokenCheckType.Redeem) {
+            if(_tokenValue > _tokenDeposit ){
+                return false;
+                // return releaseWinnerToken(_direction, _id);
+            } 
+        }
         return releaseToken(_direction, _id, _tokenValue, _tokenDeposit);
     }
 
-    // We check token by token, but in one go with process all tokens of the same holder
-    function checkWinnersOnClear(int _direction, uint _id) internal returns(bool) {
-        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
-
-        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
-        uint _tokenDeposit = getTokenDeposit(_direction, _id);
-
-        // Is loser (in theory shall be already out)
-        if(_tokenValue <= _tokenDeposit) {return false;}
-
+    function releaseWinnerToken(int _direction, uint _id) internal returns(bool){
         address _holder = ownerOf(_direction, _id);
         // TODO: maybe is good idea to reafctor invalidateTokensByOwner and get the valid num
         uint[] memory _validTokens = getValidTokenIdsByOwner(_direction, _holder);
 
         uint _ethToReturn = calculateBenefits(_direction, _validTokens);
         invalidateTokens(_direction, _validTokens);
-
         _holder.transfer(_ethToReturn);
         emit Benefits(_direction, _holder, _ethToReturn);
-
-        return false;
     }
 
     function calculateBenefits(int _direction, uint[] _winnerTokens) internal returns(uint) {
