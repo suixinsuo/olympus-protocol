@@ -30,7 +30,7 @@ contract Derivative is DerivativeInterface, ERC20Extended, ComponentContainer, P
     bytes32 public constant REBALANCE = "RebalanceProvider";
     bytes32 public constant STEP = "StepProvider";
     bytes32 public constant LOCKER = "LockerProvider";
-
+    bytes32 public constant REBALANCESWAP = "RebalanceSwapProvider";
     bytes32 public constant GETETH = "GetEth";
 
     uint public pausedTime;
