@@ -285,9 +285,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         require(_targetPrice > 0, "4");
 
         uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
-
         require(msg.value >= _totalEthDeposit, "5"); // Enough ETH to buy the share
-
         require(
             getToken(_direction).mintMultiple(
             msg.sender,
@@ -463,51 +461,59 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             if(_tokenValue > _tokenDeposit ){return true;}
         } else if(checkType == TokenCheckType.Win) {
             // should hold the token not to release;
-            if(_tokenValue <= _tokenDeposit ){return false;}
-            return releaseWinnerToken(_direction, _id);
+            if(_tokenValue <= _tokenDeposit ){return true;}
+            return releaseWinnerToken(_direction, _id, _tokenDeposit, false);
         } else if(checkType == TokenCheckType.Redeem) {
             if(_tokenValue > _tokenDeposit ){
-                return false;
-                // return releaseWinnerToken(_direction, _id);
+                return releaseWinnerToken(_direction, _id, _tokenDeposit, true);
             } 
         }
         return releaseToken(_direction, _id, _tokenValue, _tokenDeposit);
     }
 
-    function releaseWinnerToken(int _direction, uint _id) internal returns(bool){
-        address _holder = ownerOf(_direction, _id);
-        // TODO: maybe is good idea to reafctor invalidateTokensByOwner and get the valid num
-        uint[] memory _validTokens = getValidTokenIdsByOwner(_direction, _holder);
-
-        uint _ethToReturn = calculateBenefits(_direction, _validTokens);
-        invalidateTokens(_direction, _validTokens);
-        _holder.transfer(_ethToReturn);
-        emit Benefits(_direction, _holder, _ethToReturn);
-    }
-
-    function calculateBenefits(int _direction, uint[] _winnerTokens) internal returns(uint) {
-
+    function releaseWinnerToken(int _direction, uint _id, uint _tokenDeposit, bool _only) internal returns(bool){
         uint _total;
         uint _deposit;
         uint _pendingBalance;
-        // We return all the deposit of the token winners + the benefits
-        for(uint i = 0; i < _winnerTokens.length; i++) {
-            _deposit = getTokenDeposit(_direction,_winnerTokens[i]);
-            _total = _total.add(_deposit);
+        uint _totalTokenSupply;
+
+        if(frozenTotalWinnersSupply > 0){
+            _totalTokenSupply = frozenTotalWinnersSupply;
+        }else{
+            // TODO refactor with clear duplicate codes;
+            frozenLongTokens = getValidTokens(LONG);
+            frozenShortTokens = getValidTokens(SHORT);
+            _totalTokenSupply = frozenLongTokens.length.add(frozenShortTokens.length);
+        }
+        address _holder = ownerOf(_direction, _id);
+        uint _tokenLength = 1;
+        if(!_only){
+            uint[] memory _winnerTokens = getValidTokenIdsByOwner(_direction, _holder);
+            // We return all the deposit of the token winners + the benefits
+            for(uint i = 0; i < _winnerTokens.length; i++) {
+                _deposit = getTokenDeposit(_direction,_winnerTokens[i]);
+                _total = _total.add(_deposit);
+            }
+            invalidateTokens(_direction, _winnerTokens);
+            _tokenLength = _winnerTokens.length;
+        }else {
+            _total = _total.add(_tokenDeposit);
+            getToken(_direction).invalidateToken(_id);
         }
 
         // Benefits in function of his total supply
         // Is important winners balance doesnt reduce, as is frozen during clear.
-        uint _benefits = winnersBalance.mul(_winnerTokens.length).div(frozenTotalWinnersSupply);
+        uint _benefits = winnersBalance.mul(_tokenLength).div(_totalTokenSupply);
         winnersBalanceRedeemed = winnersBalanceRedeemed.add(_benefits); // Keep track
-
         // Special cases decimals
         _pendingBalance = winnersBalance.sub(winnersBalanceRedeemed);
-        if(_pendingBalance > 0 && _pendingBalance < frozenTotalWinnersSupply) {
+        if(_pendingBalance > 0 && _pendingBalance < _totalTokenSupply) {
             _benefits = _benefits.add(_pendingBalance);
         }
-
-        return _total.add(_benefits);
+        uint _ethToReturn = _total.add(_benefits);
+        _holder.transfer(_ethToReturn);
+        emit Benefits(_direction, _holder, _ethToReturn);
+        return true;
     }
     /// --------------------------------- END CLEAR ---------------------------------
 
@@ -570,23 +576,23 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     function initializeOrContinueStep(bytes32 category) internal returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).initializeOrContinue(category);
+        return  StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
     }
 
     function getStatusStep(bytes32 category) internal view returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).getStatus(category);
+        return  StepInterface(getComponentByName(STEP)).getStatus(category);
     }
 
     function finalizeStep(bytes32 category) internal returns(bool) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).finalize(category);
+        return  StepInterface(getComponentByName(STEP)).finalize(category);
     }
 
     function goNextStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).goNextStep(category);
+        return StepInterface(getComponentByName(STEP)).goNextStep(category);
     }
 
     function updateStatusStep(bytes32 category) internal returns(uint) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).updateStatus(category);
+        return StepInterface(getComponentByName(STEP)).updateStatus(category);
     }
 
     function setMaxSteps( bytes32 _category,uint _maxSteps) public onlyOwner {

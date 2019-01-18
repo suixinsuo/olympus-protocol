@@ -111,20 +111,30 @@ contract("Test Future MVP Redeem", accounts => {
   });
 
   it("2. redeem before clear.", async () => {
-    const tx = await future.redeem(FutureDirection.Short, 1, {
+    await future.redeem(FutureDirection.Short, 1, {
       from: accounts[2]
+    }).then((tx) => {
+      assert.ok(tx, 'Can redeem until next check position');
     });
-    assert.ok(tx, 'Can redeem until next check position');
-    await utils.safeCheckPosition(future);
 
-    // assert(false);
-    // await utils.estimateValue(future, FutureDirection.Short, 1, 1 * 10 ** 18).then((value) => {
-    //   assert.equal(0, +value, 'should be return 0');
-    // });
+    await utils.safeCheckPosition(future).then((tx) => {
+      // TODO account 2 should be got 0.4ETH;
+      assert.ok(tx, 'Can redeem until next check position');
+    });
 
-    // await utils.estimateValue(future, FutureDirection.Short, 2, 1 * 10 ** 18).then((value) => {
-    //   assert.equal(0, +value, 'should be return 0');
-    // });
+    await utils.estimateValue(future, FutureDirection.Short, 1, 1 * 10 ** 18).then((value) => {
+      assert.equal(0, +value, 'token 1 should be return 0');
+    });
+
+    await utils.estimateValue(future, FutureDirection.Short, 2, 1 * 10 ** 18).then((value) => {
+      assert.equal(0.2 * 10 ** 18, +value, 'token 2 should be return 0.2 ETH');
+    });
+
+    await future.winnersBalance().then(value => {
+      console.log('winnersBalance:', +value);
+    });
+
+    assert(false);
 
   });
 
