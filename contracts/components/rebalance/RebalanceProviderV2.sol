@@ -113,10 +113,10 @@ contract RebalanceProviderV2 is FeeCharger {
     }
 
     function rebalanceGetTokensToTrade(uint _rebalanceDeltaPercentage) external returns (address[],address[],uint[]) {
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.Calculated) {
+            return (sourceTokens[msg.sender],destTokens[msg.sender],srcAmount[msg.sender]);
+        }
         require(payFee(0), "Fee cannot be paid");
-        delete sourceTokens[msg.sender];
-        delete destTokens[msg.sender];
-        delete srcAmount[msg.sender];
         uint[] memory counters = new uint[](4);
         uint[] memory totalValueEach;
         address[] memory indexTokenAddresses;
@@ -164,7 +164,24 @@ contract RebalanceProviderV2 is FeeCharger {
                 }
             }
         }
+        rebalanceStatus[msg.sender] = RebalanceStatus.Calculated;
+        // Prevent contracts getting stuck because one of the arrays is empty
+        if(tokensToSell.length == 0 || tokensToBuy.length == 0){
+            finalize();
+        }
         return (sourceTokens[msg.sender],destTokens[msg.sender],srcAmount[msg.sender]);
+    }
+
+    function getRebalanceInProgress() external returns (bool inProgress) {
+        return rebalanceStatus[msg.sender] != RebalanceStatus.Initial;
+    }
+
+    function finalize() public returns (bool success) {
+        rebalanceStatus[msg.sender] = RebalanceStatus.Initial;
+        delete sourceTokens[msg.sender];
+        delete destTokens[msg.sender];
+        delete srcAmount[msg.sender];
+        return true;
     }
 
     function getTotalIndexValue() public returns (uint totalValue) {
