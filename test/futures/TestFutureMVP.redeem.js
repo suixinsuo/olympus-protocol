@@ -134,7 +134,7 @@ contract("Test Future MVP Redeem", accounts => {
       console.log('winnersBalance:', +value);
     });
 
-    assert(false);
+    // assert(false);
 
   });
 

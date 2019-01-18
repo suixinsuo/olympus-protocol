@@ -576,15 +576,15 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     function initializeOrContinueStep(bytes32 category) internal returns(uint) {
-        return  StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
+        return StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
     }
 
     function getStatusStep(bytes32 category) internal view returns(uint) {
-        return  StepInterface(getComponentByName(STEP)).getStatus(category);
+        return StepInterface(getComponentByName(STEP)).getStatus(category);
     }
 
     function finalizeStep(bytes32 category) internal returns(bool) {
-        return  StepInterface(getComponentByName(STEP)).finalize(category);
+        return StepInterface(getComponentByName(STEP)).finalize(category);
     }
 
     function goNextStep(bytes32 category) internal returns(bool) {
