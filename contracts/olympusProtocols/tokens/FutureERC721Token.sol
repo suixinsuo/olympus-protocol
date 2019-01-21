@@ -15,10 +15,8 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
     mapping(uint => uint) public tokenDeposit; // Their actual deposit
     mapping(uint => bool) public tokenValid; // Is valid or not (A token can be invalidated on a check position or after clear)
 
-
-
     constructor(string _name, string _symbol, int _tokenPosition) ERC721Token(_name, _symbol) public {
-        require(_tokenPosition == -1 || _tokenPosition == 1, "Position should be either short or long");
+        require(_tokenPosition == -1 || _tokenPosition == 1, "");
         tokenPosition_ = _tokenPosition;
     }
 
@@ -33,8 +31,8 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         uint _deposit,
         uint _buyingPrice
     ) internal {
-        require(_to != 0x0, "Can't mint to the empty address");
-        require(_deposit > 0 && _buyingPrice > 0, "Deposit and initial price can't be zero");
+        require(_to != 0x0, "");
+        require(_deposit > 0 && _buyingPrice > 0, "");
         super._mint(_to, tokenIdCounter);
         _setFutureData(tokenIdCounter, _deposit, _buyingPrice);
         tokenIdCounter = tokenIdCounter.add(1);
@@ -117,7 +115,7 @@ contract FutureERC721Token is ERC721Token, Ownable, FutureERC721 {
         uint i;
 
         for(i = 0; i < _tokens.length; i++) {
-            if(filter(_tokens[i])) { _length++; }
+            if(filter(_tokens[i])) {_length++;}
         }
 
         _validTokens = new uint[](_length);

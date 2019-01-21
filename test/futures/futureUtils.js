@@ -16,6 +16,10 @@ const FutureToken = artifacts.require("FutureERC721Token");
 const MockToken = artifacts.require("MockToken");
 const MockKyberNetwork = artifacts.require("MockKyberNetwork");
 const ExchangeProvider = artifacts.require("ExchangeProvider");
+const {
+  FutureDirection,
+  DerivativeStatus,
+} = require("../utils/constants");
 
 const DENOMINATOR = 10000;
 const INITIAL_FEE = 10 ** 17;
@@ -34,6 +38,107 @@ const futureData = {
   defaultTargetPrice: 10 ** 18,
   fee: 0,
 };
+
+async function estimateAllTokenBenefits(
+  token,
+  direction,
+  ids,
+  price,
+  depositPercentage,
+  delta,
+  denominator) {
+  price = new BigNumber(price);
+  let winnerBalanceStack = new BigNumber(0);
+  const values = await Promise.all(ids.map(async (id) => {
+    const buyingPrice = await token.getBuyingPrice(id);
+    const isWinnerToken = (price.gt(buyingPrice) && direction === FutureDirection.Long) ||
+      (buyingPrice.gt(price) && direction === FutureDirection.Short);
+
+    const absolutePriceDiff = buyingPrice.minus(price).abs();
+    const tokenDeposit = await token.getDeposit(id);
+    const benefit = absolutePriceDiff.times(tokenDeposit)
+      .div(buyingPrice.times(depositPercentage).div(
+        denominator));
+    if (isWinnerToken) {
+      return benefit;
+    }
+    /**
+     * if not as winner then benefit return 0;
+     * winnerBalanceStack should be increased;
+     */
+    const isReachToOutToken = reachToOut(buyingPrice, price, delta, denominator);
+    if (isReachToOutToken) {
+      if (benefit.gt(tokenDeposit)) {
+        winnerBalanceStack = winnerBalanceStack.plus(tokenDeposit);
+      } else {
+        winnerBalanceStack = winnerBalanceStack.plus(benefit);
+      }
+    }
+    return new BigNumber(0);
+  }));
+
+  const total = values.reduce((a, b) => a.plus(b));
+  return {
+    total,
+    winnerBalanceStack
+  };
+}
+
+async function reachToOut(buyingPrice, price, delta, denominator) {
+  const absolutePriceDiff = buyingPrice.minus(price).abs();
+  return delta.div(denominator).times(price).lt(absolutePriceDiff);
+}
+
+/**
+ * estimateValue estimate how much can be redeem.
+ * @param {*} future future
+ * @param {*} direction long or short
+ * @param {*} tokenId token id
+ * @param {*} price price ie. 10 ** 18
+ */
+async function estimateValue(future, direction, tokenId, price) {
+  const actValue = await future.getTokenActualValue(direction, tokenId, price);
+  const tokenDeposit = await future.getTokenDeposit(direction, tokenId);
+  // if action lower then deposit return actValue;
+  if (actValue <= tokenDeposit) {
+    return actValue;
+  }
+
+  const longAddress = await future.getLongToken();
+  const shortAddress = await future.getShortToken();
+  const delta = await future.forceClosePositionDelta();
+  const denominator = await future.DENOMINATOR();
+  const depositPercentage = await future.depositPercentage();
+
+  longToken = new FutureToken(longAddress);
+  shortToken = new FutureToken(shortAddress);
+  const longValidTokenIds = await future.getValidTokens(FutureDirection.Long) || [];
+  const shortValidTokenIds = await future.getValidTokens(FutureDirection.Short) || [];
+  const longEstimated = await estimateAllTokenBenefits(
+    longToken,
+    FutureDirection.Long,
+    longValidTokenIds,
+    price,
+    depositPercentage,
+    delta,
+    denominator);
+  const shortEstimated = await estimateAllTokenBenefits(
+    shortToken,
+    FutureDirection.Short,
+    shortValidTokenIds,
+    price,
+    depositPercentage,
+    delta,
+    denominator);
+
+  const winnersBalance = await future.winnersBalance();
+  const total = longEstimated.total.plus(shortEstimated.total);
+  const benefit = winnersBalance.plus(longEstimated.winnerBalanceStack)
+    .plus(shortEstimated.winnerBalanceStack)
+    .times(actValue.minus(tokenDeposit)).div(total);
+  return benefit.plus(tokenDeposit);
+}
+
 module.exports = {
 
   futureData,
@@ -178,5 +283,5 @@ module.exports = {
     }
     return (await token.getValidTokenIdsByOwner(investor)).map((id) => id.toNumber());
   },
-
+  estimateValue,
 }

@@ -13,7 +13,6 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./tokens/FutureERC721Token.sol";
 import "../interfaces/ChainlinkInterface.sol";
 
-
 contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     using SafeMath for uint256;
@@ -29,6 +28,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     enum CheckPositionPhases { Initial, LongTokens, ShortTokens }
     enum ClearPositionPhases { Initial, CalculateLoses, CalculateBenefits }
     enum MutexStatus { AVAILABLE, CHECK_POSITION, CLEAR }
+    enum TokenCheckType { Valid, Lose, Win, Redeem }
 
     MutexStatus public productStatus = MutexStatus.AVAILABLE;
 
@@ -67,6 +67,13 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     event DepositReturned(int _direction, uint _tokenId, uint amount);
     event Benefits(int _direction, address _holder, uint amount);
 
+    struct RedeemPending {
+        int direction;
+        uint id;
+    }
+
+    RedeemPending[] public redeemPending;
+    mapping(int => mapping(uint => bool)) internal redeemLock;
 
     constructor(
       string _name,
@@ -92,7 +99,6 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         status = DerivativeStatus.New;
         fundType = DerivativeType.Future;
     }
-
 
     /// --------------------------------- INITIALIZE ---------------------------------
 
@@ -139,7 +145,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     /// --------------------------------- ORACLES ---------------------------------
 
     function getTargetPrice() public view returns(uint256 _price) {
-        _price =  ChainlinkInterface(getComponentByName("ChainlinkOracle")).getCurrentPrice(2);
+        _price = ChainlinkInterface(getComponentByName("ChainlinkOracle")).getCurrentPrice(2);
     }
     function CheckOraclePriceTime() public view returns(bool){
         if (now.sub(ChainlinkInterface(getComponentByName(ORACLE)).getLastUpdateTime()) > MAX_TIMEOUT){
@@ -152,8 +158,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     /// --------------------------------- TOKENS ---------------------------------
     function getToken(int _direction) public view returns(FutureERC721Token) {
-        if(_direction == LONG) {return longToken; }
-        if(_direction == SHORT) {return shortToken; }
+        if(_direction == LONG) {return longToken;}
+        if(_direction == SHORT) {return shortToken;}
         revert();
     }
 
@@ -185,46 +191,39 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         return getToken(_direction).getValidTokenIdsByOwner(_owner);
     }
 
-    function getTokenActualValue(int _direction, uint _id, uint _price) public  view  returns(uint) {
+    function getTokenActualValue(int _direction, uint _id, uint _price) public view returns(uint) {
         if(!isTokenValid(_direction, _id)) {return 0;}
 
-        uint _startPrice = getToken(_direction).getBuyingPrice(_id);
+        uint _buyingPrice = getToken(_direction).getBuyingPrice(_id);
         uint _tokenDeposit = getTokenDeposit(_direction, _id);
-
-        // We avoid the negative numbers
-        uint _priceDifference;
-        if(_startPrice > _price) {_priceDifference = _startPrice.sub(_price);}
-        else {_priceDifference = _price.sub(_startPrice);}
-
+        uint _absolutePriceDiff = absolutePriceDiff(_buyingPrice, _price);
         /**
-         * TOKEN_DENOMINATOR. (We start multiplying for the precision, as we will finis dividing)
-         * .mul(_priceDifference.div(_startPrice))  We multiply per the percentage of price changed
-            (price changed 2% since we buy for example)
-         * .mul (DENOMINATOR.div(tokenDeposit)) We multuply per the % of the deposit.
-            So if the deposit represents 5%, reduce price of 2% means a 10% of deposit reduction.
-         *  .mul(tokenDeposit)  OurToken depoist multiplied 10% reduction, gets his real value (90% of the starting deposit)
-         * .div(TOKEN_DENOMINATOR) Eliminate the precision.
-         * All this simplify is the next formula
+         * each token needs depositRequired = buyingPrice x depositPercentage / DENOMINATOR
+         * then each token needs deposit as buyingPrice.mul(depositPercentage).div(DENOMINATOR)
+         * then formula: depositUpdate = (absolutePriceDiff x tokenDeposit) / depositRequired;
          */
-
-        uint _depositUpdate = TOKEN_DENOMINATOR
-            .mul(_priceDifference)
-            .mul(DENOMINATOR)
-            .mul(_tokenDeposit)
-            .div(_startPrice.mul(depositPercentage).mul(TOKEN_DENOMINATOR))
-        ;
+        uint _depositUpdate = _absolutePriceDiff.mul(_tokenDeposit).div(_buyingPrice.mul(depositPercentage).div(DENOMINATOR));
 
         // LONG and Positive OR short and Negative
-        if((_direction == LONG && _startPrice > _price) || (_direction == SHORT && _startPrice < _price)) {
+        if((_direction == LONG && _buyingPrice > _price) || (_direction == SHORT && _buyingPrice < _price)) {
             if(_tokenDeposit <= _depositUpdate) {return 0;}
             return _tokenDeposit.sub(_depositUpdate);
         }
         // Else
         return _tokenDeposit.add(_depositUpdate);
-
     }
 
-
+    function absolutePriceDiff(uint _buyingPrice,  uint _price) internal pure returns(uint) {
+        uint _absolutePriceDiff;
+        if(_buyingPrice > _price) 
+        {
+            _absolutePriceDiff = _buyingPrice.sub(_price);
+        } else { 
+            _absolutePriceDiff = _price.sub(_buyingPrice);
+        }  
+        return _absolutePriceDiff;
+    }
+ 
     function getTokenBottomPosition(int _direction, uint _id) public view returns(uint) {
         uint deposit = getTokenDeposit(_direction, _id);
         return deposit.sub(deposit.mul(forceClosePositionDelta).div(DENOMINATOR)); // This DENOMINATOR is based on the deposit
@@ -233,7 +232,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     // This will check all the tokens and execute the function passed as parametter
     // Require to freezeLong and freezeShort tokens before and will delete them on finish
     function checkTokens(
-        function (int, uint) internal returns(bool) checkFunction
+        TokenCheckType checkType,
+        function (int, uint, TokenCheckType) internal returns(bool) checkFunction
     ) internal returns (bool) {
 
         uint i;
@@ -244,7 +244,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         if(_stepStatus == CheckPositionPhases.LongTokens) {
 
             for (i = _transfers; i < frozenLongTokens.length && goNextStep(CHECK_POSITION); i++) {
-                checkFunction(LONG, frozenLongTokens[i]);
+                checkFunction(LONG, frozenLongTokens[i], checkType);
             }
 
             if(i == frozenLongTokens.length) {
@@ -257,7 +257,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         if(_stepStatus == CheckPositionPhases.ShortTokens) {
 
             for (i = _transfers; i < frozenShortTokens.length && goNextStep(CHECK_POSITION); i++) {
-                checkFunction(SHORT, frozenShortTokens[i]);
+                checkFunction(SHORT, frozenShortTokens[i], checkType);
             }
 
             // FINISH
@@ -279,22 +279,19 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         int _direction, // long or short
         uint _shares // shares of the target.
         ) external payable returns (bool) {
-        require(CheckOraclePriceTime(),"99");
+        require(CheckOraclePriceTime(), "99");
         uint _targetPrice = getTargetPrice();
-        require( status == DerivativeStatus.Active,"3");
+        require(status == DerivativeStatus.Active, "3");
         require(_targetPrice > 0, "4");
 
         uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
-
-        require(msg.value >= _totalEthDeposit ,"5"); // Enough ETH to buy the share
-
+        require(msg.value >= _totalEthDeposit, "5"); // Enough ETH to buy the share
         require(
             getToken(_direction).mintMultiple(
             msg.sender,
             _totalEthDeposit.div(_shares),
             _targetPrice,
-            _shares
-        ) == true, "6");
+            _shares) == true, "6");
 
         // Return maining ETH to the token
         msg.sender.transfer(msg.value.sub(_totalEthDeposit));
@@ -312,13 +309,26 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
     /// --------------------------------- END INVEST ---------------------------------
 
+    function redeem(int _direction, uint _id) external returns (bool) {
+        // only owner of token can redeem;
+        require(ownerOf(_direction, _id) == msg.sender, "88");
+        // only token is not redeemPending;
+        require(!redeemLock[_direction][_id], "88");  // TODO 
+        if(!isTokenValid(_direction, _id)) {return false;}
+        redeemPending.push(RedeemPending({
+            direction:_direction,
+            id: _id}));
+        redeemLock[_direction][_id] = true;
+        return true;
+    }
+
     /// --------------------------------- CHECK POSITION ---------------------------------
     function checkPosition() external returns (bool) {
         startGasCalculation();
         require(status != DerivativeStatus.Closed, "7");
-        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CHECK_POSITION);
+        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CHECK_POSITION, "77");
 
-         // INITIALIZE
+        // INITIALIZE
         CheckPositionPhases _stepStatus = CheckPositionPhases(getStatusStep(CHECK_POSITION));
         if (_stepStatus == CheckPositionPhases.Initial) {
             checkLocker(CHECK_POSITION);
@@ -333,40 +343,21 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             productStatus = MutexStatus.CHECK_POSITION;
         }
 
-        bool completed = checkTokens(checkTokenValidity);
+        bool completed = checkTokens(TokenCheckType.Valid, releaseTokenCheck);
         if(completed) {
             frozenPrice = 0;
             productStatus = MutexStatus.AVAILABLE;
+        }
+
+        for(uint i; i < redeemPending.length; i++ ){ 
+            releaseTokenCheck(redeemPending[i].direction, redeemPending[i].id, TokenCheckType.Redeem);
+            delete redeemPending[i];
         }
 
         reimburse();
         return completed;
     }
 
-
-    function checkTokenValidity(int _direction, uint _id) internal  returns(bool){
-
-        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
-
-        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
-        uint _redLine = getTokenBottomPosition(_direction, _id);
-
-        // Is valid
-        if(_tokenValue  >  _redLine) { return true;}
-
-        // is Invalid
-        // Deliver the lasting value to the user
-        if(_tokenValue > 0){
-            ownerOf(_direction, _id).transfer(_tokenValue); // TODO when token get holder OL-1369
-            emit DepositReturned(_direction, _id, _tokenValue);
-        }
-
-        getToken(_direction).invalidateToken(_id);
-        // Keep the lost investment into the winner balance
-        winnersBalance = winnersBalance.add(getTokenDeposit(_direction, _id).sub(_tokenValue));
-
-        return false;
-    }
     /// --------------------------------- END CHECK POSITION ---------------------------------
 
     /// --------------------------------- CLEAR ---------------------------------
@@ -402,7 +393,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         // CHECK LOSERS
         if(_stepStatus == ClearPositionPhases.CalculateLoses) {
-            if(checkTokens(checkLosersOnClear)) {
+            if(checkTokens(TokenCheckType.Lose, releaseTokenCheck)) {
                 _stepStatus = ClearPositionPhases(updateStatusStep(CLEAR));
                 // Get the valid tokens, withouth the losers
                 frozenLongTokens = getValidTokens(LONG);
@@ -416,7 +407,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
         // CHECK WINNERS
         if(_stepStatus == ClearPositionPhases.CalculateBenefits) {
-            if(checkTokens(checkWinnersOnClear)) {
+            if(checkTokens(TokenCheckType.Win, releaseTokenCheck)) {
                 finalizeStep(CLEAR);
                 if(winnersBalanceRedeemed == 0) {
                     // TODO: no winners (give to the manager?)
@@ -441,16 +432,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         winnersBalanceRedeemed = 0;
     }
 
-    function checkLosersOnClear(int _direction, uint _id)  internal returns(bool) {
-        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
-
-        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
-        uint _tokenDeposit = getTokenDeposit(_direction, _id);
-
-        // Is winner
-        if(_tokenValue > _tokenDeposit) { return false;}
-
-        // Is loser
+    function releaseToken(int _direction, uint _id, uint _tokenValue, uint _deposit) internal returns(bool) {
+        // is Invalid
         // Deliver the lasting value to the user
         if(_tokenValue > 0){
             ownerOf(_direction, _id).transfer(_tokenValue); // TODO when token get holder OL-1369
@@ -458,58 +441,79 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         }
 
         getToken(_direction).invalidateToken(_id);
-         // Keep the lost investment into the winner balance
-        winnersBalance = winnersBalance.add(_tokenDeposit.sub(_tokenValue));
-
-        return true;
-    }
-
-    // We check token by token, but in one go with process all tokens of the same holder
-    function checkWinnersOnClear(int _direction, uint _id) internal returns(bool) {
-        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
-
-        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
-        uint _tokenDeposit = getTokenDeposit(_direction, _id);
-
-        // Is loser (in theory shall be already out)
-        if(_tokenValue  <=  _tokenDeposit) { return false;}
-
-        address _holder = ownerOf(_direction, _id);
-        // TODO: maybe is good idea to reafctor invalidateTokensByOwner and get the valid num
-        uint[] memory _validTokens = getValidTokenIdsByOwner(_direction, _holder);
-
-        uint _ethToReturn = calculateBenefits(_direction, _validTokens);
-        invalidateTokens(_direction, _validTokens);
-
-        _holder.transfer(_ethToReturn);
-        emit Benefits(_direction, _holder, _ethToReturn);
-
+        // Keep the lost investment into the winner balance
+        if(_deposit > _tokenValue){
+            winnersBalance = winnersBalance.add(_deposit.sub(_tokenValue));
+        }
         return false;
     }
 
-    function calculateBenefits(int _direction, uint[] _winnerTokens) internal  returns(uint) {
+    function releaseTokenCheck(int _direction, uint _id, TokenCheckType checkType) internal returns(bool){
+        if(!isTokenValid(_direction, _id)) {return false;} // Check if was already invalid
+        uint _tokenValue = getTokenActualValue(_direction, _id, frozenPrice);
+        uint _tokenDeposit = getTokenDeposit(_direction, _id);
 
+        if(checkType == TokenCheckType.Valid){
+            // should hold the token not to release;
+            if( _tokenValue > getTokenBottomPosition(_direction, _id)){return true;}
+        } else if(checkType == TokenCheckType.Lose){
+            // should hold the token not to release;
+            if(_tokenValue > _tokenDeposit ){return true;}
+        } else if(checkType == TokenCheckType.Win) {
+            // should hold the token not to release;
+            if(_tokenValue <= _tokenDeposit ){return true;}
+            return releaseWinnerToken(_direction, _id, _tokenDeposit, false);
+        } else if(checkType == TokenCheckType.Redeem) {
+            if(_tokenValue > _tokenDeposit ){
+                return releaseWinnerToken(_direction, _id, _tokenDeposit, true);
+            } 
+        }
+        return releaseToken(_direction, _id, _tokenValue, _tokenDeposit);
+    }
+
+    function releaseWinnerToken(int _direction, uint _id, uint _tokenDeposit, bool _only) internal returns(bool){
         uint _total;
         uint _deposit;
         uint _pendingBalance;
-        // We return all the deposit of the token winners + the benefits
-        for(uint i = 0; i < _winnerTokens.length; i++) {
-            _deposit = getTokenDeposit(_direction,_winnerTokens[i]);
-            _total = _total.add(_deposit);
+        uint _totalTokenSupply;
+
+        if(frozenTotalWinnersSupply > 0){
+            _totalTokenSupply = frozenTotalWinnersSupply;
+        }else{
+            // TODO refactor with clear duplicate codes;
+            frozenLongTokens = getValidTokens(LONG);
+            frozenShortTokens = getValidTokens(SHORT);
+            _totalTokenSupply = frozenLongTokens.length.add(frozenShortTokens.length);
+        }
+        address _holder = ownerOf(_direction, _id);
+        uint _tokenLength = 1;
+        if(!_only){
+            uint[] memory _winnerTokens = getValidTokenIdsByOwner(_direction, _holder);
+            // We return all the deposit of the token winners + the benefits
+            for(uint i = 0; i < _winnerTokens.length; i++) {
+                _deposit = getTokenDeposit(_direction,_winnerTokens[i]);
+                _total = _total.add(_deposit);
+            }
+            invalidateTokens(_direction, _winnerTokens);
+            _tokenLength = _winnerTokens.length;
+        }else {
+            _total = _total.add(_tokenDeposit);
+            getToken(_direction).invalidateToken(_id);
         }
 
         // Benefits in function of his total supply
         // Is important winners balance doesnt reduce, as is frozen during clear.
-        uint _benefits = winnersBalance.mul(_winnerTokens.length).div(frozenTotalWinnersSupply);
+        uint _benefits = winnersBalance.mul(_tokenLength).div(_totalTokenSupply);
         winnersBalanceRedeemed = winnersBalanceRedeemed.add(_benefits); // Keep track
-
         // Special cases decimals
         _pendingBalance = winnersBalance.sub(winnersBalanceRedeemed);
-        if(_pendingBalance > 0 && _pendingBalance < frozenTotalWinnersSupply) {
+        if(_pendingBalance > 0 && _pendingBalance < _totalTokenSupply) {
             _benefits = _benefits.add(_pendingBalance);
         }
-
-        return _total.add(_benefits);
+        uint _ethToReturn = _total.add(_benefits);
+        _holder.transfer(_ethToReturn);
+        emit Benefits(_direction, _holder, _ethToReturn);
+        return true;
     }
     /// --------------------------------- END CLEAR ---------------------------------
 
@@ -548,8 +552,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     // Only help to check interal algorithm value, but is not for use of the final user.
     // Client side could just fech them one buy one in a loop.
     function getFrozenTokens(int _direction) external view returns(uint[]) {
-        if(_direction == LONG) { return frozenLongTokens;}
-        if(_direction == SHORT) { return frozenShortTokens;}
+        if(_direction == LONG) {return frozenLongTokens;}
+        if(_direction == SHORT) {return frozenShortTokens;}
         revert("8");
     }
     /// --------------------------------- END GETTERS   ---------------------------------
@@ -572,23 +576,23 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     function initializeOrContinueStep(bytes32 category) internal returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).initializeOrContinue(category);
+        return StepInterface(getComponentByName(STEP)).initializeOrContinue(category);
     }
 
     function getStatusStep(bytes32 category) internal view returns(uint) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).getStatus(category);
+        return StepInterface(getComponentByName(STEP)).getStatus(category);
     }
 
     function finalizeStep(bytes32 category) internal returns(bool) {
-        return  StepInterface(ReimbursableInterface(getComponentByName(STEP))).finalize(category);
+        return StepInterface(getComponentByName(STEP)).finalize(category);
     }
 
     function goNextStep(bytes32 category) internal returns(bool) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).goNextStep(category);
+        return StepInterface(getComponentByName(STEP)).goNextStep(category);
     }
 
     function updateStatusStep(bytes32 category) internal returns(uint) {
-        return StepInterface(ReimbursableInterface(getComponentByName(STEP))).updateStatus(category);
+        return StepInterface(getComponentByName(STEP)).updateStatus(category);
     }
 
     function setMaxSteps( bytes32 _category,uint _maxSteps) public onlyOwner {
@@ -605,9 +609,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     }
 
     function getManagerFee(uint _amount) external returns(bool) {
-        require(_amount > 0, "9" );
+        require(_amount > 0, "9");
         require(
-            status == DerivativeStatus.Closed ? // everything is done, take all.
+            status == DerivativeStatus.Closed ?  // everything is done, take all.
             (_amount <= accumulatedFee)
             :
             (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
@@ -622,8 +626,5 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         accumulatedFee = accumulatedFee.add(msg.value);
     }
     /// --------------------------------- END MANAGER   ---------------------------------
-
-
-
 
 }
