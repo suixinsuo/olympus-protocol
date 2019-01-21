@@ -1,13 +1,13 @@
 pragma solidity 0.4.24;
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../interfaces/RebalanceInterface.sol";
+import "../../interfaces/RebalanceSwapInterface.sol";
 import "../../interfaces/IndexInterface.sol";
 import "../../interfaces/PriceProviderInterface.sol";
 import "../../components/base/FeeCharger.sol";
 
 
-contract RebalanceProviderV2 is FeeCharger {
+contract RebalanceProviderV2 is FeeCharger, RebalanceSwapInterface {
     using SafeMath for uint256;
 
     PriceProviderInterface public priceProvider = PriceProviderInterface(0x0);
