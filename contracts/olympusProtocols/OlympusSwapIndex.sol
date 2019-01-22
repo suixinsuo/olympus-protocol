@@ -46,8 +46,8 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
       address[] _tokens,
       uint[] _weights)
       public {
-        require(0<=_decimals&&_decimals<=18,"");
-        require(_tokens.length == _weights.length,"");
+        require(0<=_decimals&&_decimals<=18);
+        require(_tokens.length == _weights.length);
         uint _totalWeight;
         uint i;
 
@@ -55,9 +55,9 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
             _totalWeight = _totalWeight.add(_weights[i]);
             // Check all tokens are ERC20Extended
             ERC20Extended(_tokens[i]).balanceOf(address(this));
-            require(ERC20Extended(_tokens[i]).decimals() <= 18,"");
+            require(ERC20Extended(_tokens[i]).decimals() <= 18);
         }
-        require(_totalWeight == 100,"");
+        require(_totalWeight == 100);
 
         name = _name;
         symbol = _symbol;
@@ -82,10 +82,10 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
         uint _rebalanceDeltaPercentage
    )
    public onlyOwner payable {
-        require(status == DerivativeStatus.New,"");
-        require(msg.value >= INITIAL_FEE,""); // Require some balance for internal opeations as reimbursable. 0.1ETH
-        require(_componentList != 0x0,"");
-        require(_rebalanceDeltaPercentage <= (10 ** decimals),"");
+        require(status == DerivativeStatus.New);
+        require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable. 0.1ETH
+        require(_componentList != 0x0);
+        require(_rebalanceDeltaPercentage <= (10 ** decimals));
 
         pausedCycle = 365 days;
 
@@ -131,16 +131,16 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
 
     // solhint-disable-next-line
     function close() public OnlyOwnerOrPausedTimeout returns (bool success) {
-        require(status != DerivativeStatus.New, "");
-        require(productStatus == Status.AVAILABLE, "");
+        require(status != DerivativeStatus.New);
+        require(productStatus == Status.AVAILABLE);
 
         status = DerivativeStatus.Closed;
         return true;
     }
 
     function sellAllTokensOnClosedFund() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool) {
-        require(status == DerivativeStatus.Closed, "");
-        require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS, "");
+        require(status == DerivativeStatus.Closed);
+        require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
         startGasCalculation();
         productStatus = Status.SELLINGTOKENS;
         bool result = getETHFromTokens(TOKEN_DENOMINATOR);
@@ -156,8 +156,8 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
      whenNotPaused
      whitelisted(WhitelistKeys.Investment)
       returns(bool) {
-        require(status == DerivativeStatus.Active, "The Fund is not active");
-        require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
+        require(status == DerivativeStatus.Active);
+        require(msg.value >= 10**15);
          // Current value is already added in the balance, reduce it
         uint _sharePrice = INITIAL_VALUE;
 
@@ -223,13 +223,12 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
 
   // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
-        require(_amount > 0, "");
+        require(_amount > 0);
         require(
             status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == 0 ? // everything is done, take all.
             (_amount <= accumulatedFee)
             :
-            (_amount.add(INITIAL_FEE) <= accumulatedFee), // else, the initial fee stays.
-            ""
+            (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
         );
         accumulatedFee = accumulatedFee.sub(_amount);
         // Exchange to MOT
@@ -280,7 +279,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
 
-        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING,"");
+        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
         productStatus = Status.WITHDRAWING;
 
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
@@ -400,7 +399,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
             (, _sellRates[sellIndex] ) = exchange.getPrice(freezeTokens[i], ETH, _amounts[sellIndex], 0x0);
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
         }
-        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0),"");
+        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
 
         if(i == freezeTokens.length) {
             finalizeStep(GETETH);
@@ -414,7 +413,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
 
-        require(productStatus == Status.AVAILABLE || productStatus == Status.BUYING,"");
+        require(productStatus == Status.AVAILABLE || productStatus == Status.BUYING);
         productStatus = Status.BUYING;
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -450,7 +449,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
             _totalAmount = _totalAmount.add(_amounts[_buyIndex]);
         }
 
-        require(exchange.buyTokens.value(_totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0),"");
+        require(exchange.buyTokens.value(_totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0));
 
         if(i == tokens.length) {
             finalizeStep(BUYTOKENS);
@@ -468,14 +467,14 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
 
         startGasCalculation();
 
-        require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING,"");
+        require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING);
 
         RebalanceSwapInterface rebalanceSwapProvider = RebalanceSwapInterface(getComponentByName(REBALANCESWAP));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
         if (!rebalanceSwapProvider.getRebalanceInProgress()) {
             checkLocker(REBALANCE);
         }
-        require(rebalanceSwapProvider.needsRebalance(rebalanceDeltaPercentage,address(this)),"");
+        require(rebalanceSwapProvider.needsRebalance(rebalanceDeltaPercentage,address(this)));
 
         address[] memory _tokensToSell;
         uint[] memory _amounts;
@@ -502,8 +501,8 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
                     _amounts[i],
                     0,
                     address(this),
-                    0x0),
-                "");
+                    0x0)
+                );
         }
         if(i == _tokensToSell.length){
             rebalanceSwapProvider.finalize();
