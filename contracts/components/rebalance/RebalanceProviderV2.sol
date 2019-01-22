@@ -1,13 +1,13 @@
 pragma solidity 0.4.24;
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../interfaces/RebalanceInterface.sol";
+import "../../interfaces/RebalanceSwapInterface.sol";
 import "../../interfaces/IndexInterface.sol";
 import "../../interfaces/PriceProviderInterface.sol";
 import "../../components/base/FeeCharger.sol";
 
 
-contract RebalanceProviderV2 is FeeCharger {
+contract RebalanceProviderV2 is FeeCharger, RebalanceSwapInterface {
     using SafeMath for uint256;
 
     PriceProviderInterface public priceProvider = PriceProviderInterface(0x0);
@@ -113,10 +113,10 @@ contract RebalanceProviderV2 is FeeCharger {
     }
 
     function rebalanceGetTokensToTrade(uint _rebalanceDeltaPercentage) external returns (address[],address[],uint[]) {
+        if(rebalanceStatus[msg.sender] == RebalanceStatus.Calculated) {
+            return (sourceTokens[msg.sender],destTokens[msg.sender],srcAmount[msg.sender]);
+        }
         require(payFee(0), "Fee cannot be paid");
-        delete sourceTokens[msg.sender];
-        delete destTokens[msg.sender];
-        delete srcAmount[msg.sender];
         uint[] memory counters = new uint[](4);
         uint[] memory totalValueEach;
         address[] memory indexTokenAddresses;
@@ -164,7 +164,38 @@ contract RebalanceProviderV2 is FeeCharger {
                 }
             }
         }
+        rebalanceStatus[msg.sender] = RebalanceStatus.Calculated;
+        // Prevent contracts getting stuck because one of the arrays is empty
+        if(tokensToSell.length == 0 || tokensToBuy.length == 0){
+            finalize();
+        }
         return (sourceTokens[msg.sender],destTokens[msg.sender],srcAmount[msg.sender]);
+    }
+
+    function getRebalanceInProgress() external returns (bool inProgress) {
+        return rebalanceStatus[msg.sender] != RebalanceStatus.Initial;
+    }
+
+    function finalize() public returns (bool success) {
+        rebalanceStatus[msg.sender] = RebalanceStatus.Initial;
+        delete sourceTokens[msg.sender];
+        delete destTokens[msg.sender];
+        delete srcAmount[msg.sender];
+        return true;
+    }
+
+    function getTotalIndexValueWithoutCache(address _indexAddress) public view returns (uint totalValue){
+        uint price;
+        address[] memory indexTokenAddresses;
+        (indexTokenAddresses, ) = IndexInterface(_indexAddress).getTokens();
+
+        for(uint i = 0; i < indexTokenAddresses.length; i++) {
+            (price,) = priceProvider.getPrice(
+                ETH_TOKEN, ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
+            totalValue = totalValue.add(
+                ERC20Extended(indexTokenAddresses[i]).balanceOf(address(_indexAddress))
+                .mul(10**(18+(18-ERC20Extended(indexTokenAddresses[i]).decimals()))).div(price));
+        }
     }
 
     function getTotalIndexValue() public returns (uint totalValue) {

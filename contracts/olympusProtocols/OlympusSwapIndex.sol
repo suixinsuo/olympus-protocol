@@ -46,8 +46,8 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
       address[] _tokens,
       uint[] _weights)
       public {
-        require(0<=_decimals&&_decimals<=18);
-        require(_tokens.length == _weights.length);
+        require(0<=_decimals&&_decimals<=18,"");
+        require(_tokens.length == _weights.length,"");
         uint _totalWeight;
         uint i;
 
@@ -55,9 +55,9 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
             _totalWeight = _totalWeight.add(_weights[i]);
             // Check all tokens are ERC20Extended
             ERC20Extended(_tokens[i]).balanceOf(address(this));
-            require( ERC20Extended(_tokens[i]).decimals() <= 18);
+            require(ERC20Extended(_tokens[i]).decimals() <= 18,"");
         }
-        require(_totalWeight == 100);
+        require(_totalWeight == 100,"");
 
         name = _name;
         symbol = _symbol;
@@ -82,10 +82,10 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
         uint _rebalanceDeltaPercentage
    )
    public onlyOwner payable {
-        require(status == DerivativeStatus.New);
-        require(msg.value >= INITIAL_FEE); // Require some balance for internal opeations as reimbursable. 0.1ETH
-        require(_componentList != 0x0);
-        require(_rebalanceDeltaPercentage <= (10 ** decimals));
+        require(status == DerivativeStatus.New,"");
+        require(msg.value >= INITIAL_FEE,""); // Require some balance for internal opeations as reimbursable. 0.1ETH
+        require(_componentList != 0x0,"");
+        require(_rebalanceDeltaPercentage <= (10 ** decimals),"");
 
         pausedCycle = 365 days;
 
@@ -130,17 +130,17 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
     }
 
     // solhint-disable-next-line
-    function close() OnlyOwnerOrPausedTimeout public returns(bool success) {
-        require(status != DerivativeStatus.New);
-        require(productStatus == Status.AVAILABLE);
+    function close() public OnlyOwnerOrPausedTimeout returns (bool success) {
+        require(status != DerivativeStatus.New,"");
+        require(productStatus == Status.AVAILABLE,"");
 
         status = DerivativeStatus.Closed;
         return true;
     }
 
-    function sellAllTokensOnClosedFund() onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) public returns (bool) {
-        require(status == DerivativeStatus.Closed );
-        require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS);
+    function sellAllTokensOnClosedFund() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) returns (bool) {
+        require(status == DerivativeStatus.Closed,"");
+        require(productStatus == Status.AVAILABLE || productStatus == Status.SELLINGTOKENS,"");
         startGasCalculation();
         productStatus = Status.SELLINGTOKENS;
         bool result = getETHFromTokens(TOKEN_DENOMINATOR);
@@ -156,16 +156,16 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
      whenNotPaused
      whitelisted(WhitelistKeys.Investment)
       returns(bool) {
-        require(status == DerivativeStatus.Active, "The Fund is not active");
-        require(msg.value >= 10**15, "Minimum value to invest is 0.001 ETH");
+        require(status == DerivativeStatus.Active,"");
+        require(msg.value >= 10**15,"");
          // Current value is already added in the balance, reduce it
-        uint _sharePrice  = INITIAL_VALUE;
+        uint _sharePrice = INITIAL_VALUE;
 
         if (totalSupply_ > 0) {
             _sharePrice = getPrice().sub((msg.value.mul(10 ** decimals)).div(totalSupply_));
         }
 
-        uint fee =  ChargeableInterface(getComponentByName(FEE)).calculateFee(msg.sender, msg.value);
+        uint fee = ChargeableInterface(getComponentByName(FEE)).calculateFee(msg.sender, msg.value);
         uint _investorShare = (msg.value.sub(fee)).mul(10 ** decimals).div(_sharePrice);
 
         accumulatedFee = accumulatedFee.add(fee);
@@ -223,12 +223,13 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
 
   // solhint-disable-next-line
     function withdrawFee(uint _amount) external onlyOwner whenNotPaused returns(bool) {
-        require(_amount > 0 );
-        require((
-            status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == 0 ) ? // everything is done, take all.
+        require(_amount > 0,"");
+        require(
+            status == DerivativeStatus.Closed && getAssetsValue() == 0 && getWithdrawAmount() == 0 ? // everything is done, take all.
             (_amount <= accumulatedFee)
             :
-            (_amount.add(INITIAL_FEE) <= accumulatedFee) // else, the initial fee stays.
+            (_amount.add(INITIAL_FEE) <= accumulatedFee), // else, the initial fee stays.
+            ""
         );
         accumulatedFee = accumulatedFee.sub(_amount);
         // Exchange to MOT
@@ -279,7 +280,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
     function withdraw() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
 
-        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING);
+        require(productStatus == Status.AVAILABLE || productStatus == Status.WITHDRAWING,"");
         productStatus = Status.WITHDRAWING;
 
         WithdrawInterface withdrawProvider = WithdrawInterface(getComponentByName(WITHDRAW));
@@ -311,7 +312,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
         uint i;
 
         for (i = _transfers; i < _requests.length && goNextStep(WITHDRAW); i++) {
-            if(!handleWithdraw(withdrawProvider, _requests[i])){ continue; }
+            if(!handleWithdraw(withdrawProvider, _requests[i])){continue;}
         }
 
         if (i == _requests.length) {
@@ -330,7 +331,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
         (_eth, _tokenAmount) = _withdrawProvider.withdraw(_investor);
         if (_tokenAmount == 0) {return false;}
 
-        balances[_investor] =  balances[_investor].sub(_tokenAmount);
+        balances[_investor] = balances[_investor].sub(_tokenAmount);
         emit Transfer(_investor, 0x0, _tokenAmount); // ERC20 Required event
 
         totalSupply_ = totalSupply_.sub(_tokenAmount);
@@ -399,7 +400,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
             (, _sellRates[sellIndex] ) = exchange.getPrice(freezeTokens[i], ETH, _amounts[sellIndex], 0x0);
             approveExchange(address(_tokensThisStep[sellIndex]), _amounts[sellIndex]);
         }
-        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0));
+        require(exchange.sellTokens(_tokensThisStep, _amounts, _sellRates, address(this), 0x0),"");
 
         if(i == freezeTokens.length) {
             finalizeStep(GETETH);
@@ -413,7 +414,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
     function buyTokens() external onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns(bool) {
         startGasCalculation();
 
-        require(productStatus == Status.AVAILABLE || productStatus == Status.BUYING);
+        require(productStatus == Status.AVAILABLE || productStatus == Status.BUYING,"");
         productStatus = Status.BUYING;
 
         OlympusExchangeInterface exchange = OlympusExchangeInterface(getComponentByName(EXCHANGE));
@@ -449,7 +450,7 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
             _totalAmount = _totalAmount.add(_amounts[_buyIndex]);
         }
 
-        require(exchange.buyTokens.value(_totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0));
+        require(exchange.buyTokens.value(_totalAmount)(_tokensErc20, _amounts, _rates, address(this), 0x0),"");
 
         if(i == tokens.length) {
             finalizeStep(BUYTOKENS);
@@ -465,15 +466,16 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
     // solhint-disable-next-line
     function rebalance() public onlyOwnerOrWhitelisted(WhitelistKeys.Maintenance) whenNotPaused returns (bool success) {
 
-        
         startGasCalculation();
 
-        require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING);
+        require(productStatus == Status.AVAILABLE || productStatus == Status.REBALANCING,"");
 
         RebalanceSwapInterface rebalanceSwapProvider = RebalanceSwapInterface(getComponentByName(REBALANCESWAP));
         OlympusExchangeInterface exchangeProvider = OlympusExchangeInterface(getComponentByName(EXCHANGE));
-
-        require(rebalanceSwapProvider.needsRebalance(rebalanceDeltaPercentage,address(this)));
+        if (!rebalanceSwapProvider.getRebalanceInProgress()) {
+            checkLocker(REBALANCE);
+        }
+        require(rebalanceSwapProvider.needsRebalance(rebalanceDeltaPercentage,address(this)),"");
 
         address[] memory _tokensToSell;
         uint[] memory _amounts;
@@ -485,22 +487,35 @@ contract OlympusSwapIndex is IndexInterface, Derivative {
             reimburse(); // Completed case
             return true;
         }
-        // solhint-disable-next-line
+
+        uint currentStep = initializeOrContinueStep(REBALANCE);
 
         productStatus = Status.REBALANCING;
 
-        //TOKENＥ　EXCHANGE
-
-        //TODO NEED ADD STEP SUPPORT
-
-        for (i = 0; i < _tokensToSell.length; i++) {
+        //TOKEN EXCHANGE
+        for (i = currentStep; i < _tokensToSell.length && goNextStep(REBALANCE); i++) {
             approveExchange(_tokensToSell[i], _amounts[i]);
-            require(exchangeProvider.tokenExchange(ERC20Extended(_tokensToSell[i]),ERC20Extended(_tokensToBuy[i]), _amounts[i], 0, address(this), 0x0));
+            require(
+                exchangeProvider.tokenExchange(
+                    ERC20Extended(_tokensToSell[i]),
+                    ERC20Extended(_tokensToBuy[i]),
+                    _amounts[i],
+                    0,
+                    address(this),
+                    0x0),
+                ""
+            );
         }
-        finalizeStep(REBALANCE);
-        productStatus = Status.AVAILABLE;
-        reimburse();   // Completed case
-        return true;
+        if(i == _tokensToSell.length){
+            rebalanceSwapProvider.finalize();
+            finalizeStep(REBALANCE);
+            productStatus = Status.AVAILABLE;
+            reimburse(); // Complete case
+            return true;
+        }
+
+        reimburse(); // Not complete case
+        return false;
     }
     // ----------------------------- STEP PROVIDER -----------------------------
     function initializeOrContinueStep(bytes32 category) internal returns(uint) {
