@@ -357,7 +357,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         }
         
         reimburse();
-        return true;
+        return completed;
     }
  
     /// --------------------------------- END CHECK POSITION ---------------------------------
