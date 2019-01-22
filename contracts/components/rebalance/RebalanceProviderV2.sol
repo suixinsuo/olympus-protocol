@@ -184,6 +184,20 @@ contract RebalanceProviderV2 is FeeCharger, RebalanceSwapInterface {
         return true;
     }
 
+    function getTotalIndexValueWithoutCache(address _indexAddress) public view returns (uint totalValue){
+        uint price;
+        address[] memory indexTokenAddresses;
+        (indexTokenAddresses, ) = IndexInterface(_indexAddress).getTokens();
+
+        for(uint i = 0; i < indexTokenAddresses.length; i++) {
+            (price,) = priceProvider.getPrice(
+                ETH_TOKEN, ERC20Extended(indexTokenAddresses[i]), 10**18, 0x0);
+            totalValue = totalValue.add(
+                ERC20Extended(indexTokenAddresses[i]).balanceOf(address(_indexAddress))
+                .mul(10**(18+(18-ERC20Extended(indexTokenAddresses[i]).decimals()))).div(price));
+        }
+    }
+
     function getTotalIndexValue() public returns (uint totalValue) {
         address[] memory indexTokenAddresses;
         (indexTokenAddresses, ) = IndexInterface(msg.sender).getTokens();
