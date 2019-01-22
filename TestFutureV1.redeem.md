@@ -19,13 +19,18 @@ expect estimateValue return 0, before token invest (invalid token always return 
 
 prepare condition
 1. deploy a future contract. 
-   "FutureTest","FutureV1","FV1","0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","1","0x4BFBa4a8F28755Cb2061c413459EE562c6B9c51b","2","1000","8000"
+    Deploy: 
+    ```
+    "FutureTest","FutureV1","FV1","0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","1","0x4BFBa4a8F28755Cb2061c413459EE562c6B9c51b","2","1000","8000"
+    ```
    deposit with 10%;
 steps
 1. estimateValue(-1,1,100000000000000000) , should be revert;
 2. initial contract, should be success;
    "0x8dbcf3dd83ca558129fcb8738ec5d313da74b26e","60"  value:0.11 ETH
+   "0x550c164e95a1909f1571fd224243655813cc96a5","60"  value:0.11 ETH （ropsten）
 3. estimateValue(1,1,100000000000000000) , should be return 0, estimateValue(-1, 1, 100000000000000000) , should be return 0;
+4. setTimeInterval "0x436865636b506f736974696f6e","2"
 ## estimateValue before check position.
 1. set mock price 1 ETH.
 2. account 1 invest( -1, 2), account 2 invest( 1, 2).
@@ -46,14 +51,14 @@ expect
 - redeemToken[1] should be true;
 2. call check position;
 expect
-- account 2 should be got 0.4ETH;
+- account 2 should be got 0.38ETH;
 - estimateValue(1, 1, 100000000000000000), should be return 0;
 - estimateValue(-1, 1, 100000000000000000), should be return 0;
-- estimateValue(1, 2, 100000000000000000), should be return 0.4ETH;
+- estimateValue(1, 2, 100000000000000000), should be return 0.38ETH;
 - estimateValue(-1, 2, 100000000000000000), should be return 0;
 1. account 2 call redeem(1,[2]);
 2. call check position;
-- account 2 should be got 0.4ETH;
+- account 2 should be got 0.38ETH;
 - estimateValue(1, 1, 100000000000000000), should be return 0;
 - estimateValue(1, 2, 100000000000000000), should be return 0;
 ## ** extra redeem before clear.
@@ -61,24 +66,30 @@ expect
  set mock price 1 ETH.
 1. account 1 invest( -1, 2), account 2 invest( 1, 2). 
 expect
-- valid tokenIds 5,6,7,8;
-- estimateValue(-1, 5, 100000000000000000), should be return 0.2ETH;
-- estimateValue(-1, 6, 100000000000000000), should be return 0.2ETH;
-- estimateValue(1, 7, 100000000000000000), should be return 0.2ETH;
-- estimateValue(1, 8, 100000000000000000), should be return 0.2ETH;
-3. set price as 0.95;
+- valid tokenIds long:3,4 short: 3,4;
+- estimateValue(-1, 3, 100000000000000000), should be return 0.2ETH;
+- estimateValue(-1, 4, 100000000000000000), should be return 0.2ETH;
+- estimateValue(1, 3, 100000000000000000), should be return 0.2ETH;
+- estimateValue(1, 4, 100000000000000000), should be return 0.2ETH;
+1. set price as 0.95;
 expect
-- estimateValue(-1, 5, 95000000000000000), should be return 0.1ETH; (if redeem then will lost half of invest)
-- estimateValue(-1, 6, 95000000000000000), should be return 0.1ETH; (if redeem then will lost half of invest)
-- estimateValue(1, 7, 95000000000000000), should be return 0.2ETH; (if redeem nobody will lost)
-- estimateValue(1, 8, 95000000000000000), should be return 0.2ETH; (if redeem nobody will lost)
-1. account 2 redeem(-1, [7,8]);
+- estimateValue(-1, 3, 95000000000000000), should be return 0.1ETH; (if redeem then will lost half of invest)
+- estimateValue(-1, 4, 95000000000000000), should be return 0.1ETH; (if redeem then will lost half of invest)
+- estimateValue(1, 3, 95000000000000000), should be return 0.2ETH; (if redeem nobody will lost)
+- estimateValue(1, 4, 95000000000000000), should be return 0.2ETH; (if redeem nobody will lost)
+1. account 2 redeem(-1, 7), account 2 redeem(-1, 8);
 2. checkPosition();
 - account 2 should be got 0.4ETH;
-- estimateValue(-1, 5, 95000000000000000)
-- estimateValue(-1, 6, 95000000000000000)
-- estimateValue(1, 7, 95000000000000000)
-- estimateValue(1, 8, 95000000000000000)
+- estimateValue(-1, 3, 95000000000000000) should be return 0 ETH;
+- estimateValue(-1, 4, 95000000000000000) should be return 0 ETH;
+- estimateValue(1, 3, 95000000000000000) should be return 0 ETH;
+- estimateValue(1, 4, 95000000000000000) should be return 0 ETH;
+3. call clear 2 times
+expect
+- account 1 got 0.2ETH back;
+- winnerBalance is 0;
+- accumulatedFee > 0.2ETH (0.2ETH + raw managementFee)
+
 ## redeem after clear.
 prepare condition
 1. deploy a future contract. 

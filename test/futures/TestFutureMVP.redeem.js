@@ -2,6 +2,7 @@ const calc = require("../utils/calc");
 const BigNumber = web3.BigNumber;
 
 const {
+  DerivativeProviders,
   FutureDirection,
   DerivativeStatus,
 } = require("../utils/constants");
@@ -37,13 +38,11 @@ contract("Test Future MVP Redeem", accounts => {
   const groupB = accounts.slice(11, 21);
   const groupAll = accounts.slice(1, 21);
 
-
   before("Initialize ComponentList", async () => {
     assert(accounts.length >= 21, "Require at least 11 investors for this test case");
     providers = await utils.setUpComponentList();
     mockOracle = await MockOracle.deployed();
   });
-
 
   it("1. redeem before invest.", async () => {
     future = await FutureContract.new(
@@ -89,7 +88,7 @@ contract("Test Future MVP Redeem", accounts => {
       assert.equal(0.2 * 10 ** 18, +value, 'should be return 0.2ETH');
     });
     await utils.estimateValue(future, FutureDirection.Short, 1, 0.91 * 10 ** 18).then((value) => {
-      assert.equal(0.38 * 10 ** 18, +value, 'should be return 0.38ETH');
+      assert.equal(0.38 * 10 ** 18, +value, '- should be return 0.38ETH');
     });
     await utils.estimateValue(future, FutureDirection.Short, 1, 0.90 * 10 ** 18).then((value) => {
       assert.equal(0.4 * 10 ** 18, +value, 'should be return 0.4ETH');
@@ -100,12 +99,19 @@ contract("Test Future MVP Redeem", accounts => {
   });
 
   it("2. redeem before clear.", async () => {
+    const interval = 2;
+    await future.setTimeInterval(DerivativeProviders.CHECK_POSITION, interval);
+    await utils.safeCheckPosition(future).then((tx) => {
+      assert.ok(tx, 'Can redeem until next check position');
+    });
+
     await future.redeem(FutureDirection.Short, 1, {
       from: accounts[2]
     }).then((tx) => {
       assert.ok(tx, 'Can redeem until next check position');
     });
 
+    await calc.waitSeconds(interval);
     await utils.safeCheckPosition(future).then((tx) => {
       // Might here check the return event value.
       assert.ok(tx, 'Can redeem until next check position');
@@ -119,11 +125,17 @@ contract("Test Future MVP Redeem", accounts => {
       assert.equal(0.2 * 10 ** 18, +value, 'token 2 should be return 0.2 ETH');
     });
 
-    await future.winnersBalance().then(value => {
-      console.log('winnersBalance:', +value);
+    await future.redeem(FutureDirection.Short, 2, {
+      from: accounts[2]
+    }).then((tx) => {
+      assert.ok(tx, 'Can redeem until next check position');
     });
 
-    // assert(false);
+    await calc.waitSeconds(interval);
+    await utils.safeCheckPosition(future).then((tx) => {
+      // Might here check the return event value.
+      assert.ok(tx, 'Can redeem until next check position');
+    });
 
   });
 
