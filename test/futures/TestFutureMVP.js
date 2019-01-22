@@ -113,7 +113,7 @@ contract("Test Future MVP", accounts => {
     const accumulatedFee = (await future.accumulatedFee()).toNumber();
     await calc.assertReverts(async () => await future.getManagerFee(accumulatedFee), 'Cant withdraw all before closed');
     const tx = await future.getManagerFee(new BigNumber(accumulatedFee).sub(futureUtils.INITIAL_FEE));
-    assert.ok(tx, 'Can withdraw fee until the minumum fee');
+    assert.ok(tx, 'Can withdraw fee until the minimum fee');
 
     assert.equal((await future.accumulatedFee()).toNumber(), futureUtils.INITIAL_FEE, 'Now accumulated fee is exactly 1 ETH');
   });
@@ -208,7 +208,7 @@ contract("Test Future MVP", accounts => {
 
   });
 
-  // TargetPrice was setted to 10**18
+  // TargetPrice was set to 10**18
   it("Investor invest long", async () => {
     const targetPrice = futureData.defaultTargetPrice;
     const amountsOfShares = 2;

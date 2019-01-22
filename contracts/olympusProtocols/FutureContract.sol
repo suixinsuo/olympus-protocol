@@ -36,8 +36,8 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     bytes32 public constant CLEAR = "Clear";
     bytes32 public constant CHECK_POSITION = "CheckPosition";
     // Basic information that is override on creation
-    string public name = "Olympus Future";
-    string public description = "Olympus Future";
+    string public name = "FT";
+    string public description = "OLF";
     string public version = "1.1-20181113";
     string public symbol;
     // Config on  Creation
@@ -279,19 +279,19 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         int _direction, // long or short
         uint _shares // shares of the target.
         ) external payable returns (bool) {
-        require(CheckOraclePriceTime(), "99");
+        require(CheckOraclePriceTime(), "");
         uint _targetPrice = getTargetPrice();
-        require(status == DerivativeStatus.Active, "3");
-        require(_targetPrice > 0, "4");
+        require(status == DerivativeStatus.Active, "");
+        require(_targetPrice > 0, "");
 
         uint _totalEthDeposit = calculateShareDeposit(_shares, _targetPrice);
-        require(msg.value >= _totalEthDeposit, "5"); // Enough ETH to buy the share
+        require(msg.value >= _totalEthDeposit, ""); // Enough ETH to buy the share
         require(
             getToken(_direction).mintMultiple(
             msg.sender,
             _totalEthDeposit.div(_shares),
             _targetPrice,
-            _shares) == true, "6");
+            _shares) == true, "");
 
         // Return maining ETH to the token
         msg.sender.transfer(msg.value.sub(_totalEthDeposit));
@@ -311,9 +311,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
 
     function redeem(int _direction, uint _id) external returns (bool) {
         // only owner of token can redeem;
-        require(ownerOf(_direction, _id) == msg.sender, "88");
+        require(ownerOf(_direction, _id) == msg.sender, "");
         // only token is not redeemPending;
-        require(!redeemLock[_direction][_id], "88");  // TODO 
+        require(!redeemLock[_direction][_id], "");  // TODO 
         if(!isTokenValid(_direction, _id)) {return false;}
         redeemPending.push(RedeemPending({
             direction:_direction,
@@ -326,7 +326,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function checkPosition() external returns (bool) {
         startGasCalculation();
         require(status != DerivativeStatus.Closed, "7");
-        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CHECK_POSITION, "77");
+        require(productStatus == MutexStatus.AVAILABLE || productStatus == MutexStatus.CHECK_POSITION, "");
 
         // INITIALIZE
         CheckPositionPhases _stepStatus = CheckPositionPhases(getStatusStep(CHECK_POSITION));
@@ -338,7 +338,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
                 reimburse();
                 return true;
             }
-            require(CheckOraclePriceTime(),"99");
+            require(CheckOraclePriceTime(),"");
             frozenPrice = getTargetPrice();
             productStatus = MutexStatus.CHECK_POSITION;
         }
@@ -350,14 +350,16 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
         }
 
         for(uint i; i < redeemPending.length; i++ ){ 
-            releaseTokenCheck(redeemPending[i].direction, redeemPending[i].id, TokenCheckType.Redeem);
-            delete redeemPending[i];
+            if(redeemPending[i].id > 0){
+                releaseTokenCheck(redeemPending[i].direction, redeemPending[i].id, TokenCheckType.Redeem);
+                delete redeemPending[i];
+            }
         }
-
+        
         reimburse();
         return completed;
     }
-
+ 
     /// --------------------------------- END CHECK POSITION ---------------------------------
 
     /// --------------------------------- CLEAR ---------------------------------
@@ -385,7 +387,7 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
                 reimburse();
                 return true;
             }
-            require(CheckOraclePriceTime(),"99");
+            require(CheckOraclePriceTime(),"");
             frozenPrice = getTargetPrice();
 
             _stepStatus = ClearPositionPhases(updateStatusStep(CLEAR));
@@ -474,8 +476,9 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
     function releaseWinnerToken(int _direction, uint _id, uint _tokenDeposit, bool _only) internal returns(bool){
         uint _total;
         uint _deposit;
-        uint _pendingBalance;
+        uint _remainder;
         uint _totalTokenSupply;
+        uint _benefits = 0;
 
         if(frozenTotalWinnersSupply > 0){
             _totalTokenSupply = frozenTotalWinnersSupply;
@@ -496,19 +499,22 @@ contract FutureContract is BaseDerivative, FutureInterfaceV1 {
             }
             invalidateTokens(_direction, _winnerTokens);
             _tokenLength = _winnerTokens.length;
+            
+            // Benefits in function of his total supply
+            // Is important winners balance doesnt reduce, as is frozen during clear.
+            _benefits = winnersBalance.mul(_tokenLength).div(_totalTokenSupply);
+            winnersBalanceRedeemed = winnersBalanceRedeemed.add(_benefits); // Keep track 
+            // Special cases decimals
+            _remainder = winnersBalance.sub(winnersBalanceRedeemed);
+            if(_remainder > 0 && _remainder < _totalTokenSupply) {
+                _benefits = _benefits.add(_remainder);
+            }
+
         }else {
             _total = _total.add(_tokenDeposit);
             getToken(_direction).invalidateToken(_id);
-        }
-
-        // Benefits in function of his total supply
-        // Is important winners balance doesnt reduce, as is frozen during clear.
-        uint _benefits = winnersBalance.mul(_tokenLength).div(_totalTokenSupply);
-        winnersBalanceRedeemed = winnersBalanceRedeemed.add(_benefits); // Keep track
-        // Special cases decimals
-        _pendingBalance = winnersBalance.sub(winnersBalanceRedeemed);
-        if(_pendingBalance > 0 && _pendingBalance < _totalTokenSupply) {
-            _benefits = _benefits.add(_pendingBalance);
+            _benefits = winnersBalance.mul(_tokenLength).div(_totalTokenSupply);
+            winnersBalance = winnersBalance.sub(_benefits);
         }
         uint _ethToReturn = _total.add(_benefits);
         _holder.transfer(_ethToReturn);

@@ -49,6 +49,7 @@ async function estimateAllTokenBenefits(
   denominator) {
   price = new BigNumber(price);
   let winnerBalanceStack = new BigNumber(0);
+  let winnerShareCount = 0;
   const values = await Promise.all(ids.map(async (id) => {
     const buyingPrice = await token.getBuyingPrice(id);
     const isWinnerToken = (price.gt(buyingPrice) && direction === FutureDirection.Long) ||
@@ -60,6 +61,7 @@ async function estimateAllTokenBenefits(
       .div(buyingPrice.times(depositPercentage).div(
         denominator));
     if (isWinnerToken) {
+      winnerShareCount++;
       return benefit;
     }
     /**
@@ -80,7 +82,8 @@ async function estimateAllTokenBenefits(
   const total = values.reduce((a, b) => a.plus(b));
   return {
     total,
-    winnerBalanceStack
+    winnerBalanceStack,
+    winnerShareCount,
   };
 }
 
@@ -132,10 +135,17 @@ async function estimateValue(future, direction, tokenId, price) {
     denominator);
 
   const winnersBalance = await future.winnersBalance();
-  const total = longEstimated.total.plus(shortEstimated.total);
+  /**
+   * div winnersBalance as amount
+   */
+  // const total = longEstimated.total.plus(shortEstimated.total);
+  // const benefit = winnersBalance.plus(longEstimated.winnerBalanceStack)
+  //   .plus(shortEstimated.winnerBalanceStack)
+  //   .times(actValue.minus(tokenDeposit)).div(total);
+  const winnerTokenSupply = longEstimated.winnerShareCount + shortEstimated.winnerShareCount;
   const benefit = winnersBalance.plus(longEstimated.winnerBalanceStack)
     .plus(shortEstimated.winnerBalanceStack)
-    .times(actValue.minus(tokenDeposit)).div(total);
+    .div(winnerTokenSupply);
   return benefit.plus(tokenDeposit);
 }
 
